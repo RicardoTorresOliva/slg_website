@@ -1,0 +1,28 @@
+# pre-commit-config.yaml — APP_Builder v4.1 — neutral local-hook alternative
+#
+# Platform-neutral way to enforce the verifiable rules without any CI vendor.
+# Install once: `pip install pre-commit && pre-commit install`
+# Place at .pre-commit-config.yaml in your project root.
+
+repos:
+  - repo: local
+    hooks:
+      - id: app-builder-completeness
+        name: APP_Builder — DU completeness
+        entry: bash scripts/check_completeness.sh .
+        language: system
+        pass_filenames: false
+
+      - id: app-builder-worklog
+        name: APP_Builder — work_log documented
+        entry: bash scripts/check_worklog.sh .
+        language: system
+        pass_filenames: false
+
+      - id: app-builder-doc-sync
+        name: APP_Builder — spec/knowledge in sync
+        entry: bash scripts/check_doc_sync.sh .
+        language: system
+        pass_filenames: false
+
+  # Add a secret scanner of your choice as a second repo entry (e.g. gitleaks).

@@ -1,0 +1,36 @@
+# app-builder-gates.yml — APP_Builder v4.1 — example CI gates
+#
+# This is ONE example (GitHub Actions). CI is inherently platform-bound; swap for
+# your runner. The neutral alternative is scripts/ + a pre-commit hook (see
+# ci/pre-commit-config.yaml). The point is: verifiable rules are enforced by
+# machine, not by the agent's prompt.
+#
+# Place at .github/workflows/app-builder-gates.yml in your project.
+
+name: APP_Builder Gates
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+
+jobs:
+  app-builder-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Completeness — no DU marked done without evidence
+        run: bash scripts/check_completeness.sh .
+
+      - name: Doc-sync — spec/knowledge stays in sync with code
+        run: bash scripts/check_doc_sync.sh .
+
+      - name: Work-log — last completed unit is documented
+        run: bash scripts/check_worklog.sh .
+
+      - name: Secret scan — no hardcoded secrets (rule 2)
+        uses: gitleaks/gitleaks-action@v2
+        # gitleaks is one option; any secret scanner satisfies the rule.
+
+  # Note: preflight_check.sh runs before /start-execution (not in PR CI), since it
+  # gates the transition from planning to building, not every commit.

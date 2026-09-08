@@ -1,0 +1,3 @@
+.DS_Store
+deliverables/*
+!deliverables/README.md
