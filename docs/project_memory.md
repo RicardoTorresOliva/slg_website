@@ -60,12 +60,17 @@ sesiones), `log.md` y los **siete conceptos** (`method-sdd-icm`, `naming-rules`,
     al servidor y las dos variables están cargadas.
   - El commit `d0db9ad` (D-50, gate D1 por Lighthouse) ya está en `develop`, local y remoto en sync
     (`git push origin develop` hecho por el agente el 2026-09-09).
-  1. **Queda**: pausar los monitores de la raíz y `www` en UptimeRobot hasta el go-live (no tienen
-     DNS todavía; tres semanas en rojo enseñan a ignorar las alertas).
-  2. Menor, no bloquea hasta FU-09: los dos cubos privados de MinIO (`downloads`, `deliverables`) y
-     una clave de acceso para la aplicación.
+  - ~~Pausar los monitores de la raíz y `www` en UptimeRobot~~ — **hecho** (confirmado por Ricardo,
+    2026-09-09).
   - MinIO, el servicio `slgweb-staging` y el DNS de `staging` **ya estaban hechos** desde antes de
     esta sesión.
+  1. **Queda, menor, no bloquea hasta FU-09**: crear el bucket `downloads` bien escrito (existe un
+     `dowloads` con typo, vacío — se deja sin usar, no hace falta borrarlo) y el bucket
+     `deliverables`, los dos **privados**. **D-51**: la clave de acceso de la aplicación será
+     `MINIO_ROOT_USER`/`MINIO_ROOT_PASSWORD` directamente (`S3_ACCESS_KEY_ID`/`S3_SECRET_ACCESS_KEY`
+     en `.env.example`) — el Console gratuito de MinIO ya no permite crear una clave acotada desde la
+     interfaz web. Riesgo abierto **R-41**, mismo patrón que S-01: revisar y rotar a una clave
+     acotada con la CLI `mc` antes del go-live.
 
 ## R-40 resuelto — D-50 (2026-09-09)
 **Ya no bloquea el cierre de FU-05.** El gate D1 y el stack elegido eran incompatibles: el suelo de
