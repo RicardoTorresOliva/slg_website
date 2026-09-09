@@ -1,0 +1,16 @@
+// Este archivo NO debe compilar. Es la prueba del criterio 5 de FU-04 (RF-71):
+// la capa de acceso no admite un `organization_id` recibido por parámetro.
+//
+// Extensión `.ts.negativo` a propósito: si terminara en `.ts`, rompería el
+// `tsc` del proyecto. El script `test-no-compila.ts` lo copia a un directorio
+// temporal, lo compila y exige que FALLE.
+import { withScope } from "../../../lib/db/scope.ts";
+
+// @ts-expect-error-NO — se espera error REAL, no suprimido
+export async function fuga(organizationId: string) {
+  // Intento 1: fabricar un contexto a mano desde la petición.
+  return withScope(
+    { organizationId, actorType: "user", actorId: "x", actorLabel: "x", actorRole: "client_admin", scopes: [] },
+    async (db) => db,
+  );
+}

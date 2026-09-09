@@ -1,0 +1,13 @@
+{
+  "nav.ai": "SLG_AI",
+  "nav.holdings": "SLG_Holdings",
+  "nav.doctrine": "Doctrina",
+  "nav.blog": "Blog",
+  "nav.about": "Nosotros",
+  "nav.signin": "Acceder",
+  "download.cta": "Descargar el documento",
+  "download.comingSoon": "Disponible próximamente",
+  "download.emailLabel": "Correo corporativo",
+  "download.freeEmailRejected": "Necesitamos un correo corporativo. Los dominios de correo gratuito no se aceptan.",
+  "footer.rights": "SLG Agency Inc."
+}

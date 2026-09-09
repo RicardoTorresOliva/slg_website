@@ -1,0 +1,106 @@
+/* ============================================================================
+ * tokens.css — Kit de Marca SLG Rojo v1
+ * ----------------------------------------------------------------------------
+ * ÚNICO archivo del proyecto autorizado a contener valores de color literales.
+ * Cualquier `#rrggbb` fuera de aquí rechaza FU-02 en revisión (criterio 2) y
+ * viola RF-16. Todo componente consume estas variables.
+ *
+ * Fuentes:  START_PROJECT.md Anexo C.1 (tabla de tokens con contrastes medidos)
+ *           design_docs/style_guide.md
+ *           knowledge/brand-tokens.md
+ * Decisión: D-44 — anillo de foco de dos capas.
+ *
+ * PROHIBICIONES DURAS DEL KIT (gate D2b, RNF-13):
+ *   · Sin verde, amarillo ni naranja. Ningún token los define.
+ *   · El rojo NUNCA es decorativo ni de relleno. Máximo 1–2 por viewport.
+ *   · Máximo 3 colores de marca por elemento gráfico.
+ *   · El logo nunca sobre fondo oscuro ni deformado.
+ * ========================================================================== */
+
+:root {
+  /* ── Color de marca ─────────────────────────────────────────────────────
+   * El contraste medido decide dónde puede usarse cada uno. No es una guía:
+   * es la diferencia entre pasar el gate D2 y no pasarlo.
+   */
+
+  /* 4,7:1 sobre --paper (AA texto) · 4,4:1 sobre --paper-2 → ahí solo ≥ 24px */
+  --slg-blue-primary: #2878b4;
+
+  /* Color de enlace. Se separa de --slg-blue-deep desde D-47: un enlace en el
+   * azul oscuro nuevo apenas se distingue del texto de cuerpo, y un enlace que
+   * no parece enlace es un defecto de uso, no de estilo. */
+  --slg-link: var(--slg-blue-primary);
+
+  /* AZUL SOBRIO OSCURO · D-47.
+   * Sustituye al #14648C del kit, que medía 200° de matiz — frontera teal — y
+   * se leía verdoso en pantalla. Este mide 209°: azul sin discusión, con
+   * saturación baja (36%), que es lo que produce la sensación metálica.
+   * 11,9:1 sobre --paper. Wordmark, H1, titulares de portada, títulos de bloque.
+   * NO se usa para enlaces: ver --slg-link. */
+  --slg-blue-deep: #24394d;
+
+  /* 2,4:1 sobre claro → NUNCA como color de texto sobre fondo claro.
+   * Solo highlight, icono, subrayado, o capa exterior del anillo de foco.
+   * Como texto, únicamente sobre --slg-indigo (5,3:1). */
+  --slg-cyan: #50b4dc;
+
+  /* Solo fondo, al 20–40 % de opacidad. Nunca texto. */
+  --slg-blue-tint: #78b4dc;
+
+  /* 12,6:1 sobre --paper. H3, SLG_Academy, datos destacados */
+  --slg-indigo: #282878;
+
+  /* DETENCIÓN VISUAL. 5,0:1 sobre --paper; blanco sobre rojo 5,0:1.
+   * Solo el botón del CTA de descarga y alertas críticas en HQ.
+   * Máximo 1–2 instancias por viewport. Nunca fondo, nunca decoración. */
+  --slg-red: #dc141e;
+
+  /* ── Tinta y superficie ────────────────────────────────────────────────── */
+  --slg-ink: #0a0a14;      /* 19,7:1 — texto de cuerpo */
+  --slg-ink-2: #5a6470;    /*  6,0:1 — texto secundario, captions, pie */
+  --slg-line: #c8ccd3;     /* solo divisores y bordes de tarjeta */
+  --slg-paper: #ffffff;    /* fondo principal */
+  --slg-paper-2: #f4f6f9;  /* fondos suaves y alternancia de secciones */
+
+  /* ── Radio ─────────────────────────────────────────────────────────────── */
+  --slg-radius-sm: 12px;
+  --slg-radius-md: 16px;
+  --slg-radius-lg: 24px;
+
+  /* ── Sombra: suaves y multicapa (Anexo C.1) ────────────────────────────── */
+  --slg-shadow-sm:
+    0 1px 2px rgb(10 10 20 / 0.04),
+    0 2px 8px rgb(10 10 20 / 0.04);
+  --slg-shadow-md:
+    0 2px 4px rgb(10 10 20 / 0.04),
+    0 8px 24px rgb(10 10 20 / 0.06);
+  --slg-shadow-lg:
+    0 4px 8px rgb(10 10 20 / 0.05),
+    0 16px 48px rgb(10 10 20 / 0.08);
+
+  /* ── Material translúcido (C.3) ────────────────────────────────────────── */
+  --slg-blur: blur(20px) saturate(180%);
+
+  /* ── Anillo de foco · D-44 ─────────────────────────────────────────────────
+   * DOS CAPAS, y token único para todo elemento interactivo.
+   * El Anexo C.1 lista --slg-cyan entre los usos de anillo de foco, pero medido
+   * da 2,4:1 sobre --slg-paper: un anillo solo de cyan NO cumpliría RNF-05 ni el
+   * gate D2. La capa interior aporta el contraste; la exterior conserva la
+   * intención cromática del kit.
+   * Escribir un foco a mano en un componente rechaza la unidad en revisión.
+   * Su verificación de contraste se cierra en FU-10.
+   */
+  --slg-focus-inner: var(--slg-blue-primary); /* capa interior: 4,7:1 */
+  --slg-focus-outer: var(--slg-cyan);         /* capa exterior: color de marca */
+  --slg-focus-ring:
+    0 0 0 2px var(--slg-focus-inner),
+    0 0 0 4px var(--slg-focus-outer);
+
+  /* ── Tipografía (C.2) ──────────────────────────────────────────────────────
+   * Montserrat es la excepción justificada a la regla de fuente de sistema:
+   * la marca ya tiene familia. Autoalojada — cero peticiones a terceros (RNF-14).
+   * Fallbacks literales del kit.
+   */
+  --slg-font-sans:
+    "Montserrat", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}

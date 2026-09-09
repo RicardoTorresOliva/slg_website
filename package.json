@@ -1,0 +1,47 @@
+{
+  "name": "slg-website",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "build:standalone": "next build && rm -rf .next/standalone/.next/static .next/standalone/public && cp -R .next/static .next/standalone/.next/static && cp -R public .next/standalone/public",
+    "start:standalone": "node .next/standalone/server.js",
+    "check:frontmatter": "node scripts/content/check-frontmatter.ts",
+    "check:pairs": "node scripts/content/check-pairs.ts",
+    "check:nomenclature": "node scripts/content/check-nomenclature.ts",
+    "check:pending": "node scripts/content/check-pending.ts",
+    "check:content": "npm run check:types && npm run check:frontmatter && npm run check:pairs && npm run check:nomenclature && npm run check:pending",
+    "check:gates": "node scripts/content/verify-gates.ts",
+    "check:types": "tsc --noEmit -p scripts/tsconfig.json",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "node scripts/db/seed.ts",
+    "test:isolation": "node scripts/db/test-isolation.ts",
+    "test:contracts": "node scripts/db/test-contratos.ts",
+    "test:nocompile": "node scripts/db/test-no-compila.ts",
+    "test:db": "npm run test:isolation && npm run test:contracts && npm run test:nocompile"
+  },
+  "dependencies": {
+    "drizzle-orm": "0.45.2",
+    "gray-matter": "4.0.3",
+    "motion": "13.2.0",
+    "next": "16.3.4",
+    "postgres": "3.4.9",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "20.19.43",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "drizzle-kit": "0.31.10",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.4",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3"
+  },
+  "description": "Website pública, HQ y portal de clientes de SLG Agency"
+}

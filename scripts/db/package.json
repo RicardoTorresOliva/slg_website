@@ -1,0 +1,4 @@
+{
+  "type": "module",
+  "//": "Los scripts de base de datos son ESM, igual que los de contenido."
+}

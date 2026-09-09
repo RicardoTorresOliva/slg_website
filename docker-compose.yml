@@ -1,0 +1,33 @@
+# Entorno de desarrollo local de slg_website.
+#
+# Es el borrador del servicio `slg-db` que correrá en Easypanel (§5.1 Operación),
+# no un montaje desechable: misma versión mayor de PostgreSQL, mismo nombre de
+# servicio, misma forma de pasar credenciales.
+#
+# Puerto 5434 a propósito: en esta máquina el 5432 lo ocupa la base de datos del
+# CRM y el 5433 otro proyecto. Levantar esto NUNCA debe interferir con ellos.
+#
+# Las credenciales llegan por variables de entorno desde `.env`, que está
+# ignorado por git. El repositorio es público: aquí no se escribe ningún valor.
+
+services:
+  slg-db:
+    image: postgres:16
+    container_name: slg-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?falta POSTGRES_USER en .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?falta POSTGRES_PASSWORD en .env}
+      POSTGRES_DB: ${POSTGRES_DB:?falta POSTGRES_DB en .env}
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - slg-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  slg-db-data:

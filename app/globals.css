@@ -1,0 +1,135 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+/* ============================================================================
+ * globals.css — Base tipográfica y de interacción
+ * ----------------------------------------------------------------------------
+ * Este archivo NO define colores literales: todos vienen de tokens.css.
+ * Ver FU-02, criterio 2.
+ * ========================================================================== */
+
+/* ── Montserrat autoalojada (C.2, RNF-14) ──────────────────────────────────
+ * Cero peticiones a servicios de fuentes de terceros: los tres pesos se sirven
+ * desde nuestro propio dominio. Subconjunto latino, `swap` para no bloquear
+ * el primer render (gate D1, LCP).
+ * Son tres archivos ESTÁTICOS, no una fuente variable: así el 600 y el 700 son
+ * los cortes reales que dibujó la fundición, no una negrita sintética.
+ */
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/montserrat-latin-400.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/montserrat-latin-600.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/montserrat-latin-700.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ── Puente con Tailwind ───────────────────────────────────────────────────
+ * Los tokens del kit se exponen como utilidades. Un componente escribe
+ * `text-ink` o `bg-paper`, nunca un hexadecimal.
+ */
+@theme inline {
+  --color-blue-primary: var(--slg-blue-primary);
+  --color-blue-deep: var(--slg-blue-deep);
+  --color-cyan-brand: var(--slg-cyan);
+  --color-blue-tint: var(--slg-blue-tint);
+  --color-indigo-brand: var(--slg-indigo);
+  --color-stop: var(--slg-red);
+  --color-ink: var(--slg-ink);
+  --color-ink-2: var(--slg-ink-2);
+  --color-line: var(--slg-line);
+  --color-paper: var(--slg-paper);
+  --color-paper-2: var(--slg-paper-2);
+
+  --radius-sm: var(--slg-radius-sm);
+  --radius-md: var(--slg-radius-md);
+  --radius-lg: var(--slg-radius-lg);
+
+  --font-sans: var(--slg-font-sans);
+}
+
+/* ── Base ──────────────────────────────────────────────────────────────────
+ * Light-first: el kit prohíbe el logo sobre fondo oscuro, así que la web nace
+ * clara. Modo oscuro fuera de v1 (§5.2); los tokens son variables CSS para
+ * habilitarlo en v1.1 sin rehacer nada.
+ */
+html {
+  /* Espaciado en rem: respeta el tamaño de texto que el usuario haya fijado */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--slg-paper);
+  color: var(--slg-ink);
+  font-family: var(--slg-font-sans);
+  font-size: 1.0625rem; /* 17px — cuerpo del kit */
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Foco · D-44 ───────────────────────────────────────────────────────────
+ * Token ÚNICO para todo elemento interactivo. Escribir un anillo de foco a
+ * mano en un componente rechaza la unidad en revisión (FU-02, criterio 5).
+ * `:focus-visible` y no `:focus`: el ratón no debe dibujar anillos.
+ */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: var(--slg-focus-ring);
+  border-radius: var(--slg-radius-sm);
+}
+
+/* Nunca suprimir el foco sin sustituirlo (RNF-05, gate D2). */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ── Motion (C.4) ──────────────────────────────────────────────────────────
+ * Regla dura del Anexo C.4: con `prefers-reduced-motion: reduce` no hay
+ * desplazamientos ni rebotes, solo cross-fades cortos.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.2s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.2s !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* `prefers-contrast: more` → bordes definidos y fondos casi sólidos (C.4). */
+@media (prefers-contrast: more) {
+  :root {
+    --slg-line: var(--slg-ink-2);
+  }
+}
+
+/* `prefers-reduced-transparency` → superficies sólidas, sin material (C.3). */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --slg-blur: none;
+  }
+}
