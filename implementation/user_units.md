@@ -362,7 +362,7 @@ automático: `main` → producción, `develop` → staging. Staging con autentic
 indexación. Los registros DNS **nuevos** de raíz, `www` y `staging`, añadidos con la lista de «no
 tocar» delante (`crm`, `n8n`, `evolution`, `academy` y los MX) y con la zona previa copiada a `docs/`
 como estado anterior. El pipeline de CI: lint, pruebas, los cuatro scripts de contenido de FU-03,
-análisis de secretos y **presupuesto de JS inicial verificado en cada push**. Un `.env.example` con
+análisis de secretos y **gate D1 por Lighthouse verificado en cada push** (D-50). Un `.env.example` con
 todos los nombres y **ningún valor**. Cabeceras de seguridad. El **monitor de caída externo al VPS**
 que fija **D-43**: un servicio de uptime dedicado con tramo gratuito, contratado y configurado **fuera
 del VPS**, vigilando al menos `softlandingglobal.com` y `staging.softlandingglobal.com` y avisando por
@@ -401,8 +401,8 @@ RNF-22 · RNF-26 · RNF-28 · RNF-40 (custodia de claves) · RNF-42.
    ejecutar esta unidad, dentro de la categoría ya cerrada por D-43 y tras comparar 2–3 candidatos.
    Su elección **no bloquea el arranque del proyecto**, pero sí el cierre de esta unidad.
 
-**Gates.** `QG` · **D11** (operación, cerrado en categoría por D-43) · alimenta **D1** (presupuesto de
-JS) y **D5**.
+**Gates.** `QG` · **D11** (operación, cerrado en categoría por D-43) · alimenta **D1** (Lighthouse,
+D-50) y **D5**.
 
 ---
 

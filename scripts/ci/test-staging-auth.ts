@@ -76,8 +76,13 @@ async function main() {
     (r200.headers.get("x-robots-tag") ?? "").includes("noindex"),
   );
   afirmar(
-    "las cabeceras de seguridad siguen presentes",
-    Boolean(r200.headers.get("content-security-policy")),
+    "CSP presente, con frame-ancestors 'none' (criterio 7)",
+    (r200.headers.get("content-security-policy") ?? "").includes("frame-ancestors 'none'"),
+  );
+  afirmar(
+    "HSTS presente, con includeSubDomains y preload (criterio 7)",
+    /max-age=\d+/.test(r200.headers.get("strict-transport-security") ?? "") &&
+      (r200.headers.get("strict-transport-security") ?? "").includes("includeSubDomains"),
   );
 
   if (fallos) {
