@@ -53,18 +53,19 @@ sesiones), `log.md` y los **siete conceptos** (`method-sdd-icm`, `naming-rules`,
   `test-staging-auth.ts`), y el **gate D1 por Lighthouse** (`check-lighthouse.ts` + prueba negativa —
   D-50, ver abajo). Simulación local: **`npm run verify` completo en verde**, sin ningún rojo
   intencionado.
-- **Pendiente de Ricardo** (según su propio cierre de sesión del 2026-09-09, `docs/MANANA.md`,
-  consolidado aquí):
-  1. Cargar `STAGING_BASIC_AUTH_USER` y `STAGING_BASIC_AUTH_PASSWORD` en el entorno de
-     `slgweb-staging` en Easypanel — sin ellas el middleware de protección no se activa.
-  2. Push a `develop` para que el middleware llegue al servidor.
-  3. Comprobar que `staging.softlandingglobal.com` pide contraseña.
-  4. Pausar los monitores de la raíz y `www` en UptimeRobot hasta el go-live (no tienen DNS todavía;
-     tres semanas en rojo enseñan a ignorar las alertas).
-  5. Menor, no bloquea hasta FU-09: los dos cubos privados de MinIO (`downloads`, `deliverables`) y
+- **Pendiente de Ricardo** — actualizado 2026-09-09 tras confirmar en vivo:
+  - ~~Cargar `STAGING_BASIC_AUTH_USER`/`PASSWORD` en Easypanel~~ · ~~push a `develop`~~ ·
+    ~~comprobar que `staging.softlandingglobal.com` pide contraseña~~ — **los tres confirmados
+    hechos**: Ricardo verificó que staging pide contraseña, lo que solo pasa si el middleware llegó
+    al servidor y las dos variables están cargadas.
+  - El commit `d0db9ad` (D-50, gate D1 por Lighthouse) ya está en `develop`, local y remoto en sync
+    (`git push origin develop` hecho por el agente el 2026-09-09).
+  1. **Queda**: pausar los monitores de la raíz y `www` en UptimeRobot hasta el go-live (no tienen
+     DNS todavía; tres semanas en rojo enseñan a ignorar las alertas).
+  2. Menor, no bloquea hasta FU-09: los dos cubos privados de MinIO (`downloads`, `deliverables`) y
      una clave de acceso para la aplicación.
-  - MinIO, el servicio `slgweb-staging` y el DNS de `staging` **ya están hechos** (2026-09-09) — la
-    entrada anterior de este archivo, que los daba como pendientes, estaba desactualizada.
+  - MinIO, el servicio `slgweb-staging` y el DNS de `staging` **ya estaban hechos** desde antes de
+    esta sesión.
 
 ## R-40 resuelto — D-50 (2026-09-09)
 **Ya no bloquea el cierre de FU-05.** El gate D1 y el stack elegido eran incompatibles: el suelo de
