@@ -422,3 +422,25 @@ después). Repushed para confirmar en el runner real antes de dar el criterio
 por cerrado — **un script que se vio colgar una vez no se acepta como
 arreglado solo porque ahora corre rápido en mi máquina** (mismo principio que
 R-26, aplicado al propio pipeline, no solo a los frenos de contenido).
+
+**Confirmado en el runner de GitHub** (run `34417767830`): `Calidad, contenido
+y secretos` completo en **1 min 22 s** (antes: colgado 3 h 39 min). El paso
+del gate corrió en 14 s — Performance 98 · Accesibilidad 100 · Best Practices
+92 · SEO 100 · LCP 1,7 s — y terminó limpio, sin quedarse esperando nada.
+Freno 6 verificado en verde de verdad, no solo en local.
+
+## 2026-09-09 · Criterio 2 de FU-05 — `main` protegida (R-20)
+
+Con el pipeline confirmado en verde en el runner real, protección de rama
+aplicada sobre `main` vía API de GitHub: Pull Request obligatorio (sin `push`
+directo, ni siquiera para el administrador), `required_status_checks` con las
+dos verificaciones (`Calidad, contenido y secretos`, `Aislamiento entre
+empresas`) en modo `strict` —tienen que estar en verde **y** la rama
+actualizada contra `main`—, sin aprobaciones humanas obligatorias
+(`required_approving_review_count: 0`, porque hoy no hay un segundo revisor),
+sin force-push ni borrado de rama. **Confirmado con Ricardo antes de
+aplicarlo** — cambia su flujo: a `main` se llega por PR fusionado desde
+GitHub, no por `push` directo.
+
+`develop` sigue sin protección: el flujo de trabajo diario del agente no
+cambia, solo la puerta de entrada a producción.
