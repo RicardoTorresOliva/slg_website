@@ -146,7 +146,7 @@ softlandingglobal.com                      (un solo servicio: slg-web)
 | Comparten | No comparten |
 |---|---|
 | Proceso, base de datos, esquema y capa de acceso con alcance (`data_model` §6.4) | **Estrategia de renderizado**: la pública es estática; HQ y portal, servidor por petición (§3) |
-| Módulo de identidad y sesión (FU-06) | **Presupuesto de JavaScript**: el gate D1 (< 150 KB gz) obliga solo a la capa pública (RNF-03) |
+| Módulo de identidad y sesión (FU-06) | **Gate D1**: Lighthouse móvil ≥ 90 y LCP < 2,5 s (RNF-01, RNF-02) obligan solo a la capa pública |
 | Tokens de marca y sistema de componentes (FU-02, FU-10) | **Idioma**: la pública se resuelve por ruta; HQ y portal, por preferencia del usuario (RF-72) |
 | Capa de contenido: todo texto visible sale de `content/` (RF-16) | **Conmutador de idioma**: solo la pública lo tiene (`ui_wireframes` §1.2) |
 | Auditoría, correo, almacenamiento de archivos, colas | **Indexación**: la pública se indexa; el resto, `noindex` |
@@ -298,13 +298,17 @@ Son tres, están acotadas y ninguna carga JavaScript adicional en las páginas e
    `download.completed` (RF-40).
 3. **Visor de entregables HTML** (solo dentro del portal, no en la capa pública) → §11.3.
 
-### 3.5 El presupuesto de JavaScript es una verificación, no una intención
+### 3.5 El gate D1 es una verificación, no una intención
 
-RNF-03 fija < 150 KB comprimidos de JS inicial en la capa pública, y FU-05 lo convierte en un freno
-del pipeline: un push que lo supere **falla**, no avisa (criterio 4 de FU-05). La arquitectura ayuda
-en tres puntos: componentes de servidor por defecto (solo se envía JS donde hay gesto: barra de
-navegación, sheet móvil, formulario, carrusel de artículos), Montserrat autoalojada sin peticiones a
-servicios de fuentes de terceros (RNF-14), y Umami cargado de forma diferida y no bloqueante (§12.3).
+RNF-01 fija Lighthouse móvil ≥ 90 en Performance, Accessibility, Best Practices y SEO, y RNF-02 fija
+LCP < 2,5 s, ambos en la capa pública. FU-05 lo convierte en un freno del pipeline: un push que quede
+por debajo **falla**, no avisa (criterio 4 de FU-05, D-50). *(RNF-03, el presupuesto de JS < 150 KB
+comprimido, quedó retirada por D-50: medía un proxy — el suelo del framework, 172 KB sin una sola
+librería propia — no el objetivo. Lighthouse mide el objetivo directamente y es más difícil de
+engañar con un número de bytes.)* La arquitectura ayuda en tres puntos: componentes de servidor por
+defecto (solo se envía JS donde hay gesto: barra de navegación, sheet móvil, formulario, carrusel de
+artículos), Montserrat autoalojada sin peticiones a servicios de fuentes de terceros (RNF-14), y Umami
+cargado de forma diferida y no bloqueante (§12.3).
 
 ### 3.6 La única caché de la capa autenticada: las métricas del CRM
 
@@ -413,7 +417,7 @@ scripts**, todos bloqueantes (RF-128, criterio 4 de FU-05):
 | 4 | **Cero `[PENDIENTE]` en `main`** | Aparece `[PENDIENTE]` o lorem ipsum en la rama de producción; en `develop` es visible y legítimo | RF-128, RNF-18, DoD #10 |
 
 Los cuatro corren en cada push y **además** en el pipeline de `main`, junto con el análisis de
-secretos y el presupuesto de JS (FU-05).
+secretos y el gate D1 (FU-05).
 
 ---
 
@@ -623,7 +627,7 @@ decisión de operación, se registra en decision_log]`.
 ### 7.3 Flujo de despliegue
 
 1. Push a `develop` → CI (lint, pruebas, los cuatro scripts de contenido, análisis de secretos,
-   presupuesto de JS) → build de imagen → `slg-web-staging`.
+   gate D1 por Lighthouse) → build de imagen → `slg-web-staging`.
 2. Verificación en staging: gates que correspondan al milestone.
 3. Merge a `main` → el mismo CI → build → `slg-web`. **Antes de aplicar cualquier migración de
    esquema se ejecuta una copia de seguridad automática** (criterio 7 de FU-14, R-20).

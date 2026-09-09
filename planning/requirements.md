@@ -319,7 +319,7 @@ tabla tiene aquí un requisito verificable. Ninguno de estos requisitos construy
 |---|---|---|---|---|
 | RNF-01 | Rendimiento de la capa pública | Lighthouse móvil ≥ 90 en Performance, Accessibility, Best Practices y SEO, medido en Home, una página de servicio y un artículo | DoD #7, D1 | explícito |
 | RNF-02 | Velocidad de carga percibida | LCP < 2,5 s en 4G simulado en las tres páginas de RNF-01 | D1 | explícito |
-| RNF-03 | Peso del JavaScript inicial | < 150 KB comprimido (gzip) en la capa pública | D1 | explícito |
+| ~~RNF-03~~ | ~~Peso del JavaScript inicial~~ | ~~< 150 KB comprimido (gzip) en la capa pública~~ — **retirada por D-50**: proxy mal calibrado, incompatible con el suelo de React 19 + Next 16 (172 KB sin librerías propias) pese a cumplir el objetivo del gate. El gate D1 queda definido solo por RNF-01 + RNF-02. | D1 | ~~explícito~~ |
 | RNF-04 | Contraste de color | AA en todas las combinaciones. `#50B4DC` y `#78B4DC` nunca como color de texto sobre fondo claro; `#2878B4` sobre blanco roto (`#F4F6F9`) solo a ≥ 24 px | D2, C.1 | explícito |
 | RNF-05 | Accesibilidad operativa | Navegación completa por teclado con foco visible en todo elemento interactivo; `alt` en toda imagen informativa; formularios con etiqueta asociada y error en línea | D2, DoD #7 | explícito |
 | RNF-06 | Movimiento reducido | Con `prefers-reduced-motion: reduce`, toda transición se degrada a cross-fade de 200 ms, sin desplazamientos ni rebotes | C.4, D3 | explícito |

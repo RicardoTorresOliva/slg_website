@@ -261,8 +261,9 @@ registra con `--scope local`, nunca en un `.mcp.json` versionado).
 
 **(h) Cero scripts de terceros en la capa pública.**
 Analítica autoalojada, sin desafío anti-bot de terceros (D-16), sin widgets embebidos, sin agenda
-incrustada en las páginas de servicio (A.3 §6 lo prohíbe expresamente). Razón: los gates D1
-(Lighthouse ≥ 90, JS inicial < 150 KB gz) y la promesa privacy-first se pierden de uno en uno.
+incrustada en las páginas de servicio (A.3 §6 lo prohíbe expresamente). Razón: el gate D1
+(Lighthouse ≥ 90 en las cuatro categorías, LCP < 2,5 s — D-50) y la promesa privacy-first se pierden
+de uno en uno.
 
 **(i) MCP para construir, API para operar. Nunca se mezclan.**
 Los MCP (CRM, navegador, Drive) son herramientas de la sesión de construcción; la producción opera

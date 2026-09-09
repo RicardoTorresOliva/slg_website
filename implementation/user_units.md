@@ -373,7 +373,8 @@ bloquea el arranque del proyecto]`. Y `docs/run_metadata.md` listo para registra
 
 **Requisitos que cubre.** RF-56 (alojamiento de las dos claves del CRM como variables) · RF-120 ·
 RF-121 · RF-122 · RF-128 (pipeline) · RF-129 · RF-130 · RF-131 · RF-148 (gates escritos como script o
-checklist, no como prosa) · RNF-03 · RNF-22 · RNF-26 · RNF-28 · RNF-40 (custodia de claves) · RNF-42.
+checklist, no como prosa) · RNF-01 · RNF-02 (gate D1, por Lighthouse — D-50; ~~RNF-03~~ retirada) ·
+RNF-22 · RNF-26 · RNF-28 · RNF-40 (custodia de claves) · RNF-42.
 
 **Criterios de aceptación.**
 1. Los cinco servicios arrancan y `staging.softlandingglobal.com` responde por HTTPS, pide
@@ -383,7 +384,8 @@ checklist, no como prosa) · RNF-03 · RNF-22 · RNF-26 · RNF-28 · RNF-40 (cus
 3. Tras el cambio DNS, `crm`, `n8n`, `evolution`, `academy` y los MX **siguen resolviendo igual**;
    se verifica nombre por nombre y se registra en `work_log` (R-25).
 4. El pipeline **falla** —no avisa— ante: frontmatter inválido, `pair` roto, nomenclatura alterada,
-   un `[PENDIENTE]` en `main`, un patrón de secreto o un JS inicial por encima de 150 KB comprimido.
+   un `[PENDIENTE]` en `main`, un patrón de secreto, o Lighthouse móvil por debajo de 90 en alguna
+   de las cuatro categorías, o LCP ≥ 2,5 s, en Home (gate D1, RNF-01/RNF-02 — D-50).
 5. Cada uno de esos frenos tiene su **prueba negativa** ejecutada y registrada (R-26).
 6. `.env.example` lista **todos** los nombres de variable con su propósito y su servicio consumidor,
    y **cero valores** (RF-129, RNF-26).
@@ -911,7 +913,9 @@ de que **D1 a D6 están en verde en staging**, que es la condición de cierre de
 4. **Lighthouse móvil ≥ 90 en Performance, Accessibility, Best Practices y SEO** en Home, una página
    de servicio y —cuando exista, en M2— un artículo (RNF-01, gate D1).
 5. **LCP < 2,5 s** en 4G simulado en esas páginas (RNF-02).
-6. **JS inicial de la capa pública < 150 KB comprimido**, verificado en CI, no a mano (RNF-03).
+6. ~~JS inicial de la capa pública < 150 KB comprimido~~ — **retirado por D-50** (RNF-03 retirada):
+   el gate D1 queda definido solo por los criterios 4 y 5, ya verificados en CI por Lighthouse desde
+   FU-05, extendidos aquí a las tres páginas.
 7. Los gates D1, D2, D2b, D3, D4, D5 y D6 se declaran en verde **con su evidencia registrada en
    `work_log`**, y cada uno con su prueba negativa hecha (R-26).
 

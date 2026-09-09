@@ -224,7 +224,7 @@ configura en paneles externos. **La mitad de agente está hecha; la de Ricardo n
 | Pipeline de CI | Dos jobs, 18 pasos, los **seis frenos** del criterio 4, cada uno con su prueba negativa |
 | `scripts/db/setup-app-role.ts` | Cierra el hueco que hacía fallar el primer despliegue |
 | `scripts/ci/check-secrets.ts` + su prueba negativa | 9 patrones; detecta credenciales literales y **no** marca referencias a variable |
-| `scripts/ci/check-js-budget.ts` | Mide los scripts que el HTML prerenderizado referencia de verdad, comprimidos |
+| `scripts/ci/check-lighthouse.ts` | Gate D1 por Lighthouse contra el build real (D-50, ver entrada del 09-09) — sustituye al script de presupuesto de KB que corrió ese día |
 
 **Simulación local completa del pipeline: 16 pasos en verde, 1 en rojo** (el
 presupuesto de JS, a propósito — ver más abajo).
@@ -326,3 +326,49 @@ contenedor local como para el staging desplegado.
 - La raíz y `www`: en rojo **por diseño** — no tienen registro DNS hasta el go-live.
 - MinIO: **arrancado**. El `FATAL` que se veía era la línea vieja de un log
   acumulativo; por debajo estaba el arranque correcto y 65,8 MB de memoria.
+
+## 2026-09-09 · D-50 — R-40 resuelto: el gate D1 pasa a Lighthouse
+
+Ricardo elige la salida **(a)** de las tres que registraba R-40: el gate D1 deja
+de medirse por presupuesto de KB y pasa a medirse por **Lighthouse en CI** — el
+umbral que ya fijaban RNF-01 (≥ 90 en las cuatro categorías) y RNF-02
+(LCP < 2,5 s). **RNF-03 queda retirada**: el presupuesto de 150 KB era un proxy
+mal calibrado del objetivo, no el objetivo, y el objetivo ya se cumplía.
+
+**Hecho:**
+
+| Pieza | Evidencia |
+|---|---|
+| `scripts/ci/check-lighthouse.ts` | Arranca `next start` contra el build real, lanza Chrome headless con `chrome-launcher`, mide con `lighthouse` (API de Node) y evalúa con una función pura (`evaluar()`) separada de Chrome |
+| `scripts/ci/test-lighthouse-gate.ts` | Prueba negativa (R-26) de `evaluar()` con resultados fabricados: cada categoría por debajo de 90, LCP en el límite y justo por debajo, varias categorías fallando a la vez, y los dos casos límite (90 pasa, 2500 ms falla) |
+| `scripts/ci/check-js-budget.ts` | **Borrado** — su gate ya no existe |
+| `.github/workflows/ci.yml` | Freno 6 reemplazado; se añade `browser-actions/setup-chrome@v1` porque el runner de GitHub no garantiza Chrome instalado |
+| `package.json` | `check:js-budget` → `check:lighthouse`; `lighthouse` y `chrome-launcher` como devDependencies, versión exacta |
+| `docs/decision_log.md`, `planning/risks.md`, `planning/requirements.md`, `planning/scope.md`, `implementation/user_units.md`, `design_docs/architecture.md` | D-50 registrada; R-40 resuelto; RNF-03 marcada retirada con nota; los criterios de FU-05 y DU-07 que citaban 150 KB, actualizados |
+
+**Verificado, no solo escrito.** `npm run verify` completo en verde, incluida la
+prueba negativa y el gate real contra el build:
+
+| | Umbral | Medido |
+|---|---|---|
+| Performance | ≥ 90 | **100** |
+| Accesibilidad | ≥ 90 | **100** |
+| Best Practices | ≥ 90 | 92 |
+| SEO | ≥ 90 | **100** |
+| LCP | < 2,5 s | **1,6 s** |
+
+**Por qué la prueba negativa no arranca Chrome de verdad**: hacerlo en cada push
+sería caro y lento sin añadir confianza — lo que puede tener un defecto es la
+comparación de umbral (`evaluar()`), no Lighthouse en sí. El script real
+(`check-lighthouse.ts`) ya se demostró en verde contra el build de producción
+antes de escribir la prueba negativa, así que el freno se vio funcionar de
+verdad, no solo se le confió el mensaje de éxito.
+
+**Alcance de hoy**: solo Home, la única página pública que existe en M0-A.
+RNF-01 exige tres páginas; DU-07 añade una de servicio y un artículo a `RUTAS`
+en `check-lighthouse.ts` cuando existan, y cierra el gate D1 formalmente.
+
+**Pendiente, sin relación con esta unidad**: el build sigue avisando que la
+convención de archivo `middleware` está obsoleta en Next 16 y sugiere migrar a
+`proxy`. No se toca aquí — es la protección de staging de la sesión anterior,
+fuera del alcance de R-40.

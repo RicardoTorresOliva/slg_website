@@ -42,23 +42,45 @@ sesiones), `log.md` y los **siete conceptos** (`method-sdd-icm`, `naming-rules`,
 `content-schema`, `brand-tokens`, `crm-integration`, `doctrine-summary`).
 
 ## Última unidad completada
-- (ninguna — no se produce nada antes de la aprobación del plan; AGENTS.md Regla 1)
+- FU-04 (capa de datos) · 2026-09-08. FU-05 sigue `in_progress`, no se cuenta como completada.
 
 ## Próxima unidad
 **FU-05 está `in_progress`.** La unidad está partida en dos y solo una mitad depende del agente.
 
 - **Hecho por el agente**: `Dockerfile`, `/api/health`, cabeceras de seguridad verificadas en respuesta
   real, `.env.example` con 42 variables y cero valores, pipeline de CI con los seis frenos y sus
-  pruebas negativas, `setup-app-role.ts`. Simulación local: **16 pasos en verde, 1 en rojo**.
-- **El rojo es intencionado**: el presupuesto de JS (R-40). Ver «Decisión que bloquea» más abajo.
-- **Pendiente de Ricardo**: MinIO (dominio + dos cubos privados), servicio `slgweb-staging` en
-  Easypanel, registros DNS de `staging` y `minio`, y verificar que los diez intocables siguen vivos.
+  pruebas negativas, `setup-app-role.ts`, protección de staging (`middleware.ts`, verificada con
+  `test-staging-auth.ts`), y el **gate D1 por Lighthouse** (`check-lighthouse.ts` + prueba negativa —
+  D-50, ver abajo). Simulación local: **`npm run verify` completo en verde**, sin ningún rojo
+  intencionado.
+- **Pendiente de Ricardo** (según su propio cierre de sesión del 2026-09-09, `docs/MANANA.md`,
+  consolidado aquí):
+  1. Cargar `STAGING_BASIC_AUTH_USER` y `STAGING_BASIC_AUTH_PASSWORD` en el entorno de
+     `slgweb-staging` en Easypanel — sin ellas el middleware de protección no se activa.
+  2. Push a `develop` para que el middleware llegue al servidor.
+  3. Comprobar que `staging.softlandingglobal.com` pide contraseña.
+  4. Pausar los monitores de la raíz y `www` en UptimeRobot hasta el go-live (no tienen DNS todavía;
+     tres semanas en rojo enseñan a ignorar las alertas).
+  5. Menor, no bloquea hasta FU-09: los dos cubos privados de MinIO (`downloads`, `deliverables`) y
+     una clave de acceso para la aplicación.
+  - MinIO, el servicio `slgweb-staging` y el DNS de `staging` **ya están hechos** (2026-09-09) — la
+    entrada anterior de este archivo, que los daba como pendientes, estaba desactualizada.
 
-## Decisión que bloquea el cierre de FU-05
-**R-40 · el gate D1 y el stack elegido son incompatibles.** El suelo de React 19 + Next 16 App Router
-son 172,3 KB comprimidos en una página vacía, con cero librerías propias; el gate fija 150 KB. **El
-objetivo sí se cumple**: Lighthouse móvil da Performance 98, Accesibilidad 100, Best Practices 92,
-SEO 100, LCP 2,4 s, TBT 20 ms. Tres salidas en `planning/risks.md` R-40. Decide Ricardo.
+## R-40 resuelto — D-50 (2026-09-09)
+**Ya no bloquea el cierre de FU-05.** El gate D1 y el stack elegido eran incompatibles: el suelo de
+React 19 + Next 16 App Router son 172,3 KB comprimidos en una página vacía, con cero librerías
+propias, contra un presupuesto de 150 KB — pese a que Lighthouse ya daba 98/100/92/100. **Ricardo
+eligió la salida (a)**: el gate D1 pasa a medirse por Lighthouse en CI (≥ 90 en las cuatro categorías,
+LCP < 2,5 s — RNF-01, RNF-02); RNF-03 (el presupuesto de KB) queda retirada. Implementado en
+`scripts/ci/check-lighthouse.ts` con prueba negativa en `test-lighthouse-gate.ts` (R-26), verificado
+en verde contra el build real (Performance 100 · Accesibilidad 100 · Best Practices 92 · SEO 100 ·
+LCP 1,6 s). Detalle completo en `docs/decision_log.md` D-50 y `docs/work_log.md` (entrada del 09-09).
+Solo mide Home hoy; DU-07 añade una página de servicio y un artículo cuando existan.
+
+## Nota de higiene
+`docs/MANANA.md` (notas de cierre de la sesión del 08 al 09) queda **consolidado en este archivo** y
+puede borrarse: mantenerlo por separado invita a que ambos diverjan, que es justo lo que había pasado
+—daba por pendientes tareas de infraestructura que ya estaban hechas—.
 
 ## Entorno local
 - `docker-compose.yml` levanta `slg-db` (PostgreSQL 16) en el **puerto 5434**. El 5432 lo ocupa la base

@@ -73,6 +73,11 @@ jobs:
         # roto pasaría por verde para siempre.
         run: node scripts/content/verify-gates.ts
 
+      - name: Prueba negativa del gate D1 (Lighthouse)
+        # R-26, D-50: prueba la lógica de umbral con resultados fabricados,
+        # sin arrancar Chrome — ver la cabecera de test-lighthouse-gate.ts.
+        run: node scripts/ci/test-lighthouse-gate.ts
+
       - name: Criterio 5 · el aislamiento no se puede eludir por parámetro
         run: node scripts/db/test-no-compila.ts
 
@@ -99,10 +104,16 @@ jobs:
             echo "Sin credenciales en los secretos del repositorio: se omite."
           fi
 
-      - name: Freno 6 · Presupuesto de JS de la capa pública
-        # CONFLICTO ABIERTO R-40: falla a propósito hasta que Ricardo decida
-        # entre medir Lighthouse, subir el umbral o cambiar de arquitectura.
-        run: node scripts/ci/check-js-budget.ts
+      - name: Chrome para Lighthouse
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Freno 6 · Gate D1 — Lighthouse móvil
+        # D-50 resuelve R-40: sustituye el presupuesto de KB (proxy mal
+        # calibrado) por Lighthouse ≥ 90 en las cuatro categorías y
+        # LCP < 2,5 s (RNF-01, RNF-02), medido contra el build real.
+        run: node scripts/ci/check-lighthouse.ts
 
   # ─── Aislamiento entre empresas: necesita PostgreSQL de verdad ────────────
   aislamiento:
