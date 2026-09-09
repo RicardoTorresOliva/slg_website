@@ -45,13 +45,20 @@ sesiones), `log.md` y los **siete conceptos** (`method-sdd-icm`, `naming-rules`,
 - (ninguna — no se produce nada antes de la aprobación del plan; AGENTS.md Regla 1)
 
 ## Próxima unidad
-- **FU-04 está `in_progress`**, no `pending`. Hecho y verificado contra PostgreSQL real: las 19 tablas,
-  las restricciones, la inmutabilidad de `audit_log` y el **aislamiento entre empresas por Row Level
-  Security** (sin contexto → cero filas; con contexto ajeno → cero filas; escritura ajena → rechazada).
-  **Falta**: la capa de acceso en TypeScript (criterio 5), el mapa de renderizadores de `deliverable`
-  (criterio 6), la validación de `payload_json` en la escritura (criterio 7), los datos de ejemplo y
-  las pruebas automatizadas que sustituyan a las manuales.
-- Después: FU-05, que **espera a S-01 y al producto de monitorización (EXT-7)**.
+**FU-05 está `in_progress`.** La unidad está partida en dos y solo una mitad depende del agente.
+
+- **Hecho por el agente**: `Dockerfile`, `/api/health`, cabeceras de seguridad verificadas en respuesta
+  real, `.env.example` con 42 variables y cero valores, pipeline de CI con los seis frenos y sus
+  pruebas negativas, `setup-app-role.ts`. Simulación local: **16 pasos en verde, 1 en rojo**.
+- **El rojo es intencionado**: el presupuesto de JS (R-40). Ver «Decisión que bloquea» más abajo.
+- **Pendiente de Ricardo**: MinIO (dominio + dos cubos privados), servicio `slgweb-staging` en
+  Easypanel, registros DNS de `staging` y `minio`, y verificar que los diez intocables siguen vivos.
+
+## Decisión que bloquea el cierre de FU-05
+**R-40 · el gate D1 y el stack elegido son incompatibles.** El suelo de React 19 + Next 16 App Router
+son 172,3 KB comprimidos en una página vacía, con cero librerías propias; el gate fija 150 KB. **El
+objetivo sí se cumple**: Lighthouse móvil da Performance 98, Accesibilidad 100, Best Practices 92,
+SEO 100, LCP 2,4 s, TBT 20 ms. Tres salidas en `planning/risks.md` R-40. Decide Ricardo.
 
 ## Entorno local
 - `docker-compose.yml` levanta `slg-db` (PostgreSQL 16) en el **puerto 5434**. El 5432 lo ocupa la base
@@ -114,5 +121,8 @@ que el usuario **no** haya elegido, y estos los eligió él el 2026-09-08.
   design_summary.md
 - `implementation/`: user_units.md, task_tracker.md
 - `knowledge/`: index.md, log.md y los siete conceptos (bundle OKF)
-- `docs/`: decision_log.md (D-14…D-46, P-3/P-4, S-01), project_memory.md
+- `docs/`: decision_log.md (D-14…D-49, P-3/P-4, S-01), project_memory.md, work_log.md,
+  `infra/dns-estado-anterior.md`
+- Código: `app/`, `lib/`, `content/`, `scripts/`, `drizzle/`, `Dockerfile`, `docker-compose.yml`,
+  `.github/workflows/ci.yml`
 - `mcps/inventory.md`, `skills/inventory.md`

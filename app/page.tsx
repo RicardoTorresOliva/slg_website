@@ -44,7 +44,7 @@ export default function Home() {
           }}
         >
           Pulsa el tabulador para comprobar el anillo de foco de dos capas:{" "}
-          <Link href="/" style={{ color: "var(--slg-link)" }}>
+          <Link href="/">
             este enlace
           </Link>
           .

@@ -1,0 +1,180 @@
+name: CI
+
+# Los seis frenos del gate del Anexo D. FALLAN el pipeline, no avisan
+# (FU-05, criterio 4). Cada uno tiene su prueba negativa ejecutada, porque un
+# freno que nunca se ha visto en rojo no se acepta como verde (R-26).
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ─── Frenos que no necesitan base de datos ────────────────────────────────
+  calidad:
+    name: Calidad, contenido y secretos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      # `npm ci` respeta el lockfile exactamente. Las versiones están fijadas
+      # sin rangos a propósito (FU-02, criterio 8).
+      - run: npm ci
+
+      - name: Prueba negativa del freno de secretos
+        # R-26: se comprueba que el freno PUEDE fallar, antes de confiar en él.
+        run: node scripts/ci/test-secret-scanner.ts
+
+      - name: Freno 1 · Secretos
+        # Primero de todos: si hay un secreto, nada más importa. El repositorio
+        # es público y el historial de git no se borra (R-09).
+        run: node scripts/ci/check-secrets.ts
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tipos de la aplicación
+        run: npx tsc --noEmit
+
+      - name: Tipos de los scripts
+        run: npx tsc --noEmit -p scripts/tsconfig.json
+
+      - name: Freno 2 · Frontmatter y contrato A.3
+        run: node scripts/content/check-frontmatter.ts
+
+      - name: Freno 3 · Paridad ES/EN
+        run: node scripts/content/check-pairs.ts
+
+      - name: Freno 4 · Nomenclatura literal y DAL OS
+        run: node scripts/content/check-nomenclature.ts
+
+      - name: Freno 5 · Cero [PENDIENTE]
+        # `--strict` solo en `main`: en `develop` los marcadores son OBLIGATORIOS
+        # donde falta un dato, y prohibidos en producción.
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            node scripts/content/check-pending.ts --strict
+          else
+            node scripts/content/check-pending.ts
+          fi
+
+      - name: Prueba negativa de los frenos de contenido
+        # R-26: comprueba que cada freno FALLA cuando debe. Sin esto, un freno
+        # roto pasaría por verde para siempre.
+        run: node scripts/content/verify-gates.ts
+
+      - name: Criterio 5 · el aislamiento no se puede eludir por parámetro
+        run: node scripts/db/test-no-compila.ts
+
+      - name: Contratos de entregables y eventos de agente
+        run: node scripts/db/test-contratos.ts
+
+      - name: Compilación
+        run: npm run build
+
+      - name: Protección de staging
+        # Solo contra el staging desplegado, y solo si hay credenciales en los
+        # secretos del repositorio. Mide comportamiento, no configuración: el
+        # hueco que corrige nació justamente de confiar en la documentación.
+        if: github.ref == 'refs/heads/develop'
+        continue-on-error: true
+        env:
+          BASE_URL: https://staging.softlandingglobal.com
+          STAGING_BASIC_AUTH_USER: ${{ secrets.STAGING_BASIC_AUTH_USER }}
+          STAGING_BASIC_AUTH_PASSWORD: ${{ secrets.STAGING_BASIC_AUTH_PASSWORD }}
+        run: |
+          if [ -n "$STAGING_BASIC_AUTH_USER" ]; then
+            node scripts/ci/test-staging-auth.ts
+          else
+            echo "Sin credenciales en los secretos del repositorio: se omite."
+          fi
+
+      - name: Freno 6 · Presupuesto de JS de la capa pública
+        # CONFLICTO ABIERTO R-40: falla a propósito hasta que Ricardo decida
+        # entre medir Lighthouse, subir el umbral o cambiar de arquitectura.
+        run: node scripts/ci/check-js-budget.ts
+
+  # ─── Aislamiento entre empresas: necesita PostgreSQL de verdad ────────────
+  aislamiento:
+    name: Aislamiento entre empresas
+    runs-on: ubuntu-latest
+
+    # Las credenciales NO se escriben aquí como cadena de conexión: el freno de
+    # secretos rechaza cualquier `esquema://usuario:clave@` en el repositorio, y
+    # hace bien — no debe haber excepciones ni siquiera para un contenedor
+    # efímero. Las piezas van sueltas y la cadena se compone en cada paso.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: slg
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slg_website
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGDATABASE: slg_website
+      PG_OWNER_USER: slg
+      PG_OWNER_PASS: postgres
+      PG_APP_USER: slg_app
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+
+      - name: Componer cadenas de conexión
+        # La contraseña del rol de aplicación se genera aquí y muere con el job.
+        # Nunca existe en el repositorio.
+        run: |
+          APP_PASS="$(openssl rand -hex 24)"
+          echo "::add-mask::$APP_PASS"
+          {
+            echo "DATABASE_URL_MIGRATIONS=postgresql://${PG_OWNER_USER}:${PG_OWNER_PASS}@${PGHOST}:${PGPORT}/${PGDATABASE}"
+            echo "DATABASE_URL=postgresql://${PG_APP_USER}:${APP_PASS}@${PGHOST}:${PGPORT}/${PGDATABASE}"
+          } >> "$GITHUB_ENV"
+
+      - name: Migraciones
+        run: npx drizzle-kit migrate
+
+      - name: Restricciones, inmutabilidad y políticas de fila
+        # Escritas a mano: drizzle-kit genera tablas, no políticas ni guardas.
+        run: |
+          for f in drizzle/0001_*.sql drizzle/0002_*.sql drizzle/0003_*.sql; do
+            echo "→ $f"
+            psql "$DATABASE_URL_MIGRATIONS" -v ON_ERROR_STOP=1 -f "$f"
+          done
+
+      - name: Rol de aplicación
+        # Cierra el hueco que hacía fallar el primer despliegue: crea `slg_app`
+        # con su contraseña y VERIFICA que no puede saltarse el aislamiento.
+        run: node scripts/db/setup-app-role.ts
+
+      - name: Prueba de aislamiento
+        # El corazón del DoD #5 y del riesgo R-10. Diez comprobaciones contra
+        # PostgreSQL real, incluida la que vigila que DATABASE_URL no apunte a
+        # un superusuario — el fallo que casi convierte todo esto en teatro.
+        run: node scripts/db/test-isolation.ts
+
+      - name: Datos de ejemplo
+        run: node scripts/db/seed.ts

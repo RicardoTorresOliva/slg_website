@@ -11,7 +11,7 @@ source: START_PROJECT.md v1.1 §9 y anexos · docs/decision_log.md (D-14…D-20,
 
 # Registro de riesgos — slg_website
 
-Generado por `init-project` (paso 4). Contiene **38 riesgos**: los 10 de `START_PROJECT.md` §9,
+Generado por `init-project` (paso 4). Contiene **40 riesgos**: los 10 de `START_PROJECT.md` §9,
 conservados y enriquecidos con señal temprana y dueño, más 28 derivados de lo que la planificación
 sabe hoy (decisiones D-14…D-24, incidencia S-01, restricciones del brief y del perfil `software-app`).
 
@@ -76,6 +76,7 @@ registros o en el `task_tracker`.
 
 ---
 | R-37 | **Cloudflare R2 no ofrece Object Lock por API estándar (D-21).** Un atacante con las credenciales del VPS (o un fallo de script) puede borrar o sobrescribir los backups además de los datos originales: el backup deja de ser una red de seguridad frente a un compromiso, y solo protege frente a la muerte del hardware. | Baja | Crítico | Credenciales de R2 **de solo escritura y sin permiso de borrado** para el proceso de backup; el borrado de copias antiguas lo hace un proceso distinto con otras credenciales · activar versionado de bucket donde R2 lo permita y verificar qué garantiza · retención por generaciones (diaria/semanal/mensual), no un único destino sobrescrito · **verificar la restauración desde una copia antigua, no solo desde la última** (el DoD #8 exige restauración probada) · reevaluar un segundo destino con inmutabilidad estándar si el volumen de datos de cliente crece. | El proceso de backup usa una credencial con permiso de borrado · solo existe una generación de copia · nadie ha restaurado nunca desde una copia de más de un día. | agente |
+| R-39 | **La caducidad del certificado no está vigilada.** El plan gratuito de UptimeRobot **no incluye** el aviso de caducidad de SSL ni de dominio (verificado por Ricardo el 2026-09-08, en contra de lo que anuncia su página). Un certificado Let's Encrypt caducado tumba el sitio entero, y es un fallo silencioso: todo va bien hasta el minuto en que deja de ir. | Media | Alto | Easypanel renueva Let's Encrypt automáticamente: la primera línea de defensa es que esa renovación funcione, y hay que **verificarla al menos una vez** viendo la fecha del certificado cambiar · añadir un monitor de tipo palabra clave sobre una página que solo responda con HTTPS válido, que sí entra en el plan gratuito · alternativa de coste cero: un flujo en n8n que compruebe la fecha del certificado una vez al día — sirve aquí porque un certificado caduca de forma predecible, no de golpe, así que un monitor dentro del VPS basta para ESTE riesgo concreto · si más adelante duele, el plan de pago de UptimeRobot son 9 USD/mes. | El certificado entra en su último mes sin que nadie lo haya mirado · el panel no muestra la fecha de renovación · nadie sabe decir cuándo caduca. | Ricardo |
 
 ## C. Entrega y calendario
 
@@ -100,6 +101,7 @@ registros o en el `task_tracker`.
 | R-24 | **Deuda silenciosa del adaptador de dos modos (D-19):** producción se queda para siempre en modo `contact_note` porque el `/iterate` del CRM nunca se ejecuta, y nadie lo nota porque las capturas "funcionan". | Alta | Medio | El **modo activo se muestra en el tablero de HQ** y en el README operativo, no solo en una variable de entorno · `api_contracts` especifica los dos modos y el DU de captura prueba ambos contra un doble del endpoint `POST /api/v1/leads` · la dependencia queda como entrada explícita en `decision_log` con revisión obligatoria al cerrar M5 · mientras siga en `contact_note`, HQ muestra cuántas capturas exigen crear la oportunidad a mano. | Pasa un milestone completo sin revisar el estado del spec-delta del CRM · nadie sabe decir en qué modo está producción sin abrir Easypanel. | Ricardo |
 
 ---
+| R-40 | **El presupuesto de JS del gate D1 y el stack elegido son incompatibles.** Medido el 2026-09-08: el suelo de React 19 + Next 16 App Router es de **172 KB comprimidos** en una página vacía, con **cero** librerías de la aplicación. El gate fija 150 KB. Ambos los decidió Ricardo. | Alta (ya ocurrida) | Medio | **El objetivo del gate sí se cumple**, y eso reencuadra el problema: Lighthouse móvil da Performance **98**, Accesibilidad **100**, Best Practices 92, SEO 100, con **LCP 2,4 s** y **TBT 20 ms**. Los 150 KB eran un proxy mal calibrado, no el objetivo. Tres salidas: **(a)** sustituir el umbral de KB por los umbrales que de verdad importan —Lighthouse ≥ 90 en las cuatro y LCP < 2,5 s— medidos por Lighthouse en CI, que es más difícil de engañar que un número de bytes; **(b)** subir el presupuesto a 180 KB y conservarlo como detector de **regresiones**, que es para lo que sirve un presupuesto; **(c)** mantener 150 KB, lo que exigiría abandonar App Router y contradiría §10. **Decisión de Ricardo.** Hasta entonces la comprobación falla a propósito. | El presupuesto se sube en silencio para poner el CI en verde · alguien desactiva la comprobación en vez de decidir · se acepta el número sin medir Lighthouse. | Ricardo |
 
 ## E. Operación
 
@@ -212,3 +214,5 @@ operación 6 · contenido y marca 6.
   como defensa en profundidad. Ni el número de riesgos (38) ni ninguna probabilidad, impacto o conteo
   del Resumen cambian.
 - `2026-09-08` — D-46 (cron de Hermes como validador de las compuertas delegables): R-16 baja de Alta/Alto a Media/Medio. Sin cambio de alcance en este repositorio: el cron vive en Hermes Agent.
+- `2026-09-08` — R-39 añadido: la caducidad de SSL no entra en el plan gratuito de UptimeRobot (comprobación empírica de Ricardo, contraria a lo que anuncia su web).
+- `2026-09-08` — R-40 añadido: el gate D1 (150 KB) y el stack decidido son incompatibles; el objetivo del gate sí se cumple (Lighthouse 98/100/92/100). Decisión pendiente.

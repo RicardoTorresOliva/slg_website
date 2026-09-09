@@ -205,3 +205,124 @@ degradaría `drizzle-kit` de 0.31 a 0.18. Se acepta; revísese si `drizzle-kit` 
 
 **Siguiente.** FU-05 — despliegue, CI, DNS y documentación de entorno. **Bloqueada por S-01 y por la
 elección del producto de monitorización (EXT-7)**, ambas de Ricardo.
+
+---
+
+## 2026-09-08 · FU-05 — Despliegue, CI y entorno · `in_progress`
+
+Unidad partida en dos: lo que se construye en el repositorio y lo que se
+configura en paneles externos. **La mitad de agente está hecha; la de Ricardo no.**
+
+### Hecho y verificado
+
+| Pieza | Evidencia |
+|---|---|
+| `Dockerfile` multietapa, salida `standalone`, usuario sin privilegios | Empaqueta `static/` y `public/`, que Next no copia por diseño |
+| Endpoint `/api/health` | Deliberadamente tonto: no comprueba base de datos, para que una integración caída no provoque reinicios de un contenedor sano |
+| Cabeceras de seguridad (B.8, criterio 7) | CSP, HSTS 2 años, `frame-ancestors: none`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, sin `X-Powered-By` — **verificadas en respuesta HTTP real** |
+| `.env.example` (criterio 6) | **42 variables, cero valores**, cada bloque con su servicio consumidor y su unidad |
+| Pipeline de CI | Dos jobs, 18 pasos, los **seis frenos** del criterio 4, cada uno con su prueba negativa |
+| `scripts/db/setup-app-role.ts` | Cierra el hueco que hacía fallar el primer despliegue |
+| `scripts/ci/check-secrets.ts` + su prueba negativa | 9 patrones; detecta credenciales literales y **no** marca referencias a variable |
+| `scripts/ci/check-js-budget.ts` | Mide los scripts que el HTML prerenderizado referencia de verdad, comprimidos |
+
+**Simulación local completa del pipeline: 16 pasos en verde, 1 en rojo** (el
+presupuesto de JS, a propósito — ver más abajo).
+
+### Hueco propio, encontrado y cerrado
+
+Las migraciones crean el rol `slg_app` y le quitan `BYPASSRLS`, pero **no pueden
+asignarle contraseña**: una contraseña en un archivo versionado sería un secreto
+en un repositorio público. Sin ese paso, la aplicación no arranca y el primer
+despliegue falla. `setup-app-role.ts` lo cierra: lee `DATABASE_URL` —una sola
+fuente de verdad, sin una tercera variable que se desincronice—, asegura el rol,
+y **verifica que no es superusuario y no tiene `BYPASSRLS`** antes de dar el paso
+por bueno. Probado en tres escenarios: rol existente, rol borrado, y
+`DATABASE_URL` apuntando por error al superusuario, que rechaza con explicación.
+
+### Hallazgo mayor · R-40 · el gate D1 y el stack son incompatibles
+
+Medido: el suelo de React 19 + Next 16 App Router es de **172,3 KB comprimidos**
+en una página vacía, con **cero librerías de la aplicación** en el paquete
+—verificado buscando `motion`, `gray-matter`, `drizzle` y `postgres` en los
+chunks: ninguno viaja. El gate D1 fija 150 KB. Ambos los decidió Ricardo.
+
+**Pero el objetivo del gate sí se cumple.** Lighthouse móvil sobre la salida real:
+
+| | Umbral DoD #7 | Medido |
+|---|---|---|
+| Performance | ≥ 90 | **98** |
+| Accesibilidad | ≥ 90 | **100** |
+| Best Practices | ≥ 90 | 92 |
+| SEO | ≥ 90 | **100** |
+| LCP | < 2,5 s | **2,4 s** |
+| TBT | — | 20 ms |
+
+Los 150 KB eran un **proxy mal calibrado del objetivo**, no el objetivo. Las tres
+salidas están en R-40 y la decisión es de Ricardo. Hasta entonces la comprobación
+falla a propósito: un gate que se relaja solo deja de ser un gate.
+
+### Corrección de accesibilidad, encontrada al medir
+
+La primera medición dio **89** en Accesibilidad, un punto por debajo del DoD #7.
+Causa: el enlace se distinguía **solo por color**, y contra el texto que lo rodea
+daba 1,27:1 cuando WCAG exige 3:1. La corrección no fue cambiar el color sino
+**subrayar los enlaces en texto corrido**, que es lo correcto y no un parche.
+Resultado: **100**, sin ningún fallo de accesibilidad restante.
+
+### El freno de secretos se denunció a sí mismo, y estuvo bien
+
+Al escribir el pipeline puse contraseñas de ejemplo en el workflow y el escáner
+las detectó. La corrección no fue relajar el patrón: fue **componer las cadenas
+de conexión en tiempo de ejecución**, para que en el repositorio no exista nada
+con forma de credencial. El patrón sí se afinó en un punto legítimo: una
+referencia a variable (`${CLAVE}`) no es un secreto, y marcarla obligaría a
+poner excepciones, que es como mueren estos frenos.
+
+### Pendiente de Ricardo
+
+MinIO (dominio y dos cubos privados) · servicio `slgweb-staging` en Easypanel ·
+registros DNS de `staging` y `minio` · verificación de que los diez intocables
+siguen funcionando. Guía paso a paso entregada como artefacto.
+
+---
+
+## 2026-09-09 · Protección de staging — hueco propio, encontrado por Ricardo
+
+**Staging estuvo abierto e indexable durante una hora y media.**
+
+El criterio 1 de FU-05 exige que staging pida autenticación básica y devuelva
+`noindex`. Yo escribí `STAGING_BASIC_AUTH_USER` y `STAGING_BASIC_AUTH_PASSWORD`
+en `.env.example` **y nunca escribí el código que las consume**. Documenté una
+protección que no existía. Lo detectó Ricardo al responder «no» a la pregunta de
+si el sitio le pedía contraseña — no lo detectó ninguna comprobación mía, porque
+ninguna medía comportamiento en ese punto.
+
+**Corregido** con `middleware.ts`:
+
+- 401 con `WWW-Authenticate` si faltan o fallan las credenciales.
+- Comparación en **tiempo constante**: comparar con `===` filtra información por
+  el tiempo que tarda en fallar.
+- `X-Robots-Tag: noindex, nofollow, noarchive` en el 401 y en la página servida.
+  Se usa la cabecera y no una etiqueta `meta` porque cubre también PDF e imágenes.
+- `/api/health` queda **fuera** a propósito: si pidiera credenciales, el monitor
+  externo daría el sitio por caído siempre y el aviso dejaría de significar nada.
+  No expone nada: responde `{"status":"ok"}`.
+- Se activa **solo si las dos variables existen**, no por `NODE_ENV`: staging
+  corre en modo producción, así que una condición sobre el entorno protegería mal.
+
+**Un fallo encontrado por la prueba, no por la revisión a ojo.** La primera
+versión devolvía **500 en vez de 401**: el texto del `realm` llevaba una raya
+larga (`—`, U+2014) y una cabecera HTTP es una ByteString que no admite
+caracteres de más de un byte. A ojo el código parecía correcto.
+
+**Prueba automatizada añadida**: `scripts/ci/test-staging-auth.ts`, diez
+comprobaciones de comportamiento. Acepta `BASE_URL`, así que sirve tanto para el
+contenedor local como para el staging desplegado.
+
+### Estado de la infraestructura, confirmado por Ricardo
+
+- `staging.softlandingglobal.com` y `/api/health`: **en verde**, 1 h 37 min.
+- La raíz y `www`: en rojo **por diseño** — no tienen registro DNS hasta el go-live.
+- MinIO: **arrancado**. El `FATAL` que se veía era la línea vieja de un log
+  acumulativo; por debajo estaba el arranque correcto y 65,8 MB de memoria.

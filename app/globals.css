@@ -89,6 +89,39 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ── Enlaces ───────────────────────────────────────────────────────────────
+ * Los enlaces dentro de texto corrido llevan SUBRAYADO, no solo color.
+ *
+ * Por qué: WCAG exige que un enlace se distinga del texto que lo rodea por algo
+ * más que el color, o que tenga 3:1 de contraste CONTRA ese texto. Medido con
+ * Lighthouse, `--slg-link` sobre `--slg-ink-2` daba 1,27:1 — muy por debajo — y
+ * costaba un punto de Accesibilidad, justo el que separaba 89 de los 90 que
+ * exige el DoD #7.
+ *
+ * El subrayado se separa un poco de la línea base para no cortar los descendentes
+ * de las letras: legibilidad, no adorno.
+ *
+ * Los enlaces que NO van en texto corrido —navegación, botones, tarjetas— se
+ * distinguen por su posición y su forma, así que ahí el subrayado sobra: se
+ * quita con la clase `no-underline`.
+ */
+a {
+  color: var(--slg-link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  text-decoration-color: color-mix(in srgb, var(--slg-link) 45%, transparent);
+  transition: text-decoration-color 120ms ease;
+}
+a:hover {
+  text-decoration-color: var(--slg-link);
+}
+a.no-underline,
+nav a,
+a[class*="button"] {
+  text-decoration: none;
+}
+
 /* ── Foco · D-44 ───────────────────────────────────────────────────────────
  * Token ÚNICO para todo elemento interactivo. Escribir un anillo de foco a
  * mano en un componente rechaza la unidad en revisión (FU-02, criterio 5).
