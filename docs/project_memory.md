@@ -45,32 +45,35 @@ sesiones), `log.md` y los **siete conceptos** (`method-sdd-icm`, `naming-rules`,
 - FU-04 (capa de datos) · 2026-09-08. FU-05 sigue `in_progress`, no se cuenta como completada.
 
 ## Próxima unidad
-**FU-05 está `in_progress`.** La unidad está partida en dos y solo una mitad depende del agente.
+**FU-05 está `in_progress`.** De los 9 criterios de aceptación, quedan dos abiertos, y los dos son de
+Ricardo — ninguno de código.
 
-- **Hecho por el agente**: `Dockerfile`, `/api/health`, cabeceras de seguridad verificadas en respuesta
-  real, `.env.example` con 42 variables y cero valores, pipeline de CI con los seis frenos y sus
-  pruebas negativas, `setup-app-role.ts`, protección de staging (`middleware.ts`, verificada con
-  `test-staging-auth.ts`), y el **gate D1 por Lighthouse** (`check-lighthouse.ts` + prueba negativa —
-  D-50, ver abajo). Simulación local: **`npm run verify` completo en verde**, sin ningún rojo
-  intencionado.
-- **Pendiente de Ricardo** — actualizado 2026-09-09 tras confirmar en vivo:
-  - ~~Cargar `STAGING_BASIC_AUTH_USER`/`PASSWORD` en Easypanel~~ · ~~push a `develop`~~ ·
-    ~~comprobar que `staging.softlandingglobal.com` pide contraseña~~ — **los tres confirmados
-    hechos**: Ricardo verificó que staging pide contraseña, lo que solo pasa si el middleware llegó
-    al servidor y las dos variables están cargadas.
-  - El commit `d0db9ad` (D-50, gate D1 por Lighthouse) ya está en `develop`, local y remoto en sync
-    (`git push origin develop` hecho por el agente el 2026-09-09).
-  - ~~Pausar los monitores de la raíz y `www` en UptimeRobot~~ — **hecho** (confirmado por Ricardo,
-    2026-09-09).
-  - MinIO, el servicio `slgweb-staging` y el DNS de `staging` **ya estaban hechos** desde antes de
-    esta sesión.
-  1. **Queda, menor, no bloquea hasta FU-09**: crear el bucket `downloads` bien escrito (existe un
-     `dowloads` con typo, vacío — se deja sin usar, no hace falta borrarlo) y el bucket
-     `deliverables`, los dos **privados**. **D-51**: la clave de acceso de la aplicación será
-     `MINIO_ROOT_USER`/`MINIO_ROOT_PASSWORD` directamente (`S3_ACCESS_KEY_ID`/`S3_SECRET_ACCESS_KEY`
-     en `.env.example`) — el Console gratuito de MinIO ya no permite crear una clave acotada desde la
-     interfaz web. Riesgo abierto **R-41**, mismo patrón que S-01: revisar y rotar a una clave
-     acotada con la CLI `mc` antes del go-live.
+**Hecho por el agente, todo verificado, no solo escrito:**
+- `Dockerfile`, `/api/health`, cabeceras de seguridad (criterio 7, con prueba explícita de CSP
+  `frame-ancestors 'none'` y HSTS, no solo "existe una CSP").
+- `.env.example` con todos los nombres, cero valores.
+- Pipeline de CI con los seis frenos y sus pruebas negativas (criterios 4 y 5).
+- `setup-app-role.ts`, protección de staging (`middleware.ts` + `test-staging-auth.ts`).
+- **Gate D1 por Lighthouse** (D-50): reemplaza el presupuesto de KB. Tuvo un hallazgo serio —
+  `check-lighthouse.ts` medía bien pero **colgaba el pipeline 3h39m** en el runner real de GitHub por
+  un proceso huérfano de `next-server`; corregido (spawn `detached` + matar el grupo + `process.exit`
+  de respaldo) y **reconfirmado en verde en GitHub** (1m22s, no solo en local).
+- **Criterio 2 (R-20)**: `main` protegida — Pull Request y los dos checks de CI en verde, obligatorios,
+  sin `push` directo. Confirmado con Ricardo antes de aplicarlo.
+- **Criterio 3 (R-25)**: DNS verificado por consulta directa — los diez intocables intactos, `staging`
+  y `minio` resuelven bien.
+
+**Pendiente de Ricardo — guía actualizada en el artifact `Puesta en marcha M0-A`:**
+1. **Crear el servicio de producción `slg-web` en Easypanel** (rama `main`, dominio
+   `softlandingglobal.com` sin DNS todavía — no publica nada al público, solo prueba el mecanismo).
+   Sin este servicio, los criterios 1 y 2 no se pueden dar por completamente cerrados. **Ojo con
+   R-42**: la base de datos de producción tiene que llevar un **nombre distinto** al que quedó en
+   staging dentro del mismo `slgwebpostgres` — si no, los dos entornos comparten datos.
+2. **Criterio 8**: provocar una caída una vez y confirmar que UptimeRobot avisa por el canal fuera del
+   VPS. No se puede simular desde aquí.
+3. Menor, no bloquea hasta FU-09: los dos cubos de MinIO (`downloads`, `deliverables`) — **D-51**: la
+   app usará `MINIO_ROOT_USER`/`PASSWORD` directamente (R-41, revisar antes del go-live), porque el
+   Console gratuito ya no deja crear una clave acotada desde la web.
 
 ## R-40 resuelto — D-50 (2026-09-09)
 **Ya no bloquea el cierre de FU-05.** El gate D1 y el stack elegido eran incompatibles: el suelo de
