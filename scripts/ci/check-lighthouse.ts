@@ -78,6 +78,21 @@ async function medirRuta(ruta: string, puertoChrome: number): Promise<ResultadoR
   };
 }
 
+function matarGrupo(servidor: ChildProcessWithoutNullStreams): void {
+  // `npx next start` no es un solo proceso: encadena hijos (npx → next →
+  // next-server). Matar solo el PID que devuelve `spawn` deja al servidor
+  // real huérfano y corriendo — es justo lo que colgó el pipeline en CI 3h39m
+  // (2026-09-09): el paso terminó su trabajo y se quedó esperando un proceso
+  // que nadie mató. `detached: true` al arrancar pone al hijo en su propio
+  // grupo de procesos, y matar con PID **negativo** mata el grupo entero.
+  if (!servidor.pid) return;
+  try {
+    process.kill(-servidor.pid, "SIGKILL");
+  } catch {
+    servidor.kill("SIGKILL");
+  }
+}
+
 async function main() {
   console.log("Gate D1 — Lighthouse móvil (D-50)\n");
 
@@ -85,7 +100,7 @@ async function main() {
   const servidor: ChildProcessWithoutNullStreams = spawn(
     "npx",
     ["next", "start", "-p", String(PUERTO)],
-    { env: { ...process.env, NODE_ENV: "production" } },
+    { env: { ...process.env, NODE_ENV: "production" }, detached: true },
   );
   servidor.stdout.on("data", (d) => (salidaServidor += String(d)));
   servidor.stderr.on("data", (d) => (salidaServidor += String(d)));
@@ -126,10 +141,16 @@ async function main() {
     process.exitCode = 1;
   } finally {
     if (chrome) await chrome.kill();
-    servidor.kill();
+    matarGrupo(servidor);
   }
 }
 
 // Solo se ejecuta al invocarse directamente, no al importar `evaluar()` desde
 // la prueba negativa — si no, cada import arrancaría Chrome y el servidor.
-if (import.meta.url === `file://${process.argv[1]}`) main();
+if (import.meta.url === `file://${process.argv[1]}`) {
+  // Respaldo definitivo: aunque `matarGrupo` falle o quede algún stream de los
+  // hijos abierto manteniendo vivo el bucle de eventos, el proceso SALE. Es
+  // lo que de verdad evita que el paso de CI se quede colgado — matar bien a
+  // los hijos es higiene, pero esto es la garantía.
+  main().finally(() => process.exit(process.exitCode ?? 0));
+}

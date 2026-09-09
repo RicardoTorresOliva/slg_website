@@ -372,3 +372,53 @@ en `check-lighthouse.ts` cuando existan, y cierra el gate D1 formalmente.
 convención de archivo `middleware` está obsoleta en Next 16 y sugiere migrar a
 `proxy`. No se toca aquí — es la protección de staging de la sesión anterior,
 fuera del alcance de R-40.
+
+## 2026-09-09 · Criterio 3 de FU-05 — DNS verificado nombre por nombre (R-25)
+
+Tras los registros nuevos de `staging` y `minio`, verificado por consulta DNS
+directa (`dig`), no por inspección del panel:
+
+| Nombre | Resuelve a | Esperado |
+|---|---|---|
+| `softlandingglobal.com` (raíz) | sin registro A | correcto — por diseño, hasta el go-live |
+| `crm.softlandingglobal.com` | `167.88.42.76` | sin cambio |
+| `n8n.softlandingglobal.com` | `167.88.42.76` | sin cambio |
+| `evolution.softlandingglobal.com` | `167.88.42.76` | sin cambio |
+| `academy.softlandingglobal.com` | `216.150.16.65` | sin cambio (Vercel, no el VPS) |
+| `staging.softlandingglobal.com` | `167.88.42.76` | **nuevo**, correcto |
+| `minio.softlandingglobal.com` | `167.88.42.76` | **nuevo**, correcto |
+| MX (`@`) | `softlandingglobal-com.mail.protection.outlook.com` | sin cambio — Microsoft 365 intacto |
+| SPF (`@` TXT) | `v=spf1 include:spf.protection.outlook.com -all` | sin cambio |
+| DMARC (`_dmarc` TXT) | `p=quarantine`, sin `sp=` | sin cambio — hallazgo ya registrado en la guía de puesta en marcha, no es nuevo |
+
+**Ninguno de los diez intocables se movió.** Criterio 3 de FU-05 cerrado.
+
+## 2026-09-09 · Hallazgo en CI real — `check-lighthouse.ts` colgaba el pipeline
+
+**Verde en local no es verde en CI.** El script pasó limpio en esta máquina
+(macOS) cada vez que corrió. En el runner de GitHub (Ubuntu), el gate **midió
+bien** —Perf 91 · A11y 100 · BP 92 · SEO 100 · LCP 1,9 s, imprimió «✓ Gate D1 en
+verde»— y el paso se quedó **colgado 3 h 39 min** hasta que lo cancelé a mano.
+El log de limpieza del runner lo delata: `Terminate orphan process: pid (2860)
+(next-server (v16.3.4))`.
+
+**Causa.** `npx next start` no es un solo proceso: encadena `npx → next →
+next-server`. `servidor.kill()` solo mataba el primer PID; `next-server`
+quedaba huérfano y vivo, con sus streams de stdout/stderr todavía enganchados
+al proceso de Node del script — eso basta para que el bucle de eventos no
+drene solo, aunque `main()` ya haya terminado todo su trabajo.
+
+**Corrección**, dos capas:
+1. `spawn(..., { detached: true })` pone al hijo en su propio grupo de
+   procesos; `process.kill(-pid, "SIGKILL")` mata el grupo entero, no solo el
+   primer PID.
+2. **Respaldo definitivo**: `main().finally(() => process.exit(...))`. Aunque
+   la limpieza de procesos falle o algo más deje un handle abierto, el
+   proceso sale. Es esto, no la limpieza correcta, lo que de verdad garantiza
+   que el paso de CI no vuelva a colgarse.
+
+Verificado: local, 11,5 s de pared y sin procesos huérfanos (`ps aux` limpio
+después). Repushed para confirmar en el runner real antes de dar el criterio
+por cerrado — **un script que se vio colgar una vez no se acepta como
+arreglado solo porque ahora corre rápido en mi máquina** (mismo principio que
+R-26, aplicado al propio pipeline, no solo a los frenos de contenido).
