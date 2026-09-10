@@ -508,3 +508,29 @@ cerrado de verdad, no solo aparentado.
 Este mismo commit, al pushearse, es la prueba real: si `slgweb-staging` recibe
 un despliegue nuevo sin que nadie toque Easypanel, el webhook funciona en
 producción, no solo en el ping.
+
+## 2026-09-10 · Criterio 8 de FU-05 — UptimeRobot, hallazgo y avance parcial
+
+Con acceso de lectura al panel de UptimeRobot (Claude in Chrome, sesión de
+Ricardo, sin credenciales tocadas), tres cosas:
+
+1. **Los cuatro monitores estaban pausados**, no solo raíz/`www` como pedía la
+   instrucción original. Reanudados los dos de `staging` (el de
+   `/api/health` y el de la raíz); raíz y `www` de producción siguen
+   pausados a propósito, sin DNS hasta el go-live.
+2. **Segunda corrección de D-49**: la integración de n8n vía webhook —«lo
+   decisivo» según la propia decisión— no está disponible en el plan
+   gratuito (`Upgrade to access` en Integrations → Webhook). El único canal
+   activo hoy es **correo** a `torresoliva.ricardo@gmail.com`. No rompe D-43:
+   el correo ya sale de los servidores de UptimeRobot, no del VPS.
+3. **Enviada una notificación de prueba real** desde el monitor
+   `staging.softlandingglobal.com/api/health` (botón nativo "Test
+   Notification", no simulado — dispara el mismo envío que un incidente
+   real). Pendiente de que Ricardo confirme si le llegó a Gmail.
+
+**No hecho todavía, y es lo que cierra el criterio de verdad**: el criterio 8
+pide «provocar la condición», no solo probar el canal. Falta parar
+`slgweb-staging` en Easypanel unos minutos, dejar que UptimeRobot lo detecte
+caído por sí solo (chequeo cada 5 min) y confirmar el aviso — con acceso a
+los dos paneles, el agente puede orquestarlo, pero es una interrupción
+deliberada de un servicio y se pide confirmación antes de ejecutarla.
