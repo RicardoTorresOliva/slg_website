@@ -42,11 +42,14 @@ sesiones), `log.md` y los **siete conceptos** (`method-sdd-icm`, `naming-rules`,
 `content-schema`, `brand-tokens`, `crm-integration`, `doctrine-summary`).
 
 ## Última unidad completada
-- FU-04 (capa de datos) · 2026-09-08. FU-05 sigue `in_progress`, no se cuenta como completada.
+- **FU-05 (despliegue, CI, DNS y entorno) · `done` · 2026-09-10.** Los 9 criterios de aceptación
+  cerrados y verificados — no solo escritos. Detalle completo abajo y en `work_log.md`.
 
 ## Próxima unidad
-**FU-05 está `in_progress`.** De los 9 criterios de aceptación, quedan dos abiertos, y los dos son de
-Ricardo — ninguno de código.
+**FU-06 · Módulo de identidad y autorización · M0-B.** Depende de FU-04 y FU-05, las dos ya cerradas.
+Leer `implementation/user_units.md` §FU-06 y `knowledge/index.md` antes de empezar.
+
+## FU-05 — cómo quedaron los 9 criterios (referencia)
 
 **Hecho por el agente, todo verificado, no solo escrito:**
 - `Dockerfile`, `/api/health`, cabeceras de seguridad (criterio 7, con prueba explícita de CSP
@@ -76,13 +79,16 @@ Ricardo — ninguno de código.
   activo. **R-42 confirmado resuelto**: producción usa `slg_website_prod` como base de datos, distinto
   del nombre de staging — los dos entornos no comparten datos.
 
-**Pendiente de Ricardo:**
-1. **Criterio 8**: provocar una caída una vez y confirmar que UptimeRobot avisa por el canal fuera del
-   VPS. No se puede simular desde aquí.
-2. ~~Los dos cubos de MinIO~~ — **hecho**. **D-51 sigue en pie**: la app usará `MINIO_ROOT_USER`/
-   `PASSWORD` directamente (R-41, revisar antes del go-live), porque el Console gratuito ya no deja
-   crear una clave acotada desde la web. No verificado por el agente que los dos queden **privados**
-   (no hay acceso al Console) — confirmarlo la primera vez que FU-09 suba un archivo de prueba.
+**Criterio 8, cerrado 2026-09-10**: `slgweb-staging` detenido a propósito en Easypanel; UptimeRobot lo
+detectó solo (Down, incidente real) en su siguiente chequeo; servicio reiniciado y verificado con
+`curl` (200 de vuelta). De paso: los 4 monitores estaban pausados (no solo raíz/`www`), reanudados los
+de staging; y **D-49 tuvo una segunda corrección** — la integración n8n/webhook no está en el plan
+gratuito, solo correo está activo hoy, lo que igual cumple D-43 (el correo sale de UptimeRobot, no del
+VPS).
+
+**Los dos cubos de MinIO**: hechos. **D-51 sigue en pie**: la app usa `MINIO_ROOT_USER`/`PASSWORD`
+directamente (R-41, revisar antes del go-live). No verificado que los dos queden **privados** (sin
+acceso al Console) — confirmarlo la primera vez que FU-09 suba un archivo de prueba.
 
 ## R-40 resuelto — D-50 (2026-09-09)
 **Ya no bloquea el cierre de FU-05.** El gate D1 y el stack elegido eran incompatibles: el suelo de

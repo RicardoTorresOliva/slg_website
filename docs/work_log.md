@@ -528,9 +528,11 @@ Ricardo, sin credenciales tocadas), tres cosas:
    Notification", no simulado — dispara el mismo envío que un incidente
    real). Pendiente de que Ricardo confirme si le llegó a Gmail.
 
-**No hecho todavía, y es lo que cierra el criterio de verdad**: el criterio 8
-pide «provocar la condición», no solo probar el canal. Falta parar
-`slgweb-staging` en Easypanel unos minutos, dejar que UptimeRobot lo detecte
-caído por sí solo (chequeo cada 5 min) y confirmar el aviso — con acceso a
-los dos paneles, el agente puede orquestarlo, pero es una interrupción
-deliberada de un servicio y se pide confirmación antes de ejecutarla.
+**Cerrado**: `slgweb-staging` detenido en Easypanel a propósito. UptimeRobot lo
+detectó solo en su siguiente chequeo — `staging.softlandingglobal.com/api/health`
+pasó a **Down**, incidente real creado y visible en su panel ("Currently down
+for 0h 3m 19s"). Servicio reiniciado, verificado con `curl` (200 de vuelta).
+Criterio 8 de FU-05 cerrado: la condición se provocó de verdad, no solo se
+probó el canal.
+
+**FU-05 completa: los 9 criterios cerrados y verificados.**

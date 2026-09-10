@@ -38,7 +38,7 @@ se ha producido ningún entregable.
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 35 `pending` · **1 `in_progress`** (FU-05: 8 de 9 criterios cerrados y verificados; queda 1, de Ricardo) · 0 `blocked` · 0 `review` · **3 `done`** (FU-02, FU-03, FU-04 · 2026-09-08). **M0-A completo salvo FU-05**, ya desbloqueada (EXT-7 cerrada por D-49; S-01 diferida a go-live). Falta solo: provocar una caída una vez y confirmar la alerta de UptimeRobot (criterio 8) — detalle en `docs/project_memory.md`.
+**Estado global:** 34 `pending` · 0 `in_progress` · 0 `blocked` · 0 `review` · **4 `done`** (FU-02, FU-03, FU-04 · 2026-09-08; FU-05 · 2026-09-10). **M0-A completo.** Siguiente: FU-06 (M0-B).
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -54,7 +54,7 @@ se ha producido ningún entregable.
 | FU-02 | FU | Andamiaje del repositorio, tokens de marca y skills aprobadas | M0-A | — | `done` |
 | FU-03 | FU | Capa de contenido OKF, i18n y scripts de verificación | M0-A | FU-02 | `done` |
 | FU-04 | FU | Capa de datos: PostgreSQL, Drizzle, migraciones y modelo B.2 | M0-A | FU-02 · `data_model` | `done` |
-| FU-05 | FU | Despliegue, CI, DNS y documentación de entorno | M0-A | FU-02, FU-03, FU-04 · EXT-7 ✅ (D-49) | `in_progress` |
+| FU-05 | FU | Despliegue, CI, DNS y documentación de entorno | M0-A | FU-02, FU-03, FU-04 · EXT-7 ✅ (D-49) | `done` |
 | ━━━ | ━━━ | **▼ M0-B · FUNDACIONES: IDENTIDAD Y SERVICIOS COMPARTIDOS** | ━━━ | ━━━ | ━━━ |
 | FU-06 | FU | Módulo de identidad y autorización | M0-B | FU-04, FU-05 | `pending` |
 | FU-07 | FU | Servicio de invitaciones | M0-B | FU-06, FU-08 | `pending` |
@@ -170,3 +170,7 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   La condición que hace aceptable el aplazamiento —no reutilizar esa credencial en ningún entorno
   desplegado, y rotar antes del go-live— queda registrada en `docs/decision_log.md`.
   **FU-05 queda desbloqueada.**
+- `2026-09-10` — **FU-05 → `done`**. Los 9 criterios cerrados y verificados: gate D1 por Lighthouse
+  (D-50), `main` protegida (R-20), auto-deploy real en las dos ramas, DNS verificado, cabeceras
+  probadas, y UptimeRobot detectando una caída real provocada a propósito (criterio 8). **M0-A
+  completo.** Detalle en `docs/work_log.md` y `docs/project_memory.md`. Siguiente: FU-06.
