@@ -257,7 +257,7 @@ RNF-13 · RNF-14 · RNF-15 · RNF-26 · RNF-27 · RNF-28.
 8. `package.json` no contiene ningún rango de versión (`^`, `~`) en dependencias de producción.
 
 **Gates.** `QG` (secretos, dependencias) · **D2b** (marca: tokens sin verde/amarillo/naranja,
-Montserrat autoalojada) · **D1** (base del presupuesto de JS inicial).
+Montserrat autoalojada) · **D1** (base del suelo de JS medido por Lighthouse — D-50).
 
 ---
 
