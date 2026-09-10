@@ -38,8 +38,10 @@ se ha producido ningún entregable.
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 31 `pending` · 1 `in_progress` (FU-08) · 0 `blocked` · 0 `review` · **6 `done`** (FU-02, FU-03, FU-04 · 2026-09-08; FU-05, FU-06, FU-09 · 2026-09-10). **M0-A completo.** Siguiente:
-cerrar FU-08 cuando F.2-4/P-3/P-4 se resuelvan de verdad; FU-07 depende también de FU-08.
+**Estado global:** 30 `pending` · 2 `in_progress` (FU-07, FU-08) · 0 `blocked` · 0 `review` · **6 `done`**
+(FU-02, FU-03, FU-04 · 2026-09-08; FU-05, FU-06, FU-09 · 2026-09-10). **M0-A completo.** Siguiente:
+cerrar FU-07 (F.2-2/F.2-3) y FU-08 (F.2-4/P-3/P-4) cuando esas dependencias externas se resuelvan;
+mientras tanto, DU-01 sigue bloqueada por las tres.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -58,7 +60,7 @@ cerrar FU-08 cuando F.2-4/P-3/P-4 se resuelvan de verdad; FU-07 depende también
 | FU-05 | FU | Despliegue, CI, DNS y documentación de entorno | M0-A | FU-02, FU-03, FU-04 · EXT-7 ✅ (D-49) | `done` |
 | ━━━ | ━━━ | **▼ M0-B · FUNDACIONES: IDENTIDAD Y SERVICIOS COMPARTIDOS** | ━━━ | ━━━ | ━━━ |
 | FU-06 | FU | Módulo de identidad y autorización | M0-B | FU-04, FU-05 | `done` |
-| FU-07 | FU | Servicio de invitaciones | M0-B | FU-06, FU-08 | `pending` |
+| FU-07 | FU | Servicio de invitaciones | M0-B | FU-06, FU-08 | `in_progress` |
 | FU-08 | FU | Adaptador de correo transaccional | M0-B | FU-05 · F.2-4 | `in_progress` |
 | FU-09 | FU | Almacenamiento de archivos y URLs firmadas | M0-B | FU-05 · `api_contracts` | `done` |
 | DU-01 | DU | Acceso, sesión y recuperación por los tres métodos | M0-B | FU-06, FU-07, FU-08 · F.2-2, F.2-3 | `pending` |
@@ -203,3 +205,15 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   incompletos frente a `data_model` §5.10/§5.11/§5.14 (ninguno de los 5 criterios de FU-09 los toca;
   es trabajo de DU-08/DU-13/DU-15) — anotado como tarea aparte, no en `decision_log`. Detalle en
   `docs/work_log.md`. Siguiente: cerrar FU-08 cuando F.2-4/P-3/P-4 se resuelvan; después, FU-07.
+- `2026-09-10` — **FU-07 → `in_progress`**. Emisión, revocación, reenvío y aceptación (los tres
+  métodos convergen en un núcleo común) construidos y probados contra Postgres y SMTP reales — 27
+  comprobaciones en verde — y verificados en el navegador real contra el build de producción (cuenta,
+  membership y `user.role` confirmados en Postgres tras aceptar por contraseña). Tres hallazgos
+  propios: **D-55** (`invitation` incompleta desde FU-04, mismo patrón que `email_delivery` en FU-08),
+  **D-56** (hueco de seguridad en FU-06 — Google/Microsoft podían crear cuenta sola, sin invitación;
+  nunca explotado, F.2-2/F.2-3 sin credenciales reales) y **D-57** (la CSP de FU-05 bloqueaba la
+  hidratación de React en TODO el sitio, no solo en FU-07 — corregida con CSP de nonce por petición y
+  renderizado dinámico en toda la app; el gate D1 mejora, no empeora: Performance 98→100,
+  Best Practices 92→100). Queda `in_progress`: el criterio 2 exige los tres métodos de aceptación
+  funcionando, y Google/Microsoft no se pueden ejercer de punta a punta sin F.2-2/F.2-3. Detalle en
+  `docs/work_log.md`.

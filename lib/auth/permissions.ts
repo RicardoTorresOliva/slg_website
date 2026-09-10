@@ -75,6 +75,23 @@ const ALCANCE_POR_ACCION: Record<Accion, ApiScope | null> = {
 };
 
 /**
+ * ¿Este rol es de plantilla de SLG? No es una decisión de autorización en sí
+ * —eso lo decide `puedeHacer`/`exigir`—, es la clasificación que otras
+ * unidades necesitan para cosas como elegir a qué superficie redirigir tras
+ * un evento (`/hq` vs `/portal`, FU-07). Vive aquí, no repetida a mano en cada
+ * llamador — `scripts/db/check-auth-encapsulado.ts` rechaza una comparación
+ * de rol fuera de `lib/auth/`.
+ */
+export function esRolDeSlg(role: UserRole): boolean {
+  return role === "slg_admin" || role === "slg_operator";
+}
+
+/** A qué superficie pertenece un rol recién ligado (FU-07: a dónde redirigir tras aceptar una invitación). */
+export function superficieDeRol(role: UserRole): "/hq" | "/portal" {
+  return esRolDeSlg(role) ? "/hq" : "/portal";
+}
+
+/**
  * ¿Puede este actor —persona o clave de API, ya autenticado en `ctx`— realizar
  * esta acción? Responde a nivel de rol/alcance; ver cabecera sobre el filtro de
  * asignación que falta para `ACCIONES_CON_FILTRO_DE_ASIGNACION`.

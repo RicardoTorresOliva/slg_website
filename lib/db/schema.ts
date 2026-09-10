@@ -213,14 +213,25 @@ export const invitation = pgTable(
       .notNull()
       .references(() => organization.id, { onDelete: "cascade" }),
     role: text("role").notNull().default("client_member"),
+    status: text("status").notNull().default("pending"),
     tokenHash: text("token_hash").notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    inviterId: text("inviter_id").references(() => user.id, { onDelete: "set null" }),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
     acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+    acceptedByUserId: text("accepted_by_user_id").references(() => user.id, { onDelete: "set null" }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    revokedByUserId: text("revoked_by_user_id").references(() => user.id, { onDelete: "set null" }),
     createdAt: createdAt(),
   },
   (t) => [
     uniqueIndex("uq_invitation_token").on(t.tokenHash),
     index("idx_invitation_org").on(t.organizationId),
+    uniqueIndex("uq_invitation_pending_per_email_org")
+      .on(t.organizationId, t.email)
+      .where(sqlPending(t.status)),
+    index("idx_invitation_org_status").on(t.organizationId, t.status, t.createdAt),
+    index("idx_invitation_pending_expiry").on(t.expiresAt).where(sqlPending(t.status)),
   ],
 );
 

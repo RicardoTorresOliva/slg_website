@@ -237,7 +237,7 @@ jobs:
       - name: Restricciones, inmutabilidad y políticas de fila
         # Escritas a mano: drizzle-kit genera tablas, no políticas ni guardas.
         run: |
-          for f in drizzle/0001_*.sql drizzle/0002_*.sql drizzle/0003_*.sql drizzle/0005_*.sql drizzle/0006_*.sql drizzle/0007_*.sql; do
+          for f in drizzle/0001_*.sql drizzle/0002_*.sql drizzle/0003_*.sql drizzle/0005_*.sql drizzle/0006_*.sql drizzle/0007_*.sql drizzle/0008_*.sql; do
             echo "→ $f"
             psql "$DATABASE_URL_MIGRATIONS" -v ON_ERROR_STOP=1 -f "$f"
           done
@@ -267,6 +267,13 @@ jobs:
         # Resend (criterios 3 y 6 literales): eso exige el dominio verificado
         # de F.2-4, que sigue [PENDIENTE] — ver docs/decision_log.md D-54.
         run: node scripts/email/test-email.ts
+
+      - name: FU-07 · invitaciones — emisión, revocación, reenvío, aceptación
+        # Contra Postgres y SMTP reales. NO ejercita Google/Microsoft de punta
+        # a punta (mitad del criterio 2): F.2-2/F.2-3 siguen [PENDIENTE] y sin
+        # credenciales reales Better Auth ni registra esos proveedores — ver
+        # docs/decision_log.md D-55/D-56/D-57.
+        run: node scripts/db/test-invitations.ts
 
       - name: Datos de ejemplo
         run: node scripts/db/seed.ts

@@ -13,34 +13,26 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
 
   /**
-   * Cabeceras de seguridad (B.8, FU-05 criterio 7).
+   * Cabeceras de seguridad (B.8, FU-05 criterio 7) — salvo
+   * `Content-Security-Policy`, que se fija en `proxy.ts` (FU-07): necesita un
+   * nonce distinto en cada petición, y `headers()` aquí se evalúa una vez por
+   * build/arranque, no por petición.
+   *
+   * Hallazgo propio (FU-07): la CSP estática que vivía aquí antes
+   * (`script-src 'self'`, sin nonce) bloqueaba la hidratación de React en
+   * TODAS las páginas, estáticas incluida la portada — nadie lo notó antes
+   * porque ninguna unidad hasta FU-07 enviaba un Client Component con
+   * interactividad real que lo hiciera visible. Detalle en `docs/decision_log.md`.
    *
    * `frame-ancestors 'none'` protege la aplicación de ser embebida. El visor de
    * entregables HTML es el caso contrario —él SÍ se embebe— y por eso vive en un
    * ORIGEN SEPARADO con su propia política (D-45), no bajo estas cabeceras.
    */
   async headers() {
-    const csp = [
-      "default-src 'self'",
-      // Next inyecta estilos en línea; el nonce llega en FU-06 con el middleware.
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob:",
-      // Montserrat se sirve desde nuestro dominio (RNF-14): sin terceros.
-      "font-src 'self'",
-      "script-src 'self'",
-      "connect-src 'self'",
-      "object-src 'none'",
-      "base-uri 'self'",
-      "form-action 'self'",
-      "frame-ancestors 'none'",
-      "upgrade-insecure-requests",
-    ].join("; ");
-
     return [
       {
         source: "/:path*",
         headers: [
-          { key: "Content-Security-Policy", value: csp },
           // Dos años y precarga: el sitio es HTTPS puro desde el primer día.
           { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
           { key: "X-Content-Type-Options", value: "nosniff" },

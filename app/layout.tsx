@@ -18,6 +18,20 @@ export const metadata: Metadata = {
   description: "Precision with Purpose.",
 };
 
+/**
+ * Renderizado dinámico en TODO el sitio (FU-07, hallazgo propio).
+ *
+ * La CSP con nonce que `proxy.ts` fija en cada petición es, según la propia
+ * documentación de Next.js, incompatible con la optimización estática y con
+ * ISR: una página generada en el build no puede llevar un nonce que todavía
+ * no existe. La alternativa —sin nonce— es la que dejaba bloqueada TODA la
+ * hidratación de React bajo la CSP estricta (ver `next.config.ts` y
+ * `docs/decision_log.md`). Se hereda a cada ruta; ninguna necesita declararlo
+ * por su cuenta. Verificado que el gate D1 (Lighthouse, D-50) sigue en verde
+ * con este cambio — `docs/work_log.md`.
+ */
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {

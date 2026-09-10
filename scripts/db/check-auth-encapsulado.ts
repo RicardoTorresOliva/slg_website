@@ -17,6 +17,9 @@ const PERMITIDOS = new Set([
   "lib/auth/org.ts",
   "lib/auth/api-keys.ts",
   "lib/auth/permissions.ts",
+  "lib/auth/invitations.ts",
+  "lib/auth/invitation-signup.ts",
+  "lib/auth/client.ts",
   "lib/db/context.ts",
   "app/api/auth/[...all]/route.ts",
 ]);

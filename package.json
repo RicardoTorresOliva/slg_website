@@ -22,6 +22,7 @@
     "test:contracts": "node scripts/db/test-contratos.ts",
     "test:nocompile": "node scripts/db/test-no-compila.ts",
     "test:auth": "node scripts/db/test-auth.ts",
+    "test:invitations": "node scripts/db/test-invitations.ts",
     "check:auth-encapsulado": "node scripts/db/check-auth-encapsulado.ts",
     "check:email-encapsulado": "node scripts/email/check-email-encapsulado.ts",
     "test:email": "node scripts/email/test-email.ts",

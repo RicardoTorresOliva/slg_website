@@ -82,12 +82,26 @@ export const auth = betterAuth({
   // F.2-2/F.2-3 siguen [PENDIENTE]: sin credenciales reales, el proveedor
   // social no se registra — Better Auth simplemente no ofrece ese botón, no
   // falla al arrancar. Se activa solo con las variables cargadas.
+  //
+  // `disableImplicitSignUp: true` en LOS DOS (FU-07, hallazgo propio antes de
+  // que F.2-2/F.2-3 llegaran a activarse): `emailAndPassword.disableSignUp`
+  // (arriba) NO alcanza a los proveedores sociales — es un flag distinto que
+  // el manejador de OAuth de Better Auth nunca lee (verificado en el código
+  // fuente de la librería, node_modules/better-auth/dist/api/routes/callback.mjs).
+  // Sin este flag, cualquiera con una cuenta de Google/Microsoft podría
+  // iniciar sesión por primera vez y Better Auth le crearía una cuenta sola,
+  // saltándose "acceso de clientes SOLO por invitación" (`data_model` §10-10)
+  // para los dos métodos sociales. `disableImplicitSignUp` bloquea esa alta
+  // implícita; `lib/auth/invitations.ts` la reactiva SOLO para la sesión de
+  // aceptación de una invitación, pasando `requestSignUp: true` en esa
+  // llamada concreta — nunca por defecto.
   socialProviders: {
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
       ? {
           google: {
             clientId: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            disableImplicitSignUp: true,
           },
         }
       : {}),
@@ -100,6 +114,7 @@ export const auth = betterAuth({
             // Entra puede no emitir `email` en cuentas gestionadas (F.1): el
             // ancla es `oid` (== accountId aquí), nunca el email.
             requireSelectAccount: true,
+            disableImplicitSignUp: true,
           },
         }
       : {}),

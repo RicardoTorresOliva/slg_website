@@ -17,5 +17,17 @@
   "email.captureNotice.subject": "[PENDIENTE: copy FU-01] New capture: {{leadName}}",
   "email.captureNotice.body": "[PENDIENTE: copy FU-01] {{leadName}} ({{leadEmail}}) downloaded {{downloadTitle}}. CRM record: {{crmContactUrl}}.",
   "email.captureFailedAlert.subject": "[PENDIENTE: copy FU-01] CRM delivery failed: {{leadEmail}}",
-  "email.captureFailedAlert.body": "[PENDIENTE: copy FU-01] The capture from {{leadEmail}} did not reach the CRM after 5 attempts. Manual retry available in HQ. Reference: {{leadCaptureId}}."
+  "email.captureFailedAlert.body": "[PENDIENTE: copy FU-01] The capture from {{leadEmail}} did not reach the CRM after 5 attempts. Manual retry available in HQ. Reference: {{leadCaptureId}}.",
+  "invitation.title": "[PENDIENTE: copy FU-01] You've been invited to {{organizationName}}",
+  "invitation.subtitle": "[PENDIENTE: copy FU-01] Accept with {{email}} using any of these options.",
+  "invitation.invalid.title": "[PENDIENTE: copy FU-01] This link is no longer valid",
+  "invitation.invalid.body": "[PENDIENTE: copy FU-01] It may have expired, already been used, or been revoked. Ask whoever invited you for a new link.",
+  "invitation.password.label": "[PENDIENTE: copy FU-01] Choose a password",
+  "invitation.password.button": "[PENDIENTE: copy FU-01] Create account",
+  "invitation.google.button": "[PENDIENTE: copy FU-01] Continue with Google",
+  "invitation.microsoft.button": "[PENDIENTE: copy FU-01] Continue with Microsoft",
+  "invitation.confirmEmail.label": "[PENDIENTE: copy FU-01] Confirm your email to complete linking",
+  "invitation.confirmEmail.button": "[PENDIENTE: copy FU-01] Confirm",
+  "invitation.error.emailMismatch": "[PENDIENTE: copy FU-01] That email doesn't match the invitation.",
+  "invitation.error.generic": "[PENDIENTE: copy FU-01] Something failed. Try again."
 }

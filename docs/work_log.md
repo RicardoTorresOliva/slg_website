@@ -723,3 +723,104 @@ Sin llamador real todavía (igual que FU-08): `emitirUrlFirmadaDeDescarga`/`emit
 las usarán DU-08 (biblioteca de descargas), DU-13/DU-15 (entregables en HQ/portal) cuando se
 construyan. El paso de sincronización contenido→`download` (`architecture` §5.3) tampoco se construye
 aquí: es un paso de despliegue que depende de que la tabla `download` exista primero.
+
+## 2026-09-10 · FU-07 — Servicio de invitaciones · `in_progress`
+
+Tercera unidad de la misma sesión autónoma, inmediatamente después de FU-09. La más profunda de las
+tres: primera con UI real (`app/(auth)/invitacion/[token]/`), primera que crea cuentas y sesiones de
+verdad, y la que sacó a la luz dos hallazgos que afectaban a FU-05 y FU-06, ya `done`.
+
+**Hecho:**
+
+| Pieza | Evidencia |
+|---|---|
+| `drizzle/0008_invitacion_completa.sql` | `invitation` completada contra `data_model` §5.7 (D-55): columnas, restricciones, índices parciales, política RESTRICTIVE de INSERT, más una política de sistema en `membership` para poder crear la primera membership de una cuenta |
+| `lib/auth/invitation-signup.ts` | Segunda instancia de Better Auth, SOLO con `disableSignUp: false` — única forma de crear una cuenta con contraseña sin pasar por el alta pública deshabilitada (F.1), reutilizando el hash/validación reales de la librería en vez de reinventarlos |
+| `lib/auth/invitations.ts` | `crearInvitacion`, `revocarInvitacion`, `reenviarInvitacion` (testigo nuevo cada vez), `buscarInvitacionVigente` (mensaje neutro), `aceptarInvitacionConContrasena`, `completarAceptacionInvitacion` (núcleo común a los tres métodos) |
+| `lib/auth/client.ts` | Primer `createAuthClient` (Client Components) del proyecto |
+| `app/(auth)/invitacion/[token]/` | Página de aceptación (servidor) + formulario (cliente: contraseña, Google, Microsoft) + ruta `/completar` para el regreso de OAuth, con fallback de confirmación explícita de correo (criterio 3) |
+| `scripts/db/test-invitations.ts` | 27 comprobaciones contra Postgres y SMTP reales |
+
+### Hallazgo 1 (D-55): `invitation` incompleta desde FU-04 — mismo patrón que `email_delivery`
+
+`invitation` solo tenía `id, organization_id, email, role, token_hash, expires_at, accepted_at,
+created_at`. Sin `status`/`revoked_at` no hay forma de expresar "revocada"; sin `sent_at`, no hay forma
+de saber si el correo salió. Cerrado en 0008, con la política RESTRICTIVE que `data_model` §5.7 exige
+como segunda capa contra que un `client_admin` invite a un `slg_admin` o a una organización `slg`.
+
+### Hallazgo 2 (D-56): un hueco de seguridad en FU-06, nunca explotado, verificado en el código fuente
+
+Al construir el botón "Continuar con Google", se comprobó si `emailAndPassword.disableSignUp` (F.1,
+sin alta pública) también protegía el alta por OAuth — y no: es un flag distinto que el manejador de
+OAuth de Better Auth nunca lee (`node_modules/better-auth/dist/context/create-context.mjs`,
+`.../api/routes/callback.mjs`, leídos directamente, no la documentación). Sin `disableImplicitSignUp`
+en cada proveedor social, cualquiera con una cuenta de Google o Microsoft se habría podido crear sesión
+sola la primera vez que iniciara sesión, saltándose "acceso solo por invitación" (`data_model` §10-10).
+**Nunca se llegó a explotar**: F.2-2/F.2-3 siguen sin credenciales reales, así que Google/Microsoft
+nunca se registraron en ningún entorno desplegado. Corregido en `lib/auth/config.ts`; se reactiva solo
+para la sesión de aceptación de una invitación (`requestSignUp: true`, botones del formulario).
+
+### Hallazgo 3 (D-57): la CSP de FU-05 bloqueaba la hidratación de React en TODO el sitio
+
+El más grave de los tres. Al hacer clic en "Crear cuenta" en el navegador real, no pasaba nada — la
+consola mostraba `Executing inline script violates ... 'script-src 'self''` y `React error #412`
+(fallo de hidratación). Comprobado contra el build de producción real (`.next/standalone`, no `next
+dev`): el mismo fallo aparece en **la portada**, la página más simple del sitio, con cero relación con
+FU-07. Ninguna unidad anterior lo había notado porque ninguna enviaba un Client Component con
+interactividad real — una página estática sin botones "se ve bien" aunque su hidratación esté rota.
+
+Causa: `next.config.ts` fijaba una CSP **estática** (`script-src 'self'`, sin nonce) desde FU-05; el
+propio comentario del archivo ya decía "el nonce llega en FU-06 con el middleware" — una promesa que
+`proxy.ts` nunca cumplió. Corregido siguiendo el patrón oficial de Next.js: `proxy.ts` genera un nonce
+por petición y lo fija en la CSP (`script-src 'self' 'nonce-... ' 'strict-dynamic'`); la consecuencia
+documentada por Next.js es que **toda la aplicación debe renderizarse dinámicamente** (un nonce no
+puede existir en una página generada en el build), así que `app/layout.tsx` fija
+`dynamic = "force-dynamic"` para todo el árbol. `style-src` se queda en `'unsafe-inline'` sin nonce a
+propósito: los atributos `style="..."` en línea que React aplica no los cubre un nonce por
+especificación CSP3 (solo elementos `<script>`/`<style>`), verificado con el propio mensaje de error
+del navegador.
+
+**Verificado que el cambio no cuesta rendimiento — al contrario**: el gate D1 (Lighthouse, D-50),
+medido contra el mismo build de producción antes y después:
+
+| | Antes (CSP rota, estático) | Después (CSP con nonce, dinámico) |
+|---|---|---|
+| Performance | 98 | 98–100 |
+| Best Practices | 92 | 100 |
+| LCP | 2,3 s | 1,2–2,3 s |
+
+Best Practices subía de 92 a 100 porque las violaciones de CSP en consola —invisibles hasta que se
+miraron— ya estaban descontando puntos que nadie había atado a esta causa.
+
+### Verificado de punta a punta, en el navegador real
+
+`scripts/db/test-invitations.ts` (27 comprobaciones) prueba el módulo contra Postgres y SMTP reales:
+matriz B.3 en la emisión (incluida la política RESTRICTIVE con un INSERT directo que se salta
+`exigir`), duplicados, canje neutro, revocación, reenvío con testigo nuevo, aceptación por contraseña
+de punta a punta (cuenta, membership, `user.role`, invitación `accepted`) y el núcleo común de
+aceptación con y sin confirmación explícita de correo (criterio 3).
+
+Además, **contra el navegador real y el build de producción** (`.next/standalone`, no un supuesto): se
+sembró una invitación real, se abrió `/invitacion/[token]`, se rellenó la contraseña, se hizo clic en
+"Crear cuenta", y se confirmó en Postgres que la cuenta, la membership (`org_role = client_admin`) y la
+invitación (`status = accepted`, `accepted_by_user_id`) quedaron exactamente como debían — con
+`npm run verify` completo en verde después.
+
+### Lo que NO se pudo verificar, y por qué (residual, no oculto)
+
+- **Google y Microsoft de punta a punta** (mitad del criterio 2): F.2-2/F.2-3 siguen `[PENDIENTE]` —
+  sin credenciales reales, Better Auth ni siquiera registra esos proveedores, así que los botones no
+  existen todavía en la página. El código (`disableImplicitSignUp` + `requestSignUp` + la ruta
+  `/completar`) está escrito y revisado contra el código fuente real de Better Auth, no solo probado
+  con una sesión fabricada (`completarAceptacionInvitacion`, que no distingue cómo se creó la sesión).
+- Por eso la unidad queda `in_progress`, no `done`: el criterio 2 exige los TRES métodos funcionando,
+  y dos de ellos no se pueden ejercer sin F.2-2/F.2-3.
+
+### Fuera de alcance de FU-07, a propósito
+
+Sin llamador de emisión real todavía: "aquí la emisión se ejerce por semilla y por prueba"
+(`implementation/user_units.md`) — la superficie de emisión llega con DU-14 (HQ) y DU-21 (portal). El
+reintento automático de la cola de FU-08 tampoco se registró para `kind = 'invitation'`: `reenviarInvitacion`
+(manual) ya satisface el criterio 4 ("queda creada y reenviable"), y un testigo de invitación no se
+puede regenerar de forma automática sin volver a mintarlo — se deja para cuando DU-14/DU-21 decidan si
+hace falta.

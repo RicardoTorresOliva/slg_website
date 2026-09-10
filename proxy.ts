@@ -1,8 +1,10 @@
+import { randomUUID } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 
 /**
- * proxy.ts — Protección de staging (FU-05) + clasificador barato de FU-06.
+ * proxy.ts — Protección de staging (FU-05) + clasificador barato de FU-06 +
+ * Content-Security-Policy con nonce (FU-07).
  *
  * Antes era `middleware.ts`; Next 16 renombra la convención a `proxy.ts`
  * (mismo contrato). Se aprovecha el cambio para no dejar dos archivos
@@ -19,6 +21,15 @@ import { getSessionCookie } from "better-auth/cookies";
  * `api/v1` contra `lib/auth/api-keys.ts`. Que este archivo se equivoque no
  * abre nada: en el peor caso, deja pasar una petición que la capa de verdad
  * rechaza después.
+ *
+ * FU-07 — CSP con nonce (hallazgo propio, `docs/decision_log.md`): la CSP
+ * estática que vivía en `next.config.ts` (`script-src 'self'`, sin nonce)
+ * bloqueaba la hidratación de React en TODAS las páginas. La solución
+ * documentada por Next.js exige un nonce distinto EN CADA PETICIÓN — que
+ * `next.config.ts` no puede generar (se evalúa una vez, no por petición) — y,
+ * a cambio, exige que TODA la aplicación se renderice dinámicamente
+ * (`app/layout.tsx` fija `dynamic = "force-dynamic"`): la generación estática
+ * no puede incluir un nonce que todavía no existe en tiempo de build.
  */
 
 const USUARIO = process.env.STAGING_BASIC_AUTH_USER;
@@ -63,8 +74,40 @@ function esRutaDe(ruta: string, prefijo: string): boolean {
   return ruta === prefijo || ruta.startsWith(prefijo + "/");
 }
 
+const DEV = process.env.NODE_ENV === "development";
+
+/**
+ * Patrón documentado por Next.js para App Router (content-security-policy.mdx):
+ * `strict-dynamic` deja que los propios scripts de Next (ya autorizados por
+ * el nonce) carguen los suyos, sin listarlos uno a uno. `'unsafe-eval'` solo
+ * en desarrollo, que Turbopack lo necesita para el refresco en caliente.
+ */
+function construirCsp(nonce: string): string {
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${DEV ? " 'unsafe-eval'" : ""}`,
+    // `unsafe-inline`, no nonce: React aplica ATRIBUTOS `style="..."` en
+    // línea (no un elemento `<style>`), y un nonce no cubre atributos — la
+    // propia CSP lo advierte ("hashes/nonces do not apply to ... style
+    // attributes"). El riesgo real que importa aquí es `script-src`, que sí
+    // queda con nonce estricto.
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob:",
+    // Montserrat se sirve desde nuestro dominio (RNF-14): sin terceros.
+    "font-src 'self'",
+    "connect-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "upgrade-insecure-requests",
+  ].join("; ");
+}
+
 export function proxy(request: NextRequest) {
   const ruta = request.nextUrl.pathname;
+  const nonce = Buffer.from(randomUUID()).toString("base64");
+  const csp = construirCsp(nonce);
 
   // ─── FU-05: staging, primero — nada de lo de abajo importa si esto bloquea ──
   if (STAGING_PROTEGIDO && !RUTAS_ABIERTAS_EN_STAGING.some((r) => esRutaDe(ruta, r))) {
@@ -77,6 +120,7 @@ export function proxy(request: NextRequest) {
           "WWW-Authenticate": 'Basic realm="SLG Agency staging", charset="UTF-8"',
           "X-Robots-Tag": "noindex, nofollow, noarchive",
           "Cache-Control": "no-store",
+          "Content-Security-Policy": csp,
         },
       });
     }
@@ -84,20 +128,32 @@ export function proxy(request: NextRequest) {
 
   // ─── FU-06: api/v1 — sin cabecera, ni se molesta en llegar al handler ──────
   if (esRutaDe(ruta, "/api/v1") && !request.headers.get("authorization")) {
-    return NextResponse.json(
+    const respuesta = NextResponse.json(
       { error: { code: "no_autenticado", message: "Falta la cabecera Authorization." } },
       { status: 401 },
     );
+    respuesta.headers.set("Content-Security-Policy", csp);
+    return respuesta;
   }
 
   // ─── FU-06: hq/portal — sin cookie de sesión, directo a /acceder ──────────
   if ((esRutaDe(ruta, "/hq") || esRutaDe(ruta, "/portal")) && !getSessionCookie(request)) {
     const destino = new URL("/acceder", request.url);
     destino.searchParams.set("volver", ruta);
-    return NextResponse.redirect(destino);
+    const respuesta = NextResponse.redirect(destino);
+    respuesta.headers.set("Content-Security-Policy", csp);
+    return respuesta;
   }
 
-  const respuesta = NextResponse.next();
+  // FU-07: el nonce viaja en la petición reenviada (Next lo lee ahí para
+  // aplicarlo a sus propios scripts durante el renderizado) Y en la
+  // respuesta (lo que el navegador de verdad hace cumplir).
+  const cabecerasDeReenvio = new Headers(request.headers);
+  cabecerasDeReenvio.set("x-nonce", nonce);
+  cabecerasDeReenvio.set("Content-Security-Policy", csp);
+
+  const respuesta = NextResponse.next({ request: { headers: cabecerasDeReenvio } });
+  respuesta.headers.set("Content-Security-Policy", csp);
   if (STAGING_PROTEGIDO) {
     // Autenticado en staging, o ruta abierta: nunca indexable de todos modos.
     respuesta.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");

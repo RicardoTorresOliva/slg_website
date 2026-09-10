@@ -17,5 +17,17 @@
   "email.captureNotice.subject": "[PENDIENTE: copy FU-01] Nueva captura: {{leadName}}",
   "email.captureNotice.body": "[PENDIENTE: copy FU-01] {{leadName}} ({{leadEmail}}) descargó {{downloadTitle}}. Ficha en el CRM: {{crmContactUrl}}.",
   "email.captureFailedAlert.subject": "[PENDIENTE: copy FU-01] Fallo de entrega al CRM: {{leadEmail}}",
-  "email.captureFailedAlert.body": "[PENDIENTE: copy FU-01] La captura de {{leadEmail}} no llegó al CRM tras 5 intentos. Reintento manual disponible en HQ. Referencia: {{leadCaptureId}}."
+  "email.captureFailedAlert.body": "[PENDIENTE: copy FU-01] La captura de {{leadEmail}} no llegó al CRM tras 5 intentos. Reintento manual disponible en HQ. Referencia: {{leadCaptureId}}.",
+  "invitation.title": "[PENDIENTE: copy FU-01] Te han invitado a {{organizationName}}",
+  "invitation.subtitle": "[PENDIENTE: copy FU-01] Acepta con {{email}} usando cualquiera de estas opciones.",
+  "invitation.invalid.title": "[PENDIENTE: copy FU-01] Este enlace ya no es válido",
+  "invitation.invalid.body": "[PENDIENTE: copy FU-01] Puede haber caducado, haberse usado ya o haber sido revocado. Pide a quien te invitó que te envíe un enlace nuevo.",
+  "invitation.password.label": "[PENDIENTE: copy FU-01] Elige una contraseña",
+  "invitation.password.button": "[PENDIENTE: copy FU-01] Crear cuenta",
+  "invitation.google.button": "[PENDIENTE: copy FU-01] Continuar con Google",
+  "invitation.microsoft.button": "[PENDIENTE: copy FU-01] Continuar con Microsoft",
+  "invitation.confirmEmail.label": "[PENDIENTE: copy FU-01] Confirma tu correo para completar la vinculación",
+  "invitation.confirmEmail.button": "[PENDIENTE: copy FU-01] Confirmar",
+  "invitation.error.emailMismatch": "[PENDIENTE: copy FU-01] Ese correo no coincide con la invitación.",
+  "invitation.error.generic": "[PENDIENTE: copy FU-01] Algo falló. Vuelve a intentarlo."
 }
