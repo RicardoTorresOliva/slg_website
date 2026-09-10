@@ -469,7 +469,10 @@ por si acaso.
 
 Verificado local: headers de seguridad idénticos (`curl -D -` contra
 `/api/health` y `/`), `npm run verify` completo en ~22 s sin la advertencia de
-Next, y sin procesos huérfanos después (`ps aux` limpio). **Pendiente de
-reconfirmar en el runner real** antes de darlo por cerrado — «verde en local
-no es verde en CI» ya se demostró una vez esta misma sesión (el cuelgue de
-3h39m), así que la confianza se gana en GitHub, no en esta máquina.
+Next, y sin procesos huérfanos después (`ps aux` limpio).
+
+**Confirmado en el runner de GitHub** (run `34420475470`): job completo en
+**1 min 11 s**. El paso del gate corrió en **9,3 s** — Performance 99 ·
+Accesibilidad 100 · Best Practices 92 · SEO 100 · LCP 1,6 s — y pasó limpio a
+«Post Run» sin quedarse esperando nada. Mide ahora el binario exacto que
+despliega el `Dockerfile`, verificado en el sitio donde de verdad importa.

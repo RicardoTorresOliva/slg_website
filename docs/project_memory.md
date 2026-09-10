@@ -54,10 +54,14 @@ Ricardo — ninguno de código.
 - `.env.example` con todos los nombres, cero valores.
 - Pipeline de CI con los seis frenos y sus pruebas negativas (criterios 4 y 5).
 - `setup-app-role.ts`, protección de staging (`middleware.ts` + `test-staging-auth.ts`).
-- **Gate D1 por Lighthouse** (D-50): reemplaza el presupuesto de KB. Tuvo un hallazgo serio —
-  `check-lighthouse.ts` medía bien pero **colgaba el pipeline 3h39m** en el runner real de GitHub por
-  un proceso huérfano de `next-server`; corregido (spawn `detached` + matar el grupo + `process.exit`
-  de respaldo) y **reconfirmado en verde en GitHub** (1m22s, no solo en local).
+- **Gate D1 por Lighthouse** (D-50): reemplaza el presupuesto de KB. Dos hallazgos reales, los dos
+  corregidos y reconfirmados en el runner de GitHub, no solo en local: (1) `check-lighthouse.ts` medía
+  bien pero **colgaba el pipeline 3h39m** por un proceso huérfano de `next-server` (`npx next start`
+  encadenaba hijos) — corregido; (2) medía contra `next start`, que Next avisa que **no** es la vía
+  soportada con `output: "standalone"` — corregido para arrancar `node server.js` sobre
+  `.next/standalone`, el mismo binario que despliega el `Dockerfile`. Confirmado en verde en GitHub:
+  job completo en 1m11s, gate en 9,3s (Performance 99 · Accesibilidad 100 · Best Practices 92 ·
+  SEO 100 · LCP 1,6s).
 - **Criterio 2 (R-20)**: `main` protegida — Pull Request y los dos checks de CI en verde, obligatorios,
   sin `push` directo. Confirmado con Ricardo antes de aplicarlo.
 - **Criterio 3 (R-25)**: DNS verificado por consulta directa — los diez intocables intactos, `staging`
