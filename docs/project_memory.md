@@ -75,9 +75,11 @@ Ricardo — ninguno de código.
    staging dentro del mismo `slgwebpostgres` — si no, los dos entornos comparten datos.
 2. **Criterio 8**: provocar una caída una vez y confirmar que UptimeRobot avisa por el canal fuera del
    VPS. No se puede simular desde aquí.
-3. Menor, no bloquea hasta FU-09: los dos cubos de MinIO (`downloads`, `deliverables`) — **D-51**: la
-   app usará `MINIO_ROOT_USER`/`PASSWORD` directamente (R-41, revisar antes del go-live), porque el
-   Console gratuito ya no deja crear una clave acotada desde la web.
+3. ~~Los dos cubos de MinIO (`downloads`, `deliverables`)~~ — **hecho** (confirmado por Ricardo,
+   2026-09-09/10). **D-51 sigue en pie**: la app usará `MINIO_ROOT_USER`/`PASSWORD` directamente
+   (R-41, revisar antes del go-live), porque el Console gratuito ya no deja crear una clave acotada
+   desde la web. No verificado por el agente que los dos queden **privados** (no hay acceso al
+   Console) — confirmarlo la primera vez que FU-09 suba un archivo de prueba.
 
 ## R-40 resuelto — D-50 (2026-09-09)
 **Ya no bloquea el cierre de FU-05.** El gate D1 y el stack elegido eran incompatibles: el suelo de
