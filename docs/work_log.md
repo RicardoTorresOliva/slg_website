@@ -444,3 +444,32 @@ GitHub, no por `push` directo.
 
 `develop` sigue sin protección: el flujo de trabajo diario del agente no
 cambia, solo la puerta de entrada a producción.
+
+## 2026-09-09 · Hallazgo propio — el gate D1 no medía el binario real
+
+Revisando el gate ya verificado en verde, `next start` avisaba en su propia
+salida: *"next start" does not work with "output: standalone" configuration.
+Use "node .next/standalone/server.js" instead.* `next.config.ts` fija
+`output: "standalone"` desde FU-02, y el `Dockerfile` corre exactamente ese
+binario en producción. El gate estaba midiendo un camino de ejecución que
+producción **nunca toma** — funcionaba, pero no era lo real.
+
+**Corregido**: `check-lighthouse.ts` arranca `node server.js` sobre
+`.next/standalone` (el mismo binario del `Dockerfile`, con `HOSTNAME=0.0.0.0`
+y `PORT` iguales), no `npx next start`. El paso «Compilación» del pipeline
+pasa de `npm run build` a `npm run build:standalone` — el script que empaqueta
+`static/` y `public/` dentro de `standalone/`, el mismo hueco que ya causó un
+fallo real en FU-02 si se hace a mano (documentado en el propio `Dockerfile`).
+
+**Efecto colateral bueno**: al ya no depender de `npx next start` (que
+encadenaba `npx → next → next-server`), el motivo original del cuelgue de
+3h39m deja de poder ocurrir — `node server.js` es un solo proceso. La higiene
+de matar por grupo y el `process.exit()` de respaldo se quedan de todos modos,
+por si acaso.
+
+Verificado local: headers de seguridad idénticos (`curl -D -` contra
+`/api/health` y `/`), `npm run verify` completo en ~22 s sin la advertencia de
+Next, y sin procesos huérfanos después (`ps aux` limpio). **Pendiente de
+reconfirmar en el runner real** antes de darlo por cerrado — «verde en local
+no es verde en CI» ya se demostró una vez esta misma sesión (el cuelgue de
+3h39m), así que la confianza se gana en GitHub, no en esta máquina.

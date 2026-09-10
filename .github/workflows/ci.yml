@@ -85,7 +85,11 @@ jobs:
         run: node scripts/db/test-contratos.ts
 
       - name: Compilación
-        run: npm run build
+        # `build:standalone`, no `build` a secas: el gate D1 (paso siguiente)
+        # mide contra `.next/standalone/server.js`, el mismo binario que
+        # arranca el Dockerfile — no contra un `next start` que Next avisa
+        # que no es la vía soportada con `output: "standalone"`.
+        run: npm run build:standalone
 
       - name: Protección de staging
         # Solo contra el staging desplegado, y solo si hay credenciales en los

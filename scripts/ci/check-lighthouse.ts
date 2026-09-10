@@ -7,14 +7,23 @@
  * presupuesto de KB era un proxy mal calibrado — 172 KB de suelo de
  * React 19 + Next 16 App Router, cero librerías propias, con Lighthouse en
  * 98/100/92/100 — no el objetivo. El objetivo es la experiencia de carga
- * real, y eso es lo que este script mide, contra el build real arrancado con
- * `next start`, no una estimación.
+ * real, y eso es lo que este script mide.
+ *
+ * Arranca `node server.js` sobre la salida `.next/standalone` — el mismo
+ * servidor que corre el `Dockerfile` en producción — y no `next start`:
+ * `next.config.ts` fija `output: "standalone"`, y Next avisa en voz alta que
+ * `next start` **no** es la vía soportada con esa configuración. Medir contra
+ * `next start` habría sido medir un camino de ejecución que producción nunca
+ * toma; `npm run build:standalone` (que corre antes, en CI) es lo que empaqueta
+ * `static/` y `public/` dentro de `standalone/`, exactamente como el
+ * `Dockerfile` — el hueco que ya causó un fallo real en FU-02 si se hace a mano.
  *
  * Rutas medidas hoy: solo Home — es la única página pública que existe en
  * M0-A. RNF-01 exige tres páginas (Home, un servicio, un artículo); DU-07
  * añade las otras dos a esta lista cuando existan, y cierra el gate D1.
  */
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
+import fs from "node:fs";
 import * as chromeLauncher from "chrome-launcher";
 import lighthouse from "lighthouse";
 
@@ -79,12 +88,11 @@ async function medirRuta(ruta: string, puertoChrome: number): Promise<ResultadoR
 }
 
 function matarGrupo(servidor: ChildProcessWithoutNullStreams): void {
-  // `npx next start` no es un solo proceso: encadena hijos (npx → next →
-  // next-server). Matar solo el PID que devuelve `spawn` deja al servidor
-  // real huérfano y corriendo — es justo lo que colgó el pipeline en CI 3h39m
-  // (2026-09-09): el paso terminó su trabajo y se quedó esperando un proceso
-  // que nadie mató. `detached: true` al arrancar pone al hijo en su propio
-  // grupo de procesos, y matar con PID **negativo** mata el grupo entero.
+  // Higiene defensiva, ya no la causa del cuelgue de 3h39m del 2026-09-09
+  // (ese venía de `npx next start`, que encadenaba npx → next → next-server y
+  // dejaba huérfano al último). `node server.js` es un solo proceso, pero se
+  // mantiene `detached: true` + PID negativo por si algún día vuelve a haber
+  // un hijo de por medio — matar con PID negativo mata el grupo entero.
   if (!servidor.pid) return;
   try {
     process.kill(-servidor.pid, "SIGKILL");
@@ -96,11 +104,29 @@ function matarGrupo(servidor: ChildProcessWithoutNullStreams): void {
 async function main() {
   console.log("Gate D1 — Lighthouse móvil (D-50)\n");
 
+  const RAIZ_STANDALONE = "./.next/standalone";
+  if (!fs.existsSync(`${RAIZ_STANDALONE}/server.js`)) {
+    console.error(
+      `\n✗ No existe ${RAIZ_STANDALONE}/server.js. ` +
+        "Ejecuta `npm run build:standalone` (no `npm run build` a secas) antes de este script: " +
+        "es el paso que empaqueta static/ y public/ dentro de standalone/, igual que el Dockerfile.\n",
+    );
+    process.exitCode = 1;
+    return;
+  }
+
   let salidaServidor = "";
+  // `node server.js`, no `npx next start`: es un solo proceso (el standalone
+  // de Next no hace fork de un hijo aparte), así que ya no depende de matar
+  // una cadena npx→next→next-server para no colgar el paso de CI.
   const servidor: ChildProcessWithoutNullStreams = spawn(
-    "npx",
-    ["next", "start", "-p", String(PUERTO)],
-    { env: { ...process.env, NODE_ENV: "production" }, detached: true },
+    process.execPath,
+    ["server.js"],
+    {
+      cwd: RAIZ_STANDALONE,
+      env: { ...process.env, NODE_ENV: "production", PORT: String(PUERTO), HOSTNAME: "0.0.0.0" },
+      detached: true,
+    },
   );
   servidor.stdout.on("data", (d) => (salidaServidor += String(d)));
   servidor.stderr.on("data", (d) => (salidaServidor += String(d)));
