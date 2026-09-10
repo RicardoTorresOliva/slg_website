@@ -508,6 +508,12 @@ export const emailDelivery = pgTable(
     templateKey: text("template_key").notNull(),
     subjectKey: text("subject_key").notNull(),
     locale: text("locale").notNull(),
+    /** `invitation` · `lead_capture` · `user` — sin FK (§2.4): la evidencia no depende de la vida del hecho. */
+    relatedEntityType: text("related_entity_type"),
+    relatedEntityId: text("related_entity_id"),
+    organizationId: text("organization_id").references(() => organization.id, {
+      onDelete: "restrict",
+    }),
     status: text("status").notNull().default("pending"),
     attempts: integer("attempts").notNull().default(0),
     providerMessageId: text("provider_message_id"),
@@ -515,9 +521,17 @@ export const emailDelivery = pgTable(
     providerStatus: text("provider_status"),
     lastError: text("last_error"),
     nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
     createdAt: createdAt(),
   },
-  (t) => [index("idx_email_pending").on(t.nextAttemptAt).where(sqlPending(t.status))],
+  (t) => [
+    index("idx_email_queue").on(t.nextAttemptAt).where(sqlPending(t.status)),
+    index("idx_email_related").on(t.relatedEntityType, t.relatedEntityId, t.createdAt),
+    index("idx_email_to").on(t.toEmail, t.createdAt),
+    index("idx_email_failed")
+      .on(t.createdAt)
+      .where(sql`${t.status} = 'failed'`),
+  ],
 );
 
 /* ── Ayudas de índice parcial ─────────────────────────────────────────────── */
@@ -538,4 +552,5 @@ export const ORG_SCOPED_TABLES = [
   "deliverable",
   "announcement",
   "agent_event",
+  "email_delivery",
 ] as const;

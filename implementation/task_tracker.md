@@ -38,7 +38,8 @@ se ha producido ningún entregable.
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 33 `pending` · 0 `in_progress` · 0 `blocked` · 0 `review` · **5 `done`** (FU-02, FU-03, FU-04 · 2026-09-08; FU-05, FU-06 · 2026-09-10). **M0-A completo.** Siguiente: FU-08 (FU-07 depende también de FU-08, que aún no empieza).
+**Estado global:** 31 `pending` · 1 `in_progress` (FU-08) · 0 `blocked` · 0 `review` · **6 `done`** (FU-02, FU-03, FU-04 · 2026-09-08; FU-05, FU-06, FU-09 · 2026-09-10). **M0-A completo.** Siguiente:
+cerrar FU-08 cuando F.2-4/P-3/P-4 se resuelvan de verdad; FU-07 depende también de FU-08.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -58,8 +59,8 @@ se ha producido ningún entregable.
 | ━━━ | ━━━ | **▼ M0-B · FUNDACIONES: IDENTIDAD Y SERVICIOS COMPARTIDOS** | ━━━ | ━━━ | ━━━ |
 | FU-06 | FU | Módulo de identidad y autorización | M0-B | FU-04, FU-05 | `done` |
 | FU-07 | FU | Servicio de invitaciones | M0-B | FU-06, FU-08 | `pending` |
-| FU-08 | FU | Adaptador de correo transaccional | M0-B | FU-05 · F.2-4 | `pending` |
-| FU-09 | FU | Almacenamiento de archivos y URLs firmadas | M0-B | FU-05 · `api_contracts` | `pending` |
+| FU-08 | FU | Adaptador de correo transaccional | M0-B | FU-05 · F.2-4 | `in_progress` |
+| FU-09 | FU | Almacenamiento de archivos y URLs firmadas | M0-B | FU-05 · `api_contracts` | `done` |
 | DU-01 | DU | Acceso, sesión y recuperación por los tres métodos | M0-B | FU-06, FU-07, FU-08 · F.2-2, F.2-3 | `pending` |
 | ━━━ | ━━━ | **▼ M1-A · CAPA PÚBLICA: COMPUERTAS, COMPONENTES Y ARMAZÓN** | ━━━ | ━━━ | ━━━ |
 | FU-01 | FU | Copy maestro bilingüe — compuerta única de aprobación | M1-A | FU-03 · SLG_Overhauling | `pending` |
@@ -182,3 +183,23 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   nuevas), y `(hq)`/`(portal)` como grupos resolvían las dos a `/`. `npm run verify` y
   `npm run test:db` en verde. Detalle en `docs/work_log.md`. Siguiente: FU-08 (FU-07 depende también
   de FU-08).
+- `2026-09-10` — **FU-08 → `in_progress`**. Construido y probado el adaptador SMTP completo (puerto
+  propio, plantillas desde `content/ui`, cola de reintento con reserva-y-plazo, barrendero en proceso)
+  contra SMTP y Postgres reales — 33 comprobaciones en verde, `npm run verify` en verde. Dos hallazgos
+  propios cerrados en `drizzle/0007`: `email_delivery` incompleta desde FU-04 contra `data_model` §5.19,
+  y necesitaba RLS (comprobación 8 de `test-isolation.ts`, ver D-53-style policy nueva). **D-54**:
+  P-3/P-4 resueltos con valor PROVISIONAL del agente (modo de ejecución autónoma) para no bloquear la
+  construcción — siguen sin confirmación real de Ricardo. Queda `in_progress`, no `done`: los criterios
+  3/4/6 (entrega real a tres buzones, subdominio verificado en DNS, seguimiento desactivado en el panel
+  de Resend) exigen **F.2-4**, externo y `[PENDIENTE]`. Detalle en `docs/work_log.md`. Siguiente:
+  FU-09 (sin bloqueo externo) o cerrar FU-08 cuando F.2-4/P-3/P-4 se resuelvan.
+- `2026-09-10` — **FU-09 → `done`**. Servicio de archivos (`lib/files/`) construido y probado contra
+  MinIO real (binario Homebrew, sin Docker): URLs firmadas de descarga (SigV4) y de subida (POST
+  policy, no PUT — es lo que permite que MinIO rechace tamaño/tipo antes de aceptar el archivo). Los
+  5 criterios verificados de verdad: firma sin validar y firma caducada denegadas por MinIO mismo,
+  caducidad exacta por configuración, subida fuera de límite/tipo rechazada por el almacenamiento,
+  cero archivos gated en git. `npm run verify` en verde con los cuatro pasos nuevos. Hallazgo propio
+  encontrado y **deliberadamente NO cerrado aquí**: `download`/`download_event`/`deliverable`
+  incompletos frente a `data_model` §5.10/§5.11/§5.14 (ninguno de los 5 criterios de FU-09 los toca;
+  es trabajo de DU-08/DU-13/DU-15) — anotado como tarea aparte, no en `decision_log`. Detalle en
+  `docs/work_log.md`. Siguiente: cerrar FU-08 cuando F.2-4/P-3/P-4 se resuelvan; después, FU-07.

@@ -566,3 +566,160 @@ probó el canal.
 **Fuera de alcance de FU-06, a propósito**: no hay página `/acceder` (es DU-01) ni endpoints reales de `api/v1` (DU-22/DU-23) — el criterio 4 (alcances sin implicación) se prueba a nivel de módulo, no de ruta HTTP, porque la ruta todavía no existe.
 
 **Confirmado en el runner de GitHub** (run `34430892726`): los dos jobs en verde, incluidos los cuatro pasos nuevos —`check-auth-encapsulado.ts`, `Compilación` y `Freno 6` contra el `DATABASE_URL` de relleno, y `test-auth.ts` contra Postgres real con las políticas 0005/0006 aplicadas por el bucle de `psql`—. No solo en local.
+
+## 2026-09-10 · FU-08 — Adaptador de correo transaccional · `in_progress`
+
+**Contexto de la sesión**: Ricardo pidió avanzar en modo autónomo ("modo turbo") desde el móvil, sin
+detenerse a confirmar decisiones diferibles. `user_units.md` y `api_contracts` §11.3 fijaban P-3/P-4
+(dirección remitente, nombre del subdominio) como condición de ENTRADA a esta unidad, no solo de
+cierre — se resolvieron con un valor PROVISIONAL del agente (**D-54**) para poder construir y probar
+sin bloquearse; siguen sin confirmación real de Ricardo.
+
+**Hecho:**
+
+| Pieza | Evidencia |
+|---|---|
+| `lib/email/config.ts` | Lee `MAIL_SMTP_*`/`MAIL_FROM_*`/`MAIL_REPLY_TO`/`MAIL_ALERTS_TO` — variables de TRANSPORTE (D-36), nunca `RESEND_API_KEY` |
+| `lib/email/smtp-transport.ts` | Único archivo que importa `nodemailer`; SMTP estándar, `secure` derivado del puerto (465 vs STARTTLS oportunista) |
+| `lib/email/templates.ts` | Asunto/cuerpo desde `content/ui/<lang>.json` vía `loadUiStrings()` (paridad ES/EN ya validada por FU-03); interpolación `{{clave}}` simple, sin motor de plantillas (RF-54) |
+| `lib/email/send.ts` | `enviarCorreo()`: escribe `email_delivery` (`pending`) y hace el intento 1 en la misma llamada |
+| `lib/email/queue.ts` | Reintento con reserva-y-plazo (`FOR UPDATE SKIP LOCKED`), escalón 1min→10min→1h→6h→24h, tope de 5 intentos, barrendero en proceso (`architecture` §6.2, decisión A-01) |
+| `lib/email/retry-registry.ts` | Cómo reconstruir un reintento sin guardar el cuerpo (`data_model` §5.19): FU-08 no tiene llamador real todavía, así que es solo el mecanismo — FU-07/DU-01/DU-09 deben registrar el suyo |
+| `instrumentation.ts` | Arranca el barrendero al levantar `slg-web`; si falta configuración de correo, avisa por log y sigue sirviendo la web pública (no depende del correo) |
+| `drizzle/0007_evidencia_de_correo_completa.sql` | `email_delivery` completada contra `data_model` §5.19: columnas, 4 restricciones, 3 índices — y RLS (ver hallazgo abajo) |
+| `scripts/email/check-email-encapsulado.ts`, `scripts/email/test-email.ts`, `scripts/email/fake-smtp-server.ts` | Criterio 1 automatizado + 33 comprobaciones contra SMTP real (captador en proceso, sin Docker) y Postgres real |
+
+### Hueco propio, encontrado y cerrado: `email_delivery` incompleta desde FU-04
+
+FU-04 (0000) creó `email_delivery` con solo las columnas que las unidades ya construidas necesitaban
+en ese momento. `data_model.md` §5.19 —ya aprobado entonces— definía cinco columnas más
+(`related_entity_type`, `related_entity_id`, `organization_id`, `sent_at`), cuatro restricciones y tres
+índices que ninguna migración había añadido. FU-08 es la primera unidad que escribe filas de verdad
+aquí y depende de todo eso — mismo patrón que D-53 en FU-06: un hueco de diseño aprobado que nadie
+había ejercido en runtime. Cerrado en `drizzle/0007_evidencia_de_correo_completa.sql`.
+
+### Segundo hallazgo, encontrado por la prueba: `email_delivery` necesitaba RLS
+
+Al añadir `organization_id`, `scripts/db/test-isolation.ts` (comprobación 8, un barrido del CATÁLOGO
+de PostgreSQL, no una lista escrita a mano) puso la tabla en rojo: *"toda tabla con `organization_id`
+tiene RLS activa, FORZADA y con política"* es una regla sin excepciones, sea o no la tabla "dato de
+cliente". Corregido en el mismo 0007: `email_delivery` se une a la política uniforme de las ocho tablas
+de 0001, más una política adicional para `app_actor_role() = 'system'` (mismo patrón que D-53 para
+`api_key`) — porque, hoy, todo lo que toca esta tabla es la cola de FU-08 bajo `withSystemScope`, casi
+siempre sin empresa en contexto (un `capture_notice` sobre un lead que no es cliente no tiene
+`organization_id`). Sin esta segunda política, ningún correo se habría podido enviar nunca — la prueba
+lo habría descubierto en el primer intento real, no en la revisión.
+
+### Verificado, no solo escrito
+
+`npm run verify` completo en verde (incluye el build y el gate D1 contra el servidor standalone real,
+y `check:email-encapsulado` nuevo). `npm run test:db` completo en verde contra Postgres real, incluida
+la comprobación 8 de `test-isolation.ts` ya en verde con `email_delivery` protegida. `npm run test:email`
+(33 comprobaciones) contra SMTP real y Postgres real:
+
+- Los cuatro tipos de correo (`invitation`, `password_reset`, `capture_notice`, `capture_failed_alert`)
+  se entregan en el primer intento, con `from_email`/`reply_to`/`template_key`/`subject_key`/`locale`
+  persistidos tal cual se usaron, `provider_message_id` y `sent_at` presentes, y el mensaje confirmado
+  de verdad en el socket SMTP (no solo en la base).
+- Reintento tras fallo transitorio: dos fallos simulados dejan `attempts=2`/`status=pending`/
+  `last_error` saneado; el tercer intento entrega y pasa a `delivered`.
+- Agotamiento: cinco fallos seguidos dejan `status=failed` sin próximo intento (`data_model` §3.9).
+- Cambio de destino SOLO por variables de entorno (criterio 2): la misma `enviarCorreo()`/
+  `crearTransporteSmtp()`, sin editar una línea, entrega en un segundo captador y confirma que el
+  primero NO lo recibió — destinos realmente distintos.
+
+Confirmado además que el servidor standalone arranca y sirve `/` en 200 con `MAIL_SMTP_*` ausente
+(el escenario real del job "calidad" de CI): el barrendero simplemente no arranca y avisa por log,
+sin tumbar la web pública.
+
+### Lo que NO se pudo verificar, y por qué (residual, no oculto)
+
+- **Criterio 3 literal** (entrega a bandeja de entrada en tres proveedores de correo distintos,
+  incluido Microsoft 365 corporativo) y **criterio 4** (subdominio de envío realmente verificado en
+  DNS): exigen **F.2-4** (dominio de correo verificado, SPF/DKIM/DMARC), que sigue `[PENDIENTE]` y no
+  depende de este repositorio.
+- **Criterio 6** (seguimiento de aperturas/clics desactivado, verificado en el panel del proveedor):
+  exige una cuenta real de Resend con el dominio añadido — no existe todavía. El esquema de
+  `email_delivery` no tiene dónde guardar aperturas/clics aunque alguien lo active en el panel (`data_model`
+  §5.19), que es la garantía de código; falta la verificación operativa en el panel real.
+- **P-3 y P-4 sin confirmación real de Ricardo** (D-54): el `From`/subdominio usados en pruebas son
+  provisionales. Cambiar el valor real, cuando llegue, cuesta variables de entorno — cero líneas de
+  código, que es exactamente lo que D-22/D-36 exigían.
+
+**Por eso la unidad queda `in_progress`, no `done`.** Lo que faltaba construir está construido y
+probado; lo que falta es un dato externo (F.2-4) y una decisión de Ricardo (P-3/P-4) que ninguna
+cantidad de código adicional puede sustituir.
+
+### Fuera de alcance de FU-08, a propósito
+
+FU-08 es una Foundation Unit: no tiene todavía ningún llamador real. `enviarCorreo()` para invitación
+(FU-07), recuperación de contraseña (DU-01) y aviso de captura (DU-09) se conectan cuando esas
+unidades se construyan — cada una debe registrar su propio reconstructor de reintento
+(`lib/email/retry-registry.ts`) antes de que sus reintentos funcionen de verdad. `test-email.ts` hace
+de llamador de prueba mientras tanto, con datos sintéticos.
+
+## 2026-09-10 · FU-09 — Almacenamiento de archivos y URLs firmadas · `done`
+
+Construida en la misma sesión autónoma que FU-08, inmediatamente después: sin bloqueador externo (a
+diferencia de FU-08, no depende de ninguna decisión de Ricardo ni de infraestructura de terceros
+pendiente), así que se completó y verificó de punta a punta.
+
+**Hecho:**
+
+| Pieza | Evidencia |
+|---|---|
+| `lib/files/config.ts` | Lee `FILES_S3_*`, `FILES_BUCKET_*`, `SIGNED_URL_TTL_*` — API S3 genérica (D-20/D-21), variables de transporte |
+| `lib/files/client.ts` | Único archivo que instancia `S3Client`, `forcePathStyle: true` (MinIO y la mayoría de S3-compatibles fuera de AWS lo exigen) |
+| `lib/files/limits.ts` | Constante única de tipo MIME/tamaño por destino (`data_model` §2.6, D-25); el conjunto MIME de `material` era `[PENDIENTE: lo fija FU-09]` en el propio `data_model` — fijado aquí (pdf, pptx, docx, mp4, zip) |
+| `lib/files/signed-urls.ts` | `emitirUrlFirmadaDeDescarga` (GET presignado SigV4) y `emitirUrlFirmadaDeSubida` (**POST policy, no PUT presignado** — es el único mecanismo S3 estándar con `content-length-range`, que hace que el propio almacenamiento rechace tamaño/tipo antes de aceptar el archivo) |
+| `scripts/files/check-files-encapsulado.ts`, `check-no-gated-files.ts`, `test-files.ts` | Criterios 1/2 automatizados (mismo patrón que `check-auth-encapsulado.ts`/`check-email-encapsulado.ts`, barriendo solo `app/`+`lib/`), criterio 5 automatizado, y 10 comprobaciones funcionales |
+
+### Decisión de encuadre: FU-09 es un puerto genérico, no toca `download`/`deliverable`
+
+Al construir, se encontró que `lib/db/schema.ts` no tiene tabla `download` en absoluto (`data_model`
+§5.10), que `download_event` usa `download_slug` en vez de una FK real a `download.id` (§5.11), y que
+`deliverable` no tiene `source`/`external_url`/`mime_type`/`size_bytes` (§5.14) — un hueco real desde
+FU-04, mismo patrón que el de `email_delivery` en FU-08. **A diferencia de `email_delivery`, este NO se
+cerró aquí**: ninguno de los 5 criterios de aceptación de FU-09 (`implementation/user_units.md`)
+menciona escribir en `download` ni en `deliverable` — la persistencia de evidencia es responsabilidad
+de quien llama (DU-08, DU-13, DU-15), igual que `email_delivery` es responsabilidad de quien llama a
+`enviarCorreo()`. Cerrarlo aquí habría sido construir por adelantado el trabajo de tres unidades que
+todavía no existen. Queda anotado como tarea aparte (`task_fb516747` en el gestor de tareas de la
+sesión) para quien construya la primera de esas tres unidades.
+
+### Verificado contra MinIO real, no un mock de SigV4
+
+Se instaló MinIO real vía Homebrew (binario oficial, sin Docker — el pull de imágenes Docker en esta
+máquina resultó extremadamente lento incluso para `hello-world`, problema del entorno, no de las
+imágenes; ver la misma decisión tomada en FU-08 con `smtp-server` en vez de un contenedor `mailpit`).
+`npm run test:files` (10 comprobaciones) contra MinIO real:
+
+- Una URL de descarga firmada lee el objeto correcto; la misma petición **sin firma** la deniega MinIO
+  (403); la misma petición con una firma **caducada** (`expiresIn: 1`, no la de configuración —
+  probando el mismo mecanismo SigV4 con un vencimiento corto en vez de esperar 15 minutos reales)
+  también la deniega MinIO. Ninguna de las dos peticiones llega jamás a esta aplicación: **el propio
+  MinIO** hace cumplir el criterio 1, en producción también.
+- La caducidad emitida coincide exactamente con `SIGNED_URL_TTL_DOWNLOAD_MINUTES` (criterio 3).
+- Una subida con tipo y tamaño correctos, MinIO la acepta; un `Content-Type` forzado distinto al
+  firmado, MinIO la rechaza; un cuerpo de 26 MB contra el tope de 25 MB de `downloads`, MinIO lo
+  rechaza — **antes de aceptar el archivo** (criterio 4), por la condición `content-length-range` de la
+  política de subida, no por una comprobación nuestra después del hecho (aunque esa comprobación
+  también existe, como segunda capa: `emitirUrlFirmadaDeSubida` rechaza un MIME no permitido antes
+  incluso de pedir la firma).
+- Criterio 2 (ningún endpoint lista un bucket): verdadero hoy porque **no existe ningún endpoint
+  todavía** — FU-09 es una librería sin ruta pública propia. El valor real de
+  `check-files-encapsulado.ts` es evitar que aparezca uno mañana: ningún archivo de `app/`/`lib/`
+  puede importar el comando de listado ni el cliente S3 fuera de `lib/files/`.
+- Criterio 5: `git ls-files` confirma cero `.pdf`/`.docx`/`.pptx`/`.mp4`/`.zip` en control de versiones
+  (186 archivos rastreados).
+
+`npm run verify` completo en verde con los cuatro pasos nuevos. CI (`.github/workflows/ci.yml`)
+descarga el binario oficial de MinIO para Linux y lo arranca en segundo plano antes de
+`test-files.ts` — mismo principio que en local, sin contenedor.
+
+### Fuera de alcance de FU-09, a propósito
+
+Sin llamador real todavía (igual que FU-08): `emitirUrlFirmadaDeDescarga`/`emitirUrlFirmadaDeSubida`
+las usarán DU-08 (biblioteca de descargas), DU-13/DU-15 (entregables en HQ/portal) cuando se
+construyan. El paso de sincronización contenido→`download` (`architecture` §5.3) tampoco se construye
+aquí: es un paso de despliegue que depende de que la tabla `download` exista primero.

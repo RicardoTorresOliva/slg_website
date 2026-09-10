@@ -63,6 +63,15 @@ jobs:
       - name: FU-06 · módulo de identidad encapsulado (criterio 1, R-19)
         run: node scripts/db/check-auth-encapsulado.ts
 
+      - name: FU-08 · puerto de correo encapsulado (criterio 1)
+        run: node scripts/email/check-email-encapsulado.ts
+
+      - name: FU-09 · servicio de archivos encapsulado, sin listado (criterios 1, 2)
+        run: node scripts/files/check-files-encapsulado.ts
+
+      - name: FU-09 · cero archivos gated en control de versiones (criterio 5, RNF-27)
+        run: node scripts/files/check-no-gated-files.ts
+
       - name: Freno 2 · Frontmatter y contrato A.3
         run: node scripts/content/check-frontmatter.ts
 
@@ -97,6 +106,33 @@ jobs:
 
       - name: Contratos de entregables y eventos de agente
         run: node scripts/db/test-contratos.ts
+
+      - name: FU-09 · MinIO real para probar las URLs firmadas
+        # Binario oficial, no Docker: sin servicio que levantar ni imagen que
+        # tirar de un registro — arranca en segundos y es el mismo software
+        # que corre en producción (D-51), no una reimplementación de SigV4.
+        run: |
+          curl -sSL https://dl.min.io/server/minio/release/linux-amd64/minio -o /tmp/minio
+          chmod +x /tmp/minio
+          MINIO_ROOT_USER=ci MINIO_ROOT_PASSWORD=ci-relleno-no-es-real \
+            /tmp/minio server /tmp/minio-data --address 127.0.0.1:9500 --console-address 127.0.0.1:9501 &
+          for i in $(seq 1 30); do
+            curl -sSf http://127.0.0.1:9500/minio/health/live >/dev/null 2>&1 && break
+            sleep 1
+          done
+
+      - name: FU-09 · URLs firmadas de descarga y de subida
+        env:
+          FILES_S3_ENDPOINT: http://127.0.0.1:9500
+          FILES_S3_REGION: us-east-1
+          FILES_S3_ACCESS_KEY_ID: ci
+          FILES_S3_SECRET_ACCESS_KEY: ci-relleno-no-es-real
+          FILES_BUCKET_DOWNLOADS: ci-downloads
+          FILES_BUCKET_DELIVERABLES: ci-deliverables
+          SIGNED_URL_TTL_DOWNLOAD_MINUTES: '15'
+          SIGNED_URL_TTL_DELIVERABLE_MINUTES: '10'
+          SIGNED_URL_TTL_UPLOAD_MINUTES: '30'
+        run: node scripts/files/test-files.ts
 
       - name: Compilación
         # `build:standalone`, no `build` a secas: el gate D1 (paso siguiente)
@@ -163,6 +199,18 @@ jobs:
       PG_OWNER_USER: slg
       PG_OWNER_PASS: postgres
       PG_APP_USER: slg_app
+      # FU-08: el captador SMTP es EN PROCESO (scripts/email/fake-smtp-server.ts),
+      # no un servicio de este job — evita depender de que Docker Hub responda
+      # rápido para una imagen que solo hace falta en la propia suite.
+      # `MAIL_SMTP_HOST`/`MAIL_SMTP_PORT` los fija `test-email.ts` en caliente
+      # (uno por captador); el resto son de PRUEBA, no de producción (D-54 en
+      # docs/decision_log.md: P-3 y P-4 siguen sin confirmar por Ricardo).
+      MAIL_SMTP_USERNAME: ci
+      MAIL_SMTP_PASSWORD: ci
+      MAIL_FROM_ADDRESS: "no-reply@mail.softlandingglobal.test"
+      MAIL_FROM_NAME: "SLG Agency (CI)"
+      MAIL_REPLY_TO: "support@softlandingglobal.com"
+      MAIL_ALERTS_TO: "support@softlandingglobal.com"
 
     steps:
       - uses: actions/checkout@v4
@@ -189,7 +237,7 @@ jobs:
       - name: Restricciones, inmutabilidad y políticas de fila
         # Escritas a mano: drizzle-kit genera tablas, no políticas ni guardas.
         run: |
-          for f in drizzle/0001_*.sql drizzle/0002_*.sql drizzle/0003_*.sql drizzle/0005_*.sql drizzle/0006_*.sql; do
+          for f in drizzle/0001_*.sql drizzle/0002_*.sql drizzle/0003_*.sql drizzle/0005_*.sql drizzle/0006_*.sql drizzle/0007_*.sql; do
             echo "→ $f"
             psql "$DATABASE_URL_MIGRATIONS" -v ON_ERROR_STOP=1 -f "$f"
           done
@@ -212,6 +260,13 @@ jobs:
         # conexión sin contexto habría dado falsos negativos, no un fallo de
         # la lógica.
         run: node scripts/db/test-auth.ts
+
+      - name: FU-08 · puerto de correo, cola y reintento
+        # Contra SMTP real (dos captadores locales, no supuestos) y Postgres
+        # real. NO prueba entrega a buzones de proveedor real ni el panel de
+        # Resend (criterios 3 y 6 literales): eso exige el dominio verificado
+        # de F.2-4, que sigue [PENDIENTE] — ver docs/decision_log.md D-54.
+        run: node scripts/email/test-email.ts
 
       - name: Datos de ejemplo
         run: node scripts/db/seed.ts

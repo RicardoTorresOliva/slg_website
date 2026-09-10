@@ -9,5 +9,13 @@
   "download.comingSoon": "Coming soon",
   "download.emailLabel": "Corporate email",
   "download.freeEmailRejected": "We need a corporate email. Free email domains are not accepted.",
-  "footer.rights": "SLG Agency Inc."
+  "footer.rights": "SLG Agency Inc.",
+  "email.invitation.subject": "[PENDIENTE: copy FU-01] Invitation to {{organizationName}}",
+  "email.invitation.body": "[PENDIENTE: copy FU-01] You've been invited to join {{organizationName}}. To accept, open this link: {{inviteUrl}} (expires {{expiresAt}}).",
+  "email.passwordReset.subject": "[PENDIENTE: copy FU-01] Reset your password",
+  "email.passwordReset.body": "[PENDIENTE: copy FU-01] To choose a new password, open this link: {{resetUrl}} (expires {{expiresAt}}). If you didn't request this, ignore this email.",
+  "email.captureNotice.subject": "[PENDIENTE: copy FU-01] New capture: {{leadName}}",
+  "email.captureNotice.body": "[PENDIENTE: copy FU-01] {{leadName}} ({{leadEmail}}) downloaded {{downloadTitle}}. CRM record: {{crmContactUrl}}.",
+  "email.captureFailedAlert.subject": "[PENDIENTE: copy FU-01] CRM delivery failed: {{leadEmail}}",
+  "email.captureFailedAlert.body": "[PENDIENTE: copy FU-01] The capture from {{leadEmail}} did not reach the CRM after 5 attempts. Manual retry available in HQ. Reference: {{leadCaptureId}}."
 }

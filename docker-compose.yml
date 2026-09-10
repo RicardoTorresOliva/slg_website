@@ -29,5 +29,27 @@ services:
       timeout: 5s
       retries: 10
 
+  # ── Captadores SMTP locales · FU-08 · OPCIONALES ────────────────────────────
+  # `npm run test:email` NO depende de esto: usa un captador EN PROCESO
+  # (scripts/email/fake-smtp-server.ts), sin Docker. Estos dos son solo para
+  # inspección manual con navegador (web UI de mailpit en :18025/:18026) si
+  # Ricardo quiere VER un correo de prueba renderizado. No son "el proveedor"
+  # (Resend, D-22): son un destino de pruebas para el adaptador SMTP estándar.
+  slg-mail-a:
+    image: axllent/mailpit:v1.22
+    container_name: slg-mail-a
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:10250:1025"
+      - "127.0.0.1:18025:8025"
+
+  slg-mail-b:
+    image: axllent/mailpit:v1.22
+    container_name: slg-mail-b
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:10251:1025"
+      - "127.0.0.1:18026:8025"
+
 volumes:
   slg-db-data:
