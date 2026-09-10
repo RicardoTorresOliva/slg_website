@@ -2,192 +2,83 @@
 type: docs
 title: Project memory
 project: slg_website
-status: planning
-timestamp: 2026-09-08
+status: ejecución
+timestamp: 2026-09-10
 ---
 
 # Project memory — slg_website
 
 ## Current state
-- **Phase**: **ejecución** (`start-execution`). `init-project` cerrado en sus 10 pasos; preflight OK.
-- **active_profile**: `software-app` (`profiles/software-app/profile.md`) — decidido en **D-14**.
-  - Extensiones declaradas en el brief, no en el perfil: gates de marketing, identidad y API (Anexo D).
-  - Regla del perfil que aplica: superficie de administración/operaciones (HQ lo es).
-- **Contrato de entrada**: `START_PROJECT.md` v1.1 (`type: project-brief`), fase *Specify* de SDD.
-- **Plan approved**: **SÍ** — Ricardo, 2026-09-08. La **Compuerta de Planificación queda abierta**.
-
-## Qué está escrito
-
-**Los cinco `design_docs` existen.** Ninguno falta:
-
-| Documento | Líneas | Nivel |
-|---|---:|---|
-| `design_docs/data_model.md` | 1981 | HIGH |
-| `design_docs/api_contracts.md` | 1853 | HIGH |
-| `design_docs/ui_wireframes.md` | 1221 | MEDIUM |
-| `design_docs/architecture.md` | 1035 | MEDIUM |
-| `design_docs/style_guide.md` | 372 | LIGHT |
-
-Su consolidación vive en `design_docs/design_summary.md`: 18 decisiones a registrar (D-25…D-42, ya
-transcritas al `decision_log`), 8 conflictos —**dos ya resueltos** por D-44 y D-45— y 26 huecos con
-dueño y milestone.
-
-**Unidades de trabajo: 39** — **14 Foundation Units** + **25 Deliverable Units**, definidas en
-`implementation/user_units.md` y seguidas en `implementation/task_tracker.md`. **Las 39 están en
-`pending`**: no se ha producido ningún entregable. Reparto por milestone: M0-A 4 · M0-B 5 · M1-A 4 ·
-M1-B 4 · M2 6 · M3 6 · M4 5 · M5 5.
-
-**Bundle OKF montado**: `knowledge/` con `index.md` (divulgación progresiva, se carga en todas las
-sesiones), `log.md` y los **siete conceptos** (`method-sdd-icm`, `naming-rules`, `offer-structure`,
-`content-schema`, `brand-tokens`, `crm-integration`, `doctrine-summary`).
+- **Fase**: ejecución (`start-execution`), plan aprobado por Ricardo el 2026-09-08. Perfil activo:
+  `software-app`. Stack cerrado — detalle y justificación de cada elección en `docs/decision_log.md`.
+- **M0-A completa** (FU-02, FU-03, FU-04, FU-05) · **M0-B en curso**: FU-06 hecha, FU-07/FU-08/FU-09
+  pendientes de 39 unidades totales.
 
 ## Última unidad completada
-- **FU-06 (módulo de identidad y autorización) · `done` · 2026-09-10.** Better Auth 1.7.3, matriz B.3
-  completa, compuertas de superficie, claves de API — todo verificado contra Postgres real
-  (`npm run test:db`), no solo escrito. Tres bugs reales de FU-04/FU-06 encontrados por la prueba y
-  corregidos (detalle en `work_log.md`). D-52 (sin plugins `organization`/`admin`/`apiKey`) y D-53
-  (dos políticas de fila para el arranque de identidad) registradas en `decision_log.md`.
-- FU-05 (despliegue, CI, DNS y entorno) · `done` · 2026-09-10.
+**FU-06 · Módulo de identidad y autorización · `done` · 2026-09-10.** Better Auth 1.7.3 (exacto),
+matriz B.3 completa, compuertas de `/hq`/`/portal`, claves de API — verificado contra Postgres real
+(`npm run test:db`, 47 comprobaciones) y confirmado en el runner de GitHub, no solo en local. Detalle
+completo en `docs/work_log.md` (entrada 2026-09-10) y decisiones D-52/D-53 en `docs/decision_log.md`.
+
+**Lo que hay que saber para construir sobre FU-06:**
+- Sin los plugins de Better Auth `organization`/`admin`/`apiKey` (D-52) — el esquema real de FU-04 es
+  incompatible con lo que asumen. El módulo propio en `lib/auth/` es la única puerta (R-19).
+  `puedeHacer`/`exigir` (`lib/auth/permissions.ts`) es la matriz B.3; ninguna unidad compara `role` a
+  mano — `scripts/db/check-auth-encapsulado.ts` lo vigila en CI.
+- `api_key` y `membership` tienen RLS: cualquier código que las toque pasa por
+  `withScope`/`withSystemScope` (`lib/db/scope.ts`), nunca por una conexión propia.
+- `/hq` y `/portal` existen pero están apagadas (`HABILITADO = false` en sus `layout.tsx`) — DU-13 y
+  DU-18 las encienden al construir el contenido real.
+- `proxy.ts` (antes `middleware.ts`, Next 16 renombró la convención) hace comprobaciones baratas sin
+  tocar la base de datos; la comprobación de verdad vive en los `layout.tsx` y en `lib/auth/`.
+- Tres bugs reales encontrados por la prueba, no por la revisión (uno de FU-04, nunca antes ejercido
+  en runtime): detalle en `work_log.md`, útil si algo parecido reaparece en otra unidad.
 
 ## Próxima unidad
 **FU-08 · Adaptador de correo transaccional · M0-B.** Depende de FU-05 (cerrada) y de F.2-4 (dominio
-de correo verificado — sigue `[PENDIENTE]`, no bloquea empezar el adaptador en sí, solo el envío
-real). FU-07 (invitaciones) depende de FU-06 **y** FU-08, así que FU-08 va primero. Leer
-`implementation/user_units.md` §FU-08 y `knowledge/index.md` antes de empezar.
+de correo verificado — externo, `[PENDIENTE]`). FU-07 (invitaciones) depende de FU-06 **y** FU-08, así
+que FU-08 va primero.
 
-## FU-06 — lo que hay que saber para construir sobre ello (referencia)
-- **Sin los plugins de Better Auth** `organization`/`admin`/`apiKey` (D-52) — el módulo propio en
-  `lib/auth/` es la única puerta. `puedeHacer`/`exigir` (`lib/auth/permissions.ts`) es la matriz B.3;
-  cualquier unidad que compruebe permisos pasa por ahí, nunca comparando `role` a mano
-  (`scripts/db/check-auth-encapsulado.ts` lo vigila en CI).
-- **`api_key` y `membership` tienen RLS**: cualquier código nuevo que las toque pasa por
-  `withScope`/`withSystemScope` (`lib/db/scope.ts`), nunca por una conexión propia — el bug real que
-  esto habría causado está documentado en `work_log.md`, 2026-09-10.
-- **`/hq` y `/portal` existen pero están apagadas** (`HABILITADO = false` en sus `layout.tsx`). DU-13
-  y DU-18 las encienden al construir el contenido real — hasta entonces, ninguna sesión ve nada ahí.
-- `proxy.ts` (antes `middleware.ts`, Next 16 renombró la convención) hace comprobaciones baratas sin
-  tocar la base de datos; la comprobación de verdad vive en los `layout.tsx` y en `lib/auth/`.
+**Bloqueador real, de Ricardo, antes de cerrar FU-08** — dos sub-decisiones de configuración, abiertas
+desde la planificación (`docs/decision_log.md`, tabla «Pendientes de decisión»):
+- **P-3**: dirección remitente visible — `From` en el subdominio con `Reply-To` a `support@`
+  (recomendado), o `From` en la raíz apoyándose solo en alineación DKIM.
+- **P-4**: nombre exacto del subdominio de envío.
 
-## FU-05 — cómo quedaron los 9 criterios (referencia)
-
-**Hecho por el agente, todo verificado, no solo escrito:**
-- `Dockerfile`, `/api/health`, cabeceras de seguridad (criterio 7, con prueba explícita de CSP
-  `frame-ancestors 'none'` y HSTS, no solo "existe una CSP").
-- `.env.example` con todos los nombres, cero valores.
-- Pipeline de CI con los seis frenos y sus pruebas negativas (criterios 4 y 5).
-- `setup-app-role.ts`, protección de staging (`middleware.ts` + `test-staging-auth.ts`).
-- **Gate D1 por Lighthouse** (D-50): reemplaza el presupuesto de KB. Dos hallazgos reales, los dos
-  corregidos y reconfirmados en el runner de GitHub, no solo en local: (1) `check-lighthouse.ts` medía
-  bien pero **colgaba el pipeline 3h39m** por un proceso huérfano de `next-server` (`npx next start`
-  encadenaba hijos) — corregido; (2) medía contra `next start`, que Next avisa que **no** es la vía
-  soportada con `output: "standalone"` — corregido para arrancar `node server.js` sobre
-  `.next/standalone`, el mismo binario que despliega el `Dockerfile`. Confirmado en verde en GitHub:
-  job completo en 1m11s, gate en 9,3s (Performance 99 · Accesibilidad 100 · Best Practices 92 ·
-  SEO 100 · LCP 1,6s).
-- **Criterio 2 (R-20)**: `main` protegida — Pull Request y los dos checks de CI en verde, obligatorios,
-  sin `push` directo. Confirmado con Ricardo antes de aplicarlo.
-- **Criterio 3 (R-25)**: DNS verificado por consulta directa — los diez intocables intactos, `staging`
-  y `minio` resuelven bien.
-- **Criterios 1 y 2, cierre real (2026-09-10)**: `slg-web` (producción) creado por Ricardo en Easypanel.
-  Con acceso de lectura a su panel vía Claude in Chrome (su sesión, sin ver ni escribir ninguna
-  contraseña) se diagnosticó y corrigió «Github token is missing»: faltaba el token a nivel de cuenta
-  (Ricardo lo generó y guardó él mismo). **Hallazgo real**: `slgweb-staging` nunca tuvo webhook
-  registrado en GitHub —10 horas sin redeploy automático, verificado contra la API de GitHub—;
-  corregido creando el webhook faltante directamente por API (`gh api .../hooks`), ping **200 OK** en
-  los dos. `slg-web` sigue `main`, `slgweb-staging` sigue `develop`, cada uno con su propio webhook
-  activo. **R-42 confirmado resuelto**: producción usa `slg_website_prod` como base de datos, distinto
-  del nombre de staging — los dos entornos no comparten datos.
-
-**Criterio 8, cerrado 2026-09-10**: `slgweb-staging` detenido a propósito en Easypanel; UptimeRobot lo
-detectó solo (Down, incidente real) en su siguiente chequeo; servicio reiniciado y verificado con
-`curl` (200 de vuelta). De paso: los 4 monitores estaban pausados (no solo raíz/`www`), reanudados los
-de staging; y **D-49 tuvo una segunda corrección** — la integración n8n/webhook no está en el plan
-gratuito, solo correo está activo hoy, lo que igual cumple D-43 (el correo sale de UptimeRobot, no del
-VPS).
-
-**Los dos cubos de MinIO**: hechos. **D-51 sigue en pie**: la app usa `MINIO_ROOT_USER`/`PASSWORD`
-directamente (R-41, revisar antes del go-live). No verificado que los dos queden **privados** (sin
-acceso al Console) — confirmarlo la primera vez que FU-09 suba un archivo de prueba.
-
-## R-40 resuelto — D-50 (2026-09-09)
-**Ya no bloquea el cierre de FU-05.** El gate D1 y el stack elegido eran incompatibles: el suelo de
-React 19 + Next 16 App Router son 172,3 KB comprimidos en una página vacía, con cero librerías
-propias, contra un presupuesto de 150 KB — pese a que Lighthouse ya daba 98/100/92/100. **Ricardo
-eligió la salida (a)**: el gate D1 pasa a medirse por Lighthouse en CI (≥ 90 en las cuatro categorías,
-LCP < 2,5 s — RNF-01, RNF-02); RNF-03 (el presupuesto de KB) queda retirada. Implementado en
-`scripts/ci/check-lighthouse.ts` con prueba negativa en `test-lighthouse-gate.ts` (R-26), verificado
-en verde contra el build real (Performance 100 · Accesibilidad 100 · Best Practices 92 · SEO 100 ·
-LCP 1,6 s). Detalle completo en `docs/decision_log.md` D-50 y `docs/work_log.md` (entrada del 09-09).
-Solo mide Home hoy; DU-07 añade una página de servicio y un artículo cuando existan.
-
-## Nota de higiene
-`docs/MANANA.md` (notas de cierre de la sesión del 08 al 09) queda **consolidado en este archivo** y
-puede borrarse: mantenerlo por separado invita a que ambos diverjan, que es justo lo que había pasado
-—daba por pendientes tareas de infraestructura que ya estaban hechas—.
+Ninguna de las dos bloquea *empezar* FU-08 (el adaptador SMTP en sí no depende del nombre elegido),
+pero sí bloquea el primer envío real y el cierre de la unidad.
 
 ## Entorno local
-- `docker-compose.yml` levanta `slg-db` (PostgreSQL 16) en el **puerto 5434**. El 5432 lo ocupa la base
-  de datos del CRM y el 5433 otro proyecto: no se tocan.
-- Credenciales en `.env`, ignorado por git. `.env.example` documenta solo los nombres.
-- Migraciones en `drizzle/`: `0000_inicial.sql` generada, `0001_restricciones_aislamiento.sql` escrita
-  a mano (drizzle-kit no genera políticas de fila ni disparadores).
+- `docker-compose.yml` levanta `slg-db` (PostgreSQL 16) en el puerto **5434** — 5432 y 5433 son de
+  otros proyectos, no se tocan.
+- Credenciales en `.env` (ignorado por git); `.env.example` documenta solo los nombres.
+- Migraciones en `drizzle/`: `0000` y `0004` generadas por `drizzle-kit`; `0001`, `0002`, `0003`,
+  `0005`, `0006` escritas a mano (políticas de fila, roles, disparadores — `drizzle-kit` no las genera)
+  y aplicadas vía el bucle de `psql` en `ci.yml`, no por `drizzle-kit migrate`.
 
-## Stack: cerrado
-Todas las categorías están decididas por Ricardo en HITL. El detalle y la justificación de cada
-elección viven en `docs/decision_log.md` (D-21 a D-24 y D-43 a D-45).
-
-- **Correo transaccional: Resend** (D-22), tras adaptador SMTP por variable de entorno (D-36).
-- **Backups: Cloudflare R2** (D-21), contra API S3 genérica.
-- **Correo corporativo: se queda en Microsoft 365** (D-23). No hay migración; los MX de Outlook no se tocan.
-- **Subdominio de envío dedicado** (D-24): el SPF de la raíz no se toca.
-- **Monitorización externa** (D-43): servicio de uptime dedicado con tramo gratuito, ejecutado
-  **fuera del VPS** — n8n vive en la misma máquina que vigilaría, así que queda como señal
-  **secundaria**. Cierra P-5, RF-130 y el gate D11. Falta elegir el producto concreto (2–3 candidatos,
-  paso 5) antes de FU-05; **no bloquea el arranque**.
-- **Anillo de foco de dos capas** (D-44): exterior `--cyan`, interior `--blue-primary` o `--ink`.
-  El cyan solo mide 2,4:1 y no pasaba el gate D2. Token en FU-02, verificado en FU-10.
-- **Visor de entregables HTML desde origen separado** (D-45), normativo. El `iframe sandbox` y la
-  CSP estricta se mantienen como defensa en profundidad. Se construye en DU-19.
-
-Nombrar **Resend** y **Cloudflare R2** **no** viola la Regla 7: la regla prohíbe nombrar productos
-que el usuario **no** haya elegido, y estos los eligió él el 2026-09-08.
+## Infraestructura desplegada
+- `slg-web` (producción, rama `main`) y `slgweb-staging` (`develop`) en Easypanel, cada uno con su
+  propio webhook de auto-deploy activo en GitHub. `main` está protegida (PR + CI en verde
+  obligatorios, sin `push` directo).
+- MinIO con los cubos `downloads`/`deliverables` creados y privados (no verificado por el agente, sin
+  acceso al Console — confirmar la primera vez que FU-09 suba un archivo). La app usa las credenciales
+  de administrador de MinIO directamente (D-51/R-41: rotar a una clave acotada antes del go-live).
+  Existe un bucket con typo (`dowloads`) vacío y sin usar — se deja así.
+  `S3_ACCESS_KEY_ID`/`S3_SECRET_ACCESS_KEY` (`.env.example`) para cuando FU-09 los necesite.
+- Bases de datos separadas por entorno: producción usa `slg_website_prod`, distinta de la de staging,
+  dentro del mismo servicio `slgwebpostgres` (R-42 confirmado resuelto).
+- UptimeRobot vigila `staging.softlandingglobal.com` (raíz y `/api/health`); los monitores de la raíz
+  y `www` de producción están pausados a propósito — sin DNS hasta el go-live. Canal de aviso: correo
+  a `torresoliva.ricardo@gmail.com` únicamente — el webhook/n8n no está en el plan gratuito de
+  UptimeRobot (segunda corrección de D-49, ver `decision_log.md`).
 
 ## Decisiones fijadas (no re-explorar)
-- **13 decisiones HITL** de Ricardo sobre stack y hosting (`START_PROJECT.md` §7 y §10).
-- **D-14…D-24**: perfil, categorías de stack, anti-abuso, 11 documentos de descarga, adaptador de dos
-  modos al CRM, y las elecciones de producto de Resend, R2, M365 y subdominio de envío.
-- **D-43…D-46**: monitorización externa, anillo de foco de dos capas, origen separado del visor, y el
-  cron de validación de Hermes (EXT-9). Cierran P-5, CF-3 y CF-4, y bajan R-16 a Media/Medio.
-- **D-25…D-42**: las 18 decisiones que tomaron los `design_docs`. Dos de ellas están marcadas
-  **[IRREVERSIBLE-TRAS-FU-04]** (D-26 y D-27): revertirlas después de la primera migración es
-  migración de datos.
-- Dos umbrales que estaban `[PENDIENTE]` **ya están cerrados**: caducidad de URL firmada (RNF-20 →
-  **D-28**, 15/10/30 min) y tamaño máximo de subida (RNF-25 → **D-25**, 25/50/5/1 MB, tope 50).
-  El bloqueo que `user_units` §0.6 declaraba sobre FU-04, FU-09, DU-22 y DU-23 **se levanta**.
-- Todo registrado en `docs/decision_log.md`.
+Todas registradas en `docs/decision_log.md` (D-14 a D-53). Dos marcadas
+**[IRREVERSIBLE-TRAS-FU-04]** (D-26, D-27): revertirlas después de la primera migración es migración
+de datos, no una edición.
 
 ## Blockers
-- **Ninguno de planificación.** A1–A5 resueltas (D-15…D-20); P-1 y P-2 cerradas (D-21, D-22).
-- **Pendiente de Ricardo, antes de `start-execution`**:
-  1. **Aprobar el plan** — la Compuerta de Planificación (Regla 1). Incluye dar por bueno el bloque
-     D-25…D-42 ya escrito en el `decision_log`.
-  2. **H-04** — `organization.primary_contact`: ¿usuario con `FK` o texto libre? Cambia el tipo de una
-     columna **antes** de FU-04, así que conviene resolverlo pronto.
-  3. **S-01** — verificación de higiene de credenciales; se sigue **fuera de este repositorio**.
-- **Cerradas desde la última revisión**: ~~P-5~~ (D-43) · ~~CF-3, anillo de foco~~ (D-44) ·
-  ~~CF-4, origen del visor~~ (D-45). Ninguna debe reabrirse en una sesión futura.
-- **Abiertas sin bloquear**: P-3 y P-4 (remitente y nombre del subdominio de envío), se fijan en M0
-  antes de FU-08 · el producto concreto de monitorización, antes de FU-05 · confirmar la vía del
-  `cycle` (CF-1), antes de DU-16.
-
-## Archivos clave tocados esta sesión
-- `planning/`: questions.md, requirements.md, scope.md, risks.md
-- `design_docs/`: data_model.md, api_contracts.md, ui_wireframes.md, architecture.md, style_guide.md,
-  design_summary.md
-- `implementation/`: user_units.md, task_tracker.md
-- `knowledge/`: index.md, log.md y los siete conceptos (bundle OKF)
-- `docs/`: decision_log.md (D-14…D-49, P-3/P-4, S-01), project_memory.md, work_log.md,
-  `infra/dns-estado-anterior.md`
-- Código: `app/`, `lib/`, `content/`, `scripts/`, `drizzle/`, `Dockerfile`, `docker-compose.yml`,
-  `.github/workflows/ci.yml`
-- `mcps/inventory.md`, `skills/inventory.md`
+- **P-3, P-4** (arriba) — antes de cerrar FU-08.
+- **S-01** (rotación de una credencial de construcción) — diferida a go-live por decisión de Ricardo,
+  fuera de este repositorio.
+- Ninguno de planificación: el plan está aprobado y la Compuerta de Planificación, abierta.
