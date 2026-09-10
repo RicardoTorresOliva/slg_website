@@ -536,3 +536,31 @@ Criterio 8 de FU-05 cerrado: la condición se provocó de verdad, no solo se
 probó el canal.
 
 **FU-05 completa: los 9 criterios cerrados y verificados.**
+
+## 2026-09-10 · FU-06 — Módulo de identidad y autorización · `done`
+
+**Hecho:**
+
+| Pieza | Evidencia |
+|---|---|
+| `lib/auth/config.ts` | Better Auth 1.7.3 (exacto, R-19), credencial + Google/Microsoft condicionales a que existan sus variables |
+| `lib/auth/session.ts` + `lib/auth/org.ts` | `AuthContext` desde una sesión real; separado en dos archivos porque `session.ts` depende de `next/headers` y `org.ts` no — así `test-auth.ts` prueba la lógica sin servidor |
+| `lib/auth/permissions.ts` | Matriz B.3 completa (`puedeHacer`/`exigir`), 10 acciones × 4 roles + alcances de agente |
+| `lib/auth/api-keys.ts` | Emisión, verificación y revocación de claves contra la tabla real, sin el plugin `apiKey` |
+| `proxy.ts` | Antes `middleware.ts`; compone la protección de staging (FU-05) con el clasificador barato de FU-06 |
+| `app/hq/`, `app/portal/` | Compuertas reales, `HABILITADO = false` hasta DU-13/DU-18 |
+| `scripts/db/test-auth.ts`, `scripts/db/check-auth-encapsulado.ts` | 47 comprobaciones contra Postgres real + barrido estático del criterio 1 |
+
+**Desviación deliberada, documentada como D-52**: sin los plugins `organization`, `admin` ni `apiKey` de Better Auth — el esquema real de FU-04 es incompatible con lo que esos plugins asumen (detalle en el decision_log). La garantía de R-19 (un módulo propio, único que sabe de identidad) se cumple igual.
+
+### Tres bugs reales encontrados por la prueba, ninguno por la revisión a ojo
+
+1. **`lib/db/context.ts` (FU-04) nunca había funcionado en runtime.** `declare const verificado: unique symbol` solo declaraba el TIPO — no existía como valor. `contextoDeSesion`/`contextoDeClaveApi` lanzaban `ReferenceError` al ejecutarse de verdad. Nadie lo había disparado: los tests de FU-04 fabricaban el contexto con `as AuthContext`, nunca con estas dos funciones. Corregido: `const verificado: unique symbol = Symbol(...)`, sigue sin exportarse.
+2. **`api_key` y `membership` tienen RLS (0001) y mi primera versión de `api-keys.ts`/`org.ts` las tocaba con una conexión sin contexto.** Habría compilado, pasado el build, y fallado en silencio en producción: toda verificación de clave y toda resolución de empresa de cliente habría devuelto cero filas para siempre. Encontrado por `test-auth.ts`, no por la revisión. Corregido usando `withScope`/`withSystemScope` (FU-04) en vez de conexiones propias, más dos políticas de fila adicionales (D-53, migraciones 0005 y 0006) para el caso de arranque: verificar una clave o resolver la empresa de un usuario es, por definición, anterior a tener el contexto que la política de 0001 exige.
+3. **App Router en `(hq)`/`(portal)` (grupos) resolvían las dos a `/`.** Un grupo de rutas no añade segmento de URL; el criterio exige la ruta literal `/hq`. Corregido renombrando a `app/hq/` y `app/portal/` (segmentos reales, no grupos) — el build lo rechazó con un error claro antes de llegar a ningún lado.
+
+### Verificado, no solo escrito
+
+`npm run verify` completo en verde (incluye el build con `lib/auth/config.ts` cargado y el gate D1 contra el servidor standalone real). `npm run test:db` completo en verde contra Postgres real: matriz B.3 fila por fila (40 comprobaciones), alcances sin implicación (RF-147), mensajes de error uniformes (RNF-32), orden de las compuertas de superficie (D-38), y el ciclo de vida completo de una clave de API. Confirmado además contra un servidor standalone con `DATABASE_URL` deliberadamente inalcanzable (el escenario real del job "calidad" de CI, que no tiene Postgres): `/` sirve 200, `/api/health` 200, `/hq` sin cookie redirige (307) sin tocar la base de datos, y `/hq` con una cookie de sesión fabricada responde 404 sin colgarse ni dar 500 — Better Auth resuelve "sin sesión" ante un fallo de conexión, no lanza.
+
+**Fuera de alcance de FU-06, a propósito**: no hay página `/acceder` (es DU-01) ni endpoints reales de `api/v1` (DU-22/DU-23) — el criterio 4 (alcances sin implicación) se prueba a nivel de módulo, no de ruta HTTP, porque la ruta todavía no existe.

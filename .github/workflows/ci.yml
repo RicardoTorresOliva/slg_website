@@ -15,10 +15,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ─── Frenos que no necesitan base de datos ────────────────────────────────
+  # ─── Frenos que no necesitan una base de datos de verdad ──────────────────
   calidad:
     name: Calidad, contenido y secretos
     runs-on: ubuntu-latest
+    env:
+      # FU-06: `lib/auth/config.ts` exige que estas variables EXISTAN al
+      # cargar el módulo (Better Auth se instancia en el import, no al
+      # primer uso) — la compilación y el arranque del servidor standalone
+      # (Freno 6) lo importan transitivamente aunque ninguna ruta que se
+      # visite en este job toque la base de datos. Valores de relleno,
+      # nunca reales: ninguna consulta llega a ejecutarse contra ellos.
+      DATABASE_URL: "postgresql://ci:ci@127.0.0.1:1/ci_no_existe"
+      DATABASE_URL_MIGRATIONS: "postgresql://ci:ci@127.0.0.1:1/ci_no_existe"
+      BETTER_AUTH_SECRET: "ci-relleno-no-es-un-secreto-real"
+      BETTER_AUTH_URL: "http://localhost:3000"
     steps:
       - uses: actions/checkout@v4
 
@@ -48,6 +59,9 @@ jobs:
 
       - name: Tipos de los scripts
         run: npx tsc --noEmit -p scripts/tsconfig.json
+
+      - name: FU-06 · módulo de identidad encapsulado (criterio 1, R-19)
+        run: node scripts/db/check-auth-encapsulado.ts
 
       - name: Freno 2 · Frontmatter y contrato A.3
         run: node scripts/content/check-frontmatter.ts
@@ -175,7 +189,7 @@ jobs:
       - name: Restricciones, inmutabilidad y políticas de fila
         # Escritas a mano: drizzle-kit genera tablas, no políticas ni guardas.
         run: |
-          for f in drizzle/0001_*.sql drizzle/0002_*.sql drizzle/0003_*.sql; do
+          for f in drizzle/0001_*.sql drizzle/0002_*.sql drizzle/0003_*.sql drizzle/0005_*.sql drizzle/0006_*.sql; do
             echo "→ $f"
             psql "$DATABASE_URL_MIGRATIONS" -v ON_ERROR_STOP=1 -f "$f"
           done
@@ -190,6 +204,14 @@ jobs:
         # PostgreSQL real, incluida la que vigila que DATABASE_URL no apunte a
         # un superusuario — el fallo que casi convierte todo esto en teatro.
         run: node scripts/db/test-isolation.ts
+
+      - name: FU-06 · matriz B.3, alcances, superficies y claves de API
+        # Contra Postgres real: membership y api_key tienen RLS (0001), y
+        # verificar una clave o resolver la propia empresa son lecturas de
+        # sistema previas a tener contexto (0005, 0006) — probarlo con una
+        # conexión sin contexto habría dado falsos negativos, no un fallo de
+        # la lógica.
+        run: node scripts/db/test-auth.ts
 
       - name: Datos de ejemplo
         run: node scripts/db/seed.ts

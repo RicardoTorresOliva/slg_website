@@ -1,0 +1,2 @@
+ALTER TABLE "account" ADD COLUMN "refresh_token_expires_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "verification" ADD COLUMN "updated_at" timestamp with time zone DEFAULT now() NOT NULL;

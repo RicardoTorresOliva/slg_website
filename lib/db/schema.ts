@@ -91,6 +91,7 @@ export const account = pgTable(
     refreshToken: text("refresh_token"),
     idToken: text("id_token"),
     accessTokenExpiresAt: timestamp("access_token_expires_at", { withTimezone: true }),
+    refreshTokenExpiresAt: timestamp("refresh_token_expires_at", { withTimezone: true }),
     scope: text("scope"),
     password: text("password"),
     createdAt: createdAt(),
@@ -128,6 +129,7 @@ export const verification = pgTable(
     value: text("value").notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     createdAt: createdAt(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("idx_verification_identifier").on(t.identifier)],
 );

@@ -17,8 +17,16 @@ import type { ApiScope, UserRole } from "./schema.ts";
  * Marca de tipo. Impide fabricar un contexto con un objeto literal desde el
  * código de una ruta: `withScope({ organizationId: req.params.id, ... })` no
  * compila, porque falta esta propiedad y no se puede escribir a mano.
+ *
+ * CORREGIDO (FU-06): `declare const` solo declaraba el TIPO, nunca creaba el
+ * símbolo en tiempo de ejecución — `contextoDeSesion`/`contextoDeClaveApi`
+ * escribían `[verificado]: true` contra un valor `undefined` y lanzaban
+ * `ReferenceError` al ejecutarse. Nadie lo había disparado: los tests de
+ * FU-04 construían el contexto con `as AuthContext`, nunca con estas dos
+ * funciones. `const ... = Symbol()` sí existe en tiempo de ejecución y sigue
+ * sin exportarse, así que la garantía de tipo no cambia.
  */
-declare const verificado: unique symbol;
+const verificado: unique symbol = Symbol("verificado");
 
 export type AuthContext = {
   readonly [verificado]: true;

@@ -38,7 +38,7 @@ se ha producido ningún entregable.
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 34 `pending` · 0 `in_progress` · 0 `blocked` · 0 `review` · **4 `done`** (FU-02, FU-03, FU-04 · 2026-09-08; FU-05 · 2026-09-10). **M0-A completo.** Siguiente: FU-06 (M0-B).
+**Estado global:** 33 `pending` · 0 `in_progress` · 0 `blocked` · 0 `review` · **5 `done`** (FU-02, FU-03, FU-04 · 2026-09-08; FU-05, FU-06 · 2026-09-10). **M0-A completo.** Siguiente: FU-08 (FU-07 depende también de FU-08, que aún no empieza).
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -56,7 +56,7 @@ se ha producido ningún entregable.
 | FU-04 | FU | Capa de datos: PostgreSQL, Drizzle, migraciones y modelo B.2 | M0-A | FU-02 · `data_model` | `done` |
 | FU-05 | FU | Despliegue, CI, DNS y documentación de entorno | M0-A | FU-02, FU-03, FU-04 · EXT-7 ✅ (D-49) | `done` |
 | ━━━ | ━━━ | **▼ M0-B · FUNDACIONES: IDENTIDAD Y SERVICIOS COMPARTIDOS** | ━━━ | ━━━ | ━━━ |
-| FU-06 | FU | Módulo de identidad y autorización | M0-B | FU-04, FU-05 | `pending` |
+| FU-06 | FU | Módulo de identidad y autorización | M0-B | FU-04, FU-05 | `done` |
 | FU-07 | FU | Servicio de invitaciones | M0-B | FU-06, FU-08 | `pending` |
 | FU-08 | FU | Adaptador de correo transaccional | M0-B | FU-05 · F.2-4 | `pending` |
 | FU-09 | FU | Almacenamiento de archivos y URLs firmadas | M0-B | FU-05 · `api_contracts` | `pending` |
@@ -174,3 +174,11 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   (D-50), `main` protegida (R-20), auto-deploy real en las dos ramas, DNS verificado, cabeceras
   probadas, y UptimeRobot detectando una caída real provocada a propósito (criterio 8). **M0-A
   completo.** Detalle en `docs/work_log.md` y `docs/project_memory.md`. Siguiente: FU-06.
+- `2026-09-10` — **FU-06 → `done`**. Better Auth 1.7.3 sin los plugins `organization`/`admin`/`apiKey`
+  (D-52, esquema real de FU-04 incompatible con lo que asumen); matriz B.3 completa, alcances de
+  agente sin implicación (RF-147), compuertas de `/hq`/`/portal` con `HABILITADO=false` hasta
+  DU-13/DU-18. Tres bugs reales encontrados por la prueba: `context.ts` de FU-04 nunca funcionaba en
+  runtime, `api_key`/`membership` con RLS sin contexto en la primera versión (D-53, dos políticas
+  nuevas), y `(hq)`/`(portal)` como grupos resolvían las dos a `/`. `npm run verify` y
+  `npm run test:db` en verde. Detalle en `docs/work_log.md`. Siguiente: FU-08 (FU-07 depende también
+  de FU-08).

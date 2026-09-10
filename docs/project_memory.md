@@ -42,12 +42,31 @@ sesiones), `log.md` y los **siete conceptos** (`method-sdd-icm`, `naming-rules`,
 `content-schema`, `brand-tokens`, `crm-integration`, `doctrine-summary`).
 
 ## Última unidad completada
-- **FU-05 (despliegue, CI, DNS y entorno) · `done` · 2026-09-10.** Los 9 criterios de aceptación
-  cerrados y verificados — no solo escritos. Detalle completo abajo y en `work_log.md`.
+- **FU-06 (módulo de identidad y autorización) · `done` · 2026-09-10.** Better Auth 1.7.3, matriz B.3
+  completa, compuertas de superficie, claves de API — todo verificado contra Postgres real
+  (`npm run test:db`), no solo escrito. Tres bugs reales de FU-04/FU-06 encontrados por la prueba y
+  corregidos (detalle en `work_log.md`). D-52 (sin plugins `organization`/`admin`/`apiKey`) y D-53
+  (dos políticas de fila para el arranque de identidad) registradas en `decision_log.md`.
+- FU-05 (despliegue, CI, DNS y entorno) · `done` · 2026-09-10.
 
 ## Próxima unidad
-**FU-06 · Módulo de identidad y autorización · M0-B.** Depende de FU-04 y FU-05, las dos ya cerradas.
-Leer `implementation/user_units.md` §FU-06 y `knowledge/index.md` antes de empezar.
+**FU-08 · Adaptador de correo transaccional · M0-B.** Depende de FU-05 (cerrada) y de F.2-4 (dominio
+de correo verificado — sigue `[PENDIENTE]`, no bloquea empezar el adaptador en sí, solo el envío
+real). FU-07 (invitaciones) depende de FU-06 **y** FU-08, así que FU-08 va primero. Leer
+`implementation/user_units.md` §FU-08 y `knowledge/index.md` antes de empezar.
+
+## FU-06 — lo que hay que saber para construir sobre ello (referencia)
+- **Sin los plugins de Better Auth** `organization`/`admin`/`apiKey` (D-52) — el módulo propio en
+  `lib/auth/` es la única puerta. `puedeHacer`/`exigir` (`lib/auth/permissions.ts`) es la matriz B.3;
+  cualquier unidad que compruebe permisos pasa por ahí, nunca comparando `role` a mano
+  (`scripts/db/check-auth-encapsulado.ts` lo vigila en CI).
+- **`api_key` y `membership` tienen RLS**: cualquier código nuevo que las toque pasa por
+  `withScope`/`withSystemScope` (`lib/db/scope.ts`), nunca por una conexión propia — el bug real que
+  esto habría causado está documentado en `work_log.md`, 2026-09-10.
+- **`/hq` y `/portal` existen pero están apagadas** (`HABILITADO = false` en sus `layout.tsx`). DU-13
+  y DU-18 las encienden al construir el contenido real — hasta entonces, ninguna sesión ve nada ahí.
+- `proxy.ts` (antes `middleware.ts`, Next 16 renombró la convención) hace comprobaciones baratas sin
+  tocar la base de datos; la comprobación de verdad vive en los `layout.tsx` y en `lib/auth/`.
 
 ## FU-05 — cómo quedaron los 9 criterios (referencia)
 
