@@ -476,3 +476,35 @@ Next, y sin procesos huérfanos después (`ps aux` limpio).
 Accesibilidad 100 · Best Practices 92 · SEO 100 · LCP 1,6 s — y pasó limpio a
 «Post Run» sin quedarse esperando nada. Mide ahora el binario exacto que
 despliega el `Dockerfile`, verificado en el sitio donde de verdad importa.
+
+## 2026-09-10 · Criterio 1/2 de FU-05 — el auto-deploy de `develop` nunca existió
+
+Ricardo creó `slg-web` (producción) en Easypanel y se topó con «Github token is
+missing» al intentar activar el despliegue automático. Con acceso de lectura a
+su panel (Claude in Chrome, su sesión ya iniciada — en ningún momento se
+escribió ni se vio una contraseña) se encontró y arregló de raíz:
+
+1. **Faltaba el token de GitHub a nivel de cuenta** (Settings → Github, campo
+   vacío) — Ricardo lo generó y lo guardó él mismo (`repo` scope, vía el enlace
+   pre-rellenado de Easypanel). Requisito de Easypanel para crear webhooks,
+   independiente de que el repo sea público.
+2. **Al guardar la fuente de `slg-web` con el token ya presente, Easypanel creó
+   su webhook solo** y disparó un primer despliegue (verde, automático).
+3. **Hallazgo real, no esperado**: `slgweb-staging` —desplegado desde antes de
+   esta sesión— **nunca tuvo un webhook registrado**. Verificado contra la API
+   de GitHub (`gh api .../hooks`): un solo hook, el de `slg-web`. La última
+   implementación de staging llevaba **10 horas**, sin reflejar ninguno de los
+   pushes de esta sesión (sin impacto funcional — ninguno tocó código de la
+   app, solo scripts de CI y documentación).
+
+**Corregido**: creado el webhook de `slgweb-staging` directamente contra la
+API de GitHub (`gh api repos/.../hooks -X POST`), con la misma URL de
+activación que ya mostraba su panel. Ping de verificación: **200 OK** en los
+dos hooks. `slg-web` sigue `main`, `slgweb-staging` sigue `develop`, cada uno
+con su propio webhook activo — el criterio 2 de FU-05 («push a develop publica
+staging y push a main publica producción, sin intervención manual») queda
+cerrado de verdad, no solo aparentado.
+
+Este mismo commit, al pushearse, es la prueba real: si `slgweb-staging` recibe
+un despliegue nuevo sin que nadie toque Easypanel, el webhook funciona en
+producción, no solo en el ping.

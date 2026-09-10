@@ -38,7 +38,7 @@ se ha producido ningún entregable.
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 35 `pending` · **1 `in_progress`** (FU-05: 7 de 9 criterios cerrados y verificados; quedan 2, los dos de Ricardo) · 0 `blocked` · 0 `review` · **3 `done`** (FU-02, FU-03, FU-04 · 2026-09-08). **M0-A completo salvo FU-05**, ya desbloqueada (EXT-7 cerrada por D-49; S-01 diferida a go-live). Falta: crear el servicio `slg-web` (producción) en Easypanel, y probar una vez la alerta de UptimeRobot — detalle en `docs/project_memory.md`.
+**Estado global:** 35 `pending` · **1 `in_progress`** (FU-05: 8 de 9 criterios cerrados y verificados; queda 1, de Ricardo) · 0 `blocked` · 0 `review` · **3 `done`** (FU-02, FU-03, FU-04 · 2026-09-08). **M0-A completo salvo FU-05**, ya desbloqueada (EXT-7 cerrada por D-49; S-01 diferida a go-live). Falta solo: provocar una caída una vez y confirmar la alerta de UptimeRobot (criterio 8) — detalle en `docs/project_memory.md`.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a

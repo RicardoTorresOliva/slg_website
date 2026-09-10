@@ -66,20 +66,23 @@ Ricardo — ninguno de código.
   sin `push` directo. Confirmado con Ricardo antes de aplicarlo.
 - **Criterio 3 (R-25)**: DNS verificado por consulta directa — los diez intocables intactos, `staging`
   y `minio` resuelven bien.
+- **Criterios 1 y 2, cierre real (2026-09-10)**: `slg-web` (producción) creado por Ricardo en Easypanel.
+  Con acceso de lectura a su panel vía Claude in Chrome (su sesión, sin ver ni escribir ninguna
+  contraseña) se diagnosticó y corrigió «Github token is missing»: faltaba el token a nivel de cuenta
+  (Ricardo lo generó y guardó él mismo). **Hallazgo real**: `slgweb-staging` nunca tuvo webhook
+  registrado en GitHub —10 horas sin redeploy automático, verificado contra la API de GitHub—;
+  corregido creando el webhook faltante directamente por API (`gh api .../hooks`), ping **200 OK** en
+  los dos. `slg-web` sigue `main`, `slgweb-staging` sigue `develop`, cada uno con su propio webhook
+  activo. **R-42 confirmado resuelto**: producción usa `slg_website_prod` como base de datos, distinto
+  del nombre de staging — los dos entornos no comparten datos.
 
-**Pendiente de Ricardo — guía actualizada en el artifact `Puesta en marcha M0-A`:**
-1. **Crear el servicio de producción `slg-web` en Easypanel** (rama `main`, dominio
-   `softlandingglobal.com` sin DNS todavía — no publica nada al público, solo prueba el mecanismo).
-   Sin este servicio, los criterios 1 y 2 no se pueden dar por completamente cerrados. **Ojo con
-   R-42**: la base de datos de producción tiene que llevar un **nombre distinto** al que quedó en
-   staging dentro del mismo `slgwebpostgres` — si no, los dos entornos comparten datos.
-2. **Criterio 8**: provocar una caída una vez y confirmar que UptimeRobot avisa por el canal fuera del
+**Pendiente de Ricardo:**
+1. **Criterio 8**: provocar una caída una vez y confirmar que UptimeRobot avisa por el canal fuera del
    VPS. No se puede simular desde aquí.
-3. ~~Los dos cubos de MinIO (`downloads`, `deliverables`)~~ — **hecho** (confirmado por Ricardo,
-   2026-09-09/10). **D-51 sigue en pie**: la app usará `MINIO_ROOT_USER`/`PASSWORD` directamente
-   (R-41, revisar antes del go-live), porque el Console gratuito ya no deja crear una clave acotada
-   desde la web. No verificado por el agente que los dos queden **privados** (no hay acceso al
-   Console) — confirmarlo la primera vez que FU-09 suba un archivo de prueba.
+2. ~~Los dos cubos de MinIO~~ — **hecho**. **D-51 sigue en pie**: la app usará `MINIO_ROOT_USER`/
+   `PASSWORD` directamente (R-41, revisar antes del go-live), porque el Console gratuito ya no deja
+   crear una clave acotada desde la web. No verificado por el agente que los dos queden **privados**
+   (no hay acceso al Console) — confirmarlo la primera vez que FU-09 suba un archivo de prueba.
 
 ## R-40 resuelto — D-50 (2026-09-09)
 **Ya no bloquea el cierre de FU-05.** El gate D1 y el stack elegido eran incompatibles: el suelo de
