@@ -65,7 +65,7 @@ mientras tanto, DU-01 sigue bloqueada por las tres.
 | FU-09 | FU | Almacenamiento de archivos y URLs firmadas | M0-B | FU-05 · `api_contracts` | `done` |
 | DU-01 | DU | Acceso, sesión y recuperación por los tres métodos | M0-B | FU-06, FU-07, FU-08 · F.2-2, F.2-3 | `pending` |
 | ━━━ | ━━━ | **▼ M1-A · CAPA PÚBLICA: COMPUERTAS, COMPONENTES Y ARMAZÓN** | ━━━ | ━━━ | ━━━ |
-| FU-01 | FU | Copy maestro bilingüe — compuerta única de aprobación | M1-A | FU-03 · SLG_Overhauling | `in_progress` |
+| FU-01 | FU | Copy maestro bilingüe — compuerta única de aprobación | M1-A | FU-03 · SLG_Overhauling | `done` |
 | FU-10 | FU | Sistema de componentes C.5 con prototipo interactivo aprobado | M1-A | FU-02 | `done` |
 | DU-02 | DU | Armazón público: navegación, sheet móvil, pie y conmutador de idioma | M1-A | FU-03, FU-10 | `pending` |
 | DU-03 | DU | Portada (Home) ES/EN | M1-A | FU-01, FU-10, DU-02 | `pending` |

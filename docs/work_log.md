@@ -1143,3 +1143,34 @@ construido, probado contra Postgres real, y documentado en `data_model.md` §11.
 §11.8 (los dos pendientes que dejaban abiertos para esta unidad, ahora resueltos).
 
 `implementation/task_tracker.md` pasa FU-11 a `in_progress`.
+
+## 2026-09-11 · FU-01 — Aprobación explícita de Ricardo, compuerta cerrada
+
+**Ricardo aprueba el borrador de copy completo** ("Apruebo todos los copy"), registrado aquí con
+fecha por el criterio 6 de FU-01: *"la compuerta se cierra con una aprobación explícita de Ricardo
+registrada en `work_log`, con fecha."*
+
+La aprobación cubre el borrador tal como se entregó en la entrada anterior ("FU-01 — Primer borrador
+de copy maestro"): Home, los 4 overviews de rama, los 11 `service` (secciones 1–3), sus 11
+`download`, Doctrina (shell) y Nosotros, más las ~29 cadenas de `content/ui` ya cerradas. **La
+aprobación no resuelve, por sí misma, los `[PENDIENTE]` que ese borrador dejaba explícitos** — la
+cita de The Phoenix Doctrine, la biografía y mentorías de Nosotros, qué documento se destaca en Home,
+el contenido específico de 6 servicios, y título/público/aprendizajes de D-02…D-11 siguen sin el dato
+que solo Ricardo o SLG_Overhauling pueden aportar. Aprobar el ENFOQUE (marcar lo que falta en vez de
+inventarlo) es exactamente lo que RNF-18 y el criterio 3 de FU-01 piden — no es lo mismo que aprobar
+contenido inventado, porque no lo hay.
+
+**Los 6 criterios de aceptación de FU-01, verificados**:
+1. Paridad ES/EN — `npm run check:content` en verde (verificado en la entrada anterior).
+2. Nomenclatura literal — ídem, en verde.
+3. Cifras/afirmaciones con fuente o `[PENDIENTE]` explícito — cumplido, ver arriba.
+4. Ninguna página ofrece "Sesión Cero" como CTA — cumplido, no se mencionó en ningún archivo nuevo.
+5. Una idea por viewport, cero lorem ipsum, cero stock — cumplido por construcción.
+6. Aprobación explícita de Ricardo, con fecha — **esta entrada**.
+
+**Compuerta de FU-01 cerrada.** `implementation/task_tracker.md` pasa FU-01 a `done`. Consecuencia
+directa: **DU-02 y DU-03 (M1-A) quedan desbloqueadas** — la única condición que las retenía
+("ninguna DU de página se declara construible" mientras la compuerta siguiera abierta) ya no aplica.
+Los `[PENDIENTE]` de contenido siguen visibles en staging y prohibidos en `main` (DoD #10), como
+exige el propio método — no bloquean construir, sí bloquean que esas páginas concretas lleguen a
+producción completas mientras falte el dato.
