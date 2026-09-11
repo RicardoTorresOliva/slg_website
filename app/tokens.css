@@ -31,13 +31,15 @@
    * no parece enlace es un defecto de uso, no de estilo. */
   --slg-link: var(--slg-blue-primary);
 
-  /* AZUL SOBRIO OSCURO · D-47.
+  /* AZUL SOBRIO OSCURO · D-47, oscurecido en D-62.
    * Sustituye al #14648C del kit, que medía 200° de matiz — frontera teal — y
-   * se leía verdoso en pantalla. Este mide 209°: azul sin discusión, con
-   * saturación baja (36%), que es lo que produce la sensación metálica.
-   * 11,9:1 sobre --paper. Wordmark, H1, titulares de portada, títulos de bloque.
+   * se leía verdoso en pantalla. Mismo matiz que D-47 (~209-210°, azul sin
+   * discusión), pero con la luminosidad bajada de 22% a 14%: Ricardo, viendo
+   * los títulos renderizados, los encontró demasiado tenues para una agencia
+   * que debe proyectar firmeza y elegancia. 15,7:1 sobre --paper (subía desde
+   * 11,9:1). Wordmark, H1, titulares de portada, títulos de bloque.
    * NO se usa para enlaces: ver --slg-link. */
-  --slg-blue-deep: #24394d;
+  --slg-blue-deep: #182430;
 
   /* 2,4:1 sobre claro → NUNCA como color de texto sobre fondo claro.
    * Solo highlight, icono, subrayado, o capa exterior del anillo de foco.

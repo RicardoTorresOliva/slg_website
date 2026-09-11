@@ -1014,6 +1014,21 @@ work_log"): con la salvedad anterior declarada, no oculta, los nueve componentes
 panel del navegador visible en pantalla — la próxima vez que la sesión se siga desde el escritorio.
 `implementation/task_tracker.md` se actualiza a `in_progress` (no `done`) por esta misma razón.
 
+## 2026-09-11 · FU-10 — Motion verificado con el panel visible, compuerta cerrada
+
+Ricardo abrió el panel del navegador (`document.visibilityState: "visible"`, confirmado). Repetida
+la verificación pendiente:
+
+- **Sheet móvil**: abre, Escape lo cierra con la animación completa (scrim y hoja desaparecen del
+  DOM, no solo llegan a su valor final) — confirmado por captura de pantalla antes/después. Clic en
+  el scrim cierra igual de limpio.
+- **Hero**: la animación de entrada llega a `opacity: 1` (0.96 en el instante medido, dentro de
+  margen de redondeo de un spring en curso) — confirmado que progresa, a diferencia de la sesión
+  anterior donde quedaba congelada en `opacity: 0`.
+
+Con esto, los 12 criterios verificables de FU-10 están cerrados. **Compuerta de C.5 cerrada.**
+`implementation/task_tracker.md` pasa FU-10 a `done`.
+
 ## 2026-09-11 · FU-01 — Primer borrador de copy maestro · `in_progress` (compuerta abierta)
 
 Ricardo autorizó explícitamente redactar todo lo pendiente ("redacta todo lo que esté pendiente por
