@@ -91,12 +91,27 @@ Better Auth 1.7.3, matriz B.3, compuertas de `/hq`/`/portal`, claves de API. Sin
 `role` a mano, vigilado por `check:auth-encapsulado`. `/hq`/`/portal` existen con `HABILITADO = false`
 hasta DU-13/DU-18. Ver el hallazgo D-56 arriba: un hueco de esta unidad, corregido en FU-07.
 
+## FU-10 · Sistema de componentes C.5 · `in_progress` (2026-09-10)
+Los nueve componentes (formulario de descarga, nav + sheet móvil, hero, tarjeta de rama/servicio,
+«qué incluye», tarjeta de artículo, pie, shell de app de seis estados, visor de entregables) están
+construidos, en `/prototipos`, y verificados en el navegador real contra el build de producción.
+**No está `done` todavía**: falta repetir la verificación de las animaciones dirigidas por
+`requestAnimationFrame` (cierre del sheet móvil, entrada del hero, panel lateral) con el panel del
+navegador visible en pantalla — durante toda esta sesión estuvo en `visibilityState: "hidden"`
+(Ricardo seguía el avance desde el teléfono) y Chromium suspende esas animaciones en ese estado; los
+valores (`initial`/`animate`/`exit`) se verificaron correctos por inspección, la finalización visual
+no. Detalle completo en `docs/work_log.md` (entrada "FU-10 — Cierre de la compuerta de C.5") y D-58.
+**Hallazgo real encontrado y corregido en el camino**: `MobileSheet` nunca cerraba (D-58) — un
+`useMotionValue` externo por `style` bloqueaba `animate`/`exit`; corregido dejando que Motion gestione
+`y` internamente, mismo patrón aplicado desde el diseño en el `Drawer` del shell de app.
+
 ## Próxima unidad
-Ninguna unidad nueva sin bloqueador externo queda en M0-B: **FU-07 y FU-08 están construidas y solo
-esperan a Ricardo/terceros** (F.2-2, F.2-3, F.2-4, P-3, P-4). DU-01 depende de las tres FU y no puede
-empezar antes. Opciones razonables para la próxima sesión: (a) esperar a que esas dependencias avancen
-y cerrar FU-07/FU-08 del todo, o (b) adelantar otra unidad de M0-B sin este bloqueo si aparece alguna,
-o de M1 si Ricardo prefiere no esperar.
+Con FU-10 en este estado, DU-02 y DU-03 (M1-A) quedan desbloqueadas en cuanto se complete la
+repetición de motion pendiente arriba — no dependen de F.2-2/F.2-3/F.2-4/P-3/P-4. **FU-07 y FU-08
+siguen construidas y solo esperan a Ricardo/terceros** (F.2-2, F.2-3, F.2-4, P-3, P-4); DU-01 depende
+de las tres FU y no puede empezar antes. Opciones razonables para la próxima sesión: (a) repetir la
+verificación de motion de FU-10 con el panel visible y cerrarla `done`, (b) empezar DU-02/DU-03, o
+(c) esperar a que F.2-2/F.2-3/F.2-4/P-3/P-4 avancen para cerrar FU-07/FU-08 del todo.
 
 ## Entorno local
 - `docker-compose.yml` levanta `slg-db` (PostgreSQL 16, puerto **5434** — 5432 y 5433 son de otros
@@ -132,7 +147,7 @@ o de M1 si Ricardo prefiere no esperar.
   a `torresoliva.ricardo@gmail.com` únicamente (segunda corrección de D-49, ver `decision_log.md`).
 
 ## Decisiones fijadas (no re-explorar)
-Todas registradas en `docs/decision_log.md` (D-14 a D-57). Dos marcadas
+Todas registradas en `docs/decision_log.md` (D-14 a D-59). Dos marcadas
 **[IRREVERSIBLE-TRAS-FU-04]** (D-26, D-27): revertirlas después de la primera migración es migración
 de datos, no una edición.
 

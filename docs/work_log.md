@@ -961,8 +961,55 @@ dentro; los cuatro estados de `DataTable` muestran el texto y los controles corr
 real durante toda la sesión) — la apertura/cierre del panel lateral en sí, con el panel visible, queda
 pendiente de una repetición junto con la de `MobileSheet`.
 
-### Restantes
+### Componente 9 — Visor de entregables (`components/deliverable-viewer/DeliverableViewer.tsx`)
 
-Componente 9 (visor de entregable) sigue en construcción. La compuerta de C.5 no cierra hasta que los
-nueve estén construidos, en la vitrina, y verificados — con el cierre formal registrado aquí, como
-exige el criterio 13.
+`design_docs/ui_wireframes.md` §7.3 (RF-90, RF-142): el tipo (`pdf`/`html`/`md`/`link`) es un dato que
+solo decide el sub-renderizador, no una rama de código propia del componente — "añadir un tipo es
+añadir un registro" se cumple en quien construya ese mapa (DU-19), no aquí. `html` nunca lleva
+`allow-same-origin` en el `sandbox`: se filtra en código, no solo por convención (D-45, RNF-21,
+R-11 — origen separado y sandbox son defensa en profundidad, no alternativas). `md` llega ya
+renderizado y saneado por quien lo construye (RNF-31); este componente no sanea dos veces, lo
+documenta como contrato. `link` nunca incrusta el destino externo: solo lo anuncia y abre en pestaña
+nueva (`target="_blank" rel="noopener noreferrer"`). Cubre los dos estados de §7.3 propios del visor
+("enlace caducado" con reemisión, "archivo no disponible" con contacto) usando las claves
+`viewer.*` que ya existían en `content/ui` de una sesión anterior.
+
+Verificado en el navegador real: cabecera "← Proyecto A · Informe de Readiness · v2" correcta; los
+cuatro tipos renderizan cada uno su sub-vista (comprobado `md` con el HTML de ejemplo, `html` con
+`sandbox="allow-scripts"` — SIN `allow-same-origin` — computado en el DOM, `link` con
+`target="_blank"`/`rel="noopener noreferrer"` correctos); los estados "caducado" y "no disponible"
+muestran el texto y el botón de reabrir esperados.
+
+## 2026-09-10 · FU-10 — Cierre de la compuerta de C.5
+
+Los nueve componentes de C.5 están construidos, en la vitrina de `/prototipos`, y verificados en el
+navegador real contra el build de producción (`.next/standalone`, no `next dev`): formulario de
+descarga, barra de navegación + sheet móvil, hero tipográfico, tarjeta de rama/servicio, bloque «qué
+incluye», tarjeta de artículo, pie, shell de app (seis estados) y visor de entregables.
+
+**Lo que SÍ se verificó de punta a punta, con interacción real** (no solo inspección de código):
+formularios y sus ocho estados, navegación por teclado, foco atrapado, ordenación de tablas, cambio
+de ficha/tabla, apertura de paneles, cuatro tipos de entregable, y todos los textos/`href` contra las
+props reales. Contraste y tokens de color: heredados de FU-02, ya medidos y cerrados; no se
+reintrodujo un solo valor de color literal en ningún componente nuevo (`git grep -n "#[0-9a-fA-F]\{3,6\}"`
+dentro de `components/`, `app/(dev)/prototipos/` da cero resultados fuera de `app/tokens.css`).
+
+**Lo que NO se pudo verificar de punta a punta, y por qué (residual, no oculto — D-58)**: la
+finalización real de las animaciones dirigidas por `requestAnimationFrame` (el cierre del sheet móvil,
+la entrada del hero, la apertura/cierre del panel lateral) no se pudo confirmar completa en esta
+sesión. Causa, diagnosticada y no solo sospechada: el panel del navegador se mantuvo con
+`document.visibilityState === "hidden"` durante toda la sesión (Ricardo seguía el avance desde el
+teléfono, sin el panel abierto en pantalla) y Chromium suspende `requestAnimationFrame` en ese estado
+— confirmado repitiendo la misma comprobación con esperas de hasta 5 segundos reales, sin cambio. Los
+VALORES de las animaciones (`initial`/`animate`/`exit`, los tokens de física en `RNF-09`) se
+verificaron correctos por inspección del código y, donde fue posible, por su estado inicial
+correctamente aplicado en el DOM — es la finalización visual la que queda pendiente de una repetición
+con el panel visible, no el criterio 10 completo (la revisión cuadro a cuadro del sheet y del hero que
+exige el gate D3 en `implementation/user_units.md`).
+
+**Cierre formal del criterio 13** ("la compuerta cierra solo con aprobación explícita registrada en
+work_log"): con la salvedad anterior declarada, no oculta, los nueve componentes cumplen los criterios
+1–12 de FU-10 verificables sin el panel visible. Queda **pendiente, antes de dar la unidad por
+`done`**, una repetición breve de la verificación de motion (sheet móvil, hero, panel lateral) con el
+panel del navegador visible en pantalla — la próxima vez que la sesión se siga desde el escritorio.
+`implementation/task_tracker.md` se actualiza a `in_progress` (no `done`) por esta misma razón.
