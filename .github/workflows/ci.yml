@@ -237,7 +237,7 @@ jobs:
       - name: Restricciones, inmutabilidad y políticas de fila
         # Escritas a mano: drizzle-kit genera tablas, no políticas ni guardas.
         run: |
-          for f in drizzle/0001_*.sql drizzle/0002_*.sql drizzle/0003_*.sql drizzle/0005_*.sql drizzle/0006_*.sql drizzle/0007_*.sql drizzle/0008_*.sql; do
+          for f in drizzle/0001_*.sql drizzle/0002_*.sql drizzle/0003_*.sql drizzle/0005_*.sql drizzle/0006_*.sql drizzle/0007_*.sql drizzle/0008_*.sql drizzle/0010_*.sql; do
             echo "→ $f"
             psql "$DATABASE_URL_MIGRATIONS" -v ON_ERROR_STOP=1 -f "$f"
           done

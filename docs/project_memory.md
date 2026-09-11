@@ -101,19 +101,30 @@ Better Auth 1.7.3, matriz B.3, compuertas de `/hq`/`/portal`, claves de API. Sin
 `role` a mano, vigilado por `check:auth-encapsulado`. `/hq`/`/portal` existen con `HABILITADO = false`
 hasta DU-13/DU-18. Ver el hallazgo D-56 arriba: un hueco de esta unidad, corregido en FU-07.
 
-## FU-10 · Sistema de componentes C.5 · `in_progress` (2026-09-10)
-Los nueve componentes (formulario de descarga, nav + sheet móvil, hero, tarjeta de rama/servicio,
-«qué incluye», tarjeta de artículo, pie, shell de app de seis estados, visor de entregables) están
-construidos, en `/prototipos`, y verificados en el navegador real contra el build de producción.
-**No está `done` todavía**: falta repetir la verificación de las animaciones dirigidas por
-`requestAnimationFrame` (cierre del sheet móvil, entrada del hero, panel lateral) con el panel del
-navegador visible en pantalla — durante toda esta sesión estuvo en `visibilityState: "hidden"`
-(Ricardo seguía el avance desde el teléfono) y Chromium suspende esas animaciones en ese estado; los
-valores (`initial`/`animate`/`exit`) se verificaron correctos por inspección, la finalización visual
-no. Detalle completo en `docs/work_log.md` (entrada "FU-10 — Cierre de la compuerta de C.5") y D-58.
-**Hallazgo real encontrado y corregido en el camino**: `MobileSheet` nunca cerraba (D-58) — un
-`useMotionValue` externo por `style` bloqueaba `animate`/`exit`; corregido dejando que Motion gestione
-`y` internamente, mismo patrón aplicado desde el diseño en el `Drawer` del shell de app.
+## FU-10 · Sistema de componentes C.5 · `done` (2026-09-11)
+Los nueve componentes están construidos, en `/prototipos`, y verificados en el navegador real contra
+el build de producción — incluida la finalización visual de las animaciones (sheet móvil, hero), que
+quedó pendiente al cerrar la sesión anterior (panel oculto) y se confirmó al reabrir con el panel
+visible: Escape y clic en el scrim cierran limpio, el hero completa su entrada. **Hallazgo real
+encontrado y corregido en el camino**: `MobileSheet` nunca cerraba (D-58) — un `useMotionValue`
+externo por `style` bloqueaba `animate`/`exit`; corregido dejando que Motion gestione `y`
+internamente, mismo patrón aplicado desde el diseño en el `Drawer` del shell de app. **D-62**:
+`--blue-deep` oscurecido de `#24394D` a `#182430` por pedido de Ricardo (títulos "muy tenues" para
+una agencia que debe proyectar firmeza) — mismo matiz, contraste sube de 11,9:1 a 15,7:1.
+
+## FU-11 · Anti-abuso propio · `in_progress` (2026-09-11)
+Construida sin bloqueo externo (depende solo de FU-04/FU-05) mientras Ricardo estaba fuera. Tablas
+`blocked_email_domain` (RF-31/32) y `rate_limit_event` (RF-34, ventana deslizante) — RLS solo
+`system`, ninguna de las dos es dato de empresa. `lib/anti-abuse/` completo, probado contra Postgres
+real (`scripts/db/test-anti-abuse.ts`, 16 comprobaciones). **Hallazgo propio, corregido**: la primera
+versión del límite de peticiones tenía una condición de carrera real (contar y luego insertar en dos
+sentencias); corregida con `pg_advisory_xact_lock`, verificado con una prueba de concurrencia real.
+**Hallazgo aparte sobre la herramienta**: el journal de `drizzle-kit` no conocía las migraciones
+escritas a mano (0001-0003, 0005-0008) y generó un archivo con colisión de número y SQL redundante —
+corregido a mano, advertencia dejada en D-63 para la próxima migración que use `drizzle-kit generate`.
+**No está `done`**: los criterios 5 y 6 (cero scripts de terceros en 27 rutas; validar contra esquema
+en un formulario real) no se pueden cerrar sin páginas públicas reales (DU-02/03+) ni un formulario
+con Server Action real (DU-08) — ninguno existe todavía. Detalle completo en D-63 y `work_log.md`.
 
 ## FU-01 · Copy maestro bilingüe · `in_progress` (2026-09-11)
 Primer borrador redactado por el agente con autorización explícita de Ricardo (D-61). Cubre Home, los
@@ -135,13 +146,15 @@ Ricardo), qué documento se destaca en Home, contenido específico de 6 de los 1
 del nombre, y título/público/aprendizajes de los documentos D-02…D-11.
 
 ## Próxima unidad
-Con FU-10 y FU-01 en este estado, **la aprobación de FU-01 por Ricardo es lo único que desbloquea
-DU-02/DU-03** (M1-A) — ya no falta nada más de este repositorio para poder construirlas, salvo esa
-aprobación y, para FU-10, la repetición de motion con el panel visible (arriba). **FU-07 y FU-08
-siguen esperando a Ricardo/terceros** (F.2-2, F.2-3, F.2-4 en progreso — ver bloque de cada unidad
-arriba). Opciones razonables para la próxima sesión: (a) que Ricardo revise y apruebe (o corrija) el
-borrador de FU-01, (b) repetir la verificación de motion de FU-10 con el panel visible, o (c) avanzar
-la verificación real de FU-07/FU-08 ahora que las credenciales están cargadas.
+Con FU-10 `done`, **la aprobación de FU-01 por Ricardo es lo único que desbloquea DU-02/DU-03**
+(M1-A) — ya no falta nada más de este repositorio para poder construirlas. **FU-07 y FU-08** tienen
+credenciales cargadas en `slgweb-staging` (redirect URIs de Google/Microsoft confirmados exactos por
+Ricardo) pero **sin verificar de punta a punta todavía** — falta un inicio de sesión real y un envío
+real por Resend. **FU-11** tiene su mecanismo propio construido y probado, pendiente de DU-02/03/08
+para cerrar sus dos últimos criterios. Opciones razonables para la próxima sesión: (a) que Ricardo
+revise y apruebe (o corrija) el borrador de FU-01, (b) verificar login real de Google/Microsoft y
+envío real por Resend contra staging, o (c) seguir con otra unidad de M2 sin bloqueo si aparece
+alguna.
 
 ## Entorno local
 - `docker-compose.yml` levanta `slg-db` (PostgreSQL 16, puerto **5434** — 5432 y 5433 son de otros

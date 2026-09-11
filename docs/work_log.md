@@ -1104,3 +1104,42 @@ No cierra la compuerta de FU-01. El criterio 6 exige **aprobación explícita de
 aquí con fecha** — este borrador es la propuesta que espera esa aprobación, no la aprobación misma.
 Ricardo pidió avanzar sin intervenir y que las decisiones pendientes se le presenten al final, no que
 el agente se autoapruebe la compuerta que el propio método reserva para él.
+
+## 2026-09-11 · FU-11 — Anti-abuso propio: límite de peticiones, honeypot y dominios · `in_progress`
+
+Ricardo salió y pidió avanzar sin consultarle, registrando decisiones para revisar al final. FU-11 es
+la única unidad de M2 sin bloqueo externo (depende solo de FU-04/FU-05, ya `done`) y no toca copy ni
+producto — D-63 (`docs/decision_log.md`) registra la decisión completa; aquí, el detalle técnico.
+
+**Qué se construyó**: `lib/anti-abuse/` — `esDominioDeCorreoGratuito` (contra la tabla nueva
+`blocked_email_domain`, sembrada con la misma lista provisional que ya vivía en
+`components/download-form/free-email-domains.ts`), `verificarLimiteDePeticiones` (contra
+`rate_limit_event`, ventana deslizante, resultado sin exponer el umbral) y `esHoneypotRelleno`
+(trivial a propósito). Dos migraciones: `0009_fu11_anti_abuso.sql` (tablas, vía `drizzle-kit
+generate`) y `0010_anti_abuso_rls.sql` (RLS a mano, solo `system` — ninguna de las dos tablas tiene
+`organization_id`, no son datos de ninguna empresa).
+
+**Hallazgo propio, corregido antes de terminar**: la primera versión de `verificarLimiteDePeticiones`
+contaba y luego insertaba en dos sentencias separadas — una condición de carrera real entre
+peticiones concurrentes para la misma clave. Corregido con `pg_advisory_xact_lock` sobre un hash de
+la clave. Verificado, no solo argumentado: `scripts/db/test-anti-abuse.ts` (16 comprobaciones contra
+Postgres real, incluida una prueba de 10 peticiones simultáneas contra un umbral de 5 que confirma
+que pasan exactamente 5) — todas en verde. `npm run verify` completo también en verde después del
+cambio.
+
+**Hallazgo aparte, sobre la herramienta de migraciones, no sobre el esquema**: `drizzle-kit generate`
+intentó reutilizar el número `0002` (colisión con `0002_rol_de_aplicacion.sql`, escrita a mano) y su
+SQL generado repetía columnas que 0007/0008 ya habían añadido — el journal interno de `drizzle-kit`
+nunca se enteró de las siete migraciones escritas a mano de este proyecto. Renombrado a `0009`,
+journal corregido, SQL depurado a mano para dejar solo las dos tablas nuevas. Detalle completo y la
+advertencia para la próxima migración en D-63 — no se intentó reconciliar el journal entero, cambio
+de mayor riesgo fuera del pedido de esta sesión.
+
+**Por qué queda `in_progress`, no `done`**: los criterios 5 (cero scripts de terceros verificado en
+27 rutas públicas) y 6 (validar la entrada contra esquema antes de usarse) no se pueden cerrar sin
+las páginas reales (DU-02/03 en adelante) ni un formulario real con Server Action (DU-08) — ninguno
+de los dos existe todavía. El mecanismo que sí es responsabilidad de FU-11 (RF-31 a RF-34) está
+construido, probado contra Postgres real, y documentado en `data_model.md` §11.1 y `api_contracts.md`
+§11.8 (los dos pendientes que dejaban abiertos para esta unidad, ahora resueltos).
+
+`implementation/task_tracker.md` pasa FU-11 a `in_progress`.

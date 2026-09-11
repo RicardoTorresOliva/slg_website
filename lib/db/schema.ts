@@ -545,6 +545,50 @@ export const emailDelivery = pgTable(
   ],
 );
 
+/* ══════════════════════════════════════════════════════════════════════════
+ * Anti-abuso propio (FU-11) — RF-31 a RF-35, D-16
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Dominios de correo gratuito rechazados por el formulario público.
+ *
+ * RF-32 exige que esta lista sea dato editable **sin desplegar** — por eso es
+ * una tabla, no una constante en el código. La comprobación del lado del
+ * cliente (`components/download-form/free-email-domains.ts`) sigue siendo
+ * solo la primera señal (RNF-33); esta tabla es la autoridad real.
+ */
+export const blockedEmailDomain = pgTable("blocked_email_domain", {
+  domain: text("domain").primaryKey(),
+  createdAt: createdAt(),
+});
+
+/**
+ * Registro de cada intento sujeto a límite de peticiones (RF-34): una fila
+ * por intento, no un contador que se actualiza — así dos peticiones a la vez
+ * nunca se pisan (sin lectura-modificación-escritura). El límite se calcula
+ * contando filas dentro de la ventana en el momento de comprobar.
+ *
+ * Sin limpieza automática todavía: la tabla crece sin borrado — limitación
+ * conocida, aceptable en v1 (ver decision_log D-63), a resolver con una tarea
+ * periódica si el volumen real lo pide.
+ */
+export const rateLimitEvent = pgTable(
+  "rate_limit_event",
+  {
+    id: id(),
+    /** Qué formulario/ruta protege — namespaces distintos no se bloquean entre sí. */
+    action: text("action").notNull(),
+    keyKind: text("key_kind").notNull(),
+    keyValue: text("key_value").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("idx_rate_limit_lookup").on(t.action, t.keyKind, t.keyValue, t.createdAt),
+  ],
+);
+
+export const RATE_LIMIT_KEY_KINDS = ["ip", "email"] as const;
+
 /* ── Ayudas de índice parcial ─────────────────────────────────────────────── */
 function sqlPending(col: unknown): SQL {
   return sql`${col} = 'pending'`;

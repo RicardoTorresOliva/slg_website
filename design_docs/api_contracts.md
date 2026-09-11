@@ -1718,7 +1718,7 @@ descrita en `planning/risks.md` R-08 (S-01).
 | Variable | Propósito |
 |---|---|
 | `PUBLIC_FORM_RATE_LIMIT_MAX` · `PUBLIC_FORM_RATE_LIMIT_WINDOW_MS` | Umbral y ventana del límite de los formularios públicos, por IP y por correo (RF-34). El umbral **no se revela** en la respuesta |
-| `FREE_EMAIL_DOMAINS_SOURCE` | Dónde vive la lista de dominios de correo gratuito, que debe ser **dato editable sin desplegar** (RF-32). **[PENDIENTE: si acaba siendo tabla, se declara en `data_model`]** |
+| ~~`FREE_EMAIL_DOMAINS_SOURCE`~~ | ✅ **Resuelto por FU-11**: tabla `blocked_email_domain` (declarada en `data_model` §11.1). No es una variable de entorno — RF-32 exige editable sin desplegar, y una tabla lo es sin necesitar ni siquiera un reinicio |
 | `UMAMI_SCRIPT_URL` · `UMAMI_WEBSITE_ID` | Analítica autoalojada. **Cero scripts de terceros** en la capa pública (RF-35, RF-127, gate D1) |
 
 **No hay variable de desafío anti-bot de terceros, y esa ausencia es D-16**: la protección es propia
@@ -1810,8 +1810,8 @@ Reglas que acompañan al número, y que valen tanto como él:
 | 3 | **Forma exacta de `/dashboard/metrics`, `/reports/funnel` y `/reports/sources`** (§8.3) | Antes de DU-13, contra el MCP de solo lectura del CRM |
 | 4 | **Ruta real de la ficha de contacto** en el frontend del CRM (§8.4), hoy supuesta en la plantilla | Ricardo, F.2-5 |
 | 5 | **P-3 y P-4**: dirección remitente visible y nombre del subdominio de envío (§11.3) | Ricardo, en M0 |
-| 6 | **Dónde vive la lista de dominios de correo gratuito** (§11.8, RF-32). Si acaba siendo tabla, se declara en `data_model` | FU-11 |
-| 7 | **Persistencia del límite de peticiones** de los formularios públicos (RF-34): tabla o almacén en memoria | FU-11 |
+| ~~6~~ | ✅ **Resuelto por FU-11**: tabla `blocked_email_domain` | FU-11 |
+| ~~7~~ | ✅ **Resuelto por FU-11**: tabla `rate_limit_event`, ventana deslizante | FU-11 |
 | 8 | **MIME aceptados para `deliverable.type = 'material'`** (§3.4); el tamaño ya está fijado en `data_model` §2.6 | FU-09 |
 | 9 | **Nombre del subdominio del visor de entregables HTML** (§3.6). El origen separado ya es normativo por **D-45**; falta solo el nombre | Ricardo, en **M4**; se construye en DU-19 |
 
