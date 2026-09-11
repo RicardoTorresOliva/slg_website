@@ -211,8 +211,14 @@ export function validateFrontmatter(
       }
       continue;
     }
-    // `pair: null` es un valor legítimo, no una ausencia.
-    if (data[name] === null && name !== "pair") {
+    // `null` es un valor legítimo para cualquier campo que use `isPair` como
+    // validador (hoy `pair` y `parent` — ambos aceptan "sin par"/"sin overview
+    // padre"), no una ausencia. Se identifica por la función de validación, no
+    // por el nombre del campo: nombrarlo por campo dejaba a `parent: null`
+    // rechazado pese a que `isPair` lo declara válido (encontrado redactando
+    // el contenido real de FU-01, servicio `SLG_Holdings`, que no tiene rama
+    // padre).
+    if (data[name] === null && check !== isPair) {
       if (required) {
         errors.push({ file, field: name, reason: "campo obligatorio vacío (null)" });
       }

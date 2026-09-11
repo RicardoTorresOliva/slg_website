@@ -115,13 +115,33 @@ no. Detalle completo en `docs/work_log.md` (entrada "FU-10 — Cierre de la comp
 `useMotionValue` externo por `style` bloqueaba `animate`/`exit`; corregido dejando que Motion gestione
 `y` internamente, mismo patrón aplicado desde el diseño en el `Drawer` del shell de app.
 
+## FU-01 · Copy maestro bilingüe · `in_progress` (2026-09-11)
+Primer borrador redactado por el agente con autorización explícita de Ricardo (D-61). Cubre Home, los
+4 overviews de rama, los 11 `service` (secciones 1–3 nuevas; 4–6 ya eran texto final, replicado), sus
+11 `download` (10 nuevos), Doctrina (shell) y Nosotros, más el cierre de ~29 cadenas de `content/ui`
+que ya tenían borrador propio. Fuente real usada: `~/Dev/SLG_Overhauling/SLG Overhauling.md` (fuera
+de este repositorio) — nada inventado donde esa fuente no alcanzaba; se dejó `[PENDIENTE]` explícito.
+Verificado en verde contra `npm run check:content` y `npm run verify` completos, no solo por
+inspección. **Hallazgo propio, corregido**: `lib/content/schema.ts` rechazaba `parent: null` en el
+registro de `SLG_Holdings` — la excepción de "`null` válido" miraba el nombre del campo (`pair`), no
+la función de validación (`isPair`, compartida con `parent`); corregido por función, no por nombre.
+
+**No está `done`, y no puede estarlo por decisión de nadie más que Ricardo**: el criterio 6 de FU-01
+exige su aprobación explícita registrada en `work_log`, con fecha — eso es exactamente lo que este
+borrador todavía espera. Lista completa de lo que quedó `[PENDIENTE]` (y por qué no se inventó) en
+`docs/work_log.md`, entrada "FU-01 — Primer borrador de copy maestro"; resumen: cita y resumen de The
+Phoenix Doctrine (vive en Docs_MD, fuera de este repo), biografía/mentorías de Nosotros (dato de
+Ricardo), qué documento se destaca en Home, contenido específico de 6 de los 11 servicios más allá
+del nombre, y título/público/aprendizajes de los documentos D-02…D-11.
+
 ## Próxima unidad
-Con FU-10 en este estado, DU-02 y DU-03 (M1-A) quedan desbloqueadas en cuanto se complete la
-repetición de motion pendiente arriba — no dependen de F.2-2/F.2-3/F.2-4/P-3/P-4. **FU-07 y FU-08
-siguen construidas y solo esperan a Ricardo/terceros** (F.2-2, F.2-3, F.2-4, P-3, P-4); DU-01 depende
-de las tres FU y no puede empezar antes. Opciones razonables para la próxima sesión: (a) repetir la
-verificación de motion de FU-10 con el panel visible y cerrarla `done`, (b) empezar DU-02/DU-03, o
-(c) esperar a que F.2-2/F.2-3/F.2-4/P-3/P-4 avancen para cerrar FU-07/FU-08 del todo.
+Con FU-10 y FU-01 en este estado, **la aprobación de FU-01 por Ricardo es lo único que desbloquea
+DU-02/DU-03** (M1-A) — ya no falta nada más de este repositorio para poder construirlas, salvo esa
+aprobación y, para FU-10, la repetición de motion con el panel visible (arriba). **FU-07 y FU-08
+siguen esperando a Ricardo/terceros** (F.2-2, F.2-3, F.2-4 en progreso — ver bloque de cada unidad
+arriba). Opciones razonables para la próxima sesión: (a) que Ricardo revise y apruebe (o corrija) el
+borrador de FU-01, (b) repetir la verificación de motion de FU-10 con el panel visible, o (c) avanzar
+la verificación real de FU-07/FU-08 ahora que las credenciales están cargadas.
 
 ## Entorno local
 - `docker-compose.yml` levanta `slg-db` (PostgreSQL 16, puerto **5434** — 5432 y 5433 son de otros

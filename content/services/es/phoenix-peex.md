@@ -10,15 +10,21 @@ pair: phoenix-peex-en
 
 ## Para quién y qué problema
 
-Marcador estructural. Redacción definitiva en FU-01.
+Para quien se sienta en un directorio o comité de dirección y tiene que aprobar —o frenar—
+iniciativas de inteligencia artificial sin formación técnica propia. El problema no es la
+tecnología: es decidir con criterio cuando el equipo que presenta el proyecto sabe más que quien
+lo aprueba.
 
 ## Qué es
 
-Marcador estructural. La definición literal procede de la fuente de la oferta.
+Phoenix PEEx es el Programa Phoenix de `SLG_Academy` dirigido a Alta Dirección: la línea de los
+Programas Phoenix pensada para quien decide, no para quien ejecuta.
 
 ## Qué incluye
 
-Marcador estructural.
+- Qué preguntas hacer antes de aprobar una iniciativa de IA
+- Cómo distinguir una implementación seria de un piloto decorativo
+- Qué exigir en gobierno, datos y transferencia de capacidad
 
 ## Cómo trabajamos
 

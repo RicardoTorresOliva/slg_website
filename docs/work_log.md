@@ -1013,3 +1013,79 @@ work_log"): con la salvedad anterior declarada, no oculta, los nueve componentes
 `done`**, una repetición breve de la verificación de motion (sheet móvil, hero, panel lateral) con el
 panel del navegador visible en pantalla — la próxima vez que la sesión se siga desde el escritorio.
 `implementation/task_tracker.md` se actualiza a `in_progress` (no `done`) por esta misma razón.
+
+## 2026-09-11 · FU-01 — Primer borrador de copy maestro · `in_progress` (compuerta abierta)
+
+Ricardo autorizó explícitamente redactar todo lo pendiente ("redacta todo lo que esté pendiente por
+redactar siguiendo la misma lógica y los documentos que tienes a tu disposición... sigue hasta
+terminar, no me preguntes nada más"), tras pedir instrucciones más específicas sobre qué había que
+escribir. D-61 (`docs/decision_log.md`) registra la decisión completa; aquí el detalle de qué se
+redactó, contra qué se verificó, y qué queda `[PENDIENTE]` de verdad.
+
+### Qué se redactó
+
+- **Home** (`content/pages/{es,en}/home.md`, nuevo): los 7 bloques del contrato A.3 — titular
+  maestro y subtítulo del hero, las dos puertas (SLG_AI/SLG_Holdings), las tres tarjetas de SLG_AI.
+  Franja Doctrina y descarga destacada quedan `[PENDIENTE]` a propósito (ver abajo).
+- **4 overviews de rama** (`slg-ai`, `slg-academy`, `slg-enterprise`, `slg-factory`, ES+EN, nuevos):
+  una idea por rama más los enlaces a sus hijos, con las frases ya usadas en Home para no repetir
+  redacción distinta del mismo hecho.
+- **11 registros `service`** (ES+EN — Phoenix PEEx/TEAx/RETx, Customize Programs, AI Coaching for
+  Directors, SLG_Readiness, SLG_Implement, APP_Building, AGE_Building, CoO as a Service,
+  SLG_Holdings): secciones 1–3 («Para quién y qué problema», «Qué es», «Qué incluye») redactadas
+  contra `~/Dev/SLG_Overhauling/SLG Overhauling.md` (la fuente real de la oferta, escrita por
+  Ricardo). Secciones 4–6 ya eran texto final desde antes de esta sesión (compartido, no específico
+  de cada servicio) — se replicaron sin cambio en los 10 registros nuevos. Solo `phoenix-peex`
+  existía antes (con las 6 secciones aún en «Marcador estructural»); los otros 10 pares (20 archivos)
+  son nuevos.
+- **11 registros `download` completos** (D-01 ya existía; D-02…D-11 nuevos, ES+EN): título, público
+  y qué aprende quedan `[PENDIENTE: Anexo I-2/I-3]` en los 10 nuevos — `offer-structure.md` ya decía
+  que esos datos no existen en ninguna fuente disponible, así que no se inventaron.
+- **Doctrina** (page shell nuevo): los tres pilares de DAL OS (dato ya conocido y verificado) más el
+  resumen ejecutivo explícitamente `[PENDIENTE]` — `knowledge/doctrine-summary.md` lo prohíbe
+  rellenar por inferencia, regla que este borrador respeta al pie de la letra.
+- **Nosotros** (actualizado, no nuevo): la descripción de la firma (ya conocida) queda como cuerpo;
+  biografía y mentorías quedan `[PENDIENTE]` — `design_docs/design_summary.md` (H-21) ya marcaba ese
+  contenido específico como "Externo/Ricardo", no como dato disponible en este repositorio.
+- **~29 cadenas de `content/ui`** (es.json/en.json): se les quitó el marcador `[PENDIENTE: copy
+  FU-01]` porque ya tenían un borrador funcional del agente de una sesión anterior y no dependen de
+  ningún dato externo (mensajes de error, estados vacíos, correos transaccionales, UI de invitación).
+  `footer.jurisdictionPending` se queda `[PENDIENTE]`: pide datos legales de contacto y jurisdicción
+  reales, no redacción.
+
+### Verificado contra los gates reales del proyecto, no solo por inspección
+
+`npm run check:content` (frontmatter, paridad ES/EN, nomenclatura literal, marcadores `[PENDIENTE]`)
+y `npm run verify` completo (incluidas las pruebas negativas de los cuatro gates de contenido y el
+gate D1 de Lighthouse) — los dos en verde contra el contenido nuevo.
+
+**Hallazgo propio, corregido en el camino**: `lib/content/schema.ts` rechazaba `parent: null` en el
+registro de `SLG_Holdings` (una rama sin overview padre, caso legítimo) porque la excepción de
+"`null` es válido" solo miraba el nombre del campo (`pair`), no qué función de validación usaba el
+campo (`isPair`, la misma para `pair` y `parent`). Corregido identificando la excepción por la
+función, no por el nombre — la batería de pruebas negativas de `npm run verify` sigue en verde
+después del cambio.
+
+### Lo que queda `[PENDIENTE]`, y por qué no se inventó (residual, no oculto)
+
+1. **Cita de The Phoenix Doctrine** (Home, franja Doctrina) y **resumen ejecutivo de Doctrina** —
+   viven en Docs_MD, fuera de este repositorio; `knowledge/doctrine-summary.md` prohíbe explícitamente
+   rellenarlos por inferencia.
+2. **Biografía y mentorías de Nosotros** — dato que debe aportar Ricardo (`design_summary.md` H-21),
+   no algo que este repositorio ya tuviera.
+3. **Qué documento se destaca en Home y con qué criterio rota** — decisión de producto, no de copy
+   (ya lo decía `ui_wireframes.md` §2.1 antes de esta sesión).
+4. **Contenido específico de 6 de los 11 servicios** (Phoenix TEAx, Phoenix RETx, Customize
+   Programs, AI Coaching for Directors, SLG_Implement, APP_Building, AGE_Building) más allá de su
+   nombre y su público — `SLG Overhauling.md` no da más detalle que el nombre para estos.
+5. **Título, público y qué aprende de los documentos D-02…D-11** — `offer-structure.md` ya decía que
+   esto es `[PENDIENTE: Anexo I-2/I-3]` desde antes de esta sesión; este borrador solo crea el
+   registro de datos que faltaba, sin inventar el contenido.
+6. **`footer.jurisdictionPending`** — datos legales de contacto y jurisdicción reales.
+
+### Lo que este borrador NO hace
+
+No cierra la compuerta de FU-01. El criterio 6 exige **aprobación explícita de Ricardo, registrada
+aquí con fecha** — este borrador es la propuesta que espera esa aprobación, no la aprobación misma.
+Ricardo pidió avanzar sin intervenir y que las decisiones pendientes se le presenten al final, no que
+el agente se autoapruebe la compuerta que el propio método reserva para él.
