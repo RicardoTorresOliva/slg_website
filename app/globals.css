@@ -67,7 +67,15 @@
   --radius-md: var(--slg-radius-md);
   --radius-lg: var(--slg-radius-lg);
 
+  --shadow-sm: var(--slg-shadow-sm);
+  --shadow-md: var(--slg-shadow-md);
+  --shadow-lg: var(--slg-shadow-lg);
+
   --font-sans: var(--slg-font-sans);
+
+  --text-hero: var(--slg-text-hero-size);
+  --text-hero--line-height: var(--slg-text-hero-leading);
+  --tracking-hero: var(--slg-text-hero-tracking);
 }
 
 /* ── Base ──────────────────────────────────────────────────────────────────

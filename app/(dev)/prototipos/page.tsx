@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 
 import { loadUiStrings } from "@/lib/content/loader.ts";
 import { NavBar } from "@/components/nav/NavBar.tsx";
+import { Hero } from "@/components/hero/Hero.tsx";
+import { BranchCard } from "@/components/branch-card/BranchCard.tsx";
+import { QueIncluye } from "@/components/que-incluye/QueIncluye.tsx";
 import { PrototipoFormularioDeDescarga } from "./formulario-de-descarga.tsx";
 
 /**
@@ -70,6 +73,68 @@ export default function Prototipos() {
             Arriba de esta página. Reduce el viewport a móvil para ver el botón de menú y el sheet
             arrastrable.
           </p>
+        </section>
+
+        <section aria-labelledby="h-hero" className="flex flex-col gap-4">
+          <h2 id="h-hero" className="text-lg font-semibold text-blue-primary">
+            3. Hero tipográfico
+          </h2>
+          <div className="rounded-lg border border-line">
+            <Hero
+              eyebrow="SLG_AI"
+              headline="Automatización con criterio, no con humo"
+              subheadline="Diagnóstico, hoja de ruta y ejecución — sin venderte lo que no necesitas."
+              ctaLabel="Descargar el diagnóstico"
+              ctaHref="#"
+            />
+          </div>
+        </section>
+
+        <section aria-labelledby="h-branch-card" className="flex flex-col gap-4">
+          <h2 id="h-branch-card" className="text-lg font-semibold text-blue-primary">
+            4. Tarjeta de rama/servicio
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <BranchCard name="SLG_AI" description="Automatización e IA aplicada, de diagnóstico a ejecución." href="/ai" />
+            <BranchCard
+              name="SLG_Holdings"
+              description="Participaciones y estructura de negocio a largo plazo."
+              href="/holdings"
+            />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <BranchCard
+              name="Academy"
+              description="Formación aplicada para equipos que van a operar la automatización."
+              href="/ai/academy"
+              downloadLabel="Incluye: temario descargable"
+            />
+            <BranchCard
+              name="Enterprise"
+              description="Automatización a medida para procesos ya en marcha."
+              href="/ai/enterprise"
+              downloadLabel="Incluye: caso de estudio descargable"
+            />
+            <BranchCard
+              name="Factory"
+              description="Productos de IA propios, listos para integrar."
+              href="/ai/factory"
+              downloadLabel="Incluye: ficha técnica descargable"
+            />
+          </div>
+        </section>
+
+        <section aria-labelledby="h-que-incluye" className="flex flex-col gap-4">
+          <h2 id="h-que-incluye" className="text-lg font-semibold text-blue-primary">
+            5. Bloque «Qué incluye»
+          </h2>
+          <QueIncluye
+            items={[
+              { figura: "11", texto: "dimensiones evaluadas de SLG_Readiness" },
+              { figura: "3", texto: "sesiones de trabajo con el equipo directivo" },
+              { figura: "1", texto: "hoja de ruta priorizada, lista para ejecutar" },
+            ]}
+          />
         </section>
       </main>
     </>

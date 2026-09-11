@@ -103,4 +103,12 @@
    */
   --slg-font-sans:
     "Montserrat", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Fila «Hero» de la tabla de tipografía (style_guide.md §4.2): literal de
+   * C.2, a diferencia de H1/H2/H3 (aún [PENDIENTE]). Montserrat 700, color
+   * --blue-deep (se aplica en el componente, no aquí — este archivo es solo
+   * escala, no asignación de color a un nivel concreto). */
+  --slg-text-hero-size: clamp(2.25rem, 5vw, 4.5rem);
+  --slg-text-hero-leading: 1.05;
+  --slg-text-hero-tracking: -0.02em;
 }

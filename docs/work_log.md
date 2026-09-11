@@ -863,9 +863,54 @@ Ricardo seguía desde el teléfono, sin el panel en pantalla), en D-58.
 **Pendiente antes de cerrar el criterio 1 de este componente**: repetir la comprobación de cierre con
 el panel visible en pantalla.
 
+### Componente 3 — Hero tipográfico (`components/hero/Hero.tsx`)
+
+Sin imagen: el peso lo lleva la escala `--text-hero` (nueva en `app/tokens.css`/`globals.css`,
+literal de la fila «Hero» de la tabla de tipografía de `design_docs/style_guide.md` §4.2 — a
+diferencia de H1/H2/H3, que siguen `[PENDIENTE]`). Contenido 100% por props (`eyebrow`, `headline`,
+`subheadline`, `ctaLabel`/`ctaHref`) — RF-16, sin una sola cadena propia. Aparición al montar con
+opacidad + 8 px una sola vez (RNF-46 aplicado a la carga, no a scroll: el hero siempre está visible
+de entrada), degradando a cross-fade de 200 ms sin desplazamiento con movimiento reducido (RNF-06).
+
+Verificado en el navegador real contra el build de producción: tamaño (36px en el viewport de
+escritorio de la vitrina, dentro del `clamp` esperado), peso 700, interlineado 37,8px (36×1,05),
+tracking -0,72px (36×-0,02em) y color `rgb(36,57,77)` = `--blue-deep` — los cuatro coinciden
+exactamente con la tabla de C.2. Fuente Montserrat autoalojada confirmada por `font-family`
+computado. Contenido y enlace del CTA presentes y correctos en el árbol de accesibilidad.
+
+**Misma limitación que D-58**: la animación de aparición en sí (opacidad 0→1) no se pudo confirmar
+completa en esta sesión — el panel se mantuvo en `visibilityState: "hidden"` todo el tiempo, y
+Chromium no avanza animaciones por `requestAnimationFrame` en ese estado. El valor inicial (`opacity:
+0`, `translateY(8px)`) sí se confirmó presente y correcto; falta repetir con el panel visible.
+
+### Componente 4 — Tarjeta de rama/servicio (`components/branch-card/BranchCard.tsx`)
+
+Un único componente para las dos escalas de los wireframes (§2.1 "dos puertas" SLG_AI/SLG_Holdings;
+§2.3 servicios dentro de cada rama) — mismo armazón, contenido por props (`name`, `description`,
+`href`, `downloadLabel` opcional para las tarjetas de servicio, que "nombran su documento de
+descarga"). Toda la tarjeta es el enlace, un único destino con foco. Radio `--radius-lg` (24px) y
+sombra `--slg-shadow-sm` (ninguna de las tres fuentes de diseño fija un radio/sombra exacto para esta
+tarjeta — ver D-59 y `design_docs/style_guide.md` §2.1/§5, que dejan "tarjetas" abierta a los tres
+radios). `--slg-shadow-sm`/`md`/`lg` se puentean por primera vez a las utilidades `shadow-*` de
+Tailwind (`app/globals.css`) — no existían antes de este componente.
+
+Verificado en el navegador real: 5 tarjetas (2 de rama + 3 de servicio) con nombre, descripción y
+`href` correctos; `box-shadow` computado coincide exactamente con `--slg-shadow-sm`
+(`rgba(10,10,20,0.04) 0 1px 2px, rgba(10,10,20,0.04) 0 2px 8px`); `border-radius` computado 24px.
+
+### Componente 5 — Bloque «Qué incluye» (`components/que-incluye/QueIncluye.tsx`)
+
+Sección ③ del contrato de página de servicio (`design_docs/ui_wireframes.md` §2.2): lista de ítems,
+cada uno con `border-left 3px` ciclando `--blue-primary` / `--cyan` / `--indigo` (patrón del kit,
+`style_guide.md` §5) y una "cifra grande" como elemento gráfico. Contenido 100% por props — cada
+página de servicio trae sus propios ítems (RF-16).
+
+Verificado en el navegador real: `border-left-color` computado de los tres ítems de la vitrina
+coincide exactamente con `--blue-primary` (`rgb(40,120,180)`), `--cyan` (`rgb(80,180,220)`) e
+`--indigo` (`rgb(40,40,120)`), en ese ciclo; `border-left-width` 3px en los tres.
+
 ### Restantes
 
-Componentes 3–9 (hero tipográfico, tarjeta de rama/servicio, bloque "qué incluye", tarjeta de
-artículo, footer, app shell de seis estados, visor de entregable) siguen en construcción. La compuerta
-de C.5 no cierra hasta que los nueve estén construidos, en la vitrina, y verificados — con el cierre
-formal registrado aquí, como exige el criterio 13.
+Componentes 6–9 (tarjeta de artículo, footer, app shell de seis estados, visor de entregable) siguen
+en construcción. La compuerta de C.5 no cierra hasta que los nueve estén construidos, en la vitrina, y
+verificados — con el cierre formal registrado aquí, como exige el criterio 13.
