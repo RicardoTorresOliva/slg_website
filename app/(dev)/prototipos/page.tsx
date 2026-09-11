@@ -7,6 +7,7 @@ import { BranchCard } from "@/components/branch-card/BranchCard.tsx";
 import { QueIncluye } from "@/components/que-incluye/QueIncluye.tsx";
 import { ArticleCard } from "@/components/article-card/ArticleCard.tsx";
 import { Footer } from "@/components/footer/Footer.tsx";
+import { PrototipoAppShell } from "./app-shell-demo.tsx";
 import { PrototipoFormularioDeDescarga } from "./formulario-de-descarga.tsx";
 
 /**
@@ -171,6 +172,13 @@ export default function Prototipos() {
               strings={es}
             />
           </div>
+        </section>
+
+        <section aria-labelledby="h-app-shell" className="flex flex-col gap-4">
+          <h2 id="h-app-shell" className="text-lg font-semibold text-blue-primary">
+            8. Shell de app (barra lateral, tabla, ficha, panel lateral, estados)
+          </h2>
+          <PrototipoAppShell />
         </section>
       </main>
     </>

@@ -933,8 +933,36 @@ build (`loadUiStrings()` revienta si falta una clave en un idioma).
 Verificado en el navegador real: los 5 destinos de rama, Descargas/Contacto, Privacidad/Términos y la
 línea de copyright con el aviso de jurisdicción pendiente, todos con el `href`/texto correctos.
 
+### Componente 8 — Shell de app (`components/app-shell/`)
+
+Seis piezas para las dos configuraciones de `ui_wireframes.md` §5 (HQ y portal, mismo patrón, distinta
+navegación por props): `AppShell` (barra lateral + área de contenido), `DataTable` (ordenable, fila →
+ficha, y cuatro de los seis estados de §5.2: cargando/vacío inicial/vacío por filtro/error de carga),
+`Ficha` (cabecera + secciones + metadatos), `Drawer` (panel lateral SIN scrim, Esc cierra, confirma si
+hay cambios sin guardar — `window.confirm` real, no simulado), `AvisoAccion` (estado "error de
+acción", sobre el contenido afectado) y `EstadoPermiso` (estado "permiso/no encontrado", siempre 404
+nunca 403 — RF-71/RF-95). Los seis estados de §5.2 quedan cubiertos entre `DataTable` (4) y estos
+últimos dos componentes.
+
+`Drawer` repite la lección de D-58 desde el diseño, no como corrección posterior: `x` nunca se pasa
+como `useMotionValue` externo — Motion lo gestiona internamente, igual que el `drag` de `MobileSheet`.
+El listener de teclado usa un `ref` para `intentarCerrar` (el cierre con confirmación) en vez de
+recrear el efecto en cada tecla: así el listener siempre ve el `sucio` más reciente sin robar el foco
+del campo cada vez que el formulario se ensucia.
+
+Verificado en el navegador real, contra el build de producción: orden alfabético ascendente/descendente
+al pulsar cada cabecera de columna ordenable; clic en una fila abre la ficha con el nombre correcto en
+el título de la pantalla y en la cabecera; el enlace "← Empresas" de la ficha vuelve a la tabla; el
+panel lateral abre sin `scrim` (confirmado: no existe ningún elemento de fondo) y con el foco atrapado
+dentro; los cuatro estados de `DataTable` muestran el texto y los controles correctos al conmutarlos.
+
+**Misma limitación que D-58, no repetida por extenso aquí**: la animación de apertura/cierre del
+`Drawer` no se pudo confirmar completa por la misma causa (panel oculto, sin `requestAnimationFrame`
+real durante toda la sesión) — la apertura/cierre del panel lateral en sí, con el panel visible, queda
+pendiente de una repetición junto con la de `MobileSheet`.
+
 ### Restantes
 
-Componentes 8–9 (app shell de seis estados, visor de entregable) siguen en construcción. La compuerta
-de C.5 no cierra hasta que los nueve estén construidos, en la vitrina, y verificados — con el cierre
-formal registrado aquí, como exige el criterio 13.
+Componente 9 (visor de entregable) sigue en construcción. La compuerta de C.5 no cierra hasta que los
+nueve estén construidos, en la vitrina, y verificados — con el cierre formal registrado aquí, como
+exige el criterio 13.
