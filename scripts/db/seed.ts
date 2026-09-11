@@ -26,7 +26,7 @@ const hace = (dias: number) => new Date(ahora.getTime() - dias * 864e5);
 async function main() {
   console.log("Sembrando datos de ejemplo…\n");
 
-  await sql`truncate agent_event, crm_delivery, download_event, lead_capture,
+  await sql`truncate agent_event, crm_delivery, download_event, download, lead_capture,
     deliverable, announcement, project, contact, membership, invitation,
     api_key, organization, "user" restart identity cascade`;
 
@@ -57,17 +57,23 @@ async function main() {
     ('p-otro','org-otro','Implementación','SLG_Implement','active','u-jessica',${hace(10)})`;
 
   // Los cuatro tipos con archivo, más el enlace. `material` cuelga del proyecto.
+  // `source` es ortogonal a `type` (§3.10): file_key XOR external_url, nunca los dos.
   await sql`insert into deliverable
-    (id,project_id,organization_id,title,type,file_key,url,version,family_id,visibility,published_at,published_by_type,published_by_id,published_by_label) values
-    ('d1','p-demo','org-demo','Informe de preparación','pdf','deliverables/d1.pdf',null,1,'fam-informe','client',${hace(5)},'user','u-jessica','Jessica'),
-    ('d2','p-demo','org-demo','Informe de preparación','pdf','deliverables/d2.pdf',null,2,'fam-informe','client',${hace(1)},'user','u-jessica','Jessica'),
-    ('d3','p-demo','org-demo','Reporte interactivo','html','deliverables/d3.html',null,1,'fam-reporte','client',${hace(2)},'api_key','k1','Hermes'),
-    ('d4','p-demo','org-demo','Notas de la sesión','md','deliverables/d4.md',null,1,'fam-notas','client',${hace(3)},'user','u-jessica','Jessica'),
-    ('d5','p-demo','org-demo','Grabación','link',null,'https://example.test/v',1,'fam-video','client',${hace(4)},'user','u-jessica','Jessica'),
-    ('d6','p-demo','org-demo','Manual del programa','material','deliverables/d6.pdf',null,1,'fam-manual','client',${hace(6)},'user','u-ricardo','Ricardo')`;
+    (id,project_id,organization_id,title,type,source,file_key,external_url,version,family_id,visibility,published_at,published_by_type,published_by_id,published_by_label) values
+    ('d1','p-demo','org-demo','Informe de preparación','pdf','file','deliverables/d1.pdf',null,1,'fam-informe','client',${hace(5)},'user','u-jessica','Jessica'),
+    ('d2','p-demo','org-demo','Informe de preparación','pdf','file','deliverables/d2.pdf',null,2,'fam-informe','client',${hace(1)},'user','u-jessica','Jessica'),
+    ('d3','p-demo','org-demo','Reporte interactivo','html','file','deliverables/d3.html',null,1,'fam-reporte','client',${hace(2)},'api_key','k1','Hermes'),
+    ('d4','p-demo','org-demo','Notas de la sesión','md','file','deliverables/d4.md',null,1,'fam-notas','client',${hace(3)},'user','u-jessica','Jessica'),
+    ('d5','p-demo','org-demo','Grabación','link','link',null,'https://example.test/v',1,'fam-video','client',${hace(4)},'user','u-jessica','Jessica'),
+    ('d6','p-demo','org-demo','Manual del programa','material','file','deliverables/d6.pdf',null,1,'fam-manual','client',${hace(6)},'user','u-ricardo','Ricardo')`;
 
   await sql`insert into announcement (id,organization_id,title,body_md,published_at,author_type,author_id,author_label) values
     ('a1','org-demo','Sesión Cero agendada','Nos vemos el jueves.',${hace(7)},'user','u-ricardo','Ricardo')`;
+
+  // Ancla de identidad de §5.10. `lo-que-un-director-debe-saber` es el slug
+  // que las capturas de abajo referencian.
+  await sql`insert into download (id,slug,doc_code,service,title_es,title_en,file_key,mime_type,size_bytes,status) values
+    ('dl1','lo-que-un-director-debe-saber','D-01','Phoenix PEEx','Lo que un director debe saber','What a director must know','downloads/lo-que-un-director-debe-saber.pdf','application/pdf',1048576,'published')`;
 
   // Los TRES estados de sincronización. Sin la `failed`, la pantalla de
   // reintento de HQ nunca se ve y R-24 queda sin mitigación visible.
@@ -77,8 +83,8 @@ async function main() {
     ('l2','cfo@otra.test','otra.test','Una CFO','Otra','download','lo-que-un-director-debe-saber','/ai/academy/phoenix-peex','es',${hace(1)},'v1',null,null,'pending',0,null,null,${ahora}),
     ('l3','coo@tercera.test','tercera.test','Un COO','Tercera','contact',null,'/contacto','en',${hace(3)},'v1','contact_note',null,'failed',5,null,'El CRM no respondió tras 5 intentos',null)`;
 
-  await sql`insert into download_event (id,lead_capture_id,download_slug,signed_url_issued_at,signed_url_expires_at,completed_at) values
-    ('de1','l1','lo-que-un-director-debe-saber',${hace(2)},${hace(2)},${hace(2)})`;
+  await sql`insert into download_event (id,lead_capture_id,download_id,signed_url_issued_at,signed_url_expires_at,completed_at) values
+    ('de1','l1','dl1',${hace(2)},${hace(2)},${hace(2)})`;
 
   await sql`insert into api_key (id,name,key_hash,organization_id,scopes,rate_limit_max) values
     ('k1','Hermes — publicación','hash-ejemplo-no-es-una-clave','org-demo',

@@ -170,3 +170,11 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   La condición que hace aceptable el aplazamiento —no reutilizar esa credencial en ningún entorno
   desplegado, y rotar antes del go-live— queda registrada en `docs/decision_log.md`.
   **FU-05 queda desbloqueada.**
+
+- `2026-09-11` — **D-50**: `download`, `download_event` y `deliverable` completados contra
+  `data_model.md` §5.10/§5.11/§5.14 (`drizzle/0004_biblioteca_de_descargas.sql`), verificado contra
+  PostgreSQL real. No es una unidad nueva: es una enmienda al entregable de **FU-04**, que sigue
+  `done`. Detalle en `docs/work_log.md` (misma fecha) y `docs/decision_log.md`. Deja **P-6** abierta:
+  `lead_capture` también difiere de §5.9, brecha mayor que se deja para su propia corrección antes de
+  que DU-08/DU-09 escriban en esa tabla. No cambia el estado de ninguna de las 39 unidades ni desbloquea
+  ni bloquea nada nuevo: FU-05 sigue siendo la siguiente.

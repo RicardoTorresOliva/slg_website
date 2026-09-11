@@ -205,3 +205,59 @@ degradaría `drizzle-kit` de 0.31 a 0.18. Se acepta; revísese si `drizzle-kit` 
 
 **Siguiente.** FU-05 — despliegue, CI, DNS y documentación de entorno. **Bloqueada por S-01 y por la
 elección del producto de monitorización (EXT-7)**, ambas de Ricardo.
+
+---
+
+## 2026-09-11 · Corrección posterior a FU-04 — `download`, `download_event`, `deliverable` completos · D-50
+
+**Qué la motivó.** Una revisión de `lib/db/schema.ts` contra `design_docs/data_model.md` §5.10, §5.11
+y §5.14 encontró que FU-04 solo construyó, de estas tres tablas, lo que las unidades ya hechas
+necesitaban: la tabla `download` no existía en absoluto; `download_event` apuntaba a un documento por
+`download_slug` de texto libre en vez de `FK → download.id`; y `deliverable` no distinguía `source`
+(archivo/enlace) de `type`, así que un entregable podía tener `file_key` **y** `url` a la vez sin que
+nada lo impidiera — justo lo que RF-142 prohíbe dejar en manos del código.
+
+**Qué se produjo.**
+
+| Tabla | Antes | Después |
+|---|---|---|
+| `download` | No existía | Creada completa: 12 columnas, 2 `UNIQUE`, 4 `CHECK`, `idx_download_status` |
+| `download_event` | `download_slug text NOT NULL` | `download_id FK → download.id ON DELETE RESTRICT`; `+ CHECK download_event_completed_after_issue`; `idx_download_event_lead` → `idx_download_event_capture` (con orden `signed_url_issued_at DESC`, como pide §5.11) + `idx_download_event_download` nuevo |
+| `deliverable` | Sin `source`; `url` genérico; sin `mime_type`/`size_bytes`/`updated_at` | `source` (`file`·`link`) + `external_url` (renombrado de `url`) + `mime_type` + `size_bytes` + `updated_at`; `+ 5 CHECK` (`deliverable_source_valid`, `deliverable_payload_coherent`, `deliverable_link_not_file_type`, `deliverable_size_within_limit`, `deliverable_published_needs_actor`) + `idx_deliverable_portal` + `idx_deliverable_materials` |
+
+Migración `drizzle/0004_biblioteca_de_descargas.sql`, escrita a mano como 0001-0003 (drizzle-kit no
+resuelve el renombre `url`→`external_url` ni la reescritura de `download_slug`→`download_id` sin
+intervención). `lib/db/schema.ts` y `scripts/db/seed.ts` actualizados a la vez — `seed.ts` ahora siembra
+un `download` real y hace que `download_event` lo referencie por `id`.
+
+**Verificado contra PostgreSQL real, no afirmado** (mismo estándar que FU-04): la migración se aplicó
+al contenedor `slg-db` local; `\d` confirma las 19+1 tablas y los `CHECK`/índices nuevos; cuatro
+inserciones deliberadamente inválidas (un `download` `published` sin `file_key`, uno por encima de 25
+MB, un `deliverable` con `file_key` y `external_url` a la vez, y un `pdf` marcado `source='link'`) **se
+rechazaron con el mensaje del `CHECK` correcto**, y no dejaron fila alguna. `npm run db:seed` corre de
+punta a punta con el esquema nuevo. `npm run check:types`, `test:contracts` y `test:nocompile` en
+verde. La comprobación 8 de `test-isolation.ts` (todo `organization_id` con política de fila) se
+repitió a mano contra `pg_class`: sigue en cero — `download` y `download_event` no llevan
+`organization_id` (correcto, son evidencia fuera del alcance por empresa, igual que `lead_capture`) y
+la política de `deliverable` no se tocó.
+
+**Dos hallazgos adicionales, no mezclados con esta corrección** (detalle en `docs/decision_log.md`,
+entrada D-50):
+
+1. `drizzle/meta/_journal.json` solo registraba `0000_inicial`: `0001`-`0003` nunca estuvieron
+   registradas para `drizzle-kit migrate`. Corregido aquí porque la migración `0004` tampoco se podría
+   haber aplicado por esa vía sin arreglarlo antes. Las políticas de `0001`-`0003` ya estaban aplicadas
+   en la base local (verificado por `\d` antes de tocar nada), así que la corrección es solo del
+   journal.
+2. `lead_capture` difiere de `data_model.md` §5.9` en varios puntos (`download_id` vs. `download_slug`,
+   UTM en cinco columnas vs. `jsonb`, `email_domain` generada vs. escrita por la aplicación,
+   `crm_idempotency_key` ausente, varios `CHECK`/índices). Es una brecha real y **mayor** — toca cómo
+   la aplicación ya escribe, no solo el esquema — y queda **sin tocar**, registrada como **P-6** en
+   `docs/decision_log.md` para su propia corrección foundational.
+
+**Gates.** `QG` (consultas parametrizadas, sin secretos) · no reabre D9 (aislamiento: verificado que
+sigue en cero tablas sin política).
+
+**Siguiente.** Sin cambio: FU-05 sigue siendo la unidad activa. Esta corrección no es una unidad nueva
+del `task_tracker` — es una enmienda al entregable de FU-04, registrada aparte para no maquillar su
+fecha de cierre original.

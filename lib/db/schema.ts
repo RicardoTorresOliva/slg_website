@@ -15,6 +15,7 @@
 
 import { sql, type SQL } from "drizzle-orm";
 import {
+  bigint,
   boolean,
   index,
   integer,
@@ -316,6 +317,42 @@ export const crmDelivery = pgTable(
   ],
 );
 
+/**
+ * download — ancla de identidad estable de un documento de descarga (§5.10).
+ *
+ * La fuente de verdad de los metadatos es el registro de contenido
+ * `content/downloads/<lang>/<slug>.md` (B.4, RF-137). Esta tabla existe para
+ * que `download_event` (y, cuando FU-08/DU-09 lo necesiten, `lead_capture`)
+ * apunten a un documento por clave foránea real en vez de por `slug` en texto
+ * libre: renombrar un archivo no debe romper la trazabilidad de una captura
+ * anterior. Sus columnas de texto son un espejo, sincronizado en el
+ * despliegue; si contenido y tabla discrepan, manda el contenido.
+ */
+export const download = pgTable(
+  "download",
+  {
+    id: id(),
+    slug: text("slug").notNull(),
+    docCode: text("doc_code"),
+    /** Servicio al que pertenece (§3.13). Nulo mientras no esté asignado. */
+    service: text("service"),
+    titleEs: text("title_es").notNull(),
+    titleEn: text("title_en").notNull(),
+    /** Objeto en el bucket `downloads`. Nulo mientras no exista el PDF (RF-40). */
+    fileKey: text("file_key"),
+    mimeType: text("mime_type"),
+    sizeBytes: bigint("size_bytes", { mode: "number" }),
+    status: text("status").notNull().default("draft"),
+    createdAt: createdAt(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("uq_download_slug").on(t.slug),
+    uniqueIndex("uq_download_doc_code").on(t.docCode),
+    index("idx_download_status").on(t.status, t.docCode),
+  ],
+);
+
 export const downloadEvent = pgTable(
   "download_event",
   {
@@ -323,13 +360,18 @@ export const downloadEvent = pgTable(
     leadCaptureId: text("lead_capture_id")
       .notNull()
       .references(() => leadCapture.id, { onDelete: "restrict" }),
-    downloadSlug: text("download_slug").notNull(),
+    downloadId: text("download_id")
+      .notNull()
+      .references(() => download.id, { onDelete: "restrict" }),
     signedUrlIssuedAt: timestamp("signed_url_issued_at", { withTimezone: true }).notNull(),
     signedUrlExpiresAt: timestamp("signed_url_expires_at", { withTimezone: true }).notNull(),
     completedAt: timestamp("completed_at", { withTimezone: true }),
     createdAt: createdAt(),
   },
-  (t) => [index("idx_download_event_lead").on(t.leadCaptureId)],
+  (t) => [
+    index("idx_download_event_capture").on(t.leadCaptureId, t.signedUrlIssuedAt.desc()),
+    index("idx_download_event_download").on(t.downloadId, t.completedAt.desc()),
+  ],
 );
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -372,8 +414,12 @@ export const deliverable = pgTable(
      * `material` cuelga siempre de un proyecto — por eso `project_id` es NOT NULL.
      */
     type: text("type").notNull(),
+    /** Discriminador de dónde está el contenido, ortogonal a `type` (§3.10). */
+    source: text("source").notNull(),
     fileKey: text("file_key"),
-    url: text("url"),
+    externalUrl: text("external_url"),
+    mimeType: text("mime_type"),
+    sizeBytes: bigint("size_bytes", { mode: "number" }),
     checksumSha256: text("checksum_sha256"),
     /** Versionado desde el primer día, aunque v1 no muestre historial (RF-143). */
     version: integer("version").notNull().default(1),
@@ -385,11 +431,18 @@ export const deliverable = pgTable(
     publishedById: text("published_by_id"),
     publishedByLabel: text("published_by_label"),
     createdAt: createdAt(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     index("idx_deliverable_org").on(t.organizationId),
     index("idx_deliverable_project").on(t.projectId),
     uniqueIndex("uq_deliverable_family_version").on(t.familyId, t.version),
+    index("idx_deliverable_portal")
+      .on(t.organizationId, t.projectId, t.publishedAt.desc())
+      .where(sqlPortalVisible(t.visibility, t.publishedAt)),
+    index("idx_deliverable_materials")
+      .on(t.organizationId, t.projectId, t.publishedAt.desc())
+      .where(sqlMaterialVisible(t.type, t.visibility, t.publishedAt)),
   ],
 );
 
@@ -524,6 +577,12 @@ function sqlPending(col: unknown): SQL {
 }
 function sqlTrue(col: unknown): SQL {
   return sql`${col} = true`;
+}
+function sqlPortalVisible(visibility: unknown, publishedAt: unknown): SQL {
+  return sql`${visibility} = 'client' AND ${publishedAt} IS NOT NULL`;
+}
+function sqlMaterialVisible(type: unknown, visibility: unknown, publishedAt: unknown): SQL {
+  return sql`${type} = 'material' AND ${visibility} = 'client' AND ${publishedAt} IS NOT NULL`;
 }
 
 /** Tablas con `organization_id`: las que la política de aislamiento debe cubrir. */
