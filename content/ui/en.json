@@ -44,6 +44,7 @@
   "viewer.unavailableTitle": "[PENDIENTE: copy FU-01] File unavailable",
   "viewer.contactSupport": "[PENDIENTE: copy FU-01] Contact SLG",
   "footer.rights": "SLG Agency Inc.",
+  "footer.jurisdictionPending": "[PENDIENTE: copy FU-01] contact details and jurisdiction",
   "email.invitation.subject": "[PENDIENTE: copy FU-01] Invitation to {{organizationName}}",
   "email.invitation.body": "[PENDIENTE: copy FU-01] You've been invited to join {{organizationName}}. To accept, open this link: {{inviteUrl}} (expires {{expiresAt}}).",
   "email.passwordReset.subject": "[PENDIENTE: copy FU-01] Reset your password",

@@ -5,6 +5,8 @@ import { NavBar } from "@/components/nav/NavBar.tsx";
 import { Hero } from "@/components/hero/Hero.tsx";
 import { BranchCard } from "@/components/branch-card/BranchCard.tsx";
 import { QueIncluye } from "@/components/que-incluye/QueIncluye.tsx";
+import { ArticleCard } from "@/components/article-card/ArticleCard.tsx";
+import { Footer } from "@/components/footer/Footer.tsx";
 import { PrototipoFormularioDeDescarga } from "./formulario-de-descarga.tsx";
 
 /**
@@ -135,6 +137,40 @@ export default function Prototipos() {
               { figura: "1", texto: "hoja de ruta priorizada, lista para ejecutar" },
             ]}
           />
+        </section>
+
+        <section aria-labelledby="h-article-card" className="flex flex-col gap-4">
+          <h2 id="h-article-card" className="text-lg font-semibold text-blue-primary">
+            6. Tarjeta de artículo
+          </h2>
+          <ArticleCard
+            href="/blog/ejemplo"
+            title="Por qué la mayoría de proyectos de automatización fracasan en el primer mes"
+            description="No es un problema de herramientas. Es un problema de diagnóstico: automatizar el proceso equivocado, más rápido, sigue siendo el proceso equivocado."
+            fecha="10 de septiembre de 2026"
+            tags={["Automatización", "Diagnóstico"]}
+            coverSrc="/file.svg"
+            coverAlt=""
+          />
+        </section>
+
+        <section aria-labelledby="h-footer" className="flex flex-col gap-4">
+          <h2 id="h-footer" className="text-lg font-semibold text-blue-primary">
+            7. Pie
+          </h2>
+          <div className="rounded-lg border border-line">
+            <Footer
+              ramas={NAV_ITEMS}
+              downloadsHref="/descargas"
+              contactHref="/contacto"
+              privacyHref="/legal/privacidad"
+              termsHref="/legal/terminos"
+              rssHref="/blog/rss.xml"
+              locale="es"
+              switchLangHref="#"
+              strings={es}
+            />
+          </div>
         </section>
       </main>
     </>

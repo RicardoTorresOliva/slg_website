@@ -909,8 +909,32 @@ Verificado en el navegador real: `border-left-color` computado de los tres ítem
 coincide exactamente con `--blue-primary` (`rgb(40,120,180)`), `--cyan` (`rgb(80,180,220)`) e
 `--indigo` (`rgb(40,40,120)`), en ese ciclo; `border-left-width` 3px en los tres.
 
+### Componente 6 — Tarjeta de artículo (`components/article-card/ArticleCard.tsx`)
+
+Fila del índice de Blog (`design_docs/ui_wireframes.md` §2.6): portada, fecha · etiquetas, título,
+descripción a dos líneas (`line-clamp-2`), toda la tarjeta como enlace. RF-22 (solo `published` en el
+índice) es una decisión de qué artículos pasar a este componente, no de este componente. La portada
+usa `<img>` nativo, no `next/image` — es la vitrina de FU-10, no la página real; DU-25/D-32 decide el
+componente de imagen de producción.
+
+Verificado en el navegador real: `href`, título y descripción truncada a 2 líneas
+(`-webkit-line-clamp: 2` computado) correctos; imagen de portada cargada (`naturalWidth` > 0, no
+rota).
+
+### Componente 7 — Pie (`components/footer/Footer.tsx`)
+
+Segundo camino a Descargas, Contacto y Legal (`design_docs/ui_wireframes.md` §2.1) — esas rutas no
+están en el menú de 5 destinos (RF-01). `ramas` y las rutas llegan por props (RF-16, mismo patrón que
+`NavBar`); el texto genérico (etiquetas legales, "SLG Agency Inc.", aviso de jurisdicción pendiente)
+viene de `content/ui` — se añadió `footer.jurisdictionPending` (con el marcador `[PENDIENTE: copy
+FU-01]`, siguiendo la convención existente) en `es.json`/`en.json`, con paridad verificada por el
+build (`loadUiStrings()` revienta si falta una clave en un idioma).
+
+Verificado en el navegador real: los 5 destinos de rama, Descargas/Contacto, Privacidad/Términos y la
+línea de copyright con el aviso de jurisdicción pendiente, todos con el `href`/texto correctos.
+
 ### Restantes
 
-Componentes 6–9 (tarjeta de artículo, footer, app shell de seis estados, visor de entregable) siguen
-en construcción. La compuerta de C.5 no cierra hasta que los nueve estén construidos, en la vitrina, y
-verificados — con el cierre formal registrado aquí, como exige el criterio 13.
+Componentes 8–9 (app shell de seis estados, visor de entregable) siguen en construcción. La compuerta
+de C.5 no cierra hasta que los nueve estén construidos, en la vitrina, y verificados — con el cierre
+formal registrado aquí, como exige el criterio 13.
