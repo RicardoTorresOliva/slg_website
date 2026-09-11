@@ -41,10 +41,14 @@ desde `content/ui`, cola de reintento con reserva-y-plazo y barrendero en proces
   pero sin resolverse sola.
 - `email_delivery` tenía un hueco propio desde FU-04 (columnas/RLS que `data_model` §5.19 exigía y
   nadie había añadido) — cerrado en `drizzle/0007_evidencia_de_correo_completa.sql`.
-- **Bloqueador real de cierre**: **P-3/P-4** (remitente/subdominio) resueltos con valor PROVISIONAL del
-  agente (D-54) — sin confirmación real de Ricardo. **F.2-4** (dominio de correo verificado) sigue
-  externo y `[PENDIENTE]`; sin él no se puede probar entrega real a bandeja de entrada (criterio 3),
-  el subdominio en DNS (criterio 4) ni el seguimiento desactivado en el panel de Resend (criterio 6).
+- **P-3/P-4 confirmados (D-60, 2026-09-11) y F.2-4 resuelto**: Ricardo verificó el dominio en Resend.
+  Subdominio real **`mailweb.softlandingglobal.com`** — distinto del ejemplo provisional de D-54
+  (`mail.softlandingglobal.com`); `MAIL_FROM_ADDRESS` debe usar el dominio real, no el de ejemplo.
+  Variables `MAIL_SMTP_*`/`MAIL_FROM_*` ya actualizadas por Ricardo en Easypanel (`slgweb-staging`).
+  **Queda pendiente, no verificado por el agente todavía**: una prueba de envío real de punta a punta
+  contra staging con las variables nuevas (criterio 3), y confirmar en el panel de Resend que el
+  seguimiento de apertura/clics está desactivado (criterio 6, D-24 ya lo exigía). En cuanto se
+  verifique, FU-08 pasa a `done`.
 
 ### FU-07 · Servicio de invitaciones · `in_progress`
 Emisión, revocación, reenvío (testigo nuevo cada vez) y aceptación por los tres métodos —convergen en
@@ -69,9 +73,15 @@ membership y `user.role` confirmados en Postgres, con `npm run verify` en verde 
     CSP de nonce por petición (`proxy.ts`) y `dynamic = "force-dynamic"` en todo el árbol
     (`app/layout.tsx`) — consecuencia obligada de usar nonces, documentada por Next.js. **Verificado
     que el gate D1 mejora, no empeora**: Performance 98→100, Best Practices 92→100, LCP 2,3 s→1,2 s.
-- **Bloqueador real de cierre**: **F.2-2/F.2-3** (Google, Microsoft) sin credenciales reales — Better
-  Auth ni registra esos proveedores todavía, así que los botones no existen en la página. El criterio 2
-  exige los TRES métodos funcionando; solo contraseña se pudo probar de punta a punta en el navegador.
+- **F.2-2/F.2-3 en progreso**: Ricardo cargó `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` y
+  `MICROSOFT_CLIENT_ID`/`MICROSOFT_CLIENT_SECRET`/`MICROSOFT_TENANT_ID` en el entorno de
+  `slgweb-staging` en Easypanel (2026-09-11). **Sin verificar todavía por el agente**: falta confirmar
+  (a) que el redeploy de staging recogió las variables nuevas, (b) que las "Authorized redirect URIs"
+  registradas en Google Cloud Console / Azure App registrations son exactamente
+  `https://staging.softlandingglobal.com/api/auth/callback/google` y `.../callback/microsoft`, y (c)
+  un inicio de sesión real de punta a punta con una invitación sembrada en staging (no solo que el
+  botón aparezca). El criterio 2 de FU-07 exige los TRES métodos funcionando — hasta esa prueba real,
+  sigue sin cerrarse aunque las credenciales ya existan.
 
 ## Última unidad cerrada del todo: FU-09 · Almacenamiento de archivos y URLs firmadas · `done` · 2026-09-10
 Servicio en `lib/files/`: URL firmada de descarga (GET SigV4) y de subida (POST policy — no PUT

@@ -77,6 +77,8 @@ derivada de `style_guide` §2.3. Nada aquí es nuevo: se transcribe lo ya escrit
 
 | D-59 | 2026-09-10 | **Reordenación de FU-10 declarada**: los nueve componentes de C.5 se construyen en el orden que ya fija el propio texto de la unidad — formulario de descarga primero (RF-134), navegación segundo, y el resto en el orden literal de C.5 (hero, tarjeta de rama/servicio, «qué incluye», tarjeta de artículo, pie, app shell, visor de entregables). | Construir en el orden literal de C.5 sin adelantar el formulario | El propio `implementation/user_units.md` (FU-10) instruye registrar esta reordenación en `decision_log` antes de construir: "Esta reordenación se declara y se registra en `decision_log`." No es una decisión nueva del agente — el texto de la unidad ya resuelve el orden, esta entrada solo cumple la instrucción literal de dejarlo escrito aquí. |
 
+| D-60 | 2026-09-11 | **P-3 y P-4 confirmadas por Ricardo, con valor final DISTINTO del provisional de D-54.** P-3: `From` en el subdominio de envío, `Reply-To` a `support@softlandingglobal.com` (la opción recomendada, ratificada). P-4: el subdominio verificado en Resend es **`mailweb.softlandingglobal.com`** — no `mail.softlandingglobal.com`, el ejemplo inventado que D-54 había usado para poder construir. Dominio con estado **Verified** en el panel de Resend; recepción de correo ("enable receiving") queda apagada a propósito — este subdominio es solo de envío transaccional, nunca recibe. | Mantener el valor de ejemplo de D-54 sin verificar contra lo que Ricardo configuró realmente en Resend | Ricardo gestionó el alta del dominio en Resend directamente y reportó el nombre real y el estado `Verified`. Sustituye el valor provisional de D-54 en todo lugar donde aparezca fuera del código (el código nunca tuvo el valor literal — D-54 ya dejaba claro que vivía solo en `.env`, nunca en el repositorio) — `MAIL_FROM_ADDRESS` en `.env`/Easypanel debe usar `@mailweb.softlandingglobal.com`, no `@mail.softlandingglobal.com`. Cierra F.2-4 en conjunto con la verificación del dominio: FU-08 puede ahora completar su criterio 3 (entrega real) y criterio 6 (seguimiento desactivado, verificado en el panel de Resend) en cuanto se confirme el envío real de una prueba. |
+
 ## Acciones de seguridad previas a la ejecución
 
 | # | Acción | Dónde se sigue |
@@ -91,10 +93,10 @@ cerradas, **P-5 incluida** (D-43). Quedan solo dos sub-decisiones de configuraci
 | # | Pendiente | Tipo | Estado |
 |---|-----------|------|--------|
 | ~~P-5~~ | **Monitorización externa de disponibilidad, fuera del VPS.** La abrían `risks.md` R-29 y RF-130 (gate D11). | Elección de **categoría** | ✅ **Cerrada por D-43**: servicio de uptime dedicado con tramo gratuito, externo al VPS. Queda elegir el producto concreto con 2–3 candidatos (paso 5), lo que **no bloquea el arranque**: afecta a FU-05 y DU-25, ambas fuera de M0-A. n8n queda como monitor **secundario**. |
-| P-3 | Dirección remitente visible, tras D-24: `From` en el subdominio con `Reply-To` a `support@` (recomendado), o `From` en la raíz apoyándose solo en alineación DKIM | Sub-decisión de configuración | **Valor PROVISIONAL en D-54** (2026-09-10): se adoptó la opción recomendada para poder construir FU-08. Sigue **sin confirmación de Ricardo** |
-| P-4 | Nombre exacto del subdominio de envío | Sub-decisión de configuración | **Valor PROVISIONAL en D-54** (2026-09-10): `mail.softlandingglobal.com` (ejemplo de D-24), inventado a falta de mejor dato. Sigue **sin confirmación de Ricardo** |
+| ~~P-3~~ | Dirección remitente visible, tras D-24: `From` en el subdominio con `Reply-To` a `support@` (recomendado), o `From` en la raíz apoyándose solo en alineación DKIM | Sub-decisión de configuración | ✅ **Cerrada por D-60** (2026-09-11): confirmada la opción recomendada — `From` en el subdominio, `Reply-To` a `support@softlandingglobal.com`. |
+| ~~P-4~~ | Nombre exacto del subdominio de envío | Sub-decisión de configuración | ✅ **Cerrada por D-60** (2026-09-11): `mailweb.softlandingglobal.com` — **distinto** del ejemplo provisional de D-54 (`mail.softlandingglobal.com`); Ricardo verificó este dominio en Resend, no el de ejemplo. |
 
-**Ninguna de las tres bloquea la aprobación del plan.** P-3 y P-4 se fijan en M0 antes de FU-08.
+**Ninguna bloquea la aprobación del plan.** P-3 y P-4 quedan cerradas por D-60.
 El producto de monitorización se elige antes de FU-05, con el mismo procedimiento que P-1 y P-2:
 2–3 candidatos con contrapartidas, y elige Ricardo.
 
