@@ -824,3 +824,48 @@ reintento automático de la cola de FU-08 tampoco se registró para `kind = 'inv
 (manual) ya satisface el criterio 4 ("queda creada y reenviable"), y un testigo de invitación no se
 puede regenerar de forma automática sin volver a mintarlo — se deja para cuando DU-14/DU-21 decidan si
 hace falta.
+
+## 2026-09-10 · FU-10 — Componentes de C.5 (prototipado) · `in_progress`
+
+Todo el trabajo bloqueado externamente en M0-B (credenciales de terceros pendientes de Ricardo) deja
+FU-10 como la única unidad ejercitable ahora mismo; el gate de prototipo (C.5/FU-10) es
+autoverificable, no reservado a Ricardo (D-46), así que se construye en modo de ejecución autónoma.
+Orden de construcción: RF-134 exige el formulario de descarga primero, el resto sigue el orden natural
+de C.5.
+
+Vitrina en `/prototipos` (`app/(dev)/prototipos/`), `noindex`, `dynamic` heredado del layout raíz.
+
+### Componente 1 — Formulario de descarga (`components/download-form/DownloadForm.tsx`)
+
+Ocho estados del criterio 2 demostrados con un envoltorio de vitrina que simula la respuesta del
+servidor (`formulario-de-descarga.tsx`, con 400 ms de latencia simulada — no del componente). Honeypot
+enviado sin más: descartarlo en silencio es responsabilidad del servidor (FU-11), no de este
+componente. Validación de dominio gratuito en cliente, primera señal únicamente — el servidor sigue
+siendo la autoridad real (RNF-33). Verificado en el navegador real: los cuatro estados de respuesta,
+foco al campo con error, y que el envío fallido conserva los datos ya escritos.
+
+### Componente 2 — Barra de navegación + sheet móvil (`components/nav/NavBar.tsx`, `MobileSheet.tsx`)
+
+Verificado en el navegador real, viewport de escritorio y móvil (375×812): barra translúcida con
+subrayado activo, botón de hamburguesa solo en móvil, sheet con foco atrapado (el primer elemento
+focal recibe el foco al abrir) y los 5 destinos + botón de acceder presentes dentro.
+
+**Hallazgo propio, D-58**: al cerrar el sheet (clic en el scrim, Escape, botón de cerrar), el estado de
+React cambiaba correctamente pero la hoja se quedaba visualmente abierta — nunca se movía hacia la
+posición de salida. Causa raíz: `y` se pasaba como `useMotionValue` externo por `style`, y Motion no
+deja que `animate`/`exit` controlen un valor así — queda reservado para quien lo pasó. Corregido
+quitando el valor externo (el handler de arrastre no necesita leerlo, solo usa
+`info.offset.y`/`info.velocity.y`) y añadiendo `key` explícita a los dos hijos de `AnimatePresence`
+(no la tenían). Detalle completo, incluida la verificación parcial (el desmontaje final del nodo no
+se pudo confirmar con el panel del navegador en `visibilityState: "hidden"` durante toda la sesión —
+Ricardo seguía desde el teléfono, sin el panel en pantalla), en D-58.
+
+**Pendiente antes de cerrar el criterio 1 de este componente**: repetir la comprobación de cierre con
+el panel visible en pantalla.
+
+### Restantes
+
+Componentes 3–9 (hero tipográfico, tarjeta de rama/servicio, bloque "qué incluye", tarjeta de
+artículo, footer, app shell de seis estados, visor de entregable) siguen en construcción. La compuerta
+de C.5 no cierra hasta que los nueve estén construidos, en la vitrina, y verificados — con el cierre
+formal registrado aquí, como exige el criterio 13.
