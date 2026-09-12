@@ -322,3 +322,71 @@ de la etiqueta: en las cadenas internas el host es `slgwebpostgres`, no `slg-db`
 **Lección, escrita para no repetirla:** el runbook se redactó desde `architecture` §7 sin comprobar el
 estado real del panel. Un procedimiento que supone un punto de partida equivocado hace perder más
 tiempo que no tenerlo.
+
+---
+
+## 2026-09-12 · FU-06 — Módulo de identidad y autorización · `done`
+
+**Qué se produjo.** `lib/auth/`: el único sitio del proyecto que sabe de sesión, rol, empresa y clave
+de API. Better Auth 1.7.4 fijado sin rango, con `organization` y `admin`; la matriz B.3 como tabla de
+datos y su aplicación en servidor; la verificación de claves con su límite; el middleware con el orden
+de `architecture` §2; y los dos layouts que repiten la comprobación contra la base de datos.
+
+**Los siete criterios:**
+
+| # | Criterio | Evidencia |
+|---|---|---|
+| 1 | Cero lógica de identidad fuera del módulo | `npm run check:auth-boundary`: 28 archivos fuera de `lib/auth/`, cuatro reglas, **ninguno la cruza**. El criterio deja de ser una promesa de revisión |
+| 2 | La matriz B.3 se comprueba en el servidor | `test:permisos` invoca las 15 acciones sin pasar por ninguna interfaz: **15 × 4 = 60 celdas** recorridas una a una |
+| 3 | Un `client_*` en `/hq` no recibe datos ni pista | 404 en los cuatro caminos de `exigirSuperficie`; **nunca 403** (D-38) |
+| 4 | Los alcances no se implican | Los **seis** alcances × las 15 acciones, más los tres casos que RF-147 nombra. Y la base rechaza guardar uno inventado |
+| 5 | `/hq` y `/portal` cerrados mientras M3 y M4 sigan abiertos | `SUPERFICIES_ABIERTAS` en `false`; los layouts devuelven 404 **con sesión válida**. Se abren cambiando una constante, no borrando la comprobación |
+| 6 | Versión fijada sin rango | `better-auth` **1.7.4** con `--save-exact`; `check:secrets` y el gate de FU-02 vigilan que no aparezca un rango |
+| 7 | Los errores no revelan qué faltaba | El mensaje público no contiene ningún alcance, rol ni acción — comprobado contra las **25** palabras prohibidas |
+
+**Cuatro defectos encontrados, tres de ellos anteriores a esta unidad.**
+
+1. **`contextoDeSesion` y `contextoDeClaveApi` reventaban al llamarlas.** La marca de tipo era
+   `declare const verificado: unique symbol`, y `declare` **solo existe en el espacio de tipos**: en
+   ejecución la constante no existía y las dos constructoras lanzaban `ReferenceError` en su primera
+   línea. No se notó en FU-04 porque **nadie las llamaba**: su prueba comprobaba que el caso hostil no
+   **compila**, que es otra cosa. Con `const` + `Symbol()` TypeScript sigue infiriendo `unique symbol`
+   —la garantía de tipos es idéntica— y además la función funciona.
+2. **`api_key` no tenía ninguna restricción de alcances.** `data_model` §3.6 especifica dos
+   —contención sobre los seis valores y «no vacío»— y **no existía ninguna**: la tabla solo tenía
+   clave primaria y foránea. Se podía guardar `["superpoderes:todo"]` o `[]`. Añadidas en la
+   migración `0007`, más una tercera que exige que sea un array.
+3. **El motivo interno de un error de autorización se filtraba.** `JSON.stringify(error)` lo
+   exponía entero —y serializar el error es la ruta normal para devolverlo—, así que el mensaje
+   público cuidado no servía de nada. Ahora la propiedad es **no enumerable**. Lo encontró la prueba,
+   no una revisión.
+4. **`${JSON.stringify(lista)}::jsonb` no guarda un array, guarda una cadena JSON**: postgres.js ya
+   serializa el parámetro y el cast lo envuelve otra vez. Hay que usar `sql.json()`. Lo destapó la
+   restricción nueva del punto 2 en su primer uso, que es justo para lo que existe.
+
+**Decisiones registradas.** **D-52** (no se usa el plugin `apiKey`; desviación declarada respecto al
+texto de FU-06, con sus tres razones), **D-53** (dos funciones `SECURITY DEFINER` estrechas en vez de
+relajar las políticas de fila) y **D-54** (`invitation.token_hash` opcional).
+
+**Sobre «los cinco roles» de FU-06.** RF-67 y B.3 nombran cinco, pero `agent` **no es** un valor de
+`user.role`: `data_model` §3.1 lo excluye por escrito. Un agente no inicia sesión, presenta una clave.
+Los cinco existen como **actores**; cuatro son roles de persona y el quinto es el actor de clave, que
+es exactamente lo que `AuthContext.actorRole` ya modelaba desde FU-04. No hay contradicción que
+resolver: hay una palabra usada para dos cosas.
+
+**Gates aplicados.** `QG` del perfil —autenticación, autorización, rutas privilegiadas, ningún dato
+sensible en errores, consultas parametrizadas— y base de **D9**: el aislamiento entre empresas sigue
+verificándose por comportamiento, ahora también desde el módulo de identidad.
+
+**Verificación.** `npm run check:ci` en verde · `test:permisos` **214** comprobaciones ·
+`test:db` **53** comprobaciones contra PostgreSQL 16 real (29 de FU-04 + 23 de FU-06) ·
+`check:brakes` siete frenos.
+
+**Residual.** El límite por clave vive en memoria del proceso, coherente con D-40 y con la réplica
+única de `architecture` §6.7. Está aislado en una sola función para que moverlo a tabla, el día que
+haya dos réplicas, sea un cambio local. Y `lib/auth/` levanta una **segunda conexión** a PostgreSQL,
+porque `lib/db/scope.ts` no exporta su cliente crudo a propósito; son cinco conexiones más en el pool
+y se acepta a cambio de no abrir esa puerta.
+
+**Siguiente.** **FU-07** (servicio de invitaciones), que necesita FU-08 —adaptador de correo— para
+entregar. En paralelo sigue pendiente de Ricardo el despliegue de FU-05: `docs/deployment.md` §3 a §5.

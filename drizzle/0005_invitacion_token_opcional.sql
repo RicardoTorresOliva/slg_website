@@ -1,0 +1,21 @@
+-- ============================================================================
+-- 0005 · `invitation.token_hash` deja de ser obligatoria
+-- ----------------------------------------------------------------------------
+-- FU-06. Dos flujos escriben en `invitation` y no escriben lo mismo:
+--
+--   · El plugin `organization` de Better Auth crea la fila y usa el id de la
+--     invitación como referencia. No conoce `token_hash`, que es NUESTRA
+--     columna, añadida para el enlace firmado del correo (RF-60, RF-61).
+--   · El servicio de invitaciones de FU-07 es quien genera ese token, guarda su
+--     hash y manda el correo.
+--
+-- Con la columna obligatoria, el primer flujo no puede insertar: el adaptador
+-- avisa de que «inserts into invitation will fail». Se vuelve opcional porque
+-- **lo es**: una invitación existe antes de tener enlace enviado.
+--
+-- LO QUE NO SE RELAJA: el índice único sobre `token_hash` sigue en pie. En
+-- PostgreSQL un índice único admite varios NULL, así que las invitaciones
+-- todavía sin enlace conviven, y dos enlaces iguales siguen siendo imposibles.
+-- ============================================================================
+
+ALTER TABLE "invitation" ALTER COLUMN "token_hash" DROP NOT NULL;

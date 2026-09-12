@@ -18,7 +18,21 @@ import type { ApiScope, UserRole } from "./schema.ts";
  * código de una ruta: `withScope({ organizationId: req.params.id, ... })` no
  * compila, porque falta esta propiedad y no se puede escribir a mano.
  */
-declare const verificado: unique symbol;
+/**
+ * Símbolo REAL, privado del módulo. No se exporta, así que fuera de este
+ * archivo no hay forma de escribir la propiedad: `withScope({ organizationId:
+ * req.params.id, ... })` no compila, porque falta una clave que no se puede
+ * nombrar.
+ *
+ * Fue `declare const` hasta FU-06, y eso era un error: `declare` solo existe en
+ * el espacio de tipos, así que en tiempo de EJECUCIÓN la constante no existía y
+ * las dos constructoras reventaban con `ReferenceError` en su primera línea.
+ * No se notó porque hasta FU-06 nadie las llamaba: la prueba de FU-04
+ * comprobaba que el caso hostil no COMPILA, que es otra cosa. Con `const` +
+ * `Symbol()` TypeScript sigue infiriendo `unique symbol` y la garantía de tipos
+ * es idéntica, pero además la función funciona.
+ */
+const verificado: unique symbol = Symbol("AuthContext verificado");
 
 export type AuthContext = {
   readonly [verificado]: true;

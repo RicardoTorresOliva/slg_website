@@ -228,7 +228,13 @@ export const invitation = pgTable(
       .notNull()
       .references(() => organization.id, { onDelete: "cascade" }),
     role: text("role").notNull().default("client_member"),
-    tokenHash: text("token_hash").notNull(),
+    /**
+     * Opcional a propósito (migración 0005): el plugin `organization` crea la
+     * invitación y FU-07 es quien genera el enlace y guarda su hash. El índice
+     * único sigue: en PostgreSQL admite varios NULL, así que las invitaciones
+     * sin enlace conviven y dos enlaces iguales siguen siendo imposibles.
+     */
+    tokenHash: text("token_hash"),
     /**
      * Los CUATRO valores del plugin, con su grafía (`canceled`), para no pelear
      * con su lógica interna. «Caducada» NO es un valor: se deduce de

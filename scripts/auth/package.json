@@ -1,0 +1,4 @@
+{
+  "type": "module",
+  "//": "Acota los scripts de CI a ESM sin forzar type:module en la raíz, que cambiaría cómo Next resuelve sus archivos de configuración."
+}

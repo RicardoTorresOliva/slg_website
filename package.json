@@ -19,18 +19,21 @@
     "check:secrets": "node scripts/ci/check-secrets.ts",
     "check:env": "node scripts/ci/check-env-example.ts",
     "check:migrations": "node scripts/ci/check-migrations.ts",
+    "check:auth-boundary": "node scripts/ci/check-auth-boundary.ts",
     "check:js-budget": "node scripts/ci/check-js-budget.ts",
     "check:runtime": "node scripts/ci/check-runtime.ts",
     "check:brakes": "node scripts/ci/verify-brakes.ts",
     "check:dns": "bash scripts/ci/check-dns.sh",
     "check:dns:baseline": "bash scripts/ci/check-dns.sh --baseline",
-    "check:ci": "npm run lint && npm run check:content && npm run check:secrets && npm run check:env && npm run check:migrations && npm run build:standalone && npm run check:js-budget && npm run check:runtime",
+    "check:ci": "npm run lint && npm run check:content && npm run check:secrets && npm run check:env && npm run check:migrations && npm run check:auth-boundary && npm run test:permisos && npm run build:standalone && npm run check:js-budget && npm run check:runtime",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "node scripts/db/seed.ts",
     "test:isolation": "node scripts/db/test-isolation.ts",
     "test:contracts": "node scripts/db/test-contratos.ts",
     "test:nocompile": "node scripts/db/test-no-compila.ts",
-    "test:db": "npm run test:isolation && npm run test:contracts && npm run test:nocompile"
+    "test:permisos": "node scripts/auth/test-permisos.ts",
+    "test:autorizacion": "node scripts/auth/test-autorizacion.ts",
+    "test:db": "npm run test:isolation && npm run test:contracts && npm run test:nocompile && npm run test:autorizacion"
   },
   "dependencies": {
     "@better-auth/api-key": "1.7.4",

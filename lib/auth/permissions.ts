@@ -98,15 +98,24 @@ export function puede(
 /** Error de autorización. Su mensaje público es deliberadamente inútil. */
 export class ErrorDeAutorizacion extends Error {
   readonly status: 403 | 404;
-  /** No se serializa: existe para el `audit_log` y para los registros. */
-  readonly motivoInterno: string;
+  /**
+   * Para el `audit_log` y los registros. NO ENUMERABLE a propósito: un
+   * manejador de errores que haga `JSON.stringify(error)` —y hay muchos, y son
+   * la ruta normal para devolver un error— publicaría el motivo entero al
+   * cliente. Lo encontró la prueba de este módulo, no una revisión.
+   */
+  readonly motivoInterno!: string;
 
   constructor(status: 403 | 404, motivoInterno: string) {
     // RNF-32: ni el alcance que faltaba, ni el rol, ni el recurso.
     super(status === 404 ? "No encontrado" : "No autorizado");
     this.name = "ErrorDeAutorizacion";
     this.status = status;
-    this.motivoInterno = motivoInterno;
+    Object.defineProperty(this, "motivoInterno", {
+      value: motivoInterno,
+      enumerable: false,
+      writable: false,
+    });
   }
 
   /** Lo único que puede salir por HTTP. */

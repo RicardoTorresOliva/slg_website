@@ -26,29 +26,8 @@ import { admin } from "better-auth/plugins/admin";
 import { adminAc, defaultStatements, userAc } from "better-auth/plugins/admin/access";
 import { createAccessControl } from "better-auth/plugins/access";
 import { organization } from "better-auth/plugins/organization";
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
-
 import * as schema from "../db/schema.ts";
-
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "Falta DATABASE_URL. Ver `.env.example` para los nombres; los valores viven " +
-      "en `.env` (ignorado por git) o en Easypanel.",
-  );
-}
-
-/**
- * Conexión propia del módulo de identidad, con el rol de APLICACIÓN
- * (`slg_app`), nunca con el dueño: el dueño lleva BYPASSRLS y con él el
- * aislamiento entre empresas deja de aplicarse (hallazgo de FU-04, D-47).
- *
- * Es una segunda conexión y eso es deliberado: `lib/db/scope.ts` no exporta su
- * cliente crudo a propósito —si alguien pudiera importarlo, podría saltarse el
- * alcance sin darse cuenta— y Better Auth necesita un cliente Drizzle.
- */
-const conexion = postgres(process.env.DATABASE_URL, { max: 5, prepare: true });
-const db = drizzle(conexion, { schema });
+import { dbDeAuth } from "./db.ts";
 
 /**
  * Proveedores sociales, solo si sus credenciales están presentes.
@@ -101,7 +80,7 @@ export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_SITE_URL,
 
-  database: drizzleAdapter(db, {
+  database: drizzleAdapter(dbDeAuth, {
     provider: "pg",
     /**
      * Mapeo de nombres. D-27 renombró dos tablas del vocabulario de Better Auth
@@ -115,7 +94,13 @@ export const auth = betterAuth({
       account: schema.account,
       verification: schema.verification,
       organization: schema.organization,
-      member: schema.membership,
+      /**
+       * La clave es el `modelName` FINAL, el que el plugin declara abajo
+       * (`membership`), no el nombre del vocabulario de Better Auth (`member`).
+       * Con la clave equivocada el adaptador anuncia «missing tables» y las
+       * escrituras de pertenencia fallan en tiempo de ejecución, no de compilación.
+       */
+      membership: schema.membership,
       invitation: schema.invitation,
     },
   }),
@@ -184,8 +169,3 @@ export const auth = betterAuth({
 });
 
 export type Auth = typeof auth;
-
-/** Cierra la conexión del módulo. Solo para scripts y pruebas. */
-export async function cerrarConexionDeAuth(): Promise<void> {
-  await conexion.end({ timeout: 5 });
-}

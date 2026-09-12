@@ -36,6 +36,27 @@
       "when": 1788918109307,
       "tag": "0004_identidad",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788918109308,
+      "tag": "0005_invitacion_token_opcional",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788918109309,
+      "tag": "0006_clave_api",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788918109310,
+      "tag": "0007_alcances_de_clave",
+      "breakpoints": true
     }
   ]
 }

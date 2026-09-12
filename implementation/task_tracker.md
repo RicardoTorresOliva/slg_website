@@ -38,7 +38,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 35 `pending` · **1 `in_progress`** (FU-05) · 0 `blocked` · 0 `review` · **3 `done`** (FU-02, FU-03, FU-04 · 2026-09-08). **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
+**Estado global:** 34 `pending` · **1 `in_progress`** (FU-05) · **4 `done`** (FU-02, FU-03, FU-04, FU-06) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -56,7 +56,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | FU-04 | FU | Capa de datos: PostgreSQL, Drizzle, migraciones y modelo B.2 | M0-A | FU-02 · `data_model` | `done` |
 | FU-05 | FU | Despliegue, CI, DNS y documentación de entorno | M0-A | FU-02, FU-03, FU-04 · EXT-7 ✅ (D-49) | `in_progress` — repo cerrado; faltan criterios 1, 2, 3 y 8 (infraestructura, `docs/deployment.md`) |
 | ━━━ | ━━━ | **▼ M0-B · FUNDACIONES: IDENTIDAD Y SERVICIOS COMPARTIDOS** | ━━━ | ━━━ | ━━━ |
-| FU-06 | FU | Módulo de identidad y autorización | M0-B | FU-04, FU-05 | `pending` |
+| FU-06 | FU | Módulo de identidad y autorización | M0-B | FU-04, FU-05 | `done` |
 | FU-07 | FU | Servicio de invitaciones | M0-B | FU-06, FU-08 | `pending` |
 | FU-08 | FU | Adaptador de correo transaccional | M0-B | FU-05 · F.2-4 | `pending` |
 | FU-09 | FU | Almacenamiento de archivos y URLs firmadas | M0-B | FU-05 · `api_contracts` | `pending` |
@@ -192,3 +192,11 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   aplicada y verificada —columnas de Better Auth y la función `app_memberships_de_usuario`, única vía
   para resolver la pertenencia durante el inicio de sesión sin abrir las ocho tablas bajo RLS—, y
   `lib/auth/` con la matriz B.3 como datos y su aplicación en servidor.
+- `2026-09-12` — **FU-06 `done`.** Módulo de identidad en `lib/auth/`, con los siete criterios
+  verificados: la frontera del módulo como freno de CI (criterio 1 deja de depender de una revisión),
+  la matriz B.3 recorrida entera (60 celdas), los seis alcances probados contra las 15 acciones
+  (RF-147), y `/hq` y `/portal` devolviendo 404 con sesión válida mientras M3 y M4 sigan abiertos
+  (RF-87). Registradas **D-52** (no se usa el plugin `apiKey`, desviación declarada), **D-53**
+  (funciones `SECURITY DEFINER` estrechas) y **D-54** (`invitation.token_hash` opcional).
+  Cuatro defectos corregidos, tres anteriores a la unidad — el más grave: las dos constructoras del
+  `AuthContext` lanzaban `ReferenceError` al llamarlas, y nadie las había llamado nunca.

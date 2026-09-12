@@ -42,6 +42,13 @@ const DE_LOS_SCRIPTS = new Set([
   "SECRETS_SCAN_ROOT",
   "ENV_EXAMPLE_PATH",
   "DNS_BASELINE",
+  "MIGRATIONS_DIR",
+  "AUTH_BOUNDARY_ROOT",
+  "PGDATA",
+  "PGBIN",
+  "PGPORT",
+  "DNS_RESOLVER",
+  "DNS_DOMAIN",
 ]);
 
 type Failure = { file: string; detail: string };
