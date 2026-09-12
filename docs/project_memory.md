@@ -8,16 +8,17 @@ timestamp: 2026-09-12
 
 # Project memory — slg_website
 
-> **Punto de retomada en una línea:** seis unidades tocadas — FU-02, FU-03, FU-04 y FU-06 `done`;
-> **FU-05 y FU-08 `in_progress`**, las dos esperando cosas de Ricardo, no código. La siguiente por
-> construir es **FU-07** (invitaciones), que ya tiene todo lo que necesita en el repositorio.
+> **Punto de retomada en una línea:** siete unidades tocadas — FU-02, FU-03, FU-04, FU-06 y **FU-07**
+> `done`; **FU-05 y FU-08 `in_progress`**, las dos esperando cosas de Ricardo, no código. La siguiente
+> por construir entera es **FU-09** (archivos y URLs firmadas).
 
 ## Lo que espera a Ricardo, y solo a él
 1. **Despliegue** — `docs/deployment.md` §3 a §5. Cierra FU-05 (criterios 1, 2, 3 y 8).
-2. **P-3 y P-4** — dirección remitente y subdominio de envío. Hay propuesta en `decision_log`:
-   `no-reply@mail.softlandingglobal.com` sobre `mail.softlandingglobal.com`. Una palabra basta.
-3. **Registros del subdominio de envío** en Hostinger, y el interruptor de seguimiento **apagado** en
-   el panel del proveedor de correo. Cierran FU-08 (criterios 3, 4 y 6).
+2. ~~**P-3 y P-4**~~ — **cerradas el 2026-09-12**: `no-reply@mail.softlandingglobal.com` sobre
+   `mail.softlandingglobal.com`, `Reply-To` a `support@softlandingglobal.com`. EXT-6 cerrada.
+3. **Registros del subdominio de envío** y el **interruptor de seguimiento apagado**. Paso a paso, con
+   la trampa de los nombres relativos de Hostinger, en `docs/deployment.md` §4bis. Cierran FU-08
+   (criterios 3, 4 y 6).
 
 ## Current state
 - **Fase**: **ejecución**. Compuerta de Planificación **abierta** (Ricardo, 2026-09-08).
@@ -25,6 +26,8 @@ timestamp: 2026-09-12
 - **Contrato de entrada**: `START_PROJECT.md` v1.1, fase *Specify* de SDD.
 
 ## Última unidad completada
+- **FU-07** — servicio de invitaciones (2026-09-12). Los cinco criterios verificados con **34
+  comprobaciones** contra PostgreSQL y SMTP reales.
 - **FU-08** — adaptador de correo (2026-09-12), `in_progress`: el código está cerrado y verificado con
   **95 comprobaciones contra SMTP real**; falta dominio verificado y tres buzones.
 - **FU-06** — módulo de identidad y autorización (2026-09-12). `lib/auth/` es el único sitio que sabe
@@ -51,9 +54,18 @@ timestamp: 2026-09-12
     monitor. **Paso a paso completo en `docs/deployment.md`.**
 
 ## Próxima unidad
-- **FU-07** — servicio de invitaciones (M0-B). Ya tiene lo que necesita: FU-06 hecha y el módulo de
-  correo construido. Que P-3 y P-4 sigan abiertas **no la bloquea**: son valores de variable de
-  entorno, no decisiones de diseño.
+- **FU-09** — almacenamiento de archivos y URLs firmadas (M0-B). Se puede construir entera ahora.
+- **DU-01** (acceso, sesión y recuperación) necesita además **F.2-2 y F.2-3**: los registros de OAuth
+  de Google y de Microsoft Entra ID. Por eso va después de FU-09, no antes.
+
+## Lo que hay que saber de `lib/invitations/` antes de tocarlo
+- **Se escribe con el contexto de quien invita**, nunca como sistema: la política de fila de
+  `invitation` hace cumplir la pertenencia ella sola. El código que lo intentó como sistema fue
+  rechazado por PostgreSQL, y la base tenía razón.
+- **El testigo solo existe en el correo.** En la base está su hash. Revocar o caducar lo borra.
+- **Reenviar emite un testigo nuevo** (D-57): el viejo deja de servir.
+- **Tres reglas de B.3 que no caben en un `CHECK`**: un `client_admin` no invita a otra empresa, no
+  concede roles de SLG y no invita a la organización `slg`. Las tres responden **404**.
 
 ## Lo que hay que saber de `lib/mail/` antes de tocarlo
 - **Una puerta pública**: `@/lib/mail`. `nodemailer` vive solo en `smtp.ts`; importarlo fuera pone el

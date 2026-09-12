@@ -38,7 +38,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 33 `pending` · **2 `in_progress`** (FU-05, FU-08) · **4 `done`** (FU-02, FU-03, FU-04, FU-06) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
+**Estado global:** 32 `pending` · **2 `in_progress`** (FU-05, FU-08) · **5 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -57,7 +57,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | FU-05 | FU | Despliegue, CI, DNS y documentación de entorno | M0-A | FU-02, FU-03, FU-04 · EXT-7 ✅ (D-49) | `in_progress` — repo cerrado; faltan criterios 1, 2, 3 y 8 (infraestructura, `docs/deployment.md`) |
 | ━━━ | ━━━ | **▼ M0-B · FUNDACIONES: IDENTIDAD Y SERVICIOS COMPARTIDOS** | ━━━ | ━━━ | ━━━ |
 | FU-06 | FU | Módulo de identidad y autorización | M0-B | FU-04, FU-05 | `done` |
-| FU-07 | FU | Servicio de invitaciones | M0-B | FU-06, FU-08 | `pending` |
+| FU-07 | FU | Servicio de invitaciones | M0-B | FU-06, FU-08 | `done` |
 | FU-08 | FU | Adaptador de correo transaccional | M0-B | FU-05 · F.2-4 | `in_progress` — código cerrado (criterios 1, 2, 5, 7); faltan P-3/P-4, los registros del subdominio y los tres buzones |
 | FU-09 | FU | Almacenamiento de archivos y URLs firmadas | M0-B | FU-05 · `api_contracts` | `pending` |
 | DU-01 | DU | Acceso, sesión y recuperación por los tres métodos | M0-B | FU-06, FU-07, FU-08 · F.2-2, F.2-3 | `pending` |
@@ -118,7 +118,7 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
 | EXT-3 | Elección de producto en la categoría de correo transaccional | FU-08 | `done` — **Resend** (D-22), dentro de la categoría de D-15. El adaptador sigue hablando SMTP estándar |
 | EXT-4 | Elección de producto en la categoría de object storage externo de backups | FU-14 | `done` — **Cloudflare R2** (D-21), dentro de la categoría de D-20. El script sigue escrito contra API S3 genérica |
 | EXT-5 | Los cinco `design_docs` que el perfil exige | FU-04, FU-09, DU-22, DU-23 | `done` — los cinco existen: `data_model` (HIGH), `api_contracts` (HIGH), `ui_wireframes` (MEDIUM), `architecture` (MEDIUM), `style_guide` (LIGHT). El bloqueo queda levantado |
-| EXT-6 | Dirección remitente visible (**P-3**) y nombre del subdominio de envío (**P-4**), sub-decisiones abiertas de D-24; el brief §5.1 y RF-117 quedan desactualizados en ese punto | FU-08 | `pending` — se fijan en **M0**, antes de FU-08 |
+| EXT-6 | Dirección remitente visible (**P-3**) y nombre del subdominio de envío (**P-4**) | FU-08 | ✅ **Cerrada (2026-09-12)**: `no-reply@mail.softlandingglobal.com` sobre `mail.softlandingglobal.com`, con `support@softlandingglobal.com` como `Reply-To`. El brief §5.1 y RF-117 quedan desactualizados en ese punto |
 | EXT-7 | Elección del **producto** de monitorización externa. La **categoría está cerrada por D-43** —servicio de uptime dedicado con tramo gratuito, ejecutado **fuera del VPS**, que vigila al menos `softlandingglobal.com` y `staging.softlandingglobal.com` y avisa por un canal que no depende del VPS— y con ella P-5, RF-130 y el gate D11; n8n queda como monitor **secundario** por correr en el mismo VPS que vigila | FU-05 (cierre) · DU-25 (verificación) | ✅ **Cerrada: UptimeRobot (D-49)** |
 | EXT-8 | Nombre del **subdominio del visor de entregables**, sub-decisión abierta de **D-45** (el origen separado ya es norma; lo único abierto es el nombre) | DU-19 | `pending` — se fija en **M4**, antes de DU-19 |
 | EXT-9 | **Cron de validación en Hermes Agent** (D-46): ejecuta `/review` por milestone, corre las pruebas E2E en contenedor y recuerda compuertas. Vive **fuera de este repositorio**; consume el CI de FU-05 y, tras M5, `POST /api/v1/events` | — (mitiga R-16; no bloquea ninguna unidad) | Configurar en Hermes |
@@ -208,3 +208,10 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   **D-56** (los correos con enlace no se reintentan; reintentar es reemitir). **P-3 y P-4 siguen
   abiertas**, con propuesta escrita en `decision_log`: `mail.softlandingglobal.com` y
   `no-reply@mail.softlandingglobal.com`.
+- `2026-09-12` — **FU-07 `done`.** Servicio de invitaciones con los cinco criterios verificados contra
+  PostgreSQL y SMTP reales (34 comprobaciones). Tres hallazgos: las invitaciones **no se escriben como
+  sistema** —la política de fila las rechaza, y tenía razón: ahora se escriben con el contexto de quien
+  invita y la política hace cumplir la pertenencia sola—; `membership.org_role` guarda el rol de B.3 y
+  no el vocabulario del plugin (**D-59**); y `@/lib/auth` solo cargaba dentro de Next hasta que el
+  import de `next/headers` pasó a ser dinámico. Registradas **D-57**, **D-58** y **D-59**.
+  **EXT-6 cerrada**: P-3 y P-4 fijadas por Ricardo.

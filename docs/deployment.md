@@ -207,6 +207,112 @@ Un `crm` caído es el CRM de la empresa fuera de servicio.
 
 ---
 
+## 4bis. Correo transaccional — el subdominio de envío (FU-08)
+
+**Valores fijados** (P-3 y P-4, 2026-09-12):
+
+| | |
+|---|---|
+| Subdominio de envío | `mail.softlandingglobal.com` |
+| Remitente (`From`) | `no-reply@mail.softlandingglobal.com` |
+| `Reply-To` | `support@softlandingglobal.com` |
+| Avisos internos | `support@softlandingglobal.com` |
+
+### 4bis.1 Dar de alta el subdominio en Resend
+
+1. Entra en **resend.com** → menú lateral **Domains** → botón **Add Domain**.
+2. En *Domain* escribe exactamente **`mail.softlandingglobal.com`** — el subdominio, no la raíz.
+3. En *Region* elige la más cercana a tus destinatarios (LATAM y EE. UU. → **N. Virginia
+   `us-east-1`**). **Apunta cuál eliges**: el valor del registro MX la lleva dentro.
+4. **Add**. Resend abre la ficha del dominio con una tabla de registros DNS. Esa tabla es lo que vas
+   a copiar. **Déjala abierta.**
+
+Tendrá esta forma — **tres registros**, y uno opcional:
+
+| # | Type | Name (lo que muestra Resend) | Value |
+|---|---|---|---|
+| 1 | `MX` | `send.mail.softlandingglobal.com` | `feedback-smtp.<región>.amazonses.com`, prioridad **10** |
+| 2 | `TXT` | `send.mail.softlandingglobal.com` | `v=spf1 include:amazonses.com ~all` |
+| 3 | `TXT` | `resend._domainkey.mail.softlandingglobal.com` | `p=MIGfMA0GCSq...` (una cadena larga) |
+| 4 | `TXT` | `_dmarc.mail.softlandingglobal.com` | `v=DMARC1; p=none;` — opcional, recomendado |
+
+> Los valores exactos **los da tu panel**, no este documento: la región y la clave DKIM son tuyas.
+> Cópialos de ahí.
+
+### 4bis.2 Pegarlos en Hostinger — **la trampa está aquí**
+
+hPanel → **Dominios** → `softlandingglobal.com` → **DNS / Nameservers** → **Zona DNS**.
+
+**Hostinger pide el nombre RELATIVO a la raíz, y Resend te lo muestra COMPLETO.** Hay que quitarle
+`.softlandingglobal.com` al final. Si lo pegas entero, creas
+`send.mail.softlandingglobal.com.softlandingglobal.com` y nada verifica, sin decirte por qué.
+
+| # | Tipo | En Hostinger, «Nombre» | Valor | TTL | Prioridad |
+|---|---|---|---|---|---|
+| 1 | `MX` | `send.mail` | `feedback-smtp.<región>.amazonses.com` | 3600 | **10** |
+| 2 | `TXT` | `send.mail` | `v=spf1 include:amazonses.com ~all` | 3600 | — |
+| 3 | `TXT` | `resend._domainkey.mail` | la cadena `p=MIGf...` completa, **sin espacios ni saltos** | 3600 | — |
+| 4 | `TXT` | `_dmarc.mail` | `v=DMARC1; p=none;` | 3600 | — |
+
+**Lo que NO tocas, y por qué esto no puede romper tu correo:** el SPF de la raíz (`@`) y los MX de
+Outlook se quedan como están. Los registros de arriba cuelgan todos de `mail`, que es **otra entrada
+de la zona**. Publicarlos no puede afectar al correo humano (R-38, D-24).
+
+### 4bis.3 Verificar
+
+1. Vuelve a la ficha del dominio en Resend y pulsa **Verify DNS Records**. Tarda de minutos a una
+   hora; si sigue en *Pending* pasada una hora, casi siempre es el nombre pegado entero (§4bis.2).
+2. Comprueba que no moviste nada: `npm run check:dns` — o pásame una captura de la zona y lo miro yo.
+
+### 4bis.4 Apagar el seguimiento — **clic a clic**
+
+Resend crea los dominios **sin** seguimiento, pero hay que confirmarlo por escrito:
+
+1. **Domains** → clic en **`mail.softlandingglobal.com`**.
+2. Arriba a la derecha, **Settings** (o la pestaña **Settings** de la ficha del dominio).
+3. Busca los dos interruptores:
+   - **Open Tracking** → **apagado**
+   - **Click Tracking** → **apagado**
+4. Si alguno está encendido, apágalo y guarda.
+5. **Hazle una captura a esos dos interruptores.** Es la evidencia del criterio 6 de FU-08 y va al
+   `work_log`.
+
+**Por qué importa y no es una manía:** el seguimiento de aperturas mete un píxel invisible en cada
+correo, y el de clics **reescribe todos los enlaces** para pasar por el proveedor. Lo segundo es lo
+grave aquí: un enlace de invitación reescrito deja de ser nuestro enlace. Nuestras plantillas no
+llevan ni una imagen remota ni un parámetro de campaña —está verificado por prueba—, pero si el
+proveedor lo inyecta, lo inyecta él.
+
+### 4bis.5 La credencial SMTP
+
+**API Keys** → **Create API Key** → permiso **Sending access** → cópiala (se muestra **una sola
+vez**). En Easypanel, en `slg-web` y en `slgweb-staging`:
+
+| Variable | Valor |
+|---|---|
+| `MAIL_SMTP_HOST` | `smtp.resend.com` |
+| `MAIL_SMTP_PORT` | `587` |
+| `MAIL_SMTP_USERNAME` | `resend` |
+| `MAIL_SMTP_PASSWORD` | la clave de API que acabas de crear |
+| `MAIL_FROM_ADDRESS` | `no-reply@mail.softlandingglobal.com` |
+| `MAIL_FROM_NAME` | `SLG Agency` |
+| `MAIL_REPLY_TO` | `support@softlandingglobal.com` |
+| `MAIL_ALERTS_TO` | `support@softlandingglobal.com` |
+
+**No existe ninguna variable con el nombre del producto**, y esa ausencia es la decisión (D-55): el
+adaptador habla SMTP estándar, así que cambiar de proveedor son cuatro variables y ninguna línea de
+código.
+
+### 4bis.6 La prueba de bandeja de entrada (criterio 3)
+
+Con el dominio verificado, manda una invitación de prueba a **tres buzones de proveedores distintos**
+—por ejemplo uno de Gmail, uno de Outlook y uno de otro— y anota en cuál cayó en **bandeja de
+entrada** y en cuál en spam. Esa tabla cierra el criterio 3 y va al `work_log`. Si alguno cae en
+spam, el sospechoso habitual es el DMARC: súbelo de `p=none` a `p=quarantine` **solo** en el
+subdominio.
+
+---
+
 ## 5. Monitor de caída externo (criterios 8 y 9)
 
 **Producto: UptimeRobot** (D-49), dentro de la categoría que cerró D-43: servicio de

@@ -180,5 +180,5 @@ jobs:
       - name: Datos de ejemplo
         run: npm run db:seed
 
-      - name: Aislamiento, contratos, caso hostil, autorización y correo
+      - name: Aislamiento, contratos, caso hostil, autorización, correo e invitaciones
         run: npm run test:db

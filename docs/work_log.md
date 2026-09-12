@@ -447,3 +447,76 @@ de esta unidad— pero conviene no olvidarlo: hoy un correo que falle se queda e
 
 **Siguiente.** Con P-3 y P-4 respondidas y los registros del subdominio publicados, FU-08 cierra y
 **FU-07** (invitaciones) queda desbloqueada.
+
+---
+
+## 2026-09-12 · FU-07 — Servicio de invitaciones · `done`
+
+**Qué se produjo.** `lib/invitations/`: emisión, reenvío, revocación, canje y caducidad. El acceso de
+clientes es **solo por invitación** (§10-10), así que esto es la puerta por la que entra todo el
+mundo, y sus reglas están probadas una a una contra PostgreSQL y SMTP reales.
+
+**Los cinco criterios:**
+
+| # | Criterio | Evidencia |
+|---|---|---|
+| 1 | Un enlace usado deja de servir; uno de más de 72 h, tampoco; sin revelar si existió | El canje es una `UPDATE ... WHERE status = 'pending'`: dos canjes simultáneos del mismo enlace y **solo uno actualiza una fila**. Los cuatro motivos de rechazo —inexistente, caducado, usado, revocado— devuelven **exactamente el mismo mensaje**, comprobado comparando cadenas |
+| 2 | Se acepta por los tres métodos y la cuenta queda ligada a empresa y rol | El canje es **una función de base de datos**: consume la invitación, crea la pertenencia y hereda el rol en **una transacción**. Los tres métodos entran por el mismo sitio con `userId` + correo verificado o no |
+| 3 | Sin correo verificable, coincidencia explícita; nunca por correo no verificado | Cuatro casos probados: sin verificar y sin declarar → rechazo · declarado distinto → rechazo · **verificado pero ajeno → rechazo** · declarado coincidente → acepta |
+| 4 | Si el correo falla, la invitación queda creada y reenviable | Probado apagando el servidor SMTP: la emisión **no lanza**, `sent_at` queda nulo, el error se registra y el reenvío sale |
+| 5 | La revocación inutiliza de inmediato | Revocar borra el `token_hash` en la misma transacción: el enlace deja de servir en el acto |
+
+**El hallazgo que cambió el diseño: las invitaciones no se escriben como sistema.** La primera versión
+usaba `withSystemScope`, y PostgreSQL la rechazó — `invitation` está bajo row level security forzada y
+`'system'` no pasa la política. **La base tenía razón y el código estaba mal.** Se reescribió para
+escribir **con el contexto de quien invita**: así la política de fila hace cumplir la pertenencia ella
+sola —un `client_admin` no puede tocar las invitaciones de otra empresa aunque el código lo
+intentara— y la comprobación de B.3 pasa a ser la segunda capa en vez de la única. El barrido de
+caducadas, que no tiene actor y recorre todas las empresas, va por una función estrecha
+(migración `0009`).
+
+**Segundo hallazgo: `membership.org_role` no era lo que el documento decía.** `data_model` §3.4
+describe el vocabulario `admin`/`member` del plugin; la migración `0000` había fijado el `CHECK` sobre
+los **cuatro roles de B.3** y el defecto en `client_member`. Escribir `'admin'` viola la restricción.
+Lo descubrió esta prueba al canjear la primera invitación. Se conserva lo que la base impone (**D-59**),
+que además evita traducir en cada lectura. Queda registrado que los endpoints de pertenencia **del
+propio plugin** fallarían: no se usan, y el día que se usen necesitarán un mapeo explícito.
+
+**Tercer hallazgo: `@/lib/auth` solo cargaba dentro de Next.** `session.ts` importaba `next/headers`
+en la raíz del archivo, así que todo lo que tocara el módulo de identidad quedaba atado al runtime del
+framework — incluido `lib/invitations/`, que tiene que poder correr desde un trabajo en segundo plano
+y desde una prueba. El import pasa a ser dinámico, dentro de la función que lo usa. Una dependencia de
+framework en la raíz de un módulo de dominio se propaga a todo lo que lo toca.
+
+**Regla de B.3 que no cabe en un `CHECK`, y que ahora existe.** Un `client_admin` puede invitar a
+miembros de **su** empresa (RF-92). De ahí se sigue, y hay que escribirlo: no a otra empresa, no
+concediendo `slg_admin` ni `slg_operator`, y no a la organización de tipo `slg`. Sin esas tres
+comprobaciones, «invitar a un miembro» es **escalada de privilegios con formulario**. Las tres están
+probadas, y las tres responden **404, no 403**.
+
+**Decisiones registradas.** **D-57** (reenviar emite testigo nuevo y renueva caducidad), **D-58**
+(`NEXT_PUBLIC_SITE_URL` es la única URL base; el `APP_BASE_URL` del documento es esa misma) y **D-59**
+(`membership.org_role` guarda el rol de B.3). Y **P-3 y P-4 quedan cerradas** por Ricardo:
+`no-reply@mail.softlandingglobal.com` sobre `mail.softlandingglobal.com`, con
+`support@softlandingglobal.com` como `Reply-To`. Con ellas se cierra **EXT-6**.
+
+**El freno de fronteras se afinó, y se le puso prueba negativa.** No veía un import relativo sin
+prefijo `lib/` —`../auth/db.ts` desde `lib/invitations/` entra igual de dentro—, y sus exenciones
+valían también cuando se le apuntaba a los fixtures, así que la prueba negativa habría escaneado cero
+archivos y anunciado verde: el mismo falso verde de R-26 que ya apareció con el escáner de secretos.
+Corregido, y ahora el pipeline tiene **ocho frenos** con su caso en rojo.
+
+**Gates aplicados.** `QG`: el testigo se guarda hasheado, el mensaje de rechazo no revela nada, la
+autorización se comprueba en el servidor y la política de fila la respalda · alimenta **D8**.
+
+**Verificación.** `test:invitaciones` **34** comprobaciones contra PostgreSQL y SMTP reales ·
+`test:db` **184** en total · `check:ci` en verde · `check:brakes` ocho frenos.
+
+**Residual.** La pantalla de `/invitacion/[token]` es de **DU-01** y la superficie de emisión de
+**DU-14** (HQ) y **DU-21** (portal): por eso FU-07 es FU y no DU. El servicio está completo y probado;
+lo que falta es dónde pulsarlo. Y el barrido de caducadas, como el de correo, **existe pero nadie lo
+arranca todavía**: el ejecutor de colas se registra en DU-09.
+
+**Siguiente.** M0-B queda con **FU-09** (almacenamiento de archivos y URLs firmadas) y **DU-01**
+(acceso, sesión y recuperación). DU-01 necesita además F.2-2 y F.2-3 —los registros de OAuth de Google
+y Microsoft—, así que **FU-09 es la que puede construirse entera ahora mismo**.

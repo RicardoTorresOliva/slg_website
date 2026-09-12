@@ -34,7 +34,8 @@
     "test:permisos": "node scripts/auth/test-permisos.ts",
     "test:autorizacion": "node scripts/auth/test-autorizacion.ts",
     "test:correo": "node scripts/mail/test-correo.ts",
-    "test:db": "npm run test:isolation && npm run test:contracts && npm run test:nocompile && npm run test:autorizacion && npm run test:correo"
+    "test:invitaciones": "node scripts/invitations/test-invitaciones.ts",
+    "test:db": "npm run test:isolation && npm run test:contracts && npm run test:nocompile && npm run test:autorizacion && npm run test:correo && npm run test:invitaciones"
   },
   "dependencies": {
     "@better-auth/api-key": "1.7.4",

@@ -44,8 +44,18 @@ const EXCEPCION = "app/api/auth/[...all]/route.ts";
  */
 const PUERTAS_PUBLICAS = ["@/lib/auth", "@/lib/auth/edge"];
 
+/**
+ * Un módulo hermano dentro de `lib/` entra por `../auth/index.ts`, que es la
+ * MISMA puerta que `@/lib/auth` escrita en relativo: `lib/` no puede usar el
+ * alias `@/` sin volverse dependiente de la configuración de rutas de Next.
+ * Lo que sigue prohibido es entrar por cualquier OTRO archivo del módulo.
+ */
+
 /** Donde las constructoras del AuthContext se DEFINEN, no se llaman. */
 const DEFINE_EL_CONTEXTO = "lib/db/context.ts";
+
+/** `true` cuando se barre el repositorio; `false` cuando se apunta a fixtures. */
+const BARRIDO_NORMAL = SCAN_ROOT === REPO_ROOT;
 
 type Regla = {
   readonly nombre: string;
@@ -66,7 +76,7 @@ const REGLAS: readonly Regla[] = [
   },
   {
     nombre: "importa un archivo interno del módulo de correo",
-    re: /from\s+["'](?:@\/lib\/mail\/|\.\.?\/(?:\.\.\/)*lib\/mail\/)[a-z]/,
+    re: /from\s+["'](?:@\/lib\/mail\/|(?:\.\.?\/)+(?:lib\/)?mail\/)(?!index\.ts["'])[a-z]/,
     porQue:
       "la superficie pública es `@/lib/mail`. Entrar por un archivo interno " +
       "convierte un detalle en contrato y el módulo deja de poder reescribirse.",
@@ -81,7 +91,9 @@ const REGLAS: readonly Regla[] = [
   },
   {
     nombre: "importa un archivo interno del módulo",
-    re: /from\s+["'](?:@\/lib\/auth\/|\.\.?\/(?:\.\.\/)*lib\/auth\/)(?!edge["'])[a-z]/,
+    // También los relativos que NO llevan el prefijo `lib/`: desde `lib/algo/`,
+    // `../auth/db.ts` entra igual de dentro y el gate no lo veía.
+    re: /from\s+["'](?:@\/lib\/auth\/|(?:\.\.?\/)+(?:lib\/)?auth\/)(?!(?:edge|index\.ts)["'])[a-z]/,
     porQue:
       "la superficie pública es `@/lib/auth`. Entrar por un archivo interno " +
       "convierte un detalle en contrato y el módulo deja de poder reescribirse.",
@@ -132,15 +144,31 @@ for (const abs of archivos()) {
   const rel = path.relative(REPO_ROOT, abs).split(path.sep).join("/");
 
   if (MODULOS.some((m) => rel.startsWith(m))) continue;
+
+  /**
+   * Las exenciones de abajo valen para el barrido del repositorio, no cuando
+   * `FRONTERAS_ROOT` apunta a los fixtures: si valieran siempre, la prueba
+   * negativa escanearía cero archivos y anunciaría verde, que es el falso verde
+   * de R-26 —y ya pasó una vez con el escáner de secretos—.
+   */
+  if (BARRIDO_NORMAL) {
   // Ahí se DEFINEN las constructoras del contexto; definirlas no es llamarlas.
   if (rel === DEFINE_EL_CONTEXTO) continue;
-  // Los propios frenos hablan DE las reglas: nombrarlas no es infringirlas.
-  if (rel.startsWith("scripts/ci/")) continue;
-  /**
-   * Las pruebas del módulo son parte del módulo, no consumidores suyos: tienen
-   * que poder entrar por dentro para recorrer la matriz sin levantar Next.
-   */
-  if (rel.startsWith("scripts/auth/") || rel.startsWith("scripts/mail/")) continue;
+    // Los propios frenos hablan DE las reglas: nombrarlas no es infringirlas.
+    if (rel.startsWith("scripts/ci/")) continue;
+    /**
+     * Las pruebas de un módulo son parte del módulo, no consumidores suyos:
+     * tienen que poder entrar por dentro para recorrer la matriz o sembrar un
+     * fixture sin levantar Next.
+     */
+    if (
+      rel.startsWith("scripts/auth/") ||
+      rel.startsWith("scripts/mail/") ||
+      rel.startsWith("scripts/invitations/")
+    ) {
+      continue;
+    }
+  }
 
   revisados++;
   const lineas = fs.readFileSync(abs, "utf8").split("\n");

@@ -243,12 +243,22 @@ export const invitation = pgTable(
     status: text("status").notNull().default("pending"),
     inviterId: text("inviter_id").references(() => user.id, { onDelete: "set null" }),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    /** Nulo = creada pero NO enviada. Es la evidencia de RF-119 (FU-07). */
+    sentAt: timestamp("sent_at", { withTimezone: true }),
     acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+    acceptedByUserId: text("accepted_by_user_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    revokedByUserId: text("revoked_by_user_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
     createdAt: createdAt(),
   },
   (t) => [
     uniqueIndex("uq_invitation_token").on(t.tokenHash),
     index("idx_invitation_org").on(t.organizationId),
+    index("idx_invitation_org_status").on(t.organizationId, t.status, t.createdAt),
   ],
 );
 

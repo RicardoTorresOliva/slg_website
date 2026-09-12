@@ -54,6 +54,12 @@ const CASOS: Caso[] = [
     env: { JS_BUDGET_BYTES: "1024" },
   },
   {
+    freno: "frontera de módulo cruzada",
+    script: "check-fronteras.ts",
+    espera: "importa el framework de identidad",
+    env: { FRONTERAS_ROOT: path.join(HERE, "negative/fronteras") },
+  },
+  {
     freno: "migración no declarada en el journal",
     script: "check-migrations.ts",
     espera: "NO está en meta/_journal.json",
@@ -92,12 +98,13 @@ for (const c of CASOS) {
   }
 }
 
-console.log("\nContraprueba — contra el repositorio real, los cuatro deben PASAR:\n");
+console.log("\nContraprueba — contra el repositorio real, los cinco deben PASAR:\n");
 for (const script of [
   "check-secrets.ts",
   "check-js-budget.ts",
   "check-env-example.ts",
   "check-migrations.ts",
+  "check-fronteras.ts",
 ]) {
   const res = spawnSync(process.execPath, [path.join(HERE, script)], {
     encoding: "utf8",
@@ -138,4 +145,4 @@ if (fallos) {
   console.error(`\n✗ ${fallos} freno(s) no se comportaron como deben.\n`);
   process.exit(1);
 }
-console.log("\n✓ Los siete frenos del criterio 4 fallan cuando deben y pasan cuando deben.\n");
+console.log("\n✓ Los ocho frenos del criterio 4 fallan cuando deben y pasan cuando deben.\n");

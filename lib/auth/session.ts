@@ -11,8 +11,6 @@
  * el recurso existen, y el mapa de HQ no es información pública.
  */
 
-import { headers } from "next/headers";
-
 import { contextoDeSesion, type AuthContext } from "../db/context.ts";
 import type { UserRole } from "../db/schema.ts";
 import { auth } from "./better-auth.ts";
@@ -52,6 +50,17 @@ function esRolDePersona(valor: unknown): valor is UserRole {
  * no para autorizar. Para autorizar está `exigirSesion`.
  */
 export async function sesionActual(): Promise<SesionResuelta | null> {
+  /**
+   * `next/headers` se importa AQUÍ DENTRO, no arriba.
+   *
+   * Arriba convertía todo `@/lib/auth` en código que solo carga dentro del
+   * runtime de Next, y con él todo lo que lo importe: `lib/invitations/` usa
+   * `exigir()` para aplicar B.3 y tiene que poder correr también desde un
+   * trabajo en segundo plano —el barrido de invitaciones caducadas— y desde una
+   * prueba. Una dependencia de framework en la raíz de un módulo de dominio se
+   * propaga a todo lo que lo toca.
+   */
+  const { headers } = await import("next/headers");
   const resultado = await auth.api.getSession({ headers: await headers() });
   if (!resultado?.user) return null;
 

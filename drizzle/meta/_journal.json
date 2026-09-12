@@ -57,6 +57,20 @@
       "when": 1788918109310,
       "tag": "0007_alcances_de_clave",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788918109311,
+      "tag": "0008_invitaciones",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788918109312,
+      "tag": "0009_caducidad_invitaciones",
+      "breakpoints": true
     }
   ]
 }

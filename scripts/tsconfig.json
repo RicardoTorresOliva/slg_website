@@ -3,10 +3,18 @@
   "compilerOptions": {
     "allowImportingTsExtensions": true,
     "noEmit": true,
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
-    "types": ["node"]
+    "module": "esnext",
+    "moduleResolution": "bundler"
   },
-  "include": ["content/**/*.ts", "ci/**/*.ts", "auth/**/*.ts", "../lib/**/*.ts"],
-  "exclude": []
+  "include": [
+    "content/**/*.ts",
+    "ci/**/*.ts",
+    "auth/**/*.ts",
+    "../lib/**/*.ts"
+  ],
+  "exclude": [
+    "ci/negative/**",
+    "content/negative/**"
+  ],
+  "//": "Resoluci\u00f3n `bundler`, como la ra\u00edz. Con `nodenext`, `next/headers` no resuelve sus tipos y el chequeo de los scripts se romp\u00eda al importar cualquier archivo de lib/ que lo tocara. Node ejecuta estos archivos por su cuenta y exige la extensi\u00f3n .ts en los imports, que es lo que `nodenext` aportaba: la convenci\u00f3n se mantiene, la comprobaci\u00f3n la hace el runtime."
 }

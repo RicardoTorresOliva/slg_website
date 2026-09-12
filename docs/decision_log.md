@@ -92,20 +92,29 @@ unidad.
 | D-55 | 2026-09-12 | **Desaparece `RESEND_API_KEY` de `.env.example`; las variables de correo son de TRANSPORTE, no de marca**: `MAIL_SMTP_HOST`, `MAIL_SMTP_PORT`, `MAIL_SMTP_USERNAME`, `MAIL_SMTP_PASSWORD`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME`, `MAIL_REPLY_TO`, `MAIL_ALERTS_TO`. | Mantener una variable con el nombre del producto junto al bloque SMTP | `api_contracts` §11.3 lo dice con todas las letras: «**no hay `RESEND_API_KEY` como tal**, y esa ausencia es la decisión». `.env.example` la traía desde FU-02 y contradecía a D-36. El proveedor elegido se configura poniendo su servidor en `MAIL_SMTP_HOST` y su clave de API en `MAIL_SMTP_PASSWORD`. Verificado en la práctica: la suite corre entera contra **dos servidores SMTP distintos** cambiando solo variables (criterio 2). |
 | D-56 | 2026-09-12 | **Los correos con enlace (`invitation`, `password_reset`) NO los reintenta el barrendero**: quedan `failed` desde el primer fallo, con el motivo escrito. Reintentar significa **volver a emitir**, y eso lo hace FU-07 o DU-01 con un token nuevo. Los dos avisos internos sí se recomponen desde `lead_capture` y sí se reintentan. | Guardar los datos de plantilla —incluido el token— en `email_delivery` para poder reenviar el mismo correo | `architecture` §8.2 prohíbe que el puerto lleve a la base el cuerpo del correo y los tokens. Guardarlos convertiría la tabla de correo en un **almacén de credenciales activas**: cualquiera con lectura sobre `email_delivery` tendría enlaces de acceso vigentes. El coste asumido es que una invitación fallida exige reemitir, que además es lo correcto: el token original ya arrastra su caducidad. |
 
-### P-3 y P-4 — propuesta, pendiente de una palabra de Ricardo
+### P-3 y P-4 — **CERRADAS** (Ricardo, 2026-09-12)
 
-Siguen **abiertas** y son las únicas condiciones de entrada de FU-08 que el código no puede resolver:
-son valores, no decisiones de diseño, y por eso no bloquearon la construcción. Propuesta:
+| Sub-decisión | Valor fijado |
+|---|---|
+| **P-4** · subdominio de envío dedicado | **`mail.softlandingglobal.com`** |
+| **P-3** · dirección remitente (`From`) | **`no-reply@mail.softlandingglobal.com`** |
+| `Reply-To` (RF-117) | **`support@softlandingglobal.com`** — toda respuesta del destinatario sigue llegando ahí |
+| Destinatario de avisos (RF-53, RF-50) | **`support@softlandingglobal.com`** |
 
-| Sub-decisión | Propuesta | Por qué |
-|---|---|---|
-| **P-4** · nombre del subdominio de envío | **`mail.softlandingglobal.com`** | Es el nombre que `architecture` §10.1 ya usa como ejemplo, el más reconocible para un filtro antispam y el que menos explicación necesita en una revisión de entregabilidad |
-| **P-3** · dirección remitente (`From`) | **`no-reply@mail.softlandingglobal.com`** | Deja claro al destinatario que responder a esa dirección no llega a una persona, mientras el `Reply-To` sigue siendo `support@softlandingglobal.com` y **toda respuesta acaba ahí** (RF-117). La alternativa, un `From` que parezca humano, produce hilos perdidos en un buzón que nadie lee |
+Son **valores de variable de entorno**, no constantes de código: viven en
+`MAIL_FROM_ADDRESS`, `MAIL_REPLY_TO` y `MAIL_ALERTS_TO`, y se persisten en cada envío
+(`email_delivery.from_email`, `.reply_to`). **El brief §5.1 y RF-117 quedan desactualizados** donde
+dicen que el remitente es `support@softlandingglobal.com`: desde D-24 eso es el `Reply-To`.
 
-Con esas dos palabras, `MAIL_FROM_ADDRESS` y `MAIL_REPLY_TO` se rellenan en Easypanel y el código no
-cambia. **El brief §5.1 y RF-117 quedan desactualizados** en el punto en que dicen que el remitente es
-`support@softlandingglobal.com`: desde D-24, `support@` es el `Reply-To` y el destinatario de los
-avisos, no el `From`.
+Con esto, **EXT-6 queda cerrada** y FU-08 pierde su última condición de entrada abierta.
+
+## Decisiones de FU-07 (D-57…D-59)
+
+| # | Fecha | Decisión | Alternativas consideradas | Razón |
+|---|-------|----------|---------------------------|-------|
+| D-57 | 2026-09-12 | **Reenviar una invitación emite un testigo NUEVO y renueva la caducidad**, sobre la misma fila. No se reenvía el enlace anterior. | Reenviar el mismo enlace, conservando su caducidad original | Dos motivos. (a) El enlace viejo arrastra su caducidad: una invitación reenviada en la hora 71 duraría un minuto, y quien la recibe no entiende por qué. (b) Si el primer correo llegó a un buzón equivocado —un alias, un reenvío automático, una dirección mal escrita—, reenviar el mismo enlace deja **ese** enlace vivo. Emitir uno nuevo invalida el viejo, y el índice único sobre `token_hash` garantiza que solo uno sirva. |
+| D-58 | 2026-09-12 | **`NEXT_PUBLIC_SITE_URL` es la única URL base de la instancia.** El `APP_BASE_URL` que nombra `api_contracts` §11.1 es esa misma variable con el nombre que el proyecto usa desde FU-02. | Añadir `APP_BASE_URL` como variable propia para los enlaces absolutos | Dos nombres para una cosa es exactamente cómo un enlace de staging acaba en un correo de producción: alguien rellena uno y olvida el otro, y los dos parecen correctos. Una sola variable, comprobada por `check:env`, que además falla si el código lee una que no está declarada. |
+| D-59 | 2026-09-12 | **`membership.org_role` guarda el rol de B.3** (`slg_admin`, `slg_operator`, `client_admin`, `client_member`), no el vocabulario `admin`/`member` del plugin. | Traducir al vocabulario del plugin al escribir la pertenencia | **La base ya lo había decidido y el documento no se había enterado**: la migración `0000` fijó el `CHECK` sobre los cuatro roles de B.3 y el defecto en `client_member`; `data_model` §3.4 describe el vocabulario del plugin. Escribir `'admin'` viola la restricción — lo descubrió la prueba de FU-07 al canjear la primera invitación. Se conserva lo que la base impone, que además evita una traducción en cada lectura. **Consecuencia registrada**: los endpoints de pertenencia **del propio plugin** escribirían `owner`/`admin`/`member` y fallarían; no se usan —FU-07 es quien emite y canjea—, y el día que se usen necesitarán un mapeo explícito. |
 
 ## Acciones de seguridad previas a la ejecución
 
