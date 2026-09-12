@@ -26,7 +26,7 @@ const SCAN_ROOT = process.env.FRONTERAS_ROOT
   : REPO_ROOT;
 
 /** Dentro de su módulo todo vale: es el sitio donde esa lógica DEBE estar. */
-const MODULOS = ["lib/auth/", "lib/mail/"];
+const MODULOS = ["lib/auth/", "lib/mail/", "lib/files/"];
 
 /**
  * La única ruta del proyecto que puede importar el framework directamente: el
@@ -66,6 +66,20 @@ type Regla = {
 };
 
 const REGLAS: readonly Regla[] = [
+  {
+    nombre: "importa el cliente de almacenamiento",
+    re: /from\s+["']@aws-sdk\/(?:client-s3|s3-request-presigner)/,
+    porQue:
+      "solo lib/files/s3.ts conoce el cliente de S3. Importarlo fuera pone al " +
+      "alcance de esa ruta `ListObjects`, y ninguna ruta lista un bucket (RF-123, gate D10).",
+  },
+  {
+    nombre: "importa un archivo interno del módulo de archivos",
+    re: /from\s+["'](?:@\/lib\/files\/|(?:\.\.?\/)+(?:lib\/)?files\/)(?!index\.ts["'])[a-z]/,
+    porQue:
+      "la superficie pública es `@/lib/files`. Entrar por un archivo interno " +
+      "convierte un detalle en contrato y el módulo deja de poder reescribirse.",
+  },
   {
     nombre: "importa el transporte de correo",
     re: /from\s+["']nodemailer/,
@@ -164,7 +178,8 @@ for (const abs of archivos()) {
     if (
       rel.startsWith("scripts/auth/") ||
       rel.startsWith("scripts/mail/") ||
-      rel.startsWith("scripts/invitations/")
+      rel.startsWith("scripts/invitations/") ||
+      rel.startsWith("scripts/files/")
     ) {
       continue;
     }
@@ -191,7 +206,7 @@ if (hallazgos.length > 0) {
   }
   console.error(
     `\n  Todo lo de identidad entra por una de las dos puertas públicas del módulo:\n` +
-      [...PUERTAS_PUBLICAS, "@/lib/mail"].map((p) => `    ${p}`).join("\n") +
+      [...PUERTAS_PUBLICAS, "@/lib/mail", "@/lib/files"].map((p) => `    ${p}`).join("\n") +
       `\n  (criterio 1 de FU-06 y criterio 1 de FU-08).\n`,
   );
   process.exit(1);

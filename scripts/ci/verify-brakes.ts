@@ -54,6 +54,18 @@ const CASOS: Caso[] = [
     env: { JS_BUDGET_BYTES: "1024" },
   },
   {
+    freno: "listado de un bucket en el código",
+    script: "check-archivos.ts",
+    espera: "ninguna ruta de la aplicación lista el contenido",
+    env: { ARCHIVOS_ROOT: path.join(HERE, "negative/archivos") },
+  },
+  {
+    freno: "entregable versionado en un repositorio público",
+    script: "check-archivos.ts",
+    espera: "está en control de versiones",
+    env: { ARCHIVOS_ROOT: path.join(HERE, "negative/archivos") },
+  },
+  {
     freno: "frontera de módulo cruzada",
     script: "check-fronteras.ts",
     espera: "importa el framework de identidad",
@@ -98,13 +110,14 @@ for (const c of CASOS) {
   }
 }
 
-console.log("\nContraprueba — contra el repositorio real, los cinco deben PASAR:\n");
+console.log("\nContraprueba — contra el repositorio real, los seis deben PASAR:\n");
 for (const script of [
   "check-secrets.ts",
   "check-js-budget.ts",
   "check-env-example.ts",
   "check-migrations.ts",
   "check-fronteras.ts",
+  "check-archivos.ts",
 ]) {
   const res = spawnSync(process.execPath, [path.join(HERE, script)], {
     encoding: "utf8",
@@ -145,4 +158,4 @@ if (fallos) {
   console.error(`\n✗ ${fallos} freno(s) no se comportaron como deben.\n`);
   process.exit(1);
 }
-console.log("\n✓ Los ocho frenos del criterio 4 fallan cuando deben y pasan cuando deben.\n");
+console.log("\n✓ Los diez frenos del criterio 4 fallan cuando deben y pasan cuando deben.\n");

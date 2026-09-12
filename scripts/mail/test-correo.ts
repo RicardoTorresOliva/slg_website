@@ -297,7 +297,7 @@ async function main() {
 
   try {
     // LA MISMA SUITE, DOS DESTINOS. Solo cambian variables de entorno.
-    await suite("Destino 1", A, "no-reply@mail.softlandingglobal.com");
+    await suite("Destino 1", A, "no-reply@mailweb.softlandingglobal.com");
     await withSystemScope("limpiar entre vueltas", async (db) => {
       await db.delete(emailDelivery);
     });

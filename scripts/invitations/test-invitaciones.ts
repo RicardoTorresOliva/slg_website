@@ -78,7 +78,7 @@ function apuntarCorreoA(puerto: number) {
   process.env.MAIL_SMTP_PORT = String(puerto);
   process.env.MAIL_SMTP_USERNAME = "u";
   process.env.MAIL_SMTP_PASSWORD = CLAVE_DEL_BUZON_LOCAL;
-  process.env.MAIL_FROM_ADDRESS = "no-reply@mail.softlandingglobal.com";
+  process.env.MAIL_FROM_ADDRESS = "no-reply@mailweb.softlandingglobal.com";
   process.env.MAIL_FROM_NAME = "SLG Agency";
   process.env.MAIL_REPLY_TO = "support@softlandingglobal.com";
   process.env.MAIL_ALERTS_TO = "support@softlandingglobal.com";

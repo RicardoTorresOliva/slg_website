@@ -407,7 +407,7 @@ plantillas en dos idiomas y la cola con espera creciente. Igual que FU-05, la un
 | 2 | Cambiar de proveedor, demostrado en la práctica | **cerrado** | La suite entera corre **dos veces contra dos servidores SMTP distintos**, con credenciales y remitentes distintos, cambiando solo variables de entorno. Si alguien metiera el nombre del proveedor en el código, la segunda vuelta se pondría roja |
 | 3 | Remitente en el subdominio de envío, `Reply-To` a `support@`, y llegada a bandeja en tres buzones | **a medias** | Lo primero está verificado: el sobre lleva el remitente correcto, la cabecera `Reply-To` viaja y ambos se persisten. **La llegada a bandeja de entrada en tres proveedores distintos es de Ricardo** |
 | 4 | Verificación sobre subdominio dedicado, sin tocar el SPF de la raíz ni los MX | **pendiente de Ricardo** | Los registros del subdominio, en el panel de Hostinger. `npm run check:dns` ya vigila que `crm`, `n8n`, `evolution`, `academy` y los MX no se muevan |
-| 4b | P-3 y P-4 resueltas y registradas | **propuesta escrita** | `decision_log`: `mail.softlandingglobal.com` y `no-reply@mail.softlandingglobal.com`. Falta que Ricardo diga sí o diga otra cosa |
+| 4b | P-3 y P-4 resueltas y registradas | **propuesta escrita** | `decision_log`: `mailweb.softlandingglobal.com` y `no-reply@mailweb.softlandingglobal.com`. Falta que Ricardo diga sí o diga otra cosa |
 | 5 | Un fallo de envío no pierde el hecho de negocio | **cerrado** | `enviarCorreo()` **nunca lanza**. Probado con las tres formas de fallar: rechazo del destinatario, credencial equivocada y servidor caído. En las tres queda fila de evidencia |
 | 6 | Seguimiento de aperturas y clics desactivado | **a medias** | Verificado en el correo que sale: cero imágenes remotas, cero parámetros de campaña, cero `List-Unsubscribe`. Y el esquema **no tiene dónde** guardar una apertura. **Falta el interruptor del panel del proveedor** |
 | 7 | Cero valores de credencial en el repositorio | **cerrado** | `check:secrets` sobre 166 archivos; `check:env` sobre las 47 variables |
@@ -497,7 +497,7 @@ probadas, y las tres responden **404, no 403**.
 **Decisiones registradas.** **D-57** (reenviar emite testigo nuevo y renueva caducidad), **D-58**
 (`NEXT_PUBLIC_SITE_URL` es la única URL base; el `APP_BASE_URL` del documento es esa misma) y **D-59**
 (`membership.org_role` guarda el rol de B.3). Y **P-3 y P-4 quedan cerradas** por Ricardo:
-`no-reply@mail.softlandingglobal.com` sobre `mail.softlandingglobal.com`, con
+`no-reply@mailweb.softlandingglobal.com` sobre `mailweb.softlandingglobal.com`, con
 `support@softlandingglobal.com` como `Reply-To`. Con ellas se cierra **EXT-6**.
 
 **El freno de fronteras se afinó, y se le puso prueba negativa.** No veía un import relativo sin
@@ -520,3 +520,59 @@ arranca todavía**: el ejecutor de colas se registra en DU-09.
 **Siguiente.** M0-B queda con **FU-09** (almacenamiento de archivos y URLs firmadas) y **DU-01**
 (acceso, sesión y recuperación). DU-01 necesita además F.2-2 y F.2-3 —los registros de OAuth de Google
 y Microsoft—, así que **FU-09 es la que puede construirse entera ahora mismo**.
+
+---
+
+## 2026-09-12 · FU-09 — Almacenamiento de archivos y URLs firmadas · `in_progress`
+
+**Qué se produjo.** `lib/files/`: el puerto de almacenamiento, el adaptador contra API S3 genérica, la
+validación de tipo y tamaño **antes de emitir la firma**, y las tres caducidades leídas de
+configuración. Queda `in_progress` por una sola razón, escrita abajo.
+
+**Los cinco criterios:**
+
+| # | Criterio | Estado | Evidencia |
+|---|---|---|---|
+| 1 | Sin firma y con firma caducada, denegado | **cerrado** | Un servidor HTTP real que **recalcula la firma SigV4** paso a paso: con firma válida 200; sin firma, con el objeto cambiado, con la caducidad alargada a mano y con la ventana vencida, **403 las cuatro** |
+| 2 | **No existe** endpoint de listado | **cerrado** | El puerto expone **tres** operaciones y ninguna lista. Y `npm run check:archivos` falla si alguien nombra `ListObjects*` en cualquier archivo del repositorio, el propio adaptador incluido |
+| 3 | La caducidad es la de `api_contracts` y se lee de configuración | **cerrado** | `X-Amz-Expires` comprobado en la URL emitida: 900, 600 y 1800 segundos. Una variable de entorno lo cambia sin tocar código; un valor desmesurado se rechaza al arrancar |
+| 4 | MIME o tamaño no permitidos se rechazan en el servidor, antes de escribir un byte | **cerrado** | Ocho casos rechazados —ejecutable, SVG, HTML de 6 MB, markdown de 2 MB, PDF de 30 MB, cualquier cosa sobre el tope duro, travesía de directorios y destino inventado— y **ninguno llegó a tocar el almacenamiento** |
+| 5 | Cero PDF de descarga y cero entregables en control de versiones | **cerrado** | `npm run check:archivos`, que es el `grep` que el criterio pide, corriendo en cada push |
+
+**El defecto que encontré al empezar: las caducidades estaban intercambiadas.** `lib/db/limits.ts`
+daba **30 minutos al entregable del portal y 10 a la subida**; `api_contracts` §11.9 fija lo contrario.
+No es cosmético: el entregable habría vivido el triple de lo especificado —debilitando el gate D10, que
+existe justo para que un enlace copiado del historial no valga mañana— y una subida de 50 MB habría
+tenido 10 minutos, que por una conexión mala no bastan. Corregido, y con el número ahora en
+configuración (**D-60**) más un tope duro de 60 minutos: una variable mal puesta no debe poder
+convertir una firma en un enlace público con fecha.
+
+**Dos ausencias que son la unidad.** El puerto **no tiene** `listar` y **no tiene** `firmarPermanente`.
+No es que nadie las llame: es que no existen, y un puerto sin la operación no se puede usar mal. Es la
+diferencia entre una convención y una garantía.
+
+**La lista de MIME de `material`, cerrada (D-61).** `data_model` §2.6 la delegaba en esta unidad. Se
+cierra en vez de abrirse: un **ejecutable** en un portal de clientes distribuye malware con nuestra
+marca encima; un **comprimido** es contenido que nadie ha validado; y un **SVG es HTML con otro
+nombre** —lleva `<script>`— que se abriría en el origen del portal y no en el visor aislado que D-45
+exige. Ampliarla es una decisión escrita, no un parche.
+
+**Sobre la prueba, y lo que NO prueba.** El servidor de la suite verifica SigV4 **reescribiendo el
+estándar a mano** sobre `node:crypto`, no reutilizando el firmador del SDK: comprobar una firma con el
+mismo objeto que la creó prueba poco, porque un defecto estaría a los dos lados. Lo que este montaje
+**no** demuestra es que MinIO se comporte igual; eso se comprueba al desplegar.
+
+**Gates aplicados.** `QG` (subidas validadas, mensajes que no describen el sistema) · **D10**
+(archivos): sin listado, sin URL permanente, caducidad corta y verificada.
+
+**Verificación.** `test:archivos` **39** comprobaciones contra un servidor real · `test:db` **224** en
+total · `check:ci` en verde · `check:brakes` **diez** frenos.
+
+**Por qué `in_progress` y no `done`.** Falta **una** cosa, y es de Ricardo: crear los dos buckets
+`downloads` y `deliverables` en el servicio `minio` de Easypanel, **los dos privados**, y poner las
+seis variables `S3_*`. Todo lo demás está construido y probado. Hasta que existan los buckets, el
+criterio 1 está demostrado contra un verificador propio y no contra el almacenamiento real.
+
+**Siguiente.** M0-B queda solo con **DU-01** (acceso, sesión y recuperación), que necesita **F.2-2 y
+F.2-3**: el consentimiento OAuth de Google y el registro de aplicación en Microsoft Entra ID. Son las
+dos últimas dependencias externas de M0.

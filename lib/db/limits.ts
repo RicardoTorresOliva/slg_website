@@ -40,15 +40,28 @@ export function uploadLimitFor(kind: UploadKind): number {
 
 /**
  * Caducidad de las URL firmadas, en minutos (RNF-20, D-28).
+ *
  * Corta a propósito: una URL firmada que vive horas es un enlace público.
+ *
+ * ESTOS SON LOS VALORES POR DEFECTO, no la configuración. El criterio 3 de FU-09
+ * exige que el número **se lea de configuración**, y por eso hay tres variables
+ * de entorno (`SIGNED_URL_TTL_*_MINUTES`) que los sobreescriben; lo que vive
+ * aquí es el defecto documentado, en un solo sitio, para que ninguna ruta lo
+ * repita a mano. Ver `lib/files/ttl.ts`.
+ *
+ * CORREGIDO EN FU-09: `upload` y `deliverable` estaban INTERCAMBIADOS respecto a
+ * `api_contracts` §11.9. El efecto no era cosmético: un entregable del portal
+ * habría vivido 30 minutos —el triple de lo especificado, debilitando el gate
+ * D10— y una subida de 50 MB habría tenido 10 minutos, que por una conexión
+ * mala no bastan. Ver D-60.
  */
 export const SIGNED_URL_TTL_MINUTES = {
-  /** Descarga de un documento por un visitante. */
+  /** Descarga de un documento por un visitante, desde `/gracias` (15 min). */
   download: 15,
-  /** Subida de un entregable por un agente o un operador. */
-  upload: 10,
-  /** Lectura de un entregable dentro del portal. */
-  deliverable: 30,
+  /** Lectura de un entregable dentro del portal; ya autenticado (10 min). */
+  deliverable: 10,
+  /** Subida por API: es la única que atraviesa una transferencia real (30 min). */
+  upload: 30,
 } as const;
 
 /**

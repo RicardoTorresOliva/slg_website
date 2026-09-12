@@ -8,17 +8,21 @@ timestamp: 2026-09-12
 
 # Project memory — slg_website
 
-> **Punto de retomada en una línea:** siete unidades tocadas — FU-02, FU-03, FU-04, FU-06 y **FU-07**
-> `done`; **FU-05 y FU-08 `in_progress`**, las dos esperando cosas de Ricardo, no código. La siguiente
-> por construir entera es **FU-09** (archivos y URLs firmadas).
+> **Punto de retomada en una línea:** ocho unidades tocadas — FU-02, FU-03, FU-04, FU-06 y FU-07
+> `done`; **FU-05, FU-08 y FU-09 `in_progress`**, las tres esperando cosas de Ricardo, no código.
+> **M0-B queda solo con DU-01**, que espera a F.2-2 y F.2-3 (OAuth de Google y de Microsoft).
 
 ## Lo que espera a Ricardo, y solo a él
 1. **Despliegue** — `docs/deployment.md` §3 a §5. Cierra FU-05 (criterios 1, 2, 3 y 8).
-2. ~~**P-3 y P-4**~~ — **cerradas el 2026-09-12**: `no-reply@mail.softlandingglobal.com` sobre
-   `mail.softlandingglobal.com`, `Reply-To` a `support@softlandingglobal.com`. EXT-6 cerrada.
-3. **Registros del subdominio de envío** y el **interruptor de seguimiento apagado**. Paso a paso, con
-   la trampa de los nombres relativos de Hostinger, en `docs/deployment.md` §4bis. Cierran FU-08
-   (criterios 3, 4 y 6).
+2. ~~**P-3 y P-4**~~ — **cerradas el 2026-09-12**: `no-reply@mailweb.softlandingglobal.com` sobre
+   `mailweb.softlandingglobal.com`, `Reply-To` a `support@softlandingglobal.com`. EXT-6 cerrada.
+3. ~~**Registros del subdominio**~~ — **hechos**: `mailweb.softlandingglobal.com` verificado el
+   2026-09-11. Falta la credencial SMTP en Easypanel, **no crear el subdominio de tracking** y la
+   prueba de bandeja en tres buzones (`docs/deployment.md` §4bis). Cierran FU-08.
+4. **Los dos buckets `downloads` y `deliverables` en el servicio `minio`, los dos PRIVADOS**, y las
+   seis variables `S3_*`. Es lo único que le falta a FU-09.
+5. **F.2-2 y F.2-3** — consentimiento OAuth de Google y registro de aplicación en Entra ID. Son las
+   dos últimas dependencias externas de M0 y bloquean **DU-01**.
 
 ## Current state
 - **Fase**: **ejecución**. Compuerta de Planificación **abierta** (Ricardo, 2026-09-08).
@@ -54,9 +58,18 @@ timestamp: 2026-09-12
     monitor. **Paso a paso completo en `docs/deployment.md`.**
 
 ## Próxima unidad
-- **FU-09** — almacenamiento de archivos y URLs firmadas (M0-B). Se puede construir entera ahora.
-- **DU-01** (acceso, sesión y recuperación) necesita además **F.2-2 y F.2-3**: los registros de OAuth
-  de Google y de Microsoft Entra ID. Por eso va después de FU-09, no antes.
+- **DU-01** — acceso, sesión y recuperación por los tres métodos. Es **la última de M0-B** y la
+  primera cosa que un consumidor puede hacer de punta a punta. Necesita **F.2-2 y F.2-3**.
+- Sin ellas, lo construible es la parte de contraseña; los dos métodos sociales quedan a la espera.
+
+## Lo que hay que saber de `lib/files/` antes de tocarlo
+- **El puerto no tiene `listar` ni `firmarPermanente`.** No es que nadie las llame: no existen. Esa
+  ausencia ES el gate D10.
+- **La validación ocurre antes de emitir la firma**: sin firma no hay escritura, así que rechazar ahí
+  es rechazar antes de que se escriba un byte.
+- **Las tres caducidades salen de variables de entorno** (D-60), con defectos en `lib/db/limits.ts` y
+  tope de 60 minutos. Estuvieron intercambiadas hasta FU-09.
+- **La lista de MIME de `material` es cerrada** (D-61): sin ejecutables, sin comprimidos y sin SVG.
 
 ## Lo que hay que saber de `lib/invitations/` antes de tocarlo
 - **Se escribe con el contexto de quien invita**, nunca como sistema: la política de fila de

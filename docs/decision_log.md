@@ -96,8 +96,8 @@ unidad.
 
 | Sub-decisión | Valor fijado |
 |---|---|
-| **P-4** · subdominio de envío dedicado | **`mail.softlandingglobal.com`** |
-| **P-3** · dirección remitente (`From`) | **`no-reply@mail.softlandingglobal.com`** |
+| **P-4** · subdominio de envío dedicado | **`mailweb.softlandingglobal.com`** |
+| **P-3** · dirección remitente (`From`) | **`no-reply@mailweb.softlandingglobal.com`** |
 | `Reply-To` (RF-117) | **`support@softlandingglobal.com`** — toda respuesta del destinatario sigue llegando ahí |
 | Destinatario de avisos (RF-53, RF-50) | **`support@softlandingglobal.com`** |
 
@@ -105,6 +105,12 @@ Son **valores de variable de entorno**, no constantes de código: viven en
 `MAIL_FROM_ADDRESS`, `MAIL_REPLY_TO` y `MAIL_ALERTS_TO`, y se persisten en cada envío
 (`email_delivery.from_email`, `.reply_to`). **El brief §5.1 y RF-117 quedan desactualizados** donde
 dicen que el remitente es `support@softlandingglobal.com`: desde D-24 eso es el `Reply-To`.
+
+**Corrección de la propuesta, 2026-09-12.** Yo había propuesto `mail.softlandingglobal.com`. El
+subdominio real es **`mailweb.`**, creado y **verificado por Ricardo el 2026-09-11** en la región
+**São Paulo (`sa-east-1`)** sobre DNS de Hostinger. `mailweb` distingue mejor: deja `mail.` libre por
+si algún día hace falta para otra cosa y dice en el propio nombre que el remitente es la **web**, no
+una persona. Manda el valor real, no la propuesta.
 
 Con esto, **EXT-6 queda cerrada** y FU-08 pierde su última condición de entrada abierta.
 
@@ -115,6 +121,13 @@ Con esto, **EXT-6 queda cerrada** y FU-08 pierde su última condición de entrad
 | D-57 | 2026-09-12 | **Reenviar una invitación emite un testigo NUEVO y renueva la caducidad**, sobre la misma fila. No se reenvía el enlace anterior. | Reenviar el mismo enlace, conservando su caducidad original | Dos motivos. (a) El enlace viejo arrastra su caducidad: una invitación reenviada en la hora 71 duraría un minuto, y quien la recibe no entiende por qué. (b) Si el primer correo llegó a un buzón equivocado —un alias, un reenvío automático, una dirección mal escrita—, reenviar el mismo enlace deja **ese** enlace vivo. Emitir uno nuevo invalida el viejo, y el índice único sobre `token_hash` garantiza que solo uno sirva. |
 | D-58 | 2026-09-12 | **`NEXT_PUBLIC_SITE_URL` es la única URL base de la instancia.** El `APP_BASE_URL` que nombra `api_contracts` §11.1 es esa misma variable con el nombre que el proyecto usa desde FU-02. | Añadir `APP_BASE_URL` como variable propia para los enlaces absolutos | Dos nombres para una cosa es exactamente cómo un enlace de staging acaba en un correo de producción: alguien rellena uno y olvida el otro, y los dos parecen correctos. Una sola variable, comprobada por `check:env`, que además falla si el código lee una que no está declarada. |
 | D-59 | 2026-09-12 | **`membership.org_role` guarda el rol de B.3** (`slg_admin`, `slg_operator`, `client_admin`, `client_member`), no el vocabulario `admin`/`member` del plugin. | Traducir al vocabulario del plugin al escribir la pertenencia | **La base ya lo había decidido y el documento no se había enterado**: la migración `0000` fijó el `CHECK` sobre los cuatro roles de B.3 y el defecto en `client_member`; `data_model` §3.4 describe el vocabulario del plugin. Escribir `'admin'` viola la restricción — lo descubrió la prueba de FU-07 al canjear la primera invitación. Se conserva lo que la base impone, que además evita una traducción en cada lectura. **Consecuencia registrada**: los endpoints de pertenencia **del propio plugin** escribirían `owner`/`admin`/`member` y fallarían; no se usan —FU-07 es quien emite y canjea—, y el día que se usen necesitarán un mapeo explícito. |
+
+## Decisiones de FU-09 (D-60…D-61)
+
+| # | Fecha | Decisión | Alternativas consideradas | Razón |
+|---|-------|----------|---------------------------|-------|
+| D-60 | 2026-09-12 | **Las tres caducidades de URL firmada pasan a variables de entorno** (`SIGNED_URL_TTL_DOWNLOAD_MINUTES`, `SIGNED_URL_TTL_DELIVERABLE_MINUTES`, `SIGNED_URL_TTL_UPLOAD_MINUTES`), con los defectos en `lib/db/limits.ts` y un **tope duro de 60 minutos**. Y se corrige que **`upload` y `deliverable` estaban intercambiados**. | Dejarlas como constantes, que es como estaban desde FU-04 | El criterio 3 de FU-09 exige que el valor **se lea de configuración**, y §11.9 lo dice con todas las letras: «por eso son tres variables y no tres constantes». **La corrección no es cosmética**: con los valores intercambiados, un entregable del portal habría vivido **30 minutos** —el triple de lo especificado, debilitando el gate D10— y una subida de 50 MB habría tenido **10**, que por una conexión mala no bastan (y esa es justo la que atraviesa una transferencia real). El tope de 60 min se añade porque una variable mal puesta no debe poder convertir una firma en un enlace público con fecha. |
+| D-61 | 2026-09-12 | **Lista CERRADA de MIME para `deliverable.material`**: PDF, PNG, JPEG, WebP, texto plano, Markdown, CSV y los tres formatos ofimáticos de Office. **Sin ejecutables, sin archivos comprimidos y sin SVG.** | Aceptar cualquier MIME para `material`, que es lo que su nombre sugiere | `data_model` §2.6 delegaba la lista en esta unidad («los MIME que FU-09 fije para material»). Se cierra en vez de abrir por tres motivos: un **ejecutable** en un portal de clientes es una vía de distribución de malware con nuestra marca encima; un **comprimido** es contenido arbitrario que nadie ha validado; y un **SVG es HTML con otro nombre** —lleva `<script>`— y se abriría en el origen del portal, no en el visor aislado que D-45 exige para el HTML. La lista se amplía con una decisión escrita, no con un parche. |
 
 ## Acciones de seguridad previas a la ejecución
 

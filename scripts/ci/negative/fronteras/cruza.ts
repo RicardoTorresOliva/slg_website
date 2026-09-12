@@ -7,5 +7,7 @@ import nodemailer from "nodemailer";
 // gate no lo veía hasta FU-07.
 import { conexionDeAuth } from "../auth/db.ts";
 import { adaptadorSmtp } from "../mail/smtp.ts";
+import { S3Client } from "@aws-sdk/client-s3";
+import { validarSubida } from "../files/validation.ts";
 
-export const cruza = [betterAuth, nodemailer, conexionDeAuth, adaptadorSmtp];
+export const cruza = [betterAuth, nodemailer, conexionDeAuth, adaptadorSmtp, S3Client, validarSubida];

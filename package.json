@@ -20,12 +20,13 @@
     "check:env": "node scripts/ci/check-env-example.ts",
     "check:migrations": "node scripts/ci/check-migrations.ts",
     "check:fronteras": "node scripts/ci/check-fronteras.ts",
+    "check:archivos": "node scripts/ci/check-archivos.ts",
     "check:js-budget": "node scripts/ci/check-js-budget.ts",
     "check:runtime": "node scripts/ci/check-runtime.ts",
     "check:brakes": "node scripts/ci/verify-brakes.ts",
     "check:dns": "bash scripts/ci/check-dns.sh",
     "check:dns:baseline": "bash scripts/ci/check-dns.sh --baseline",
-    "check:ci": "npm run lint && npm run check:content && npm run check:secrets && npm run check:env && npm run check:migrations && npm run check:fronteras && npm run test:permisos && npm run build:standalone && npm run check:js-budget && npm run check:runtime",
+    "check:ci": "npm run lint && npm run check:content && npm run check:secrets && npm run check:env && npm run check:migrations && npm run check:fronteras && npm run check:archivos && npm run test:permisos && npm run build:standalone && npm run check:js-budget && npm run check:runtime",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "node scripts/db/seed.ts",
     "test:isolation": "node scripts/db/test-isolation.ts",
@@ -35,9 +36,12 @@
     "test:autorizacion": "node scripts/auth/test-autorizacion.ts",
     "test:correo": "node scripts/mail/test-correo.ts",
     "test:invitaciones": "node scripts/invitations/test-invitaciones.ts",
-    "test:db": "npm run test:isolation && npm run test:contracts && npm run test:nocompile && npm run test:autorizacion && npm run test:correo && npm run test:invitaciones"
+    "test:archivos": "node scripts/files/test-archivos.ts",
+    "test:db": "npm run test:isolation && npm run test:contracts && npm run test:nocompile && npm run test:autorizacion && npm run test:correo && npm run test:invitaciones && npm run test:archivos"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1131.0",
+    "@aws-sdk/s3-request-presigner": "3.1131.0",
     "@better-auth/api-key": "1.7.4",
     "better-auth": "1.7.4",
     "drizzle-orm": "0.45.2",

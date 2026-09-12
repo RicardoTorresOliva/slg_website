@@ -97,6 +97,11 @@ jobs:
       - name: Fronteras de los módulos encapsulados
         run: npm run check:fronteras
 
+      # Criterios 2 y 5 de FU-09: nadie lista un bucket, y cero documentos
+      # gated en control de versiones. El repositorio es público.
+      - name: Archivos — sin listado de buckets ni entregables versionados
+        run: npm run check:archivos
+
       # La matriz B.3 entera —15 acciones × 4 roles, más los seis alcances—
       # sin base de datos: es tabla de permisos, no estado.
       - name: Matriz B.3
