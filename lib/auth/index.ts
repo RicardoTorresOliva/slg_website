@@ -40,6 +40,19 @@ export {
 } from "./permissions.ts";
 
 export {
+  MENSAJE_NEUTRO,
+  proveedoresDisponibles,
+  esperaPendienteEnSegundos,
+  registrarFallo,
+  registrarAcierto,
+  reiniciarBloqueos,
+  cerrarTodasLasSesiones,
+  sesionesVivas,
+  marcarCorreoVerificado,
+  type Puerta,
+} from "./acceso.ts";
+
+export {
   verificarClave,
   respuestaDeFallo,
   hashDeClave,

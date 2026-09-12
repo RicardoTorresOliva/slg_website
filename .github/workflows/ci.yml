@@ -179,11 +179,18 @@ jobs:
 
       - run: npm ci
 
+      # `test:acceso` habla con el servidor real por HTTP, como un navegador:
+      # necesita la salida autocontenida construida.
+      - name: Compilación autocontenida (la necesita test:acceso)
+        env:
+          BETTER_AUTH_SECRET: solo-para-compilar-en-ci
+        run: npm run build:standalone
+
       - name: Migraciones, con el rol dueño
         run: npm run db:migrate
 
       - name: Datos de ejemplo
         run: npm run db:seed
 
-      - name: Aislamiento, contratos, caso hostil, autorización, correo e invitaciones
+      - name: Aislamiento, contratos, autorización, correo, invitaciones y acceso
         run: npm run test:db

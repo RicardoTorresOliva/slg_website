@@ -37,7 +37,8 @@
     "test:correo": "node scripts/mail/test-correo.ts",
     "test:invitaciones": "node scripts/invitations/test-invitaciones.ts",
     "test:archivos": "node scripts/files/test-archivos.ts",
-    "test:db": "npm run test:isolation && npm run test:contracts && npm run test:nocompile && npm run test:autorizacion && npm run test:correo && npm run test:invitaciones && npm run test:archivos"
+    "test:acceso": "node scripts/auth/test-acceso.ts",
+    "test:db": "npm run test:isolation && npm run test:contracts && npm run test:nocompile && npm run test:autorizacion && npm run test:correo && npm run test:invitaciones && npm run test:archivos && npm run test:acceso"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1131.0",
@@ -59,6 +60,7 @@
     "@types/nodemailer": "8.0.1",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.7",
+    "@types/smtp-server": "3.5.13",
     "drizzle-kit": "0.31.10",
     "eslint": "9.39.5",
     "eslint-config-next": "16.3.4",
@@ -66,5 +68,5 @@
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3"
   },
-  "description": "Website p\u00fablica, HQ y portal de clientes de SLG Agency"
+  "description": "Website pública, HQ y portal de clientes de SLG Agency"
 }

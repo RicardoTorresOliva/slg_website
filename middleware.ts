@@ -98,6 +98,19 @@ export function middleware(request: NextRequest) {
  * FU-06 · Clasificación de §2
  * ══════════════════════════════════════════════════════════════════════════ */
 
+/**
+ * NO EXISTE REGISTRO PÚBLICO (§10-10, RF-59).
+ *
+ * Better Auth publica `POST /api/auth/sign-up/email`, y con él cualquiera se
+ * daría de alta en un sitio cuyo acceso es **solo por invitación**. Aquí deja de
+ * existir: 404, no 403, porque un 403 confirma que la ruta está ahí.
+ *
+ * La única vía a una cuenta es `/api/acceso/invitacion`, que exige un testigo
+ * válido y llama a la librería **por dentro** —una llamada de función, no una
+ * petición—, así que este bloqueo no le afecta.
+ */
+const ALTA_PUBLICA = "/api/auth/sign-up";
+
 /** Prefijos que exigen sesión: `(hq)` y `(portal)` (§2.4, pasos 1 y 2). */
 const CON_SESION = ["/hq", "/portal"];
 
@@ -106,6 +119,13 @@ const GRUPO_AUTH = ["/acceder", "/recuperar", "/invitacion", "/en/sign-in", "/en
 
 function clasificar(request: NextRequest, respuesta: NextResponse): NextResponse {
   const { pathname } = request.nextUrl;
+
+  if (pathname === ALTA_PUBLICA || pathname.startsWith(`${ALTA_PUBLICA}/`)) {
+    return new NextResponse(null, {
+      status: 404,
+      headers: { "X-Robots-Tag": "noindex, nofollow" },
+    });
+  }
 
   // §2.3 — el grupo (auth) no se indexa nunca. `/invitacion/[token]` se sirve
   // SIEMPRE, con o sin sesión: aceptar una invitación puede exigir cambiar de

@@ -576,3 +576,76 @@ criterio 1 está demostrado contra un verificador propio y no contra el almacena
 **Siguiente.** M0-B queda solo con **DU-01** (acceso, sesión y recuperación), que necesita **F.2-2 y
 F.2-3**: el consentimiento OAuth de Google y el registro de aplicación en Microsoft Entra ID. Son las
 dos últimas dependencias externas de M0.
+
+---
+
+## 2026-09-12 · DU-01 — Acceso, sesión y recuperación por los tres métodos · `in_progress`
+
+**Qué se produjo.** `/acceder` y `/en/sign-in`, `/recuperar` y `/en/recover`, `/restablecer`, y la
+pantalla de `/invitacion/[token]` que crea la cuenta. Más el bloqueo progresivo, el cierre de sesión
+en todos los dispositivos y los manejadores de formulario. **Es la primera cosa que un consumidor
+puede hacer de punta a punta.**
+
+**Los nueve criterios:**
+
+| # | Criterio | Estado | Evidencia |
+|---|---|---|---|
+| 1 | Entrar por los tres métodos y llegar a la superficie del rol | **a medias** | Contraseña: **cerrado y probado**. Google y Microsoft: el código está desde FU-06 y la pantalla los ofrece; faltan **F.2-2 y F.2-3** |
+| 2 | La respuesta no revela si la cuenta existe | **cerrado** | Tres casos —correo inexistente, contraseña equivocada, y **correo con invitación vigente pero sin cuenta**, que RF-59 nombra aparte— con **el mismo destino y el mismo texto**, comparados como cadenas |
+| 3 | Vinculación solo por correo verificado; ancla `oid` en Entra | **a medias** | `accountLinking` con `trustedProviders` y `allowDifferentEmails: false`; la comprobación viva necesita los proveedores |
+| 4 | Contraseña de 12, alta verificada, recuperación de un solo uso | **cerrado** | Menos de 12 → rechazada. El enlace de recuperación **sirve una vez**: al segundo intento falla y la contraseña anterior deja de valer |
+| 5 | Bloqueo progresivo, y el mismo mecanismo en la recuperación | **cerrado** | La escalera se activa tras varios intentos seguidos, y la recuperación comparte cerradura (RNF-24) |
+| 6 | Cookies `Secure`/`HttpOnly`/`SameSite` y 7 días deslizantes | **cerrado** | Leídas del `Set-Cookie` real y la duración consultada en la base: **7 días** |
+| 7 | Cerrar sesión en todos los dispositivos | **cerrado** | Con **dos navegadores simulados**: dos sesiones vivas → cero, y el segundo queda fuera en su siguiente petición |
+| 8 | Estados resueltos | **cerrado** | Los cinco, incluido «proveedor no disponible», que se pinta **deshabilitado y explicado**, no escondido |
+| 9 | Pruebas automatizadas | **cerrado** | `test:acceso`, **39 comprobaciones** contra el servidor real con cookies |
+
+**EL HALLAZGO GRAVE: el registro público estaba abierto.** Better Auth publica
+`POST /api/auth/sign-up/email` por defecto, y con él **cualquiera se daba de alta** en un sitio cuyo
+acceso es **solo por invitación** (§10-10, RF-59). No es teórico: la primera versión de la prueba creó
+una cuenta con un `POST` y sin invitación de ningún tipo. Cerrado en el middleware con **404** —no 403,
+que confirmaría que la ruta existe— y sustituido por `/api/acceso/invitacion`, que exige testigo válido
+y llama a la librería por dentro (**D-62**). La prueba ahora comprueba las dos caras: que el alta
+pública devuelve 404 y que **no se creó ninguna cuenta**.
+
+**Tres decisiones que salieron de construirlo.**
+
+1. **El correo queda verificado al aceptar la invitación** (D-63). La invitación se envió a esa
+   dirección: llegar con su testigo ya lo prueba. Un segundo correo de verificación pide dos veces la
+   misma prueba, y es el que la gente no encuentra.
+2. **El enlace de recuperación apunta a una pantalla nuestra** (D-64). El de la librería va a
+   `/reset-password`, que aquí no existe: el destinatario aterrizaría en un 404 **con el testigo en la
+   barra de direcciones**.
+3. **Cero JavaScript en el acceso.** Formularios nativos contra manejadores de ruta. Un formulario de
+   acceso que depende de JS falla justo cuando peor viene, y además el presupuesto del gate D1 ya va
+   al 89 %. El presupuesto no se movió: **133,9 KB**, igual que antes de esta unidad.
+
+**Por qué un manejador propio y no el endpoint de la librería.** Tres cosas son nuestras y no suyas:
+el **mensaje neutro** —la librería distingue «usuario no encontrado» de «contraseña incorrecta», y esa
+distinción es justo la que no puede salir—, el **bloqueo progresivo**, y **funcionar sin JavaScript**.
+
+**Dos cosas que la prueba encontró y que no eran del código.** El servidor SMTP de la suite rechazaba
+la autenticación —y el adaptador lo clasificó correctamente como `autenticacion`, que es la prueba de
+que esa clasificación sirve—; y el enlace llegaba con un `3D` pegado delante del testigo, porque el
+correo va en *quoted-printable* y la prueba solo deshacía los saltos blandos. Las dos son de la prueba,
+no del producto, y quedan escritas porque la siguiente persona que lea un correo en una prueba se va a
+tropezar con lo mismo.
+
+**Gates aplicados.** `QG`: autenticación, autorización, sin filtración en errores, sin secretos ·
+alimenta **D8**, que cierra en M3 cuando exista la emisión de invitaciones desde HQ.
+
+**Verificación.** `test:acceso` **39** comprobaciones contra el servidor real · `test:db` **264** en
+total · `check:ci` en verde · `check:brakes` diez frenos · presupuesto de JS sin mover.
+
+**Por qué `in_progress`.** Los criterios 1 y 3 solo cierran con **F.2-2 y F.2-3**: el consentimiento
+OAuth de Google y el registro de aplicación en Entra ID. El paso a paso de los dos está en
+`docs/deployment.md` §4quater, con las URL de retorno exactas. Con las cuatro variables puestas, no
+cambia una línea de código.
+
+**Residual.** La pantalla es deliberadamente austera: el sistema de componentes es **FU-10** y esta
+unidad llega antes. Lo que hay son los tokens de FU-02 y HTML nativo, y se rehace con el sistema
+cuando exista.
+
+**Siguiente.** **M0 está construido salvo lo que depende de Ricardo.** Lo siguiente por dependencia es
+**FU-01** (copy maestro bilingüe), que es una **compuerta de aprobación** y no código: hasta que el
+copy pase, M1-A no empieza.

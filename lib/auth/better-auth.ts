@@ -27,6 +27,7 @@ import { adminAc, defaultStatements, userAc } from "better-auth/plugins/admin/ac
 import { createAccessControl } from "better-auth/plugins/access";
 import { organization } from "better-auth/plugins/organization";
 import * as schema from "../db/schema.ts";
+import { destinatarioDeAvisos, enviarCorreo } from "../mail/index.ts";
 import { dbDeAuth } from "./db.ts";
 
 /**
@@ -107,9 +108,76 @@ export const auth = betterAuth({
 
   emailAndPassword: {
     enabled: true,
-    // El envío del correo de recuperación es de DU-01, sobre el adaptador de
-    // FU-08. Aquí solo queda habilitado el método.
+    /**
+     * Doce caracteres (RF-64, criterio 4 de DU-01). Y no se pide «una mayúscula
+     * y un número»: esas reglas producen `Password1!` y nada más. La longitud
+     * es lo que de verdad cuesta adivinar.
+     */
+    minPasswordLength: 12,
+    /**
+     * El alta por contraseña exige verificar el correo (RF-64). Sin esto,
+     * cualquiera se da de alta con el correo de otro y esa cuenta queda
+     * enlazable después.
+     */
+    requireEmailVerification: true,
+    // Entrar es un acto explícito: darse de alta no inicia sesión solo.
     autoSignIn: false,
+
+    /**
+     * Recuperación: enlace de UN SOLO USO, por el adaptador de FU-08.
+     *
+     * El enlace se reescribe a NUESTRA ruta. El que trae la librería apunta a
+     * `/reset-password`, que en este proyecto no existe: el destinatario
+     * aterrizaría en un 404 con el token en la barra de direcciones, que es la
+     * peor forma posible de gastar un enlace de un solo uso.
+     */
+    async sendResetPassword({ user, url, token }) {
+      const base = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.BETTER_AUTH_URL;
+      const propia = base
+        ? `${base.replace(/\/$/, "")}/restablecer?token=${encodeURIComponent(token)}`
+        : url;
+      await enviarCorreo({
+        tipo: "password_reset",
+        para: user.email,
+        idioma: idiomaDe(user),
+        datos: { url: propia },
+      });
+    },
+  },
+
+  emailVerification: {
+    sendOnSignUp: true,
+    async sendVerificationEmail({ user, url }) {
+      /**
+       * Se reutiliza la plantilla de invitación: el correo dice «confirma tu
+       * acceso» y lleva un enlace. Una plantilla nueva por cada variante de
+       * correo transaccional es cómo se acaba con doce plantillas y ninguna
+       * revisada.
+       */
+      await enviarCorreo({
+        tipo: "invitation",
+        para: user.email,
+        idioma: idiomaDe(user),
+        datos: { invitadoPor: "SLG Agency", url },
+      });
+    },
+  },
+
+  /**
+   * VINCULACIÓN DE CUENTAS — la regla de R-22 y RF-62, en una opción.
+   *
+   * Un proveedor solo puede vincularse a una cuenta existente si entrega el
+   * correo **verificado**. `google` y `microsoft` están en la lista porque los
+   * dos verifican; `credential` no vincula nada. Y `allowDifferentEmails` queda
+   * en `false`: vincular por un correo distinto del de la cuenta es exactamente
+   * el camino por el que alguien se apropia de una cuenta ajena.
+   */
+  account: {
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ["google", "microsoft"],
+      allowDifferentEmails: false,
+    },
   },
 
   socialProviders: proveedoresSociales,
@@ -123,17 +191,38 @@ export const auth = betterAuth({
   },
 
   session: {
-    // RF-66: una sesión revocada deja de valer. La comprobación autoritativa la
-    // hace `session.ts` contra la base en cada petición, no una caché.
+    /**
+     * Siete días **deslizantes** (RF-65, RNF-23, criterio 6 de DU-01):
+     * `expiresIn` es la ventana y `updateAge` es cada cuánto se renueva al
+     * usarla. Con `updateAge` a un día, quien entra a diario no ve nunca la
+     * pantalla de acceso y quien desaparece una semana vuelve a entrar.
+     *
+     * RF-66: una sesión borrada deja de valer **en la petición siguiente**,
+     * porque `session.ts` comprueba contra la base en cada una y no contra una
+     * caché. Eso es lo que hace real el «cerrar sesión en todos los
+     * dispositivos» de `acceso.ts`.
+     */
     expiresIn: 60 * 60 * 24 * 7,
     updateAge: 60 * 60 * 24,
   },
 
   advanced: {
-    // Las cookies de sesión llevan `httpOnly`, `sameSite` y `secure` por
-    // defecto en producción; `architecture` §11.2 lo exige y se verifica en
-    // DU-01, cuando existe una pantalla de acceso que las emita.
     useSecureCookies: process.env.NODE_ENV === "production",
+    /**
+     * Las tres banderas, escritas y no heredadas (RNF-23, criterio 6).
+     *
+     * `sameSite: "lax"` y no `strict`: con `strict`, volver del callback de
+     * Google o de Microsoft **no lleva la cookie** y el usuario aterriza sin
+     * sesión justo después de autenticarse. `lax` la manda en la navegación de
+     * vuelta y sigue sin mandarla en peticiones cruzadas de terceros, que es
+     * contra lo que protege.
+     */
+    defaultCookieAttributes: {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+    },
   },
 
   plugins: [
@@ -168,4 +257,18 @@ export const auth = betterAuth({
   ],
 });
 
+/**
+ * El idioma del correo sale de la cuenta; `es` si no se sabe (§10-5).
+ *
+ * El tipo que Better Auth pasa a estos callbacks no incluye nuestros campos
+ * añadidos —los declara en `user.additionalFields`, no en la firma—, así que se
+ * lee por índice en vez de fingir que el tipo los tiene.
+ */
+function idiomaDe(user: object): "es" | "en" {
+  return (user as Record<string, unknown>).locale === "en" ? "en" : "es";
+}
+
 export type Auth = typeof auth;
+
+/** Reexportado para que las rutas no necesiten conocer `lib/mail` (FU-08). */
+export { destinatarioDeAvisos };

@@ -8,9 +8,10 @@ timestamp: 2026-09-12
 
 # Project memory — slg_website
 
-> **Punto de retomada en una línea:** ocho unidades tocadas — FU-02, FU-03, FU-04, FU-06 y FU-07
-> `done`; **FU-05, FU-08 y FU-09 `in_progress`**, las tres esperando cosas de Ricardo, no código.
-> **M0-B queda solo con DU-01**, que espera a F.2-2 y F.2-3 (OAuth de Google y de Microsoft).
+> **Punto de retomada en una línea:** **M0 está construido**. Nueve unidades tocadas — FU-02, FU-03,
+> FU-04, FU-06 y FU-07 `done`; **FU-05, FU-08, FU-09 y DU-01 `in_progress`**, las cuatro esperando
+> cosas de Ricardo y ninguna esperando código. Lo siguiente es **FU-01**, el copy maestro, que es una
+> **compuerta de aprobación**: hasta que pase, M1-A no empieza.
 
 ## Lo que espera a Ricardo, y solo a él
 1. **Despliegue** — `docs/deployment.md` §3 a §5. Cierra FU-05 (criterios 1, 2, 3 y 8).
@@ -30,6 +31,9 @@ timestamp: 2026-09-12
 - **Contrato de entrada**: `START_PROJECT.md` v1.1, fase *Specify* de SDD.
 
 ## Última unidad completada
+- **DU-01** — acceso, sesión y recuperación (2026-09-12), `in_progress`: siete de los nueve criterios
+  cerrados con **39 comprobaciones** contra el servidor real; los dos que faltan esperan los registros
+  de OAuth. **Es la primera cosa que un consumidor puede hacer de punta a punta.**
 - **FU-07** — servicio de invitaciones (2026-09-12). Los cinco criterios verificados con **34
   comprobaciones** contra PostgreSQL y SMTP reales.
 - **FU-08** — adaptador de correo (2026-09-12), `in_progress`: el código está cerrado y verificado con
@@ -58,9 +62,18 @@ timestamp: 2026-09-12
     monitor. **Paso a paso completo en `docs/deployment.md`.**
 
 ## Próxima unidad
-- **DU-01** — acceso, sesión y recuperación por los tres métodos. Es **la última de M0-B** y la
-  primera cosa que un consumidor puede hacer de punta a punta. Necesita **F.2-2 y F.2-3**.
-- Sin ellas, lo construible es la parte de contraseña; los dos métodos sociales quedan a la espera.
+- **FU-01** — copy maestro bilingüe. **No es código: es una compuerta de aprobación** (Regla 1 del
+  método). Depende de `SLG_Overhauling`, fuera de este repositorio. Hasta que pase, **M1-A no empieza**.
+- Todo lo demás de M0 está construido y solo espera a Ricardo.
+
+## Lo que hay que saber del acceso antes de tocarlo
+- **No existe registro público** (D-62). `POST /api/auth/sign-up/**` devuelve **404** desde el
+  middleware. La única vía a una cuenta es `/api/acceso/invitacion`.
+- **Los manejadores de formulario son nuestros, no de la librería**: el mensaje neutro, el bloqueo
+  progresivo y el funcionar sin JavaScript no se delegan.
+- **Cero JavaScript de cliente** en las pantallas de acceso. El presupuesto del gate D1 va al 89 %.
+- **Aceptar una invitación verifica el correo** (D-63) y **restablecer cierra todas las sesiones**
+  (D-64).
 
 ## Lo que hay que saber de `lib/files/` antes de tocarlo
 - **El puerto no tiene `listar` ni `firmarPermanente`.** No es que nadie las llame: no existen. Esa

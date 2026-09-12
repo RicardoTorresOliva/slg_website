@@ -38,7 +38,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 31 `pending` · **3 `in_progress`** (FU-05, FU-08, FU-09) · **5 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
+**Estado global:** 30 `pending` · **4 `in_progress`** (FU-05, FU-08, FU-09, DU-01) · **5 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -60,7 +60,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | FU-07 | FU | Servicio de invitaciones | M0-B | FU-06, FU-08 | `done` |
 | FU-08 | FU | Adaptador de correo transaccional | M0-B | FU-05 · F.2-4 | `in_progress` — código cerrado (criterios 1, 2, 5, 7); faltan P-3/P-4, los registros del subdominio y los tres buzones |
 | FU-09 | FU | Almacenamiento de archivos y URLs firmadas | M0-B | FU-05 · `api_contracts` | `in_progress` — los cinco criterios cerrados en código; faltan los dos buckets privados en `minio` y las variables `S3_*` |
-| DU-01 | DU | Acceso, sesión y recuperación por los tres métodos | M0-B | FU-06, FU-07, FU-08 · F.2-2, F.2-3 | `pending` |
+| DU-01 | DU | Acceso, sesión y recuperación por los tres métodos | M0-B | FU-06, FU-07, FU-08 · F.2-2, F.2-3 | `in_progress` — criterios 2, 4, 5, 6, 7, 8 y 9 cerrados; 1 y 3 esperan F.2-2 y F.2-3 |
 | ━━━ | ━━━ | **▼ M1-A · CAPA PÚBLICA: COMPUERTAS, COMPONENTES Y ARMAZÓN** | ━━━ | ━━━ | ━━━ |
 | FU-01 | FU | Copy maestro bilingüe — compuerta única de aprobación | M1-A | FU-03 · SLG_Overhauling | `pending` |
 | FU-10 | FU | Sistema de componentes C.5 con prototipo interactivo aprobado | M1-A | FU-02 | `pending` |
@@ -222,3 +222,10 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   configuración con tope duro (**D-60**). Lista de MIME de `material` cerrada sin ejecutables, sin
   comprimidos y sin SVG (**D-61**). Falta que Ricardo cree los dos buckets privados en `minio`.
   El pipeline pasa a **diez** frenos.
+- `2026-09-12` — **DU-01 `in_progress`.** Pantallas de acceso, recuperación, restablecimiento y
+  aceptación de invitación, con **39 comprobaciones** contra el servidor real. **Hallazgo grave: el
+  registro público estaba abierto** —`POST /api/auth/sign-up/email` de la librería permitía darse de
+  alta en un sitio solo por invitación—; cerrado con 404 en el middleware y sustituido por la vía de
+  la invitación (**D-62**). Registradas **D-63** (el canje verifica el correo) y **D-64** (pantalla
+  propia de restablecimiento, y cierre de todas las sesiones al cambiar la contraseña). Los criterios
+  1 y 3 esperan **F.2-2 y F.2-3**, con paso a paso en `docs/deployment.md` §4quater.

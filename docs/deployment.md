@@ -251,10 +251,21 @@ tiene que estar también de su lado.
 **Evidencia del criterio 6**: una captura de *Domains → Tracking* mostrando que **no existe ningún
 subdominio de tracking**. Va al `work_log`.
 
-### 4bis.2 La credencial SMTP y las variables
+### 4bis.2 La credencial SMTP — de dónde sale, exactamente
 
-**API Keys** → **Create API Key** → permiso **Sending access** → cópiala (se muestra **una sola
-vez**). En Easypanel, en `slg-web` y en `slgweb-staging`:
+**No hay una «contraseña SMTP» aparte. La clave de API ES la contraseña SMTP.** Eso confunde siempre,
+y es consecuencia directa de D-36: el adaptador habla SMTP estándar, así que el proveedor entra por
+las variables de transporte y no por un SDK con su propio nombre.
+
+1. En **resend.com**, menú lateral izquierdo → **API keys**.
+2. Botón **Create API Key**.
+3. *Name*: `slg-web — envío`. *Permission*: **Sending access**. *Domain*: `mailweb.softlandingglobal.com`.
+4. **Add**. La clave aparece **una sola vez** y empieza por `re_`. Cópiala ahora y guárdala en tu
+   gestor de contraseñas; si la pierdes, se crea otra y se revoca esta.
+5. Esa cadena `re_...` es lo que va en **`MAIL_SMTP_PASSWORD`**. El usuario es literalmente la palabra
+   **`resend`**.
+
+En Easypanel, en `slg-web` y en `slgweb-staging`:
 
 | Variable | Valor |
 |---|---|
@@ -310,6 +321,97 @@ Servicio **`minio`** del proyecto `slg_website`. Es lo único que le falta a FU-
 
 > **Nunca** subas un documento de descarga ni un entregable al repositorio: es público, y
 > `npm run check:archivos` pone el CI en rojo si aparece uno.
+
+---
+
+## 4quater. Los dos inicios de sesión sociales (F.2-2 y F.2-3)
+
+**Qué está hecho y qué no.** El **código** de los dos métodos está construido y probado desde FU-06:
+`lib/auth/better-auth.ts` declara Google y Microsoft y los enciende **solo si sus variables están
+presentes**. Lo que falta no es código: son **dos registros en dos consolas ajenas**, que solo puede
+hacer alguien con cuenta en ellas. Eso es F.2-2 y F.2-3.
+
+Sin ellos, `/acceder` muestra los dos botones **deshabilitados** con «no disponible» y el acceso por
+correo y contraseña funciona igual. Con ellos, es poner cuatro variables y reiniciar.
+
+Las **URL de retorno** son las mismas en los dos casos y hay que escribirlas **exactas**:
+
+| Entorno | URL de retorno de Google | URL de retorno de Microsoft |
+|---|---|---|
+| Producción | `https://softlandingglobal.com/api/auth/callback/google` | `https://softlandingglobal.com/api/auth/callback/microsoft` |
+| Staging | `https://staging.softlandingglobal.com/api/auth/callback/google` | `https://staging.softlandingglobal.com/api/auth/callback/microsoft` |
+
+> Una barra de más, `http` en vez de `https`, o `www` donde no toca, y el proveedor devuelve
+> `redirect_uri_mismatch`. Es el 90 % de los fallos de esta sección.
+
+### 4quater.1 Google — F.2-2
+
+1. Entra en **console.cloud.google.com** con la cuenta de Google de SLG.
+2. Arriba a la izquierda, selector de proyecto → **Nuevo proyecto**. Nombre: `SLG Agency Website`.
+   **Crear**, y asegúrate de que queda seleccionado.
+3. Menú ☰ → **APIs y servicios** → **Pantalla de consentimiento de OAuth**.
+   - *User Type*: **External** (Externo) → **Crear**.
+   - *Nombre de la aplicación*: `SLG Agency`.
+   - *Correo de asistencia*: `support@softlandingglobal.com`.
+   - *Dominios autorizados*: **`softlandingglobal.com`**.
+   - *Datos de contacto del desarrollador*: tu correo. → **Guardar y continuar**.
+4. **Permisos (Scopes)** → **Añadir o quitar permisos** → marca **`openid`**, **`.../auth/userinfo.email`**
+   y **`.../auth/userinfo.profile`**. Nada más: no pedimos acceso a Gmail, Drive ni contactos, y pedir
+   de más dispara una revisión de Google que tarda semanas. → **Actualizar** → **Guardar y continuar**.
+5. **Usuarios de prueba**: añade tu correo mientras la app esté en *Testing*. Cuando quieras que entre
+   cualquiera, vuelve a la pantalla de consentimiento y pulsa **Publicar aplicación**.
+6. **APIs y servicios** → **Credenciales** → **Crear credenciales** → **ID de cliente de OAuth**.
+   - *Tipo de aplicación*: **Aplicación web**.
+   - *Nombre*: `slg-web`.
+   - *Orígenes de JavaScript autorizados*: `https://softlandingglobal.com` y
+     `https://staging.softlandingglobal.com`.
+   - *URI de redireccionamiento autorizados*: **las dos de Google** de la tabla de arriba.
+   - **Crear**.
+7. Copia **ID de cliente** y **Secreto de cliente**. Van a `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET`.
+
+### 4quater.2 Microsoft Entra ID — F.2-3
+
+**D-23 ayuda aquí**: el correo se queda en Microsoft 365, así que **reutilizas el tenant que ya
+tienes**; no hay que crear un directorio nuevo ni pagar nada.
+
+1. Entra en **entra.microsoft.com** con una cuenta administradora del tenant de SLG.
+2. **Identidad** → **Aplicaciones** → **Registros de aplicaciones** → **Nuevo registro**.
+3. Rellena:
+   - *Nombre*: `SLG Agency Website`.
+   - *Tipos de cuenta admitidos*: **«Cuentas en cualquier directorio organizativo y cuentas personales
+     de Microsoft»**. Es la opción que corresponde a `tenantId: common`, y es la que hace que entre
+     tanto un cliente con Microsoft 365 propio como alguien con una cuenta personal.
+   - *URI de redirección*: plataforma **Web**, y pega la **de Microsoft de producción**.
+4. **Registrar**.
+5. **Autenticación** → **Agregar URI** → pega la **de Microsoft de staging** → **Guardar**.
+6. **Certificados y secretos** → **Secretos de cliente** → **Nuevo secreto de cliente**.
+   - *Descripción*: `slg-web`. *Expira*: 24 meses (anótate la fecha: cuando caduque, el acceso deja
+     de funcionar sin más aviso).
+   - **Agregar**. Copia la columna **Valor**, **no** la de *Id. de secreto*. Solo se ve una vez.
+7. **Información general** → copia el **Id. de aplicación (cliente)**.
+8. **Permisos de API**: normalmente ya trae `User.Read` de Microsoft Graph, que basta. Si no está:
+   **Agregar un permiso** → *Microsoft Graph* → *Permisos delegados* → `openid`, `profile`, `email`,
+   `User.Read`.
+
+### 4quater.3 Las cuatro variables
+
+En Easypanel, en `slg-web` y en `slgweb-staging`:
+
+| Variable | De dónde sale |
+|---|---|
+| `GOOGLE_CLIENT_ID` | paso 7 de §4quater.1 |
+| `GOOGLE_CLIENT_SECRET` | paso 7 de §4quater.1 |
+| `MICROSOFT_CLIENT_ID` | paso 7 de §4quater.2 |
+| `MICROSOFT_CLIENT_SECRET` | paso 6 de §4quater.2 — la columna **Valor** |
+| `MICROSOFT_TENANT_ID` | **`common`** |
+
+`BETTER_AUTH_URL` tiene que apuntar al dominio de **ese** servicio (`https://softlandingglobal.com` en
+producción, `https://staging.softlandingglobal.com` en staging): de ahí sale la URL de retorno que la
+aplicación le manda al proveedor, y si no coincide con la registrada, `redirect_uri_mismatch`.
+
+> **El correo de Microsoft puede no llegar.** Entra no siempre emite correo para cuentas gestionadas
+> (F.1), y por eso el ancla de identidad es **`oid`**, no el correo. Está construido así desde FU-06
+> y probado en DU-01: **nunca se vincula una cuenta por un correo no verificado** (RF-62, R-22).
 
 ---
 
