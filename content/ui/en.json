@@ -108,5 +108,11 @@
   "blog.tagsNavLabel": "Tags",
   "blog.empty": "We haven't published yet. The first articles are coming soon.",
   "blog.emptyTag": "No articles with this tag.",
-  "blog.backToIndex": "All articles"
+  "blog.backToIndex": "All articles",
+  "legal.lastUpdated": "Last updated",
+  "doctrine.summaryPending": "The public summary of The Phoenix Doctrine will be published here.",
+  "doctrine.pillarsTitle": "The three pillars of DAL OS",
+  "doctrine.fullDocTitle": "The full document",
+  "doctrine.fullDocPending": "The full Phoenix Doctrine document is available on request. While we enable the online request, write to us and we'll send it.",
+  "download.consentNotice": "By submitting you accept the {{privacyLink}}."
 }

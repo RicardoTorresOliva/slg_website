@@ -1569,3 +1569,44 @@ Corregido de raíz y no página por página: clase `.superficie-suave` en `globa
 tarjeta o franja en `--paper-2`, aplicada a los cinco componentes que las usan. Las tres páginas
 pasaron de 96 a **100**. Sin medir sobre una página de servicio —y no solo sobre la portada, que es
 lo único que mide el gate hoy— esto no se habría visto.
+
+---
+
+## DU-06 — Autoridad y legales: Doctrina, Nosotros y `/legal/*` · `in_progress` (2026-09-11)
+
+Ocho rutas nuevas (`/doctrina`, `/nosotros`, `/legal/privacidad`, `/legal/terminos` y sus pares
+ingleses), todas verificadas en el navegador con su `lang` correcto y conmutador recíproco. Las
+cuatro páginas de texto largo llevan **fecha de última actualización visible** (§2.9): en un
+documento legal saber qué versión lees es parte del documento.
+
+**El copy legal: qué es y qué no es.** Ricardo pidió «un copy de legal simple» para avanzar. Lo
+redactado describe con exactitud **lo que el sitio hace de verdad** —qué datos pide cada formulario,
+qué contexto guarda, que no hay cookies de seguimiento ni scripts de terceros, que el CRM es propio y
+autoalojado, que Resend procesa el envío con seguimiento desactivado, que R2 guarda copias cifradas
+antes de salir del servidor, y que los enlaces de descarga caducan en minutos—. Esa parte la puede
+escribir el agente con más precisión que una plantilla, porque construyó la máquina que describe.
+
+**Lo que el agente NO decidió, y queda marcado `[PENDIENTE]` a propósito**: ley aplicable, base legal
+del tratamiento, plazo de conservación, mecanismo de transferencias internacionales, procedimiento y
+plazo de ejercicio de derechos, cláusula de limitación de responsabilidad y fuero, y la dirección de
+contacto de privacidad. Son determinaciones jurídicas, no redacción.
+
+**Consecuencia deliberada**: esos marcadores mantienen `check:pending` bloqueando `main` (DoD #10).
+El texto sirve para staging y para la demo, y el freno que impide publicar formularios sobre
+condiciones no revisadas **sigue puesto**. Quitarlo es una decisión de una línea y es de Ricardo, no
+del agente. Hoy: **79 marcadores en 67 archivos**.
+
+**Hallazgo de cumplimiento, real y corregido**: el formulario **no enlazaba la política de
+privacidad en la variante «próximamente»** — que hoy es la de los once documentos, porque ninguno
+tiene archivo. El visitante daba su correo, el sistema guardaba `consent_at`, y **nunca se le había
+enseñado a qué consentía**. Una marca de consentimiento sin haber mostrado la política no es un
+consentimiento. Corregido: el aviso aparece ahora en las dos variantes — casilla explícita en la
+completa, aviso en línea bajo el botón en la reducida (§2.2). Verificado en la página real: el enlace
+a `/legal/privacidad` aparece en el formulario y en el pie.
+
+**Queda `in_progress`**: el criterio 3 exige que los legales estén enlazados desde **todo** formulario
+público, y los de contacto y solicitud de Doctrina llegan en DU-10. El bloque «documento completo a
+solicitud» de Doctrina muestra su estado vacío redactado y ofrece la vía de contacto (criterio 4),
+sin fingir un formulario que todavía no existe. Y el `[PENDIENTE]` del resumen ejecutivo de The
+Phoenix Doctrine sigue esperando dato externo: `doctrine-summary.md` prohíbe rellenarlo por
+inferencia, así que la página muestra estado vacío en vez de una frase inventada con voz de doctrina.

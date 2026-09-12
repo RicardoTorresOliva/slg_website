@@ -43,7 +43,15 @@ export type SlugDeOverview = (typeof OVERVIEWS)[number];
  * Vive aquí, en una sola lista, porque tenerla copiada en las rutas ES y EN es
  * garantía de que un día diverjan.
  */
-export const PAGINAS_CON_RUTA_PROPIA: readonly string[] = ["home", ...OVERVIEWS];
+export const PAGINAS_CON_RUTA_PROPIA: readonly string[] = [
+  "home",
+  ...OVERVIEWS,
+  // DU-06: Doctrina, Nosotros y los dos legales tienen ruta propia.
+  "doctrina",
+  "nosotros",
+  "privacidad",
+  "terminos",
+];
 
 /** Las tres líneas cuyos hijos son servicios (a `/ai` cuelgan páginas, no servicios). */
 const LINEAS: readonly SlugDeOverview[] = ["slg-academy", "slg-enterprise", "slg-factory"];

@@ -178,7 +178,25 @@ export function DownloadForm({
         <input id={`${idBase}-hp`} name="empresa_confirmar" type="text" tabIndex={-1} autoComplete="off" />
       </div>
 
-      {!esProximamente && (
+      {/*
+        El aviso de privacidad aparece en LAS DOS variantes, y eso es una
+        corrección, no una preferencia: la variante «próximamente» también
+        recoge un correo y también guarda `consent_at`: guardar la marca de un
+        consentimiento sin haber enseñado a qué se consiente no es un
+        consentimiento (RF-36, y criterio 3 de DU-06 — «enlazadas desde el pie
+        y desde TODO formulario público»).
+
+        Lo que cambia entre variantes es la forma, no la existencia: la
+        completa pide una casilla explícita; la reducida, que es un solo campo,
+        lo dice en línea bajo el botón, como fija `ui_wireframes` §2.2.
+      */}
+      {esProximamente ? (
+        <p className="text-sm text-ink-2">
+          {t["download.consentNotice"].split("{{privacyLink}}")[0]}
+          <a href={privacyHref}>{t["download.consentLinkText"]}</a>
+          {t["download.consentNotice"].split("{{privacyLink}}")[1]}
+        </p>
+      ) : (
         <label className="flex items-start gap-2 text-sm text-ink-2">
           <input
             type="checkbox"
