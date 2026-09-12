@@ -1,5 +1,5 @@
 import { loadCollection } from "./loader.ts";
-import { textoPlano } from "./inline.ts";
+import { textoPlano, trocearEnSecciones } from "./inline.ts";
 import type { Lang } from "./schema.ts";
 
 /**
@@ -48,17 +48,6 @@ export type ContenidoDeHome = {
  */
 function contenidoOHueco(texto: string): string | null {
   return texto.includes("[PENDIENTE") ? null : texto;
-}
-
-function trocearEnSecciones(body: string): Map<string, string> {
-  const secciones = new Map<string, string>();
-  const partes = body.split(/^##\s+/m).slice(1);
-  for (const parte of partes) {
-    const salto = parte.indexOf("\n");
-    const titulo = (salto === -1 ? parte : parte.slice(0, salto)).trim();
-    secciones.set(titulo, (salto === -1 ? "" : parte.slice(salto + 1)).trim());
-  }
-  return secciones;
 }
 
 /** `**Nombre** — descripción → \`/ruta\`` */

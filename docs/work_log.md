@@ -1399,3 +1399,37 @@ nombre literal ya es `SLG_Academy` con su guion bajo y eso es lo que el visitant
 `lib/content/inline.ts` (`textoPlano`), aplicado a Home y a los overviews. **No** se convierten a
 `<code>`: pondría tipografía monoespaciada de programador en medio de una frase de marca. Verificado
 en las diez rutas que hoy existen: cero markdown sin renderizar.
+
+---
+
+## DU-05 — Las once páginas de servicio (contrato A.3) · `done` (2026-09-11)
+
+Las 22 páginas (11 servicios × 2 idiomas) con las seis secciones del contrato A.3 en orden fijo.
+Rutas derivadas de `content/services/` — añadir un servicio sigue siendo añadir su registro, no
+tocar código (RF-27). `SLG_Holdings` vive en la raíz y no bajo `/ai` porque es una **rama**, no una
+línea: es el único registro con `parent: null`.
+
+**Verificado sobre las 22 rutas, no sobre una muestra**: las seis secciones aparecen en el orden
+exacto en los dos idiomas (comparación literal contra `SERVICE_SECTIONS`), **cero formularios, cero
+iframes, cero scripts de terceros**, ninguna página menciona «Sesión Cero» (RF-96), y el conmutador
+de idioma lleva a la misma página en el otro idioma en todas ellas. El único CTA es la sección ⑤
+(RF-07): los otros dos enlaces del artículo son el eyebrow de rama —wayfinding, no llamada a la
+acción— y el de `/contacto` de la sección ⑥, que el criterio 3 exige expresamente.
+
+**Los dos estados del criterio 7, resueltos y no inventados**:
+- *Servicio sin registro de descarga*: la sección ⑤ **no desaparece**. Es el único CTA de la página;
+  esconderla dejaría la página sin salida. Muestra su estado escrito.
+- *«Qué incluye» vacío* (hoy: `AGE_Building`, `APP_Building`, `Customize Programs` y otros, cuya
+  fuente no detalla el alcance): se renderiza el estado vacío en vez de una lista de un solo
+  elemento que dijera `[PENDIENTE: …]`.
+
+La «cifra grande» que `QueIncluye` pide como elemento gráfico (C.2) se deriva del índice — `01`,
+`02`, `03` — que es exactamente el patrón que el kit de marca usa en sus bloques con `border-left`.
+El contenido no trae figuras propias y no se ha inventado ninguna.
+
+**Lo que esta unidad hace visible y no arregla**: de los 11 servicios, **6 tienen secciones en
+`[PENDIENTE]`** porque la fuente de la oferta no da el dato (`Phoenix TEAx`, `Phoenix RETx`,
+`Customize Programs`, `AI Coaching for Directors`, `APP_Building`, `AGE_Building`), y **ninguno de
+los 11 documentos existe todavía** (EXT-1), así que las 11 secciones ⑤ muestran «disponible
+próximamente». Las páginas están completas como máquina; el contenido que les falta solo lo puede
+dar Ricardo o SLG_Overhauling.

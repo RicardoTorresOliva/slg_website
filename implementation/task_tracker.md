@@ -38,9 +38,9 @@ se ha producido ningún entregable.
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 24 `pending` · 4 `in_progress` (FU-07, FU-08, FU-11, FU-14) · 0 `blocked` · 0 `review` ·
-**11 `done`** (FU-02, FU-03, FU-04 · 2026-09-08; FU-05, FU-06, FU-09 · 2026-09-10; FU-01, FU-10,
-DU-02, DU-03, DU-04 · 2026-09-11). **M0-A y M1-A completos.** Siguiente: DU-05 (las 11 páginas de servicio). FU-07 y FU-08
+**Estado global:** 23 `pending` · 4 `in_progress` (FU-07, FU-08, FU-11, FU-14) · 0 `blocked` · 0 `review` ·
+**12 `done`** (FU-02, FU-03, FU-04 · 2026-09-08; FU-05, FU-06, FU-09 · 2026-09-10; FU-01, FU-10,
+DU-02, DU-03, DU-04, DU-05 · 2026-09-11). **M0-A y M1-A completos.** Siguiente: DU-06 (Doctrina, Nosotros y legales), que necesita F.2-1. FU-07 y FU-08
 cierran cuando se verifique de punta a punta contra staging; mientras tanto, DU-01 sigue esperando
 a F.2-2/F.2-3.
 
@@ -72,7 +72,7 @@ a F.2-2/F.2-3.
 | DU-03 | DU | Portada (Home) ES/EN | M1-A | FU-01, FU-10, DU-02 | `done` |
 | ━━━ | ━━━ | **▼ M1-B · CAPA PÚBLICA: PÁGINAS** | ━━━ | ━━━ | ━━━ |
 | DU-04 | DU | Overviews de rama (`/ai`, `/ai/academy`, `/ai/enterprise`, `/ai/factory`) | M1-B | DU-03 | `done` |
-| DU-05 | DU | Las once páginas de servicio (contrato A.3) | M1-B | DU-04 | `pending` |
+| DU-05 | DU | Las once páginas de servicio (contrato A.3) | M1-B | DU-04 | `done` |
 | DU-06 | DU | Autoridad y legales: Doctrina, Nosotros y `/legal/*` | M1-B | DU-04 · F.2-1 | `pending` |
 | DU-07 | DU | SEO técnico, 404/500 y cierre de los gates D1–D6 | M1-B | DU-03, DU-04, DU-05, DU-06 | `pending` |
 | ━━━ | ━━━ | **▼ M2 · CONVERSIÓN Y CONTENIDO** | ━━━ | ━━━ | ━━━ |
@@ -256,4 +256,10 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   tres líneas en inglés daban 500 porque el contenido escribe las rutas en dos convenciones distintas
   (unos registros en canónica española, otros ya en inglés); resuelto normalizando en
   `canonicalizarRuta`/`localizarRuta`. Recuentos fijados en `test:routes`: 3 · 5 · 2 · 3. Detalle en
+  `docs/work_log.md`.
+- `2026-09-11` — **DU-05 → `done`**. Las 22 páginas de servicio verificadas una por una: seis
+  secciones en orden exacto en ambos idiomas, cero formularios/iframes/scripts de terceros, sin
+  «Sesión Cero», CTA único y conmutador de idioma correcto en las 22. Los dos estados del criterio 7
+  resueltos con redacción propia. **Hace visible el hueco de contenido**: 6 de los 11 servicios
+  tienen secciones en `[PENDIENTE]` y ninguno de los 11 documentos existe (EXT-1). Detalle en
   `docs/work_log.md`.

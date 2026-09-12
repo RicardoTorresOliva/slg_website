@@ -76,5 +76,15 @@
   "home.cardsHeading": "The three SLG_AI lines",
   "overview.indexHeading": "What this branch includes",
   "overview.phoenixAcademy": "Phoenix Academy",
-  "overview.opensExternal": "opens on another site, outside SLG Agency"
+  "overview.opensExternal": "opens on another site, outside SLG Agency",
+  "service.whoFor": "Who it is for and what problem",
+  "service.whatItIs": "What it is",
+  "service.whatIncludes": "What it includes",
+  "service.howWeWork": "How we work",
+  "service.download": "Download",
+  "service.nextStep": "Next step",
+  "service.contactLink": "Write to us",
+  "service.sectionPending": "We're still writing this section.",
+  "service.includesPending": "The detail of this service will be published here.",
+  "service.downloadPending": "This service's document will be published here."
 }

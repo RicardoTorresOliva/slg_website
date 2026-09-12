@@ -19,3 +19,22 @@
 export function textoPlano(texto: string): string {
   return texto.replace(/`([^`]+)`/g, "$1");
 }
+
+/**
+ * Trocea un cuerpo markdown por sus encabezados `## `.
+ *
+ * Lo usan Home (RF-09) y las páginas de servicio (contrato A.3): los dos
+ * formatos fijan encabezados literales y en orden, y los dos necesitan leer
+ * cada bloque por su nombre. El **orden** no lo valida esta función — lo
+ * valida quien la llama, que es quien sabe qué orden le toca.
+ */
+export function trocearEnSecciones(body: string): Map<string, string> {
+  const secciones = new Map<string, string>();
+  const partes = body.split(/^##\s+/m).slice(1);
+  for (const parte of partes) {
+    const salto = parte.indexOf("\n");
+    const titulo = (salto === -1 ? parte : parte.slice(0, salto)).trim();
+    secciones.set(titulo, (salto === -1 ? "" : parte.slice(salto + 1)).trim());
+  }
+  return secciones;
+}
