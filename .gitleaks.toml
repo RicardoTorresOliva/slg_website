@@ -1,0 +1,22 @@
+# Configuración del escáner de secretos del pipeline (FU-05, criterio 4).
+#
+# Segunda capa sobre `scripts/ci/check-secrets.ts`: ese corre en cualquier
+# máquina y sin red; este conoce cientos de patrones que el nuestro no.
+# Ninguno sustituye al otro.
+
+title = "slg_website"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Fixtures negativos y plantillas sin valores"
+
+paths = [
+  # Secretos SINTÉTICOS, cuya razón de ser es que el escáner los encuentre
+  # cuando `verify-brakes.ts` le apunta ahí (criterio 5, R-26).
+  '''scripts/ci/negative/.*''',
+  # Solo nombres, cero valores — y hay un gate que lo comprueba (criterio 6).
+  '''\.env\.example$''',
+  '''package-lock\.json$''',
+]

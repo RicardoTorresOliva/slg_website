@@ -19,8 +19,8 @@ Se actualiza **después de cada unidad**, junto con `docs/work_log.md` (AGENTS.m
 *no later, not in batches*).
 
 **Estados admitidos:** `pending` · `in_progress` · `blocked` · `review` · `done`.
-Hoy **todas** están en `pending`: la Compuerta de Planificación (AGENTS.md Regla 1) sigue cerrada y no
-se ha producido ningún entregable.
+La **Compuerta de Planificación está abierta** desde el 2026-09-08 (AGENTS.md Regla 1, aprobación de
+Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en la tabla de abajo.
 
 ---
 
@@ -38,7 +38,7 @@ se ha producido ningún entregable.
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 36 `pending` · 0 `in_progress` · 0 `blocked` · 0 `review` · **3 `done`** (FU-02, FU-03, FU-04 · 2026-09-08). **M0-A completo salvo FU-05**, ya desbloqueada (EXT-7 cerrada por D-49; S-01 diferida a go-live). Antes decía que esperaba a S-01 y a EXT-7.
+**Estado global:** 35 `pending` · **1 `in_progress`** (FU-05) · 0 `blocked` · 0 `review` · **3 `done`** (FU-02, FU-03, FU-04 · 2026-09-08). **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -54,7 +54,7 @@ se ha producido ningún entregable.
 | FU-02 | FU | Andamiaje del repositorio, tokens de marca y skills aprobadas | M0-A | — | `done` |
 | FU-03 | FU | Capa de contenido OKF, i18n y scripts de verificación | M0-A | FU-02 | `done` |
 | FU-04 | FU | Capa de datos: PostgreSQL, Drizzle, migraciones y modelo B.2 | M0-A | FU-02 · `data_model` | `done` |
-| FU-05 | FU | Despliegue, CI, DNS y documentación de entorno | M0-A | FU-02, FU-03, FU-04 · EXT-7 ✅ (D-49) | `pending` |
+| FU-05 | FU | Despliegue, CI, DNS y documentación de entorno | M0-A | FU-02, FU-03, FU-04 · EXT-7 ✅ (D-49) | `in_progress` — repo cerrado; faltan criterios 1, 2, 3 y 8 (infraestructura, `docs/deployment.md`) |
 | ━━━ | ━━━ | **▼ M0-B · FUNDACIONES: IDENTIDAD Y SERVICIOS COMPARTIDOS** | ━━━ | ━━━ | ━━━ |
 | FU-06 | FU | Módulo de identidad y autorización | M0-B | FU-04, FU-05 | `pending` |
 | FU-07 | FU | Servicio de invitaciones | M0-B | FU-06, FU-08 | `pending` |
@@ -83,7 +83,7 @@ se ha producido ningún entregable.
 | DU-13 | DU | Tablero de HQ | M3 | FU-12, DU-09, DU-11 · F.2-5 | `pending` |
 | DU-14 | DU | Empresas, proyectos, usuarios e invitaciones | M3 | FU-07, DU-13 | `pending` |
 | DU-15 | DU | Entregables y avisos | M3 | FU-09, DU-14 | `pending` |
-| DU-16 | DU | Capturas web: lista, detalle de intentos y reintento manual | M3 | DU-09, DU-13 · spec-delta del `data_model` aprobado (conflicto del reintento manual, `design_summary` §2 CF-1) | `pending` |
+| DU-16 | DU | Capturas web: lista, detalle de intentos y reintento manual | M3 | DU-09, DU-13 · ~~spec-delta del `data_model`~~ ✅ **CF-1 resuelto por D-50** (`crm_delivery.cycle`, ya construido en FU-04) | `pending` |
 | DU-17 | DU | Claves de API y registro de auditoría | M3 | FU-06, DU-14 | `pending` |
 | ━━━ | ━━━ | **▼ M4 · PORTAL DE CLIENTES** | ━━━ | ━━━ | ━━━ |
 | FU-13 | FU | Batería de pruebas de aislamiento entre empresas | M4 | FU-04, FU-06, DU-15 | `pending` |
@@ -170,3 +170,14 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   La condición que hace aceptable el aplazamiento —no reutilizar esa credencial en ningún entorno
   desplegado, y rotar antes del go-live— queda registrada en `docs/decision_log.md`.
   **FU-05 queda desbloqueada.**
+
+- `2026-09-12` — **FU-05 pasa a `in_progress`.** Construido y verificado en el repositorio: el
+  pipeline (`.github/workflows/ci.yml`, 4 jobs), los seis frenos del criterio 4 con su **prueba
+  negativa ejecutada** (`npm run check:brakes`), las cabeceras de seguridad y la compuerta de staging
+  comprobadas **sobre el servidor real** (`npm run check:runtime`, 19 comprobaciones), el gate de
+  `.env.example` y los scripts de DNS. **Criterios 5, 6, 7 y 9 cerrados.** Criterios 1, 2, 3 y 8
+  pendientes de infraestructura, con procedimiento paso a paso en `docs/deployment.md`.
+  Registradas **D-47…D-51** en `docs/decision_log.md`: D-47, D-48 y D-49 estaban citadas en este
+  tracker y en el `work_log` **sin entrada**, y D-50 (`crm_delivery.cycle`) no tenía número.
+  Efecto en el plan: **DU-16 deja de depender de un spec-delta del `data_model`** — CF-1 quedó
+  resuelto por D-50 y la vía está construida desde FU-04.

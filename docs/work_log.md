@@ -205,3 +205,76 @@ degradaría `drizzle-kit` de 0.31 a 0.18. Se acepta; revísese si `drizzle-kit` 
 
 **Siguiente.** FU-05 — despliegue, CI, DNS y documentación de entorno. **Bloqueada por S-01 y por la
 elección del producto de monitorización (EXT-7)**, ambas de Ricardo.
+
+---
+
+## 2026-09-12 · FU-05 — Despliegue, CI, DNS y documentación de entorno · `in_progress`
+
+**Qué se produjo.** La mitad de esta unidad que vive en el repositorio, completa y verificada; y
+`docs/deployment.md`, el runbook paso a paso de la mitad que vive en la infraestructura y que solo
+Ricardo puede ejecutar. La unidad **no se marca `done`**: cuatro criterios necesitan los cinco
+servicios arriba y la zona DNS en la mano.
+
+**Los nueve criterios, uno por uno:**
+
+| # | Criterio | Estado | Evidencia |
+|---|---|---|---|
+| 1 | Staging por HTTPS, auth básica y `noindex` | **construido y probado** · falta desplegar | `middleware.ts` + 10 comprobaciones de `check:runtime` contra el servidor real |
+| 2 | `develop`→staging, `main`→producción, y nada llega a `main` sin pasar por staging | **construido** · faltan los webhooks | job `guarda-staging`: falla si el commit de `main` no está contenido en `develop` |
+| 3 | `crm`, `n8n`, `evolution`, `academy` y los MX siguen resolviendo igual | **construido** · falta ejecutarlo contra la zona real | `scripts/ci/check-dns.sh`, en modo línea base y en modo verificación |
+| 4 | El pipeline **falla** ante los seis casos | **cerrado** | `.github/workflows/ci.yml`, 4 jobs |
+| 5 | Cada freno con su prueba negativa ejecutada | **cerrado** | `npm run check:brakes`: 6 frenos en rojo por el motivo esperado + 3 contrapruebas en verde |
+| 6 | `.env.example` con todos los nombres y cero valores | **cerrado** | `npm run check:env`: 42 variables, todas documentadas; y falla si el código lee una que no está |
+| 7 | CSP, HSTS y `frame-ancestors` verificadas por prueba automatizada | **cerrado** | `npm run check:runtime`: 19 comprobaciones sobre el servidor real, no sobre `next.config.ts` |
+| 8 | El monitor avisa, provocando la caída una vez | **pendiente de Ricardo** | procedimiento exacto en `docs/deployment.md` §5.2 |
+| 9 | Producto de monitorización elegido y registrado | **cerrado** | **UptimeRobot**, ahora sí escrito como **D-49** |
+
+**Por qué la unidad queda `in_progress` y no `blocked`.** Nada de lo que falta depende de una
+decisión: depende de tener el panel de Easypanel y el de DNS delante. El runbook dice qué se pulsa
+y en qué orden.
+
+**Tres hallazgos dentro de la unidad.**
+
+1. **El presupuesto de JS estaba rojo y nadie lo sabía.** La primera ejecución del gate D1 dio
+   **172,5 KB** comprimidos en la portada — un 115 % del presupuesto— con una página que solo tiene
+   un wordmark y dos párrafos. De ellos, **39,4 KB eran el paquete de polyfills `noModule`**, que un
+   navegador moderno **ignora por completo**: no lo pide ni lo ejecuta. Excluirlo (D-51) deja la
+   portada en **133,9 KB, el 89 %**. Sigue siendo estrecho: ver *Residual*.
+2. **El escáner de secretos encontró dos cadenas de conexión en mi propio runbook**, en dos rondas
+   seguidas: primero el ejemplo de `DATABASE_URL`, después la nota que explicaba el formato. Las dos
+   eran ejemplos, y el gate tenía razón las dos veces — una cadena con contraseña dentro de un
+   repositorio público no se distingue de una real hasta que alguien la prueba. El documento las
+   describe ahora sin escribirlas.
+3. **La prueba negativa del escáner escaneaba cero archivos y anunciaba verde.** El barrido saltaba
+   todo directorio llamado `negative/`, incluidos los fixtures a los que la prueba le apuntaba a
+   propósito. Es exactamente el falso verde que R-26 describe: un gate que pasa porque no mira nada.
+   Corregido — `negative/` solo se salta en el barrido del repositorio, nunca cuando
+   `SECRETS_SCAN_ROOT` apunta ahí.
+
+**Decisiones registradas.** **D-51** (las tres precisiones de la compuerta de staging y del
+presupuesto de JS). Y se cierra el hueco documental que arrastraban las unidades anteriores:
+**D-47** (separación del rol dueño y el rol de aplicación), **D-48** (`contact` como entidad propia,
+cierra H-04) y **D-49** (UptimeRobot y S-01 diferida) estaban **citadas en el tracker, en este
+`work_log` y en el propio esquema sin tener entrada en `decision_log`**; **D-50** (`crm_delivery.cycle`,
+que resuelve CF-1) no tenía ni número. Las cinco están escritas.
+
+**Añadido no previsto, con justificación.** `scripts/ci/check-env-example.ts` comprueba también la
+dirección contraria: que toda variable que el código lee esté declarada en la plantilla. El criterio 6
+solo pedía lo primero. Cuesta 40 líneas y convierte en rojo de CI lo que si no es un `undefined`
+silencioso en producción.
+
+**Gates aplicados.** `QG` del perfil: cero secretos (144 archivos barridos), ninguna cadena de
+conexión con contraseña, la compuerta de staging comparando en tiempo constante, `/api/health` sin
+dato de negocio · **D11** (operación): monitor externo elegido, registrado y con procedimiento de
+prueba escrito · **D1** (presupuesto de JS): medido, no estimado · alimenta **D5**.
+
+**Residual y riesgo abierto.** La portada ocupa **el 89 % del presupuesto de JS estando vacía**.
+Los 133,9 KB son el runtime de React 19 más Next 16: no hay nada nuestro que recortar. Cuando entren
+la Home real (DU-03) y el sistema de componentes (FU-10), el margen es de **16 KB**. Dos salidas, y
+conviene decidir cuál antes de FU-10: reducir el JavaScript de cliente llevando componentes a
+Server Components, o subir el presupuesto con una decisión escrita. **Lo que no vale es desactivar
+el gate.**
+
+**Siguiente.** Ricardo ejecuta `docs/deployment.md` §2 a §5 para cerrar los criterios 1, 2, 3 y 8.
+En paralelo, la unidad siguiente por dependencia es **FU-06** (identidad y autorización), que solo
+espera a que FU-05 esté desplegada.

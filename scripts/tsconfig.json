@@ -7,6 +7,6 @@
     "moduleResolution": "nodenext",
     "types": ["node"]
   },
-  "include": ["content/**/*.ts", "../lib/content/**/*.ts"],
+  "include": ["content/**/*.ts", "ci/**/*.ts", "../lib/content/**/*.ts"],
   "exclude": []
 }

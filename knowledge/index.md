@@ -51,6 +51,7 @@ Los cinco están escritos, más un consolidado que los indexa. Se abren **por se
 | [../AGENTS.md](../AGENTS.md) | **Gobernanza.** Las 8 reglas. Vive ahí y solo ahí |
 | [../START_PROJECT.md](../START_PROJECT.md) | El contrato (brief v1.1). Fuente de verdad de todo este bundle. Se abre por anexo, no entero |
 | [../docs/decision_log.md](../docs/decision_log.md) | Decisiones de planificación desde `D-14`, e incidencias de seguridad |
+| [../docs/deployment.md](../docs/deployment.md) | **Runbook de operación** (FU-05): los cinco servicios, el despliegue automático, los registros DNS con la lista de «no tocar» delante y el monitor externo. Se abre al desplegar o al tocar la zona DNS, no antes |
 | [../planning/requirements.md](../planning/requirements.md) | Los requisitos `RF-*` / `RNF-*`. Se abre por sección |
 | [../planning/scope.md](../planning/scope.md) · [../planning/risks.md](../planning/risks.md) | Dentro/fuera/previsto; riesgos y mitigaciones |
 | [../profiles/software-app/profile.md](../profiles/software-app/profile.md) | Perfil activo: qué es "hecho" y qué comprueba el quality gate |

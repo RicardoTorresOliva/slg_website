@@ -2,117 +2,100 @@
 type: docs
 title: Project memory
 project: slg_website
-status: planning
-timestamp: 2026-09-08
+status: execution
+timestamp: 2026-09-12
 ---
 
 # Project memory — slg_website
 
+> **Punto de retomada en una línea:** cuatro unidades tocadas (FU-02, FU-03, FU-04 `done`; FU-05
+> `in_progress`). La siguiente por dependencia es **FU-06**, y espera a que Ricardo despliegue
+> siguiendo `docs/deployment.md`.
+
 ## Current state
-- **Phase**: **ejecución** (`start-execution`). `init-project` cerrado en sus 10 pasos; preflight OK.
-- **active_profile**: `software-app` (`profiles/software-app/profile.md`) — decidido en **D-14**.
-  - Extensiones declaradas en el brief, no en el perfil: gates de marketing, identidad y API (Anexo D).
-  - Regla del perfil que aplica: superficie de administración/operaciones (HQ lo es).
-- **Contrato de entrada**: `START_PROJECT.md` v1.1 (`type: project-brief`), fase *Specify* de SDD.
-- **Plan approved**: **SÍ** — Ricardo, 2026-09-08. La **Compuerta de Planificación queda abierta**.
-
-## Qué está escrito
-
-**Los cinco `design_docs` existen.** Ninguno falta:
-
-| Documento | Líneas | Nivel |
-|---|---:|---|
-| `design_docs/data_model.md` | 1981 | HIGH |
-| `design_docs/api_contracts.md` | 1853 | HIGH |
-| `design_docs/ui_wireframes.md` | 1221 | MEDIUM |
-| `design_docs/architecture.md` | 1035 | MEDIUM |
-| `design_docs/style_guide.md` | 372 | LIGHT |
-
-Su consolidación vive en `design_docs/design_summary.md`: 18 decisiones a registrar (D-25…D-42, ya
-transcritas al `decision_log`), 8 conflictos —**dos ya resueltos** por D-44 y D-45— y 26 huecos con
-dueño y milestone.
-
-**Unidades de trabajo: 39** — **14 Foundation Units** + **25 Deliverable Units**, definidas en
-`implementation/user_units.md` y seguidas en `implementation/task_tracker.md`. **Las 39 están en
-`pending`**: no se ha producido ningún entregable. Reparto por milestone: M0-A 4 · M0-B 5 · M1-A 4 ·
-M1-B 4 · M2 6 · M3 6 · M4 5 · M5 5.
-
-**Bundle OKF montado**: `knowledge/` con `index.md` (divulgación progresiva, se carga en todas las
-sesiones), `log.md` y los **siete conceptos** (`method-sdd-icm`, `naming-rules`, `offer-structure`,
-`content-schema`, `brand-tokens`, `crm-integration`, `doctrine-summary`).
+- **Fase**: **ejecución**. Compuerta de Planificación **abierta** (Ricardo, 2026-09-08).
+- **active_profile**: `software-app` (`profiles/software-app/profile.md`) — D-14.
+- **Contrato de entrada**: `START_PROJECT.md` v1.1, fase *Specify* de SDD.
 
 ## Última unidad completada
-- (ninguna — no se produce nada antes de la aprobación del plan; AGENTS.md Regla 1)
+- **FU-04** — capa de datos (2026-09-08). 19 tablas, cuatro migraciones, aislamiento entre empresas
+  verificado **por comportamiento** y 24 comprobaciones automatizadas.
+
+## Unidad en curso
+- **FU-05** — despliegue, CI, DNS y documentación de entorno. **`in_progress` desde 2026-09-12.**
+  - **Cerrado y verificado en el repositorio**: criterios **5, 6, 7 y 9**.
+    - Pipeline `.github/workflows/ci.yml`: 4 jobs (gates, escáner de secretos dedicado, datos con
+      PostgreSQL real, y la guarda que impide que `main` reciba nada que no haya pasado por `develop`).
+    - Los **seis frenos** del criterio 4 con **prueba negativa ejecutada**: `npm run check:brakes`.
+    - Cabeceras de seguridad y compuerta de staging comprobadas **sobre el servidor real**, no sobre
+      `next.config.ts`: `npm run check:runtime`, 19 comprobaciones.
+    - `middleware.ts`: compuerta de staging con comparación en tiempo constante; `/api/health` fuera
+      de ella a propósito (D-51).
+    - `.env.example`: 42 variables, cero valores, y el gate falla también si el código lee una que no
+      está declarada.
+    - `scripts/ci/check-dns.sh`: modo línea base y modo verificación, nombre por nombre.
+  - **Falta, y es de Ricardo, no de decisión**: criterios **1, 2, 3 y 8** — los cinco servicios de
+    Easypanel, los dos webhooks de despliegue, los tres registros DNS nuevos y la prueba de aviso del
+    monitor. **Paso a paso completo en `docs/deployment.md`.**
 
 ## Próxima unidad
-- **FU-04 está `in_progress`**, no `pending`. Hecho y verificado contra PostgreSQL real: las 19 tablas,
-  las restricciones, la inmutabilidad de `audit_log` y el **aislamiento entre empresas por Row Level
-  Security** (sin contexto → cero filas; con contexto ajeno → cero filas; escritura ajena → rechazada).
-  **Falta**: la capa de acceso en TypeScript (criterio 5), el mapa de renderizadores de `deliverable`
-  (criterio 6), la validación de `payload_json` en la escritura (criterio 7), los datos de ejemplo y
-  las pruebas automatizadas que sustituyan a las manuales.
-- Después: FU-05, que **espera a S-01 y al producto de monitorización (EXT-7)**.
+- **FU-06** — módulo de identidad y autorización (M0-B). Depende de FU-04 (hecha) y FU-05
+  (desplegada). El middleware de FU-06 se encadena **debajo** de la compuerta de staging, nunca encima.
+
+## Cómo se verifica todo, de un vistazo
+| Necesidad | Comando |
+|---|---|
+| Pipeline entero en local | `npm run check:ci` |
+| Que los frenos sigan frenando | `npm run check:brakes` |
+| DNS tras cualquier cambio de zona | `npm run check:dns` (antes: `npm run check:dns:baseline`) |
+| Aislamiento entre empresas | `npm run test:db` (necesita PostgreSQL) |
 
 ## Entorno local
-- `docker-compose.yml` levanta `slg-db` (PostgreSQL 16) en el **puerto 5434**. El 5432 lo ocupa la base
-  de datos del CRM y el 5433 otro proyecto: no se tocan.
+- `docker-compose.yml` levanta `slg-db` (PostgreSQL 16) en el **puerto 5434**. El 5432 lo ocupa la
+  base de datos del CRM y el 5433 otro proyecto: no se tocan.
+- **Dos roles, dos cadenas de conexión** (D-47): `slg` migra, `slg_app` sirve. Apuntar `DATABASE_URL`
+  al dueño **desactiva todo el aislamiento**, y `test:isolation` falla si alguien lo hace.
 - Credenciales en `.env`, ignorado por git. `.env.example` documenta solo los nombres.
-- Migraciones en `drizzle/`: `0000_inicial.sql` generada, `0001_restricciones_aislamiento.sql` escrita
-  a mano (drizzle-kit no genera políticas de fila ni disparadores).
+- Migraciones en `drizzle/`: `0000` generada; `0001`, `0002` y `0003` escritas a mano (drizzle-kit no
+  genera políticas de fila ni disparadores).
 
-## Stack: cerrado
-Todas las categorías están decididas por Ricardo en HITL. El detalle y la justificación de cada
-elección viven en `docs/decision_log.md` (D-21 a D-24 y D-43 a D-45).
+## Stack: cerrado. Todas las elecciones de producto, hechas
+Detalle y justificación en `docs/decision_log.md`. **No se re-exploran.**
 
-- **Correo transaccional: Resend** (D-22), tras adaptador SMTP por variable de entorno (D-36).
-- **Backups: Cloudflare R2** (D-21), contra API S3 genérica.
-- **Correo corporativo: se queda en Microsoft 365** (D-23). No hay migración; los MX de Outlook no se tocan.
+- Correo transaccional: **Resend** (D-22), tras adaptador SMTP por variable de entorno (D-36).
+- Backups: **Cloudflare R2** (D-21), contra API S3 genérica.
+- Correo corporativo: **se queda en Microsoft 365** (D-23). Los MX de Outlook no se tocan.
 - **Subdominio de envío dedicado** (D-24): el SPF de la raíz no se toca.
-- **Monitorización externa** (D-43): servicio de uptime dedicado con tramo gratuito, ejecutado
-  **fuera del VPS** — n8n vive en la misma máquina que vigilaría, así que queda como señal
-  **secundaria**. Cierra P-5, RF-130 y el gate D11. Falta elegir el producto concreto (2–3 candidatos,
-  paso 5) antes de FU-05; **no bloquea el arranque**.
-- **Anillo de foco de dos capas** (D-44): exterior `--cyan`, interior `--blue-primary` o `--ink`.
-  El cyan solo mide 2,4:1 y no pasaba el gate D2. Token en FU-02, verificado en FU-10.
-- **Visor de entregables HTML desde origen separado** (D-45), normativo. El `iframe sandbox` y la
-  CSP estricta se mantienen como defensa en profundidad. Se construye en DU-19.
-
-Nombrar **Resend** y **Cloudflare R2** **no** viola la Regla 7: la regla prohíbe nombrar productos
-que el usuario **no** haya elegido, y estos los eligió él el 2026-09-08.
+- Monitorización externa: **UptimeRobot** (D-49), fuera del VPS. n8n queda como señal **secundaria**.
+- Anillo de foco de dos capas (D-44) · visor de entregables desde **origen separado** (D-45).
 
 ## Decisiones fijadas (no re-explorar)
-- **13 decisiones HITL** de Ricardo sobre stack y hosting (`START_PROJECT.md` §7 y §10).
-- **D-14…D-24**: perfil, categorías de stack, anti-abuso, 11 documentos de descarga, adaptador de dos
-  modos al CRM, y las elecciones de producto de Resend, R2, M365 y subdominio de envío.
-- **D-43…D-46**: monitorización externa, anillo de foco de dos capas, origen separado del visor, y el
-  cron de validación de Hermes (EXT-9). Cierran P-5, CF-3 y CF-4, y bajan R-16 a Media/Medio.
-- **D-25…D-42**: las 18 decisiones que tomaron los `design_docs`. Dos de ellas están marcadas
-  **[IRREVERSIBLE-TRAS-FU-04]** (D-26 y D-27): revertirlas después de la primera migración es
-  migración de datos.
-- Dos umbrales que estaban `[PENDIENTE]` **ya están cerrados**: caducidad de URL firmada (RNF-20 →
-  **D-28**, 15/10/30 min) y tamaño máximo de subida (RNF-25 → **D-25**, 25/50/5/1 MB, tope 50).
-  El bloqueo que `user_units` §0.6 declaraba sobre FU-04, FU-09, DU-22 y DU-23 **se levanta**.
-- Todo registrado en `docs/decision_log.md`.
+- 13 HITL de Ricardo en `START_PROJECT.md` §7 y §10 · **D-14…D-24** · **D-25…D-42** (las que tomaron
+  los `design_docs`; D-26 y D-27 marcadas **[IRREVERSIBLE-TRAS-FU-04]**, y FU-04 ya corrió) ·
+  **D-43…D-46** · **D-47…D-51** (las de ejecución, registradas el 2026-09-12).
 
 ## Blockers
-- **Ninguno de planificación.** A1–A5 resueltas (D-15…D-20); P-1 y P-2 cerradas (D-21, D-22).
-- **Pendiente de Ricardo, antes de `start-execution`**:
-  1. **Aprobar el plan** — la Compuerta de Planificación (Regla 1). Incluye dar por bueno el bloque
-     D-25…D-42 ya escrito en el `decision_log`.
-  2. **H-04** — `organization.primary_contact`: ¿usuario con `FK` o texto libre? Cambia el tipo de una
-     columna **antes** de FU-04, así que conviene resolverlo pronto.
-  3. **S-01** — verificación de higiene de credenciales; se sigue **fuera de este repositorio**.
-- **Cerradas desde la última revisión**: ~~P-5~~ (D-43) · ~~CF-3, anillo de foco~~ (D-44) ·
-  ~~CF-4, origen del visor~~ (D-45). Ninguna debe reabrirse en una sesión futura.
-- **Abiertas sin bloquear**: P-3 y P-4 (remitente y nombre del subdominio de envío), se fijan en M0
-  antes de FU-08 · el producto concreto de monitorización, antes de FU-05 · confirmar la vía del
-  `cycle` (CF-1), antes de DU-16.
+- **Ninguno de decisión.** Lo que falta de FU-05 es acceso a paneles, y tiene runbook.
+- **De Ricardo, para cerrar FU-05**: ejecutar `docs/deployment.md` §2 a §5.
+- **Abiertas sin bloquear**: **P-3 y P-4** (dirección remitente y nombre del subdominio de envío), se
+  fijan en M0 antes de FU-08 · **EXT-8** (nombre del subdominio del visor), antes de DU-19 ·
+  **F.2-1…F.2-6**, dependencias externas listadas en el tracker.
+- **S-01**: **diferida a go-live** (D-49). La credencial afectada es de construcción, no de
+  producción, y **no se reutiliza en ningún entorno desplegado**. La rotación sigue siendo requisito
+  de go-live.
+- **Cerradas, no reabrir**: ~~P-5~~ (D-43) · ~~CF-3~~ (D-44) · ~~CF-4~~ (D-45) · ~~EXT-7~~ (D-49) ·
+  ~~H-04~~ (D-48) · ~~CF-1~~ (D-50, y con ella **DU-16 deja de esperar un spec-delta**).
 
-## Archivos clave tocados esta sesión
-- `planning/`: questions.md, requirements.md, scope.md, risks.md
-- `design_docs/`: data_model.md, api_contracts.md, ui_wireframes.md, architecture.md, style_guide.md,
-  design_summary.md
-- `implementation/`: user_units.md, task_tracker.md
-- `knowledge/`: index.md, log.md y los siete conceptos (bundle OKF)
-- `docs/`: decision_log.md (D-14…D-46, P-3/P-4, S-01), project_memory.md
-- `mcps/inventory.md`, `skills/inventory.md`
+## Riesgo abierto que conviene mirar antes de FU-10
+**El presupuesto de JavaScript va al 89 % con la portada vacía.** 133,9 KB comprimidos de los 150 KB
+del gate D1, y son runtime de React 19 más Next 16: no hay nada nuestro que recortar. Cuando entren
+DU-03 y FU-10 el margen es de **16 KB**. Decidir antes de FU-10: llevar componentes a Server
+Components, o subir el presupuesto con decisión escrita. **Desactivar el gate no es una opción.**
+
+## Archivos clave tocados esta sesión (FU-05)
+- `middleware.ts` · `.github/workflows/ci.yml` · `.gitleaks.toml`
+- `scripts/ci/`: `check-js-budget.ts`, `check-secrets.ts`, `check-env-example.ts`, `check-runtime.ts`,
+  `verify-brakes.ts`, `check-dns.sh`, `negative/`
+- `docs/`: `deployment.md` (nuevo), `decision_log.md` (D-47…D-51), `work_log.md`, `project_memory.md`,
+  `run_metadata.md`
+- `implementation/task_tracker.md` · `package.json` (ocho scripts nuevos) · `scripts/tsconfig.json`
