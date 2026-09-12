@@ -217,3 +217,9 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   Best Practices 92→100). Queda `in_progress`: el criterio 2 exige los tres métodos de aceptación
   funcionando, y Google/Microsoft no se pueden ejercer de punta a punta sin F.2-2/F.2-3. Detalle en
   `docs/work_log.md`.
+- `2026-09-11` — **D-66**: resuelto el `[PENDIENTE]` de mecanismo de cron de FU-14 (verificado contra
+  la documentación oficial de Easypanel: sin programador nativo para scripts arbitrarios; su backup
+  nativo a S3 no cifra antes de subir y exige credencial con borrado — no sirve. Mecanismo elegido:
+  servicio App aparte con Dockerfile+crontab) y generada la clave de cifrado (`openssl rand -hex 32`).
+  **FU-14 queda sin bloqueo**, lista para construirse. `FU-14` sigue `pending` (no se ha construido
+  nada todavía). Detalle en `docs/decision_log.md` D-66 y `docs/project_memory.md`.

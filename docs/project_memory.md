@@ -35,8 +35,8 @@ timestamp: 2026-09-11
    redirect URIs ya están confirmadas exactas por Ricardo) y un envío real de correo por Resend
    (dominio `mailweb.softlandingglobal.com`, ya verificado). Necesita acceso a staging con sesión
    real o que Ricardo lo pruebe y reporte.
-3. **FU-14 (backups)** — bucket y los dos tokens de R2 ya creados (ver detalle abajo); falta solo la
-   clave de cifrado y confirmar si Easypanel tiene cron nativo antes de poder construir el mecanismo.
+3. **FU-14 (backups)** — bucket, los dos tokens de R2, la clave de cifrado y el mecanismo de cron ya
+   resueltos (D-65, D-66); lista para construirse en una sesión.
 4. Contenido pendiente de FU-01 que solo Ricardo (o SLG_Overhauling) puede dar — ver lista abajo.
 
 ## FU-01 · Copy maestro bilingüe · `done` (2026-09-11)
@@ -127,7 +127,7 @@ DU-13/DU-18.
 real (binario Homebrew local, sin Docker) y en CI. Sin llamador real todavía (DU-08, DU-13/DU-15) —
 hueco de esquema anotado aparte (`task_fb516747`), no bloquea el cierre de FU-09.
 
-## FU-14 · Backups cifrados a R2 · sin empezar — preparación de Ricardo en curso (2026-09-11)
+## FU-14 · Backups cifrados a R2 · sin empezar — preparación completa, lista para construir (2026-09-11)
 
 **Hecho por Ricardo, con el agente guiando el navegador (Claude in Chrome) en directo, D-65**:
 1. Bucket `slg-backups` creado en Cloudflare R2.
@@ -144,12 +144,21 @@ hueco de esquema anotado aparte (`task_fb516747`), no bloquea el cierre de FU-09
 3. Account ID: `b1e37064c773099db5e12fbaa6134a55`. Endpoint S3:
    `https://b1e37064c773099db5e12fbaa6134a55.r2.cloudflarestorage.com`.
 
-**Falta todavía, antes de poder construir FU-14**:
-1. **Clave de cifrado**: `openssl rand -hex 32`, guardada fuera del VPS y del repositorio.
-2. **Confirmar si Easypanel tiene cron/tareas programadas nativas** para la copia diaria — sin
-   verificar todavía, Ricardo tiene que mirarlo en el panel.
+**Resuelto en esta sesión (D-66)**:
+1. **Clave de cifrado** generada (`openssl rand -hex 32`, 256 bits) y entregada a Ricardo por chat,
+   fuera del repositorio — para su gestor de contraseñas y, al construir FU-14, como variable de
+   entorno **solo del servicio de copia** (nunca en `slgweb-staging`/`slg-web`).
+2. **Mecanismo de cron confirmado contra la documentación oficial de Easypanel**: no tiene programador
+   nativo para scripts arbitrarios (solo Dockerfile+crontab, o un cron de terceros contra un endpoint
+   HTTP). Sí tiene un backup nativo programable a S3-compatible (incluido R2), pero **no sirve**: no
+   cifra antes de subir y su credencial necesita permiso de borrado para la retención — rompe la
+   mitigación 1 de R-37 y el criterio 3 de FU-14. Mecanismo elegido: servicio App aparte en Easypanel
+   con su propio Dockerfile+crontab. Detalle completo en `docs/decision_log.md` D-66 y
+   `design_docs/architecture.md` §9.1.
 
-Con esas dos cosas, FU-14 se puede construir en una sesión.
+**FU-14 queda listo para construirse.** Único detalle a confirmar ya al construir (no bloquea
+empezar): el timezone del servidor en el propio panel de Easypanel (el cron sigue la hora del
+servidor, no UTC por defecto).
 
 ## Entorno local
 
@@ -192,6 +201,6 @@ Todas registradas en `docs/decision_log.md` (D-1 a D-64). Dos marcadas
 
 - **F.2-2/F.2-3/F.2-4** (Google, Microsoft, Resend): credenciales ya cargadas, falta verificación
   real de punta a punta — no bloquea seguir con otras unidades.
-- **FU-14**: esperando que Ricardo prepare Cloudflare R2 + clave de cifrado (instrucciones arriba).
+- **FU-14**: sin bloqueo — R2 (D-65), clave de cifrado y mecanismo de cron (D-66) ya resueltos.
 - **S-01** (rotación de una credencial de construcción): diferida a go-live, fuera de este repo.
 - Ninguno bloquea DU-02/DU-03 — ver "Qué hacer a continuación" arriba.

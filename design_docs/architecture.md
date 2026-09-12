@@ -698,7 +698,12 @@ No los pide el enunciado de esta sección, pero existen y siguen la misma regla:
 
 El proceso **cifra en el VPS antes de subir** (criterio 3 de FU-14, R-12) y no se ejecuta dentro de
 `slg-web`: es una tarea programada de la plataforma sobre el VPS (§0 del brief: «backups
-programados»). `[PENDIENTE: mecanismo exacto de programación en la plataforma — se verifica en FU-14]`.
+programados»). **Mecanismo (D-66)**: un servicio **App aparte** en Easypanel, con su propio
+`Dockerfile` que hornea el crontab (`crond -f`) y ejecuta el script de copia. Easypanel no tiene un
+programador nativo para scripts arbitrarios (solo Dockerfile+crontab o un cron de terceros contra un
+endpoint HTTP); sí tiene un backup nativo programable a S3-compatible (incluido R2), pero no cifra
+antes de subir y su credencial necesita permiso de borrado para la retención — incompatible con la
+mitigación 1 de R-37 (§9.2) y con el criterio 3 de FU-14.
 
 ### 9.2 A dónde, y las cuatro mitigaciones de R-37
 
