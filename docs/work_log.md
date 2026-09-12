@@ -1346,3 +1346,47 @@ restauración no arranca.
 
 Los ocho pasos manuales que quedan en Easypanel y Cloudflare están detallados en la entrada de
 `docs/project_memory.md`.
+
+---
+
+## DU-04 — Overviews de rama · `done` (2026-09-11)
+
+`/ai` y las tres líneas (`/ai/academy`, `/ai/enterprise`, `/ai/factory`) en los dos idiomas: ocho
+rutas, todas verificadas en el navegador real devolviendo 200 con su `lang` correcto. Estas cuatro
+**no** son páginas de servicio: no tienen descarga y por tanto no llevan CTA rojo (§2.3).
+
+**El criterio 2 no se declara, se hace cumplir.** `validarCobertura` contrasta el índice de cada
+línea contra `content/services/` y **lanza** si existe un servicio que el índice no enlaza. El riesgo
+real no es listar de más: es que alguien añada un servicio y se olvide de listarlo — el servicio
+existiría, tendría su página, y nadie llegaría a él. Un fallo invisible, que es el peor tipo. La
+comprobación es **asimétrica a propósito**: falta en el índice algo que existe → error; está en el
+índice algo cuyo registro aún no existe → se renderiza igual, que es el criterio 5.
+
+Recuentos verificados en los dos idiomas: `SLG_AI` 3 · `SLG_Academy` 5 · `SLG_Enterprise` 2 ·
+`SLG_Factory` 3. Fijados además en `npm run test:routes` para que un cambio futuro los rompa ruidosamente.
+
+**Criterio 3 (Phoenix Academy)**: enlace externo con `target="_blank"` y
+`rel="noopener noreferrer external"`, marcado con ↗ visible y con una nota para lector de pantalla que
+dice que sale del sitio. `noopener` no es adorno: sin él la pestaña destino puede manipular la de
+origen por `window.opener`. Sin integración, sin sesión compartida, sin nada embebido (RF-13,
+frontera (e) de `scope.md`).
+
+**Hallazgo real, encontrado porque la validación del criterio 2 hizo su trabajo**: las tres líneas
+en inglés daban **500**. La causa no era el contenido sino que mi comprobación asumía una sola forma
+de escribir las rutas. **El contenido no es consistente**: unos registros ingleses escriben la ruta
+canónica española (`→ /ai/academy`, como `home` y `slg-ai-en`) y otros la inglesa ya resuelta
+(`→ /en/ai/academy`, como las tres líneas). Las dos formas son razonables de escribir a mano y
+ninguna es incorrecta — lo que no puede es que el código dependa de cuál eligió quien redactó el
+archivo. Resuelto con `canonicalizarRuta`/`localizarRuta` en el mapa de rutas: toda ruta que venga
+del contenido se lleva primero a su forma canónica y luego al idioma que toque. `Home` usaba su
+propia copia de esa lógica y ahora usa la compartida.
+
+Vale la pena decir lo que esto significa: **la validación del criterio 2 encontró un defecto en su
+primera ejecución**. Sin ella, las tres páginas inglesas habrían renderizado tarjetas apuntando al
+idioma equivocado sin que nada fallara.
+
+**También**: los cuatro registros de overview se excluyen ahora de la ruta genérica `/[slug]`, igual
+que `home` en DU-03 — si no, `/slg-ai` y `/ai` servirían lo mismo. La lista vive en un solo sitio
+(`PAGINAS_CON_RUTA_PROPIA`), porque tenerla copiada en las rutas ES y EN es garantía de que un día
+diverjan. En inglés la exclusión se identifica por `pair`, no por el slug: los slugs ingleses no
+siguen una regla única y compararlos por texto fallaría en silencio.

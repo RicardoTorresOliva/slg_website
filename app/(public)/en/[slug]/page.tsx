@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { loadCollection } from "@/lib/content/loader";
+import { PAGINAS_CON_RUTA_PROPIA } from "@/lib/content/overview";
 
 /**
  * Páginas públicas en INGLÉS, servidas bajo /en (§10-5).
@@ -8,10 +9,16 @@ import { loadCollection } from "@/lib/content/loader";
  * El contenido se carga y valida en tiempo de build: un frontmatter inválido
  * detiene el despliegue en vez de publicar una página a medias.
  */
-/** `home` se excluye: la portada inglesa vive en `/en` (DU-03). Ver la nota en la ruta española. */
+/**
+ * Mismas exclusiones que en español, pero identificadas por `pair` —el slug
+ * español— y no por el slug inglés: los slugs ingleses no siguen una regla
+ * única (`slg-ai-en` lleva sufijo, `about` y `doctrine` son otra palabra), así
+ * que compararlos por texto fallaría en silencio. Ver la nota en la ruta
+ * española.
+ */
 export async function generateStaticParams() {
-  return loadCollection("page", "en")
-    .filter((p) => p.slug !== "home")
+  return loadCollection<{ pair: string | null }>("page", "en")
+    .filter((p) => !PAGINAS_CON_RUTA_PROPIA.includes(p.data.pair ?? ""))
     .map((p) => ({ slug: p.slug }));
 }
 

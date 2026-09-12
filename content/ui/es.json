@@ -73,5 +73,8 @@
   "home.featuredDownload.title": "Descarga destacada",
   "home.featuredDownload.empty": "Los documentos estarán disponibles próximamente.",
   "home.doorsHeading": "Las dos ramas",
-  "home.cardsHeading": "Las tres líneas de SLG_AI"
+  "home.cardsHeading": "Las tres líneas de SLG_AI",
+  "overview.indexHeading": "Qué incluye esta rama",
+  "overview.phoenixAcademy": "Phoenix Academy",
+  "overview.opensExternal": "se abre en otro sitio, fuera de SLG Agency"
 }

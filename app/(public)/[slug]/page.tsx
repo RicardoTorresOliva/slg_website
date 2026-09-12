@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { loadCollection } from "@/lib/content/loader";
+import { PAGINAS_CON_RUTA_PROPIA } from "@/lib/content/overview";
 
 /**
  * Páginas públicas en ESPAÑOL, servidas desde la raíz (§10-5).
@@ -9,14 +10,13 @@ import { loadCollection } from "@/lib/content/loader";
  * detiene el despliegue en vez de publicar una página a medias.
  */
 /**
- * `home` se excluye a propósito: la portada tiene su propia ruta (`/`, DU-03).
- * Sin esta exclusión existirían dos URLs con el mismo contenido —`/` y
- * `/home`— que es contenido duplicado para un buscador justo en la página que
- * más importa posicionar.
+ * Las páginas con ruta propia (la portada, los cuatro overviews) se excluyen:
+ * si no, `/slg-ai` y `/ai` servirían lo mismo — contenido duplicado para un
+ * buscador, con dos URLs compitiendo por posicionar la misma página.
  */
 export async function generateStaticParams() {
   return loadCollection("page", "es")
-    .filter((p) => p.slug !== "home")
+    .filter((p) => !PAGINAS_CON_RUTA_PROPIA.includes(p.slug))
     .map((p) => ({ slug: p.slug }));
 }
 

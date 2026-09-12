@@ -15,6 +15,7 @@ import {
   navPrincipal,
   rutaAlterna,
 } from "../../lib/routes/map.ts";
+import { cargarOverview, type SlugDeOverview } from "../../lib/content/overview.ts";
 
 let fallos = 0;
 const ok = (n: string, c: boolean, d = "") => {
@@ -144,6 +145,33 @@ ok(
 ok(
   "el menú en inglés apunta a rutas en inglés",
   navPrincipal("en", "/en", strings).every((d) => d.href.startsWith("/en")),
+);
+
+// ─── 7. Overviews de rama: cada índice cubre exactamente los suyos (DU-04) ───
+console.log("\nOverviews de rama:");
+const ESPERADOS: Record<string, number> = {
+  "slg-ai": 3,
+  "slg-academy": 5,
+  "slg-enterprise": 2,
+  "slg-factory": 3,
+};
+for (const [slug, cuantos] of Object.entries(ESPERADOS)) {
+  for (const lang of ["es", "en"] as const) {
+    try {
+      const o = cargarOverview(slug as SlugDeOverview, lang);
+      ok(
+        `${slug} (${lang}): ${cuantos} hijos`,
+        o.entradas.length === cuantos,
+        `tiene ${o.entradas.length}`,
+      );
+    } catch (e) {
+      ok(`${slug} (${lang}) carga`, false, (e as Error).message.slice(0, 120));
+    }
+  }
+}
+ok(
+  "el conteo total coincide con el contrato de la oferta (10 servicios de SLG_AI)",
+  ESPERADOS["slg-academy"] + ESPERADOS["slg-enterprise"] + ESPERADOS["slg-factory"] === 10,
 );
 
 console.log(

@@ -3,7 +3,7 @@ import { BranchCard } from "@/components/branch-card/BranchCard";
 import { Hero } from "@/components/hero/Hero";
 import { cargarHome } from "@/lib/content/home";
 import { loadCollection, loadUiStrings } from "@/lib/content/loader";
-import { ruta, rutaAlterna, type Locale } from "@/lib/routes/map";
+import { localizarRuta, ruta, type Locale } from "@/lib/routes/map";
 
 /**
  * Portada (DU-03) — los siete bloques de RF-09, en orden fijo.
@@ -17,16 +17,6 @@ import { ruta, rutaAlterna, type Locale } from "@/lib/routes/map";
  * interfaz de `content/ui`. El orden de los bloques lo hace cumplir
  * `cargarHome`, que rechaza el registro si falta uno o están desordenados.
  */
-
-/**
- * El contenido escribe las rutas en su forma canónica española (`/ai`). En
- * inglés se traducen con el mismo mapa que usa el conmutador de idioma, en vez
- * de duplicar las rutas dentro del copy — donde se desincronizarían.
- */
-function localizar(hrefCanonico: string, locale: Locale): string {
-  if (locale === "es") return hrefCanonico;
-  return rutaAlterna(hrefCanonico) ?? hrefCanonico;
-}
 
 export async function Home({ locale }: { locale: Locale }) {
   const home = cargarHome(locale);
@@ -70,7 +60,7 @@ export async function Home({ locale }: { locale: Locale }) {
             key={puerta.href}
             name={puerta.nombre}
             description={puerta.descripcion}
-            href={localizar(puerta.href, locale)}
+            href={localizarRuta(puerta.href, locale)}
           />
         ))}
       </section>
@@ -83,7 +73,7 @@ export async function Home({ locale }: { locale: Locale }) {
             key={tarjeta.href}
             name={tarjeta.nombre}
             description={tarjeta.descripcion}
-            href={localizar(tarjeta.href, locale)}
+            href={localizarRuta(tarjeta.href, locale)}
           />
         ))}
       </section>

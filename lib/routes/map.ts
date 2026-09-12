@@ -163,6 +163,26 @@ export function rutaAlterna(pathname: string): string | null {
   return null;
 }
 
+/**
+ * Lleva una ruta a su forma canónica en español, venga en el idioma que venga.
+ *
+ * Existe porque el contenido **no es consistente**: unos registros ingleses
+ * escriben la ruta canónica española (`→ /ai/academy`) y otros la inglesa ya
+ * resuelta (`→ /en/ai/academy`). Las dos formas son razonables de escribir a
+ * mano, y ninguna es incorrecta; lo que no puede es depender de cuál usó quien
+ * redactó el archivo. Normalizar aquí hace que dé igual.
+ */
+export function canonicalizarRuta(href: string): string {
+  return localeDeRuta(href) === "en" ? (rutaAlterna(href) ?? href) : href;
+}
+
+/** La ruta que corresponde a `href` en `locale`, sea cual sea el idioma en que venga escrita. */
+export function localizarRuta(href: string, locale: Locale): string {
+  const canonica = canonicalizarRuta(href);
+  if (locale === "es") return canonica;
+  return rutaAlterna(canonica) ?? canonica;
+}
+
 export type DestinoDeNav = { href: string; label: string; activo?: boolean };
 
 /**

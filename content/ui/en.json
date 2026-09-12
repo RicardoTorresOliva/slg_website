@@ -73,5 +73,8 @@
   "home.featuredDownload.title": "Featured download",
   "home.featuredDownload.empty": "The documents will be available soon.",
   "home.doorsHeading": "The two branches",
-  "home.cardsHeading": "The three SLG_AI lines"
+  "home.cardsHeading": "The three SLG_AI lines",
+  "overview.indexHeading": "What this branch includes",
+  "overview.phoenixAcademy": "Phoenix Academy",
+  "overview.opensExternal": "opens on another site, outside SLG Agency"
 }
