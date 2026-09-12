@@ -1,0 +1,27 @@
+# ============================================================================
+# Crontab del servicio de COPIA (FU-14, D-66)
+# ----------------------------------------------------------------------------
+# Copia DIARIA (RF-124). Una sola entrada: `run-backup.ts` decide por sí mismo
+# qué generaciones produce hoy (diaria siempre; semanal el domingo; mensual el
+# día 1), y hace UN volcado que deposita bajo cada clave. Tres entradas de cron
+# habrían hecho tres volcados del mismo dato el primer domingo de cada mes.
+#
+# 02:15 — hora del SERVIDOR, no UTC: el cron de un contenedor sigue el reloj
+# de la máquina, y D-66 deja anotado que el timezone del VPS es lo único que
+# queda por confirmar en el panel al desplegar esto. La elección de las
+# generaciones (`generacionesDeFecha`) sí se calcula en UTC a propósito, para
+# que un cambio de zona no mueva el día en que nace la copia mensual.
+#
+# El `crond` de busybox SÍ propaga a la tarea el entorno del contenedor, al
+# contrario que el cron de Debian/cronie, que construye uno limpio y obliga a
+# volcar las variables a un archivo. VERIFICADO, no supuesto: `alpine:3.20`
+# con `crond -f` y una variable pasada por `-e` la recibe la tarea intacta.
+# Por eso no hace falta cargar ningún archivo de entorno — y por eso NO existe
+# ningún `.env` dentro de esta imagen, que es donde acabarían los secretos si
+# la propagación no funcionara.
+#
+# La salida va a stdout/stderr del contenedor, que es donde Easypanel enseña
+# los registros. La línea JSON de `run-backup.ts` ES el registro del criterio 1.
+# ============================================================================
+
+15 2 * * * cd /app && node scripts/backups/run-backup.ts
