@@ -1,11 +1,11 @@
 ---
 type: service
-name: "Phoenix PEEx"
+name: "Phoenix RETx"
 branch: SLG_Academy
 parent: "slg-academy"
-download: "lo-que-un-director-debe-saber"
+download: "d-03"
 lang: es
-pair: "phoenix-peex-en"
+pair: "phoenix-retx-en"
 ---
 
 ## Para quién y qué problema

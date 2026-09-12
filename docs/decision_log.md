@@ -137,6 +137,12 @@ Con esto, **EXT-6 queda cerrada** y FU-08 pierde su última condición de entrad
 | D-63 | 2026-09-12 | **Aceptar una invitación da el correo por verificado.** No se envía un segundo correo de verificación. | Mandar el correo de verificación igual, después del canje | La invitación **se envió a esa dirección**: llegar con su testigo ya prueba que la persona la controla. Pedir después una segunda prueba de lo mismo añade un correo que la gente no encuentra —y que, cuando no llega, deja una cuenta creada que no puede entrar—. El alta fuera de una invitación no existe (D-62), así que no hay otra ruta que pueda aprovechar esto. |
 | D-64 | 2026-09-12 | **El enlace de recuperación apunta a `/restablecer`, una pantalla nuestra**, no a la ruta por defecto de la librería. Al aplicar la contraseña nueva **se cierran todas las sesiones**. | Dejar el enlace por defecto y construir la pantalla en esa ruta | El enlace por defecto apunta a `/reset-password`, que en este proyecto **no existe**: el destinatario aterrizaría en un 404 **con el testigo en la barra de direcciones**, que es la peor forma posible de gastar un enlace de un solo uso. Y cerrar todas las sesiones al restablecer es la consecuencia de por qué se restablece: quien lo hace suele sospechar que alguien entró, y dejar vivas las sesiones anteriores deja dentro justamente a esa persona. |
 
+## Decisión de FU-01 (D-65)
+
+| # | Fecha | Decisión | Alternativas consideradas | Razón |
+|---|-------|----------|---------------------------|-------|
+| D-65 | 2026-09-12 | **Los criterios 3 y 4 de FU-01 pasan a ser un freno de CI** (`check:copy`): ningún texto público puede nombrar «Sesión Cero», una agenda o un calendario de terceros, ni llevar un porcentaje, importe, premio, superlativo o caso de cliente **sin declarar su fuente en la misma línea** con `[fuente: …]` o marcarlo `[PENDIENTE: …]`. | Dejarlo en la revisión de la compuerta, que es donde el contrato lo pone | Las dos reglas son precisamente las que se cuelan cuando hay prisa por publicar, y la compuerta de FU-01 se pasa **una sola vez** —«una segunda ronda es cambio de alcance»—: después, cualquier edición de un `.md` entra sin volver a pasar por ella. Un freno las comprueba en cada push y para siempre. **Lo que el freno no puede hacer, y queda escrito**: comprobar si el dato es **cierto**. Comprueba que nadie publique uno sin declarar de dónde sale; la veracidad la firma Ricardo en la compuerta. |
+
 ## Acciones de seguridad previas a la ejecución
 
 | # | Acción | Dónde se sigue |

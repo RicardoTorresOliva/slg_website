@@ -57,6 +57,18 @@ const CASES: Case[] = [
     expect: "Destrucción Creativa",
   },
   {
+    gate: "copy · sin Sesión Cero ni agenda",
+    script: "check-copy.ts",
+    fixture: "negative/copy",
+    expect: "Sesión Cero",
+  },
+  {
+    gate: "copy · cifra sin respaldo",
+    script: "check-copy.ts",
+    fixture: "negative/copy",
+    expect: "porcentaje sin respaldo",
+  },
+  {
     gate: "cero [PENDIENTE]",
     script: "check-pending.ts",
     fixture: "negative/pending",
@@ -100,12 +112,13 @@ for (const c of CASES) {
 }
 
 // Y la contraprueba: contra el contenido real, los cuatro pasan.
-console.log("\nContraprueba — contra el contenido real, los cuatro deben PASAR:\n");
+console.log("\nContraprueba — contra el contenido real, los cinco deben PASAR:\n");
 for (const script of [
   "check-frontmatter.ts",
   "check-pairs.ts",
   "check-nomenclature.ts",
   "check-pending.ts",
+  "check-copy.ts",
 ]) {
   const res = spawnSync(process.execPath, [path.join(HERE, script)], {
     encoding: "utf8",
@@ -123,4 +136,4 @@ if (failed) {
   console.error(`\n✗ ${failed} comprobación(es) de gate no se comportaron como deben.\n`);
   process.exit(1);
 }
-console.log("\n✓ Los cuatro gates fallan cuando deben y pasan cuando deben.\n");
+console.log("\n✓ Los cinco gates de contenido fallan cuando deben y pasan cuando deben.\n");

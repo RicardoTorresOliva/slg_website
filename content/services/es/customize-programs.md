@@ -1,11 +1,11 @@
 ---
 type: service
-name: "Phoenix PEEx"
+name: "Customize Programs"
 branch: SLG_Academy
 parent: "slg-academy"
-download: "lo-que-un-director-debe-saber"
+download: "d-04"
 lang: es
-pair: "phoenix-peex-en"
+pair: "customize-programs-en"
 ---
 
 ## Para quién y qué problema

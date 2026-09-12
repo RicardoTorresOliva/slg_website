@@ -13,7 +13,8 @@
     "check:pairs": "node scripts/content/check-pairs.ts",
     "check:nomenclature": "node scripts/content/check-nomenclature.ts",
     "check:pending": "node scripts/content/check-pending.ts",
-    "check:content": "npm run check:types && npm run check:frontmatter && npm run check:pairs && npm run check:nomenclature && npm run check:pending",
+    "check:copy": "node scripts/content/check-copy.ts",
+    "check:content": "npm run check:types && npm run check:frontmatter && npm run check:pairs && npm run check:nomenclature && npm run check:pending && npm run check:copy",
     "check:gates": "node scripts/content/verify-gates.ts",
     "check:types": "tsc --noEmit -p scripts/tsconfig.json",
     "check:secrets": "node scripts/ci/check-secrets.ts",
@@ -68,5 +69,5 @@
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3"
   },
-  "description": "Website pública, HQ y portal de clientes de SLG Agency"
+  "description": "Website p\u00fablica, HQ y portal de clientes de SLG Agency"
 }

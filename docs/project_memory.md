@@ -8,10 +8,10 @@ timestamp: 2026-09-12
 
 # Project memory — slg_website
 
-> **Punto de retomada en una línea:** **M0 está construido**. Nueve unidades tocadas — FU-02, FU-03,
-> FU-04, FU-06 y FU-07 `done`; **FU-05, FU-08, FU-09 y DU-01 `in_progress`**, las cuatro esperando
-> cosas de Ricardo y ninguna esperando código. Lo siguiente es **FU-01**, el copy maestro, que es una
-> **compuerta de aprobación**: hasta que pase, M1-A no empieza.
+> **Punto de retomada en una línea:** **M0 construido y FU-01 esqueletada**. Diez unidades tocadas —
+> cinco `done` y cinco `in_progress`, y **ninguna esperando código**. La siguiente construible es
+> **FU-10** (sistema de componentes), que no depende del copy. **M1-A no empieza hasta que Ricardo
+> cierre la compuerta de FU-01.**
 
 ## Lo que espera a Ricardo, y solo a él
 1. **Despliegue** — `docs/deployment.md` §3 a §5. Cierra FU-05 (criterios 1, 2, 3 y 8).
@@ -31,6 +31,8 @@ timestamp: 2026-09-12
 - **Contrato de entrada**: `START_PROJECT.md` v1.1, fase *Specify* de SDD.
 
 ## Última unidad completada
+- **FU-01** — copy maestro (2026-09-12), `in_progress` con la **compuerta ABIERTA**: el esqueleto
+  bilingüe está completo (71 registros) y los frenos construidos; **el copy es de `SLG_Overhauling`**.
 - **DU-01** — acceso, sesión y recuperación (2026-09-12), `in_progress`: siete de los nueve criterios
   cerrados con **39 comprobaciones** contra el servidor real; los dos que faltan esperan los registros
   de OAuth. **Es la primera cosa que un consumidor puede hacer de punta a punta.**
@@ -62,9 +64,18 @@ timestamp: 2026-09-12
     monitor. **Paso a paso completo en `docs/deployment.md`.**
 
 ## Próxima unidad
-- **FU-01** — copy maestro bilingüe. **No es código: es una compuerta de aprobación** (Regla 1 del
-  método). Depende de `SLG_Overhauling`, fuera de este repositorio. Hasta que pase, **M1-A no empieza**.
-- Todo lo demás de M0 está construido y solo espera a Ricardo.
+- **FU-10** — sistema de componentes C.5 con prototipo interactivo aprobado. Depende de **FU-02**, no
+  del copy: se valida contra el contenido marcador que ya existe. Es lo único construible ahora.
+- **M1-A (DU-02 en adelante) NO empieza** hasta que la compuerta de FU-01 se cierre con una aprobación
+  con fecha en `docs/work_log.md`.
+
+## El esqueleto de contenido, de un vistazo
+- **71 registros**: 22 `service` (las once páginas × 2 idiomas, con los seis bloques de A.3), 22
+  `page`, 22 `download` en `coming-soon`, más blog y doctrina.
+- **Cada hueco lleva su marcador con dueño**: `[PENDIENTE: copy maestro FU-01 — …]`. En staging son
+  obligatorios; en `main` los rechaza `check:pending --strict`.
+- **`check:copy` (D-65)** veta «Sesión Cero», agendas y cualquier cifra, premio o superlativo sin
+  `[fuente: …]` en la misma línea.
 
 ## Lo que hay que saber del acceso antes de tocarlo
 - **No existe registro público** (D-62). `POST /api/auth/sign-up/**` devuelve **404** desde el

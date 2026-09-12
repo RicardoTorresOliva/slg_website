@@ -1,11 +1,11 @@
 ---
 type: service
-name: "Phoenix PEEx"
-branch: SLG_Academy
-parent: "slg-academy-en"
-download: "what-a-director-should-know"
+name: "SLG_Implement"
+branch: SLG_Enterprise
+parent: "slg-enterprise-en"
+download: "d-07-en"
 lang: en
-pair: "phoenix-peex"
+pair: "implement"
 ---
 
 ## Who it is for and what problem

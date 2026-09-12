@@ -1,11 +1,11 @@
 ---
 type: service
-name: "Phoenix PEEx"
+name: "Phoenix TEAx"
 branch: SLG_Academy
 parent: "slg-academy-en"
-download: "what-a-director-should-know"
+download: "d-02-en"
 lang: en
-pair: "phoenix-peex"
+pair: "phoenix-teax"
 ---
 
 ## Who it is for and what problem

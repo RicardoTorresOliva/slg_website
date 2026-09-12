@@ -1,11 +1,11 @@
 ---
 type: service
-name: "Phoenix PEEx"
-branch: SLG_Academy
-parent: "slg-academy-en"
-download: "what-a-director-should-know"
+name: "CoO as a Service"
+branch: SLG_Factory
+parent: "slg-factory-en"
+download: "d-10-en"
 lang: en
-pair: "phoenix-peex"
+pair: "coo-as-a-service"
 ---
 
 ## Who it is for and what problem

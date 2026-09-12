@@ -70,7 +70,7 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Tipos y los cuatro scripts de contenido (FU-03)
+      - name: Tipos y los cinco scripts de contenido (FU-03, FU-01)
         run: npm run check:content
 
       # En `main` los marcadores están PROHIBIDOS; en develop/staging el brief

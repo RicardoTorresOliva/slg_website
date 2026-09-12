@@ -649,3 +649,76 @@ cuando exista.
 **Siguiente.** **M0 está construido salvo lo que depende de Ricardo.** Lo siguiente por dependencia es
 **FU-01** (copy maestro bilingüe), que es una **compuerta de aprobación** y no código: hasta que el
 copy pase, M1-A no empieza.
+
+---
+
+## 2026-09-12 · FU-01 — Copy maestro bilingüe · `in_progress` · **COMPUERTA ABIERTA**
+
+**Qué se produjo, y qué NO.** Se produjo **el esqueleto completo y bilingüe de la capa pública** —los
+64 registros de contenido que faltaban— y **la maquinaria que hace cumplir sus reglas**. **No se
+produjo el copy**, y esa ausencia es deliberada: ver abajo.
+
+**El esqueleto, en números.** De 7 registros de contenido a **71**:
+
+| Colección | Antes | Ahora | Qué es |
+|---|---:|---:|---|
+| `service` | 2 | **22** | Las **once** páginas de servicio de A.2, en los dos idiomas, cada una con los **seis bloques del contrato A.3** en su orden fijo |
+| `page` | 2 | **22** | Home, `/ai`, los tres overviews de rama, Doctrina, Nosotros, Descargas, Gracias, Contacto y los dos legales, en los dos idiomas |
+| `download` | 2 | **22** | Los **once** documentos D-01…D-11 en los dos idiomas, todos en `coming-soon` |
+| `post`, `doctrine` | 3 | 5 | Sin cambios de alcance |
+
+Las 33 páginas se generan y las **26 rutas entran bajo el presupuesto de JS**; la más pesada sigue
+siendo la portada con 133,9 KB, exactamente igual que antes. El esqueleto no costó un byte.
+
+**Por qué NO escribí el copy, y por qué eso es lo correcto.** El criterio 3 dice que toda mención de
+mentorías, premios, cifras, casos o nombres de cliente tiene que estar **respaldada por dato
+verificado y autorización explícita**. El copy de una firma que asesora directorios son afirmaciones
+sobre una empresa real: inventarlas sería producir exactamente lo que ese criterio prohíbe, y hacerlo
+con la voz de SLG. La fuente es `SLG_Overhauling` y `Docs_MD`, que viven fuera de este repositorio.
+Lo que sí se puede construir sin la fuente —y es lo que hay— es **la estructura contra la que se
+redacta** y **los frenos que impiden publicar sin respaldo**.
+
+Cada hueco lleva su marcador con dueño escrito:
+`[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la
+compuerta de aprobación de Ricardo]`. Y lo que el contrato A.3 fija por escrito **sí está redactado**,
+porque es estructura y no copy: «sin lock-in, el stack lo elige el cliente, compuertas de aprobación,
+capacidad transferible», «único llamado a la acción de esta página» y «si después de leerlo quieres
+conversar, escríbenos».
+
+**Los seis criterios:**
+
+| # | Criterio | Estado | Evidencia |
+|---|---|---|---|
+| 1 | Par ES/EN completo, cero huérfanos | **cerrado** | `check:pairs`: **46** comprobaciones, cero huérfanos sobre los 71 registros |
+| 2 | Nomenclatura literal en los dos idiomas | **cerrado** | `check:nomenclature`: **73** comprobaciones |
+| 3 | Cero cifras, premios o casos sin respaldo | **freno construido** | `check:copy` (**D-65**): exige `[fuente: …]` en la misma línea o `[PENDIENTE: …]`. La veracidad la firma Ricardo |
+| 4 | Ningún texto público ofrece «Sesión Cero» ni agenda | **cerrado** | `check:copy`, con su prueba negativa: «Sesión Cero», «agenda tu», Calendly y equivalentes en inglés |
+| 5 | Una idea por viewport, cero lorem, cero stock | **parcial** | El lorem lo veta `check:pending`. «Una idea por viewport» es juicio de diseño y se resuelve en **FU-10** y **DU-03** |
+| 6 | **Aprobación explícita de Ricardo en `work_log`, con fecha** | **ABIERTA** | Es la compuerta. Ver abajo |
+
+**LA COMPUERTA SIGUE ABIERTA, Y ESO BLOQUEA M1-A.** Mientras no haya una aprobación con fecha en este
+archivo, **ninguna DU de página se declara construible** (criterio 6). El mecanismo ya está montado y
+funciona solo: las páginas existen en staging **con los `[PENDIENTE]` visibles**, y `main` las rechaza
+porque `check:pending --strict` corre en el pipeline solo en esa rama. Comprobado: el gate pasa sin
+`--strict` y falla con él.
+
+**Lo que Ricardo tiene que hacer para cerrarla**, en orden de prioridad comercial, que es el que el
+contrato fija: Home → `SLG_AI` → las tres ramas → el resto. Por cada registro, sustituir el marcador
+por el copy definitivo en los dos idiomas. Y **una sola ronda**: el contrato dice que una segunda es
+cambio de alcance, no un paso del plan.
+
+**El freno nuevo, y lo que no puede hacer (D-65).** `check:copy` comprueba que nadie publique una
+cifra **sin declarar de dónde sale**. No puede comprobar si el dato es cierto, y eso queda escrito en
+la decisión: la veracidad es de la compuerta, la disciplina es del freno. Las dos reglas que vigila
+son justo las que se cuelan cuando hay prisa por publicar, y la compuerta se pasa **una sola vez**:
+después, cualquier edición de un `.md` entraría sin volver a verla.
+
+**Gates aplicados.** **D4** (paridad, por script) · **D5** (fidelidad de contenido: nomenclatura
+literal y marcadores bloqueados en `main`) · alimenta **D2b** y **D6**.
+
+**Verificación.** `check:gates`: **ocho** casos de contenido en rojo por su motivo y **cinco** scripts
+en verde contra el contenido real · `check:ci` en verde · el presupuesto de JS sin mover con 26 rutas.
+
+**Siguiente.** Con la compuerta abierta, M1-A no empieza. Lo que **sí** puede construirse en paralelo
+es **FU-10** (sistema de componentes C.5), que depende de FU-02 y no del copy: su prototipo se valida
+con el contenido marcador que ahora existe.

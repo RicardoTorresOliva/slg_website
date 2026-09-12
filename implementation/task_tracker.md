@@ -38,7 +38,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 30 `pending` · **4 `in_progress`** (FU-05, FU-08, FU-09, DU-01) · **5 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
+**Estado global:** 29 `pending` · **5 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01) · **5 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -62,7 +62,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | FU-09 | FU | Almacenamiento de archivos y URLs firmadas | M0-B | FU-05 · `api_contracts` | `in_progress` — los cinco criterios cerrados en código; faltan los dos buckets privados en `minio` y las variables `S3_*` |
 | DU-01 | DU | Acceso, sesión y recuperación por los tres métodos | M0-B | FU-06, FU-07, FU-08 · F.2-2, F.2-3 | `in_progress` — criterios 2, 4, 5, 6, 7, 8 y 9 cerrados; 1 y 3 esperan F.2-2 y F.2-3 |
 | ━━━ | ━━━ | **▼ M1-A · CAPA PÚBLICA: COMPUERTAS, COMPONENTES Y ARMAZÓN** | ━━━ | ━━━ | ━━━ |
-| FU-01 | FU | Copy maestro bilingüe — compuerta única de aprobación | M1-A | FU-03 · SLG_Overhauling | `pending` |
+| FU-01 | FU | Copy maestro bilingüe — compuerta única de aprobación | M1-A | FU-03 · SLG_Overhauling | `in_progress` — esqueleto bilingüe completo (71 registros) y frenos construidos; **la compuerta sigue ABIERTA** y bloquea M1-A |
 | FU-10 | FU | Sistema de componentes C.5 con prototipo interactivo aprobado | M1-A | FU-02 | `pending` |
 | DU-02 | DU | Armazón público: navegación, sheet móvil, pie y conmutador de idioma | M1-A | FU-03, FU-10 | `pending` |
 | DU-03 | DU | Portada (Home) ES/EN | M1-A | FU-01, FU-10, DU-02 | `pending` |
@@ -229,3 +229,10 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   la invitación (**D-62**). Registradas **D-63** (el canje verifica el correo) y **D-64** (pantalla
   propia de restablecimiento, y cierre de todas las sesiones al cambiar la contraseña). Los criterios
   1 y 3 esperan **F.2-2 y F.2-3**, con paso a paso en `docs/deployment.md` §4quater.
+- `2026-09-12` — **FU-01 `in_progress`, compuerta ABIERTA.** De 7 registros de contenido a **71**: las
+  once páginas de servicio con los seis bloques del contrato A.3, los overviews de rama, las páginas
+  de utilidad y los once documentos, **todo en los dos idiomas**. **El copy NO se escribió**, y es
+  deliberado: son afirmaciones sobre una empresa real y el criterio 3 exige dato verificado; la fuente
+  es `SLG_Overhauling`, fuera de este repositorio. Freno nuevo `check:copy` (**D-65**) para los
+  criterios 3 y 4. **Mientras la compuerta siga abierta, ninguna DU de página es construible** y
+  `main` rechaza los marcadores. Lo construible en paralelo es **FU-10**, que no depende del copy.

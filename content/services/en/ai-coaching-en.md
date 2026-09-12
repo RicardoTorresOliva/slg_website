@@ -1,11 +1,11 @@
 ---
 type: service
-name: "Phoenix PEEx"
+name: "AI Coaching for Directors"
 branch: SLG_Academy
 parent: "slg-academy-en"
-download: "what-a-director-should-know"
+download: "d-05-en"
 lang: en
-pair: "phoenix-peex"
+pair: "ai-coaching"
 ---
 
 ## Who it is for and what problem
