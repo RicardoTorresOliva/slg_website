@@ -1174,3 +1174,58 @@ directa: **DU-02 y DU-03 (M1-A) quedan desbloqueadas** — la única condición 
 Los `[PENDIENTE]` de contenido siguen visibles en staging y prohibidos en `main` (DoD #10), como
 exige el propio método — no bloquean construir, sí bloquean que esas páginas concretas lleguen a
 producción completas mientras falte el dato.
+
+---
+
+## DU-02 — Armazón público: navegación, sheet móvil, pie y conmutador de idioma · `done` (2026-09-11)
+
+Construido el armazón por el que se navega toda la capa pública. Los componentes ya existían y
+estaban aprobados (FU-10, compuerta C.5 cerrada); lo que faltaba —y es el trabajo real de esta
+unidad— era el **mapa de rutas** y el cableado del armazón alrededor de cada página.
+
+**`lib/routes/map.ts`, y por qué existe.** El conmutador de idioma no puede ser "antepón `/en`":
+el slug cambia en varias rutas (`/doctrina`→`/en/doctrine`, `/nosotros`→`/en/about`,
+`/descargas`→`/en/downloads`, `/blog/etiqueta`→`/en/blog/tag`). Anteponer el prefijo daría 404 en
+todas ellas, y el criterio 2 exige llegar a *esa misma* página, nunca a la portada. El mapa tiene 16
+rutas estructurales explícitas y **deriva las 11 de servicio del contenido**, que es lo que hace
+cierta la promesa de RF-27: añadir un servicio es añadir su registro, no tocar código.
+
+**Los 7 criterios, verificados:**
+1. Cinco destinos + «Acceder», logo a Home, sin etiqueta genérica — probado en `test-routes.ts` y
+   confirmado en el navegador.
+2. Conmutador a la misma página — probado sobre las 27 rutas sin parámetro (ida y vuelta) más las
+   paramétricas; y ejercido de verdad en el navegador: `/doctrina` → clic en EN → `/en/doctrine`,
+   con el conmutador ya apuntando de vuelta a `/doctrina`.
+3. ES en la raíz, EN bajo `/en`, sin redirección por idioma del navegador — `localeDeRuta` lee solo
+   la ruta. Incluye la prueba de que `/enterprise` **no** se toma por inglés.
+4. Sheet móvil — abierto y cerrado en 375×812; Escape cierra limpio (la corrección D-58 de FU-10
+   sigue intacta tras estos cambios).
+5. Ni navegación ni pie enlazan `/hq`/`/portal` — no están ocultos: no existen en `navPrincipal`,
+   y hay una prueba que lo sostiene.
+6. Los tres estados, resueltos y verificados en navegador: navegación en carga (el botón del sheet
+   se declara `aria-busy`/`disabled` hasta hidratar, en vez de quedarse mudo), sheet sin conexión
+   (aviso `role="status"` dentro del sheet, ejercido forzando el evento `offline`), y ruta sin par
+   de idioma (indicador inerte con explicación; probado con el único `post` que hoy existe solo en
+   español).
+7. Cero literales de negocio en `.tsx` — todo el texto sale de `content/ui`.
+
+**Hallazgo propio, encontrado verificando en el navegador y no leyendo el código: `<html lang>`
+decía `es` en TODO el sitio, también bajo `/en`.** `app/layout.tsx` lo fijaba a `"es"` desde FU-02
+con una nota que decía que la resolución real llegaría después — y nunca llegó. Consecuencia real:
+un lector de pantalla leía el inglés con fonética española y los buscadores recibían la señal de
+idioma equivocada en la mitad del sitio. Corregido resolviendo `lang` por petición desde la ruta.
+No lo habría visto ninguna prueba de las que existían: el HTML era válido y la página se veía bien.
+
+**Cambio de alcance declarado, no silenciado**: se añadió la clave `nav.offline` a `content/ui`
+(ES/EN). Es texto visible nuevo, posterior a la compuerta de copy de FU-01 — la redacción es del
+agente y **queda pendiente de ratificación de Ricardo**, como cualquier otra cadena de interfaz.
+
+**Nota de infraestructura**: `proxy.ts` propaga ahora `x-pathname` (un layout de servidor no recibe
+la ruta por props y `usePathname` es solo de cliente), y `eslint.config.mjs` excluye
+`.claude/worktrees/**` — el worktree del agente que construye FU-14 en paralelo estaba haciendo que
+cada archivo se analizara dos veces.
+
+**Lo que esta unidad deja a la vista, y que no arregla**: la navegación enlaza `/ai`, `/holdings`,
+`/blog`, `/descargas`, `/contacto` y `/legal/*`, que **todavía no existen** — son DU-04, DU-05,
+DU-06, DU-08 y DU-11. El armazón está listo antes que las habitaciones, que es el orden correcto,
+pero hasta que esas unidades existan el menú lleva a 404.

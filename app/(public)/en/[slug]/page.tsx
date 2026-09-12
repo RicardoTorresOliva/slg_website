@@ -26,7 +26,7 @@ export default async function PublicPage({
   const title = page.data.title as string;
 
   return (
-    <main style={{ maxWidth: "42rem", margin: "0 auto", padding: "4rem 1.5rem" }}>
+    <div style={{ maxWidth: "42rem", margin: "0 auto", padding: "4rem 1.5rem" }}>
       <p
         style={{
           margin: 0,
@@ -51,6 +51,6 @@ export default async function PublicPage({
         {title}
       </h1>
       <p style={{ color: "var(--slg-ink-2)" }}>{page.data.description as string}</p>
-    </main>
+    </div>
   );
 }

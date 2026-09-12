@@ -38,10 +38,11 @@ se ha producido ningún entregable.
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 30 `pending` · 2 `in_progress` (FU-07, FU-08) · 0 `blocked` · 0 `review` · **6 `done`**
-(FU-02, FU-03, FU-04 · 2026-09-08; FU-05, FU-06, FU-09 · 2026-09-10). **M0-A completo.** Siguiente:
-cerrar FU-07 (F.2-2/F.2-3) y FU-08 (F.2-4/P-3/P-4) cuando esas dependencias externas se resuelvan;
-mientras tanto, DU-01 sigue bloqueada por las tres.
+**Estado global:** 27 `pending` · 3 `in_progress` (FU-07, FU-08, FU-11) · 0 `blocked` · 0 `review` ·
+**9 `done`** (FU-02, FU-03, FU-04 · 2026-09-08; FU-05, FU-06, FU-09 · 2026-09-10; FU-01, FU-10,
+DU-02 · 2026-09-11). **M0-A completo.** Siguiente: DU-03 (Home), ya desbloqueada. FU-07 y FU-08
+cierran cuando se verifique de punta a punta contra staging; mientras tanto, DU-01 sigue esperando
+a F.2-2/F.2-3.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -67,7 +68,7 @@ mientras tanto, DU-01 sigue bloqueada por las tres.
 | ━━━ | ━━━ | **▼ M1-A · CAPA PÚBLICA: COMPUERTAS, COMPONENTES Y ARMAZÓN** | ━━━ | ━━━ | ━━━ |
 | FU-01 | FU | Copy maestro bilingüe — compuerta única de aprobación | M1-A | FU-03 · SLG_Overhauling | `done` |
 | FU-10 | FU | Sistema de componentes C.5 con prototipo interactivo aprobado | M1-A | FU-02 | `done` |
-| DU-02 | DU | Armazón público: navegación, sheet móvil, pie y conmutador de idioma | M1-A | FU-03, FU-10 | `pending` |
+| DU-02 | DU | Armazón público: navegación, sheet móvil, pie y conmutador de idioma | M1-A | FU-03, FU-10 | `done` |
 | DU-03 | DU | Portada (Home) ES/EN | M1-A | FU-01, FU-10, DU-02 | `pending` |
 | ━━━ | ━━━ | **▼ M1-B · CAPA PÚBLICA: PÁGINAS** | ━━━ | ━━━ | ━━━ |
 | DU-04 | DU | Overviews de rama (`/ai`, `/ai/academy`, `/ai/enterprise`, `/ai/factory`) | M1-B | DU-03 | `pending` |
@@ -223,3 +224,10 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   servicio App aparte con Dockerfile+crontab) y generada la clave de cifrado (`openssl rand -hex 32`).
   **FU-14 queda sin bloqueo**, lista para construirse. `FU-14` sigue `pending` (no se ha construido
   nada todavía). Detalle en `docs/decision_log.md` D-66 y `docs/project_memory.md`.
+- `2026-09-11` — **DU-02 → `done`**. Armazón público completo: `lib/routes/map.ts` (16 rutas
+  estructurales + las 11 de servicio derivadas del contenido, RF-27), conmutador de idioma que
+  resuelve la misma página en el otro idioma, y los tres estados del criterio 6 resueltos y
+  verificados en el navegador real. Nueva prueba `npm run test:routes`, encadenada en
+  `check:content`. **Hallazgo propio corregido**: `<html lang>` decía `es` en todo el sitio,
+  incluidas las páginas bajo `/en` (defecto real de accesibilidad y SEO, vivo desde FU-02).
+  Detalle en `docs/work_log.md`. Siguiente: DU-03 (Home).

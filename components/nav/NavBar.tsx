@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 import { MobileSheet } from "./MobileSheet.tsx";
 import { TAP_FEEDBACK } from "../shared/interaction.ts";
@@ -30,6 +30,7 @@ export type NavBarProps = {
 
 export function NavBar({ logoHref, items, signInLabel, signInHref, locale, switchLangHref, strings: t }: NavBarProps) {
   const [sheetAbierto, setSheetAbierto] = useState(false);
+  const { hidratado, sinConexion } = useEstadoDeNavegacion();
 
   return (
     <>
@@ -72,11 +73,19 @@ export function NavBar({ logoHref, items, signInLabel, signInHref, locale, switc
             </a>
           </div>
 
+          {/*
+            El sheet necesita JavaScript. Hasta que el componente hidrata, el
+            botón se declara ocupado en vez de quedarse mudo: en un móvil con
+            mala red esa ventana es real, y un botón que no responde sin decir
+            por qué es peor que uno que avisa (DU-02, criterio 6).
+          */}
           <button
             type="button"
-            className={`rounded-md border border-line p-2 md:hidden ${TAP_FEEDBACK}`}
+            className={`rounded-md border border-line p-2 md:hidden ${TAP_FEEDBACK} disabled:opacity-50`}
             aria-label={t["nav.openMenu"]}
             aria-expanded={sheetAbierto}
+            aria-busy={!hidratado}
+            disabled={!hidratado}
             onClick={() => setSheetAbierto(true)}
           >
             <HamburgerIcon />
@@ -89,6 +98,16 @@ export function NavBar({ logoHref, items, signInLabel, signInHref, locale, switc
         onCerrar={() => setSheetAbierto(false)}
         cerrarLabel={t["nav.closeMenu"]}
       >
+        {/*
+          Sin conexión, los enlaces del sheet siguen ahí pero no llevan a
+          ninguna parte. Decirlo es más honesto que dejar que el visitante
+          concluya que el sitio está roto (DU-02, criterio 6).
+        */}
+        {sinConexion && (
+          <p role="status" className="mb-2 rounded-md bg-paper-2 px-3 py-2 text-sm text-ink-2">
+            {t["nav.offline"]}
+          </p>
+        )}
         <nav aria-label="Principal" className="flex flex-col gap-1">
           {items.map((item) => (
             <a
@@ -116,6 +135,45 @@ export function NavBar({ logoHref, items, signInLabel, signInHref, locale, switc
       </MobileSheet>
     </>
   );
+}
+
+/**
+ * Los dos estados de carga del armazón (DU-02, criterio 6).
+ *
+ * `useSyncExternalStore` en vez de `useState` + `useEffect`: es la herramienta
+ * que React da para leer algo que vive fuera de React y que **vale distinto en
+ * el servidor que en el cliente**. El tercer argumento es la instantánea del
+ * servidor, y es lo que evita el desajuste de hidratación sin escribir estado
+ * dentro de un efecto.
+ */
+const SIN_SUSCRIPCION = () => () => {};
+
+function suscribirseAConectividad(alCambiar: () => void) {
+  window.addEventListener("online", alCambiar);
+  window.addEventListener("offline", alCambiar);
+  return () => {
+    window.removeEventListener("online", alCambiar);
+    window.removeEventListener("offline", alCambiar);
+  };
+}
+
+function useEstadoDeNavegacion() {
+  const hidratado = useSyncExternalStore(
+    SIN_SUSCRIPCION,
+    () => true,
+    () => false,
+  );
+
+  const sinConexion = useSyncExternalStore(
+    suscribirseAConectividad,
+    () => !navigator.onLine,
+    // En el servidor no hay red del visitante que consultar: se asume que la
+    // hay. Anunciar "sin conexión" en el HTML a alguien que sí la tiene sería
+    // el único error de los dos que se ve en pantalla.
+    () => false,
+  );
+
+  return { hidratado, sinConexion };
 }
 
 function LanguageSwitch({

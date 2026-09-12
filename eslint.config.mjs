@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Copias de trabajo de agentes en paralelo: son otro checkout del mismo
+    // repositorio. Sin esta exclusión, cada archivo se analiza dos veces y el
+    // trabajo a medias de otra rama puede tumbar la verificación de esta.
+    ".claude/worktrees/**",
   ]),
 ]);
 

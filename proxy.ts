@@ -151,6 +151,11 @@ export function proxy(request: NextRequest) {
   const cabecerasDeReenvio = new Headers(request.headers);
   cabecerasDeReenvio.set("x-nonce", nonce);
   cabecerasDeReenvio.set("Content-Security-Policy", csp);
+  // DU-02: el armazón público es un Server Component y necesita la ruta actual
+  // para marcar el destino activo y resolver el par de idioma. `usePathname`
+  // solo existe en cliente, y un layout de servidor no recibe la ruta por
+  // props: la cabecera es la vía que Next deja para esto.
+  cabecerasDeReenvio.set("x-pathname", ruta);
 
   const respuesta = NextResponse.next({ request: { headers: cabecerasDeReenvio } });
   respuesta.headers.set("Content-Security-Policy", csp);

@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
+
+import { localeDeRuta } from "@/lib/routes/map";
 import "./globals.css";
 
 /**
  * Armazón raíz.
  *
- * Deliberadamente mínimo en FU-02: la navegación, el pie y el conmutador de
- * idioma son de FU-06 y M1-A. Aquí solo se fija el idioma del documento y la
- * cadena de fuentes, para que ninguna página nazca sin ellos.
- *
- * `lang="es"` porque el español vive en la raíz y el inglés bajo `/en` (§10-5).
- * La resolución real de idioma la hará el middleware en FU-03.
+ * `lang` se resuelve **por petición** desde la ruta (DU-02), no se fija a
+ * `"es"`. Hasta DU-02 esta etiqueta decía español en todo el sitio, incluidas
+ * las páginas bajo `/en`: un lector de pantalla leía el inglés con fonética
+ * española y los buscadores recibían la señal de idioma equivocada en la mitad
+ * del sitio. Se encontró verificando `/en/doctrine` en el navegador, no
+ * leyendo el código.
  */
 export const metadata: Metadata = {
   // Metadatos por página e idioma: FU-06. Aquí solo el mínimo para no servir
@@ -32,11 +35,13 @@ export const metadata: Metadata = {
  */
 export const dynamic = "force-dynamic";
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const pathname = (await headers()).get("x-pathname") ?? "/";
+
   return (
-    <html lang="es">
+    <html lang={localeDeRuta(pathname)}>
       <body>{children}</body>
     </html>
   );
