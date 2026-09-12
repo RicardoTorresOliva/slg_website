@@ -35,9 +35,8 @@ timestamp: 2026-09-11
    redirect URIs ya están confirmadas exactas por Ricardo) y un envío real de correo por Resend
    (dominio `mailweb.softlandingglobal.com`, ya verificado). Necesita acceso a staging con sesión
    real o que Ricardo lo pruebe y reporte.
-3. **FU-14 (backups)** — Ricardo tiene las instrucciones (abajo) para crear las credenciales de
-   Cloudflare R2 y la clave de cifrado; falta que las genere y las reporte antes de poder construir
-   el mecanismo de copia.
+3. **FU-14 (backups)** — bucket y los dos tokens de R2 ya creados (ver detalle abajo); falta solo la
+   clave de cifrado y confirmar si Easypanel tiene cron nativo antes de poder construir el mecanismo.
 4. Contenido pendiente de FU-01 que solo Ricardo (o SLG_Overhauling) puede dar — ver lista abajo.
 
 ## FU-01 · Copy maestro bilingüe · `done` (2026-09-11)
@@ -128,21 +127,29 @@ DU-13/DU-18.
 real (binario Homebrew local, sin Docker) y en CI. Sin llamador real todavía (DU-08, DU-13/DU-15) —
 hueco de esquema anotado aparte (`task_fb516747`), no bloquea el cierre de FU-09.
 
-## FU-14 · Backups cifrados a R2 · sin empezar — instrucciones dadas a Ricardo, esperando que las siga
+## FU-14 · Backups cifrados a R2 · sin empezar — preparación de Ricardo en curso (2026-09-11)
 
-No es construible sin que Ricardo prepare, fuera de este repositorio:
-1. **Bucket R2** en Cloudflare (dash.cloudflare.com → R2 Object Storage) para los backups.
-2. **Dos credenciales S3 separadas**: una de solo escritura para el proceso de copia (sin permiso de
-   borrado) y otra, distinta, con permiso de borrado, para la purga de copias antiguas — R-37 exige
-   que sean procesos y credenciales distintos, porque R2 no ofrece Object Lock por API estándar.
-3. **Una clave de cifrado** (p. ej. `openssl rand -hex 32`) generada y guardada **fuera del VPS y
-   fuera del repositorio** (un gestor de contraseñas sirve) — el backup se cifra con ella antes de
-   salir de la máquina.
-4. **Confirmar si Easypanel tiene cron/tareas programadas nativas** para ejecutar la copia diaria —
-   esto no se verificó, hace falta que Ricardo lo mire en el panel de Easypanel.
+**Hecho por Ricardo, con el agente guiando el navegador (Claude in Chrome) en directo, D-65**:
+1. Bucket `slg-backups` creado en Cloudflare R2.
+2. **Dos tokens de cuenta creados** (verificados en pantalla, `Account API tokens`):
+   - `slg-backup-write` — `Object Read & Write`, acotado a `slg-backups`, TTL `Forever`. Para el
+     proceso de copia.
+   - `slg-backup-purge` — mismo permiso y bucket, TTL `Forever`, guardado **por separado** del
+     anterior. Para la purga de copias antiguas.
+   - Nota real (D-65): R2 **no tiene un nivel de permiso "escribe sin borrar"** — los dos tokens son
+     técnicamente capaces de borrar; la mitigación de R-37 es de procedimiento (cada proceso solo
+     tiene acceso a su propio token), no una restricción que Cloudflare aplique por sí sola.
+   - Ricardo tiene ambos secretos guardados en su gestor de contraseñas — **el agente nunca los vio**
+     (a propósito: no deben pasar por el chat).
+3. Account ID: `b1e37064c773099db5e12fbaa6134a55`. Endpoint S3:
+   `https://b1e37064c773099db5e12fbaa6134a55.r2.cloudflarestorage.com`.
 
-Con esas cuatro cosas en mano (nombres/valores, no hace falta que Ricardo entienda el resto), FU-14
-se puede construir en una sesión.
+**Falta todavía, antes de poder construir FU-14**:
+1. **Clave de cifrado**: `openssl rand -hex 32`, guardada fuera del VPS y del repositorio.
+2. **Confirmar si Easypanel tiene cron/tareas programadas nativas** para la copia diaria — sin
+   verificar todavía, Ricardo tiene que mirarlo en el panel.
+
+Con esas dos cosas, FU-14 se puede construir en una sesión.
 
 ## Entorno local
 
