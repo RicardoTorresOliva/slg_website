@@ -126,7 +126,7 @@ export async function Home({ locale }: { locale: Locale }) {
         camino de conversión. Enlaza a la página del documento, donde vive el
         formulario: no se duplica el formulario en Home (§2.1).
       */}
-      <section className="border-t border-line bg-paper-2">
+      <section className="superficie-suave border-t border-line bg-paper-2">
         <div className="mx-auto flex max-w-3xl flex-col gap-4 px-6 py-20 text-center">
           <h2 className="text-2xl font-bold text-blue-deep">
             {t["home.featuredDownload.title"]}

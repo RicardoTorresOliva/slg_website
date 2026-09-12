@@ -68,7 +68,7 @@ export function ServicePage({ slug, locale }: { slug: string; locale: Locale }) 
       </Seccion>
 
       {/* ⑤ DESCARGA — ÚNICO CTA DE LA PÁGINA (RF-07) */}
-      <section className="mt-12 rounded-lg border border-line bg-paper-2 p-6">
+      <section className="superficie-suave mt-12 rounded-lg border border-line bg-paper-2 p-6">
         <h2 className="text-2xl font-bold text-blue-deep">{t["service.download"]}</h2>
         {servicio.documento ? (
           <>

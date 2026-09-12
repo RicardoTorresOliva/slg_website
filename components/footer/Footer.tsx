@@ -40,7 +40,7 @@ export function Footer({
   const destino = locale === "es" ? "EN" : "ES";
 
   return (
-    <footer className="border-t border-line bg-paper-2">
+    <footer className="superficie-suave border-t border-line bg-paper-2">
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-6 py-10 text-sm text-ink-2">
         <Wordmark className="-ml-[0.72em]" />
 

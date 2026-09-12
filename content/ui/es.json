@@ -102,5 +102,11 @@
   "thanks.comingSoonTitle": "Te avisamos en cuanto esté",
   "thanks.comingSoonBody": "El documento todavía no está publicado. Guardamos tu correo y te escribimos el día que salga.",
   "thanks.nextStep": "Si después de leerlo quieres conversar, escríbenos.",
-  "thanks.notFound": "No encontramos esa descarga."
+  "thanks.notFound": "No encontramos esa descarga.",
+  "blog.title": "Blog",
+  "blog.tagTitle": "Etiqueta:",
+  "blog.tagsNavLabel": "Etiquetas",
+  "blog.empty": "Todavía no hemos publicado. Los primeros artículos llegarán pronto.",
+  "blog.emptyTag": "No hay artículos con esta etiqueta.",
+  "blog.backToIndex": "Todos los artículos"
 }

@@ -38,8 +38,8 @@ se ha producido ningún entregable.
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 22 `pending` · 5 `in_progress` (FU-07, FU-08, FU-11, FU-14, DU-08) · 0 `blocked` · 0 `review` ·
-**12 `done`** (FU-02, FU-03, FU-04 · 2026-09-08; FU-05, FU-06, FU-09 · 2026-09-10; FU-01, FU-10,
+**Estado global:** 21 `pending` · 5 `in_progress` (FU-07, FU-08, FU-11, FU-14, DU-08) · 0 `blocked` · 0 `review` ·
+**13 `done`** (FU-02, FU-03, FU-04 · 2026-09-08; FU-05, FU-06, FU-09 · 2026-09-10; FU-01, FU-10,
 DU-02, DU-03, DU-04, DU-05 · 2026-09-11). **M0-A y M1-A completos.** Siguiente: DU-06 (Doctrina, Nosotros y legales), que necesita F.2-1. FU-07 y FU-08
 cierran cuando se verifique de punta a punta contra staging; mientras tanto, DU-01 sigue esperando
 a F.2-2/F.2-3.
@@ -80,7 +80,7 @@ a F.2-2/F.2-3.
 | DU-08 | DU | Biblioteca de descargas, formulario de captura y entrega firmada | M2 | FU-09, FU-11, DU-05 | `in_progress` |
 | DU-09 | DU | Captura al CRM: adaptador de dos modos, cola y aviso | M2 | FU-08, DU-08 · F.2-5 · S-01 | `pending` |
 | DU-10 | DU | Contacto y solicitud del documento completo de Doctrina | M2 | DU-06, DU-09 | `pending` |
-| DU-11 | DU | Blog: índice, artículo, etiquetas, RSS y borradores | M2 | FU-03, DU-02 | `pending` |
+| DU-11 | DU | Blog: índice, artículo, etiquetas, RSS y borradores | M2 | FU-03, DU-02 | `done` |
 | DU-12 | DU | Webhooks salientes firmados y analítica privacy-first | M2 | DU-09, DU-11 | `pending` |
 | ━━━ | ━━━ | **▼ M3 · HQ (INTRANET SLG)** | ━━━ | ━━━ | ━━━ |
 | FU-12 | FU | Shell de aplicación para HQ y portal | M3 | FU-06, FU-10 | `pending` |
@@ -270,3 +270,10 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   archivo real en el bucket (el camino está construido, no ejercido) y falta la batería del
   criterio 11. **Corrección de fondo**: la vigencia del enlace la decide el reloj de la base de
   datos, no el del proceso web. Detalle en `docs/work_log.md`.
+- `2026-09-11` — **DU-11 → `done`**. Blog completo: índice, artículo, etiquetas y RSS por idioma en
+  los dos idiomas. Verificado con el borrador real en sus dos estados (como `draft` da 404 y RSS
+  vacío; publicado temporalmente sin commitear, se lista y el RSS español sale con 1 artículo y el
+  inglés con 0). **Gate D1 cerrado sobre tres tipos de página** (criterio 8): artículo, servicio y
+  ficha de documento, las tres 99/100/100/100. **Hallazgo grave corregido**: el CTA único de las 11
+  páginas de servicio incumplía WCAG AA por contraste (4,37:1) — mismo patrón que D-68; resuelto con
+  `.superficie-suave` para todas las superficies `--paper-2`. Detalle en `docs/work_log.md`.

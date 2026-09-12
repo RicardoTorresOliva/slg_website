@@ -102,5 +102,11 @@
   "thanks.comingSoonTitle": "We'll let you know",
   "thanks.comingSoonBody": "The document isn't published yet. We've saved your email and will write the day it's out.",
   "thanks.nextStep": "If after reading it you'd like to talk, write to us.",
-  "thanks.notFound": "We couldn't find that download."
+  "thanks.notFound": "We couldn't find that download.",
+  "blog.title": "Blog",
+  "blog.tagTitle": "Tag:",
+  "blog.tagsNavLabel": "Tags",
+  "blog.empty": "We haven't published yet. The first articles are coming soon.",
+  "blog.emptyTag": "No articles with this tag.",
+  "blog.backToIndex": "All articles"
 }

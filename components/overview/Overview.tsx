@@ -42,7 +42,7 @@ export function Overview({ slug, locale }: { slug: SlugDeOverview; locale: Local
         manipular la de origen por `window.opener`.
       */}
       {slug === "slg-academy" && (
-        <section className="border-t border-line bg-paper-2">
+        <section className="superficie-suave border-t border-line bg-paper-2">
           <div className="mx-auto max-w-3xl px-6 py-12 text-center">
             <a
               href="https://academy.softlandingglobal.com"

@@ -1524,3 +1524,48 @@ servidores justo en la comprobación que protege un secreto.
 —con `download_event` apuntando a ella por clave foránea real— sigue sin existir; hoy `download_slug`
 es texto. No bloquea ningún criterio de esta unidad (el contenido es la fuente), pero DU-13 la
 necesitará para el tablero.
+
+---
+
+## DU-11 — Blog: índice, artículo, etiquetas, RSS y borradores · `done` (2026-09-11)
+
+`/blog`, `/blog/[slug]`, `/blog/etiqueta/[tag]` y sus pares ingleses, más canal RSS por idioma.
+
+**La publicación depende de `status`, nunca de que el archivo exista** (RF-138, RF-141, criterio 6).
+Es lo que separa un borrador que ya vive en la rama de un artículo publicado: los dos son archivos
+en el repositorio y solo uno se sirve. Los parámetros de la ruta de artículo se generan **solo desde
+los publicados**, así que un borrador no tiene ruta ni conociendo su slug.
+
+**Verificado con el borrador real que hay en el repositorio**, en dos estados:
+- Como `draft`: `/blog` muestra su estado vacío redactado, `/blog/autoridad-silenciosa` devuelve
+  **404**, y los dos canales RSS salen con **0 artículos** y su `Content-Type` correcto
+  (`application/rss+xml`). Criterios 2, 3 y 7.
+- Publicado **temporalmente y sin commitear** —publicarlo de verdad es decisión editorial de Ricardo,
+  no del agente—: el índice lo lista, el artículo responde 200, la etiqueta `AI Literacy` lo
+  encuentra, el RSS español sale con **1 artículo** y el inglés sigue con **0**. Criterios 1, 3 y 4
+  demostrados en la práctica. Después se devolvió a `draft`.
+
+El cuerpo se renderiza como párrafos y encabezados simples, **sin montar un renderizador de markdown
+completo**: los artículos de v1 son prosa con encabezados, y una dependencia que interprete HTML
+arbitrario dentro del contenido abriría una vía de inyección justo en la única superficie que se
+escribe a mano (frontera (h) de `scope.md`).
+
+**Gate D1, criterio 8 y tercera página cerrada** — medido sobre tres tipos de página distintos:
+
+| Ruta | Perf | A11y | BP | SEO |
+|---|---:|---:|---:|---:|
+| `/blog/autoridad-silenciosa` | 99 | 100 | 100 | 100 |
+| `/ai/academy/phoenix-peex` | 99 | 100 | 100 | 100 |
+| `/descargas/lo-que-un-director-debe-saber` | 99 | 100 | 100 | 100 |
+
+**Hallazgo real encontrado al medir, y es el más importante de esta entrada**: la página de servicio
+daba A11y 96 por contraste — y el elemento que fallaba era **el enlace de la sección ⑤, o sea el CTA
+único de las once páginas de servicio** (RF-07). Mismo patrón que D-68 en el pie: `--blue-primary`
+sobre `--paper-2` da **4,37:1**, por debajo del 4,5:1 de WCAG AA, y `brand-tokens.md` ya lo prohibía
+por escrito («ahí solo en tamaño grande ≥ 24 px»). El enlace más importante del sitio era el que no
+cumplía, en las once páginas a las que apunta la campaña.
+
+Corregido de raíz y no página por página: clase `.superficie-suave` en `globals.css` para cualquier
+tarjeta o franja en `--paper-2`, aplicada a los cinco componentes que las usan. Las tres páginas
+pasaron de 96 a **100**. Sin medir sobre una página de servicio —y no solo sobre la portada, que es
+lo único que mide el gate hoy— esto no se habría visto.

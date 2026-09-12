@@ -142,6 +142,20 @@ footer a {
   color: var(--slg-blue-deep);
 }
 
+/* ── Enlaces sobre superficies suaves (`--paper-2`) ────────────────────────
+ * Mismo problema que el pie, y `brand-tokens.md` ya lo dice por escrito:
+ * `--blue-primary` da **4,37:1** sobre `--paper-2`, por debajo del 4,5:1 de
+ * WCAG AA, y el token solo se admite ahí «en tamaño grande (≥ 24 px)».
+ *
+ * Se midió en la sección ⑤ de las páginas de servicio, que es el **CTA único**
+ * de cada una (RF-07): el enlace más importante del sitio era el que no
+ * cumplía. Cualquier tarjeta o franja en `--paper-2` lleva esta clase, en vez
+ * de recordar caso por caso que ahí el azul de marca no vale.
+ */
+.superficie-suave a {
+  color: var(--slg-blue-deep);
+}
+
 /* ── Enlaces sobre secciones oscuras (C.3) ─────────────────────────────────
  * En una franja oscura (`--blue-deep` o `--indigo`) el color de enlace de
  * marca deja de cumplir: medido con Lighthouse, `--slg-link` sobre
