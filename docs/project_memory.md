@@ -8,44 +8,65 @@ timestamp: 2026-09-11
 
 # Project memory — slg_website
 
-## Estado actual
+## Estado actual (última sesión: 2026-09-11, larga — Opus 5)
 
-- **Fase**: ejecución (`start-execution`), plan aprobado por Ricardo el 2026-09-08. Perfil activo:
-  `software-app`. Stack cerrado — cada elección justificada en `docs/decision_log.md` (D-1 a D-64).
-- **M0-A completa** (FU-02, FU-03, FU-04, FU-05).
-- **M0-B**: FU-06 y FU-09 `done`. FU-07 y FU-08 `in_progress` — construidas y probadas de punta a
-  punta; Ricardo ya cargó las credenciales reales (Google, Microsoft, Resend) en `slgweb-staging`,
-  pero **falta la verificación real** (login de punta a punta, envío real de correo) — ver detalle
-  más abajo.
-- **M1-A COMPLETO** (FU-01, FU-10, DU-02, DU-03 · 2026-09-11). El sitio público ya tiene armazón
-  navegable y portada real en los dos idiomas.
-- **M2**: FU-11 `in_progress` — dos de sus seis criterios dependen de un formulario real (DU-08).
-- **M5**: FU-14 `in_progress` — construida y verificada; le faltan dos criterios que no son código
-  (ver su sección).
-- 39 unidades totales (Anexo E). Nada pusheado a `origin` — todo commiteado en `develop` local.
+- **Fase**: ejecución. Perfil `software-app`. Decisiones en `docs/decision_log.md` (D-1 a D-72).
+- **M0-A completo** · **M1-A completo** · **M1-B completo** (DU-04, DU-05, DU-06, DU-07 pendiente).
+- **15 unidades `done`**, 5 `in_progress` (FU-07, FU-08, FU-11, FU-14, DU-08), 19 `pending`.
+- Todo commiteado en `develop` local. **Nada pusheado a `origin` todavía.**
 
-## Plazo real declarado por Ricardo (2026-09-11)
+### El sitio público, hoy funcionando en los dos idiomas
 
-Presentación al directorio el **lunes 14** y arranque de campaña de venta el **martes 15**. Alcance
-que pidió: todo el recorrido hasta el CRM (DU-04, DU-05, DU-06, DU-08, DU-09). **Tres cosas que
-ningún trabajo de código resuelve y que gatean ese plazo**: los 11 documentos de descarga no existen
-(EXT-1 — sin ellos la campaña no tiene oferta), falta el texto legal (F.2-1 — sin él no se pueden
-activar formularios en producción) y faltan las dos claves del CRM (F.2-5). Además hay **69
-marcadores `[PENDIENTE]` en 63 archivos**, prohibidos en `main` por DoD #10.
+`/` · `/ai` · las tres líneas · **las 11 páginas de servicio** · `/descargas` + **las 11 fichas con
+formulario** · `/gracias` · **blog completo** (índice, artículo, etiquetas, RSS) · `/doctrina` ·
+`/nosotros` · `/contacto` · `/legal/privacidad` y `/legal/terminos`. **No queda ningún 404 en el
+menú ni en el pie.** Gate D1: **100 · 100 · 100 · 100**, LCP 1,7 s.
 
-## Qué hacer a continuación (en orden razonable)
+**La máquina de captura funciona de verdad**, verificada contra Postgres real por las tres puertas:
+`download`, `contact` y `doctrine-request`, las tres con `crm_sync_status: pending`.
 
-1. **DU-04 (overviews de rama)** y luego **DU-05 (las 11 páginas de servicio)** — es el camino
-   crítico para la campaña: hoy la navegación enlaza `/ai`, `/holdings`, `/blog`, `/descargas`,
-   `/contacto` y `/legal/*`, que **todavía no existen y dan 404**. El armazón (DU-02) y la portada
-   (DU-03) ya están y verificados en navegador real.
-2. **Verificar de punta a punta FU-07/FU-08** contra staging: login real de Google/Microsoft (las
-   redirect URIs ya están confirmadas exactas por Ricardo) y un envío real de correo por Resend
-   (dominio `mailweb.softlandingglobal.com`, ya verificado). Necesita acceso a staging con sesión
-   real o que Ricardo lo pruebe y reporte.
-3. **FU-14** — construida y fusionada; le quedan pasos manuales de Ricardo (tercer token de R2 y
-   ensayo de restauración en staging). Ver su sección.
-4. Contenido pendiente de FU-01 que solo Ricardo (o SLG_Overhauling) puede dar — ver lista abajo.
+## Plazo declarado por Ricardo
+
+Presentación al directorio el **lunes 14** y arranque de campaña el **martes 15** (declarado el
+viernes 11 por la noche).
+
+## Qué hacer a continuación (en orden)
+
+1. **DU-09 — entrega al CRM.** Es lo único que separa «lead capturado» de «lead en el CRM». **Ya
+   está desbloqueada**: Ricardo confirmó que cargó las dos claves en Easypanel. El modo es
+   `contact_note` (verificado en el código del CRM: la clave de API permite `POST /contacts` y
+   `POST /notes`, no crear empresas ni oportunidades). Ruta de ficha confirmada: `/contactos/:id`.
+2. **Cerrar DU-08** — faltan sus criterios 3, 6 y 8, que exigen **un archivo real** en el bucket, y
+   la batería automatizada del criterio 11.
+3. **DU-07** — SEO técnico, 404/500 y cierre de gates D1–D6. Cierra M1-B.
+4. **Cerrar FU-14** — tercer token de R2 y ensayo de restauración (ver su sección).
+
+## Lo que bloquea el go-live, y solo Ricardo puede resolver
+
+1. **Los 11 documentos de descarga no existen** (EXT-1). Las 11 fichas están construidas y capturan
+   correo, pero muestran «disponible próximamente». Una campaña cuyo CTA es descargar un documento
+   necesita el documento.
+2. **Revisión legal del borrador** (F.2-1). El copy legal existe y describe con exactitud lo que el
+   sitio hace; las determinaciones jurídicas siguen `[PENDIENTE]` **a propósito**, y eso mantiene
+   `check:pending` bloqueando `main`. Quitarlo es decisión de Ricardo, no del agente.
+3. **6 de los 11 servicios sin contenido** más allá del nombre, y el resumen público de The Phoenix
+   Doctrine. Hoy: **79 marcadores `[PENDIENTE]` en 67 archivos**.
+
+## Trampas conocidas (leer antes de tocar)
+
+- **La regla `a` de `globals.css` vive fuera de toda `@layer`**, así que en Tailwind v4 gana a
+  cualquier utilidad: `className="text-paper"` sobre un enlace **no hace nada**. Los arreglos de
+  color de enlace viven en `globals.css` (`.seccion-oscura`, `.superficie-suave`, `footer a`).
+- **`--blue-primary` sobre `--paper-2` da 4,37:1**: incumple WCAG AA en texto normal. Cualquier
+  tarjeta o franja en `--paper-2` lleva la clase `.superficie-suave` (D-68).
+- **El contenido escribe rutas en dos convenciones** (unos registros ingleses en canónica española,
+  otros ya en inglés). Usa siempre `localizarRuta`/`canonicalizarRuta` de `lib/routes/map.ts`.
+- **Un fallo de hidratación deja las animaciones de entrada congeladas en su estado inicial**: si el
+  hero «no aparece», es hidratación rota, no motion. El Fast Refresh del dev server se corrompe tras
+  muchas ediciones seguidas — reinicia el servidor antes de investigar.
+- **Los slugs ingleses no siguen una regla única** (`slg-ai-en` lleva sufijo; `about` y `doctrine`
+  son otra palabra). Busca por `pair`, nunca transformando texto.
+- **Migraciones**: ver la nota de `drizzle-kit` más abajo. Sigue vigente.
 
 ## FU-01 · Copy maestro bilingüe · `done` (2026-09-11)
 
