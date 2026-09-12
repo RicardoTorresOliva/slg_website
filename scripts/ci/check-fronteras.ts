@@ -1,26 +1,32 @@
 /**
- * check-auth-boundary.ts — El criterio 1 de FU-06, como freno.
+ * check-fronteras.ts — Las fronteras de los módulos encapsulados, como freno.
  *
- * «Cero lógica de sesión, rol o `organization_id` escrita dentro de una página
- * o de un endpoint: toda pasa por el módulo. Una revisión que encuentre una
- * excepción rechaza la unidad.»
+ * DOS UNIDADES PIDEN LO MISMO, PALABRA POR PALABRA:
  *
- * Una revisión humana encuentra la primera excepción y se pierde la tercera.
- * Esto la encuentra siempre, y por eso el criterio es verificable en vez de
- * declarativo. Mitiga R-19: el día que haya que sustituir Better Auth, la
- * garantía de que solo hay un sitio que tocar es este archivo, no la memoria.
+ *   · FU-06, criterio 1: «Cero lógica de sesión, rol o `organization_id` escrita
+ *     dentro de una página o de un endpoint: toda pasa por el módulo. Una
+ *     revisión que encuentre una excepción rechaza la unidad.»
+ *   · FU-08, criterio 1: «Ningún caso de uso importa el cliente del proveedor:
+ *     todos hablan con la interfaz propia. Una revisión que encuentre una
+ *     importación directa rechaza la unidad.»
+ *
+ * Una revisión humana encuentra la primera excepción y se pierde la tercera. Un
+ * freno la encuentra siempre, y por eso los dos criterios son verificables en
+ * vez de declarativos. Es la mitigación de R-19 y de R-05: el día que haya que
+ * sustituir el proveedor de identidad o el de correo, la garantía de que solo
+ * hay un sitio que tocar es este archivo, no la memoria de nadie.
  */
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
-const SCAN_ROOT = process.env.AUTH_BOUNDARY_ROOT
-  ? path.resolve(process.env.AUTH_BOUNDARY_ROOT)
+const SCAN_ROOT = process.env.FRONTERAS_ROOT
+  ? path.resolve(process.env.FRONTERAS_ROOT)
   : REPO_ROOT;
 
-/** Dentro del módulo todo vale: es el sitio donde esta lógica DEBE estar. */
-const DENTRO_DEL_MODULO = "lib/auth/";
+/** Dentro de su módulo todo vale: es el sitio donde esa lógica DEBE estar. */
+const MODULOS = ["lib/auth/", "lib/mail/"];
 
 /**
  * La única ruta del proyecto que puede importar el framework directamente: el
@@ -50,6 +56,21 @@ type Regla = {
 };
 
 const REGLAS: readonly Regla[] = [
+  {
+    nombre: "importa el transporte de correo",
+    re: /from\s+["']nodemailer/,
+    porQue:
+      "solo lib/mail/smtp.ts sabe cómo se transporta un correo. Importarlo fuera " +
+      "ata ese caso de uso a un transporte concreto y rompe D-36: cambiar de " +
+      "proveedor debe costar cuatro variables de entorno y ninguna línea de código.",
+  },
+  {
+    nombre: "importa un archivo interno del módulo de correo",
+    re: /from\s+["'](?:@\/lib\/mail\/|\.\.?\/(?:\.\.\/)*lib\/mail\/)[a-z]/,
+    porQue:
+      "la superficie pública es `@/lib/mail`. Entrar por un archivo interno " +
+      "convierte un detalle en contrato y el módulo deja de poder reescribirse.",
+  },
   {
     nombre: "importa el framework de identidad",
     re: /from\s+["']better-auth/,
@@ -110,7 +131,7 @@ for (const abs of archivos()) {
   if (!fs.existsSync(abs)) continue;
   const rel = path.relative(REPO_ROOT, abs).split(path.sep).join("/");
 
-  if (rel.startsWith(DENTRO_DEL_MODULO)) continue;
+  if (MODULOS.some((m) => rel.startsWith(m))) continue;
   // Ahí se DEFINEN las constructoras del contexto; definirlas no es llamarlas.
   if (rel === DEFINE_EL_CONTEXTO) continue;
   // Los propios frenos hablan DE las reglas: nombrarlas no es infringirlas.
@@ -119,7 +140,7 @@ for (const abs of archivos()) {
    * Las pruebas del módulo son parte del módulo, no consumidores suyos: tienen
    * que poder entrar por dentro para recorrer la matriz sin levantar Next.
    */
-  if (rel.startsWith("scripts/auth/")) continue;
+  if (rel.startsWith("scripts/auth/") || rel.startsWith("scripts/mail/")) continue;
 
   revisados++;
   const lineas = fs.readFileSync(abs, "utf8").split("\n");
@@ -134,7 +155,7 @@ for (const abs of archivos()) {
 
 if (hallazgos.length > 0) {
   console.error(
-    `✗ frontera del módulo de identidad: ${hallazgos.length} infracción(es) sobre ${revisados} archivos.\n`,
+    `✗ fronteras de módulo: ${hallazgos.length} infracción(es) sobre ${revisados} archivos.\n`,
   );
   for (const h of hallazgos) {
     console.error(`  ${h.archivo}:${h.linea} · ${h.regla.nombre}`);
@@ -142,12 +163,12 @@ if (hallazgos.length > 0) {
   }
   console.error(
     `\n  Todo lo de identidad entra por una de las dos puertas públicas del módulo:\n` +
-      PUERTAS_PUBLICAS.map((p) => `    ${p}`).join("\n") +
-      `\n  (criterio 1 de FU-06).\n`,
+      [...PUERTAS_PUBLICAS, "@/lib/mail"].map((p) => `    ${p}`).join("\n") +
+      `\n  (criterio 1 de FU-06 y criterio 1 de FU-08).\n`,
   );
   process.exit(1);
 }
 
 console.log(
-  `✓ frontera del módulo de identidad: ${revisados} archivos fuera de lib/auth/, ninguno la cruza.`,
+  `✓ fronteras de módulo: ${revisados} archivos fuera de ${MODULOS.join(" y ")}, ninguno las cruza.`,
 );

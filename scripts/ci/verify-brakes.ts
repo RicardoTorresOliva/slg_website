@@ -41,6 +41,12 @@ const CASOS: Caso[] = [
     env: { SECRETS_SCAN_ROOT: path.join(HERE, "negative/secrets") },
   },
   {
+    freno: "patrón de secreto · contraseña pegada en el código",
+    script: "check-secrets.ts",
+    espera: "variable de secreto con valor",
+    env: { SECRETS_SCAN_ROOT: path.join(HERE, "negative/secrets") },
+  },
+  {
     freno: "presupuesto de JS inicial",
     script: "check-js-budget.ts",
     espera: "por encima de",

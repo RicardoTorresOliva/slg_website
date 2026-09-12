@@ -390,3 +390,60 @@ y se acepta a cambio de no abrir esa puerta.
 
 **Siguiente.** **FU-07** (servicio de invitaciones), que necesita FU-08 —adaptador de correo— para
 entregar. En paralelo sigue pendiente de Ricardo el despliegue de FU-05: `docs/deployment.md` §3 a §5.
+
+---
+
+## 2026-09-12 · FU-08 — Adaptador de correo transaccional · `in_progress`
+
+**Qué se produjo.** `lib/mail/`: el puerto de una sola operación, el adaptador SMTP, las cuatro
+plantillas en dos idiomas y la cola con espera creciente. Igual que FU-05, la unidad queda
+`in_progress` y no `done`: lo que falta no es código, es dominio verificado y tres buzones reales.
+
+**Los siete criterios:**
+
+| # | Criterio | Estado | Evidencia |
+|---|---|---|---|
+| 1 | Ningún caso de uso importa el cliente del proveedor | **cerrado** | `npm run check:fronteras` — el mismo freno que vigila `lib/auth/` ahora vigila `lib/mail/`: 31 archivos fuera, ninguno la cruza |
+| 2 | Cambiar de proveedor, demostrado en la práctica | **cerrado** | La suite entera corre **dos veces contra dos servidores SMTP distintos**, con credenciales y remitentes distintos, cambiando solo variables de entorno. Si alguien metiera el nombre del proveedor en el código, la segunda vuelta se pondría roja |
+| 3 | Remitente en el subdominio de envío, `Reply-To` a `support@`, y llegada a bandeja en tres buzones | **a medias** | Lo primero está verificado: el sobre lleva el remitente correcto, la cabecera `Reply-To` viaja y ambos se persisten. **La llegada a bandeja de entrada en tres proveedores distintos es de Ricardo** |
+| 4 | Verificación sobre subdominio dedicado, sin tocar el SPF de la raíz ni los MX | **pendiente de Ricardo** | Los registros del subdominio, en el panel de Hostinger. `npm run check:dns` ya vigila que `crm`, `n8n`, `evolution`, `academy` y los MX no se muevan |
+| 4b | P-3 y P-4 resueltas y registradas | **propuesta escrita** | `decision_log`: `mail.softlandingglobal.com` y `no-reply@mail.softlandingglobal.com`. Falta que Ricardo diga sí o diga otra cosa |
+| 5 | Un fallo de envío no pierde el hecho de negocio | **cerrado** | `enviarCorreo()` **nunca lanza**. Probado con las tres formas de fallar: rechazo del destinatario, credencial equivocada y servidor caído. En las tres queda fila de evidencia |
+| 6 | Seguimiento de aperturas y clics desactivado | **a medias** | Verificado en el correo que sale: cero imágenes remotas, cero parámetros de campaña, cero `List-Unsubscribe`. Y el esquema **no tiene dónde** guardar una apertura. **Falta el interruptor del panel del proveedor** |
+| 7 | Cero valores de credencial en el repositorio | **cerrado** | `check:secrets` sobre 166 archivos; `check:env` sobre las 47 variables |
+
+**Hallazgo: `.env.example` contradecía al diseño desde FU-02.** Traía `RESEND_API_KEY`, y
+`api_contracts` §11.3 dice literalmente que **esa variable no existe y que su ausencia es la
+decisión**: el adaptador habla SMTP estándar (D-22, D-36), así que el proveedor se configura poniendo
+su servidor en `MAIL_SMTP_HOST` y su clave en `MAIL_SMTP_PASSWORD`. Sustituida por las ocho variables
+de transporte (**D-55**). Con la variable de marca, el primer programador que la viera habría
+importado el SDK, y el criterio 1 se habría perdido en la primera semana.
+
+**Decisión difícil, registrada: los correos con enlace no se reintentan (D-56).** `invitation` y
+`password_reset` llevan un token de un solo uso que **no se guarda** —`architecture` §8.2 lo prohíbe—,
+así que el barrendero no puede recomponerlos y los marca `failed` con el motivo escrito. La
+alternativa era guardar los datos de plantilla para poder reenviar el mismo correo, y eso convierte
+`email_delivery` en un **almacén de enlaces de acceso vigentes**: cualquiera con lectura sobre esa
+tabla entra. Reintentar una invitación significa **volver a emitirla**, con token y caducidad nuevos,
+y eso es de FU-07 y DU-01. Los dos avisos internos sí se recomponen desde `lead_capture` y sí los
+reintenta el barrendero.
+
+**Sobre las pruebas.** Los dos servidores SMTP de la suite **son servidores SMTP de verdad**, que
+negocian el protocolo, autentican y rechazan destinatarios. Un doble del adaptador solo habría
+probado que el adaptador llama al doble; estos comprueban que el correo sale, que la cabecera
+`Reply-To` viaja, que no hay ni un `<img>` y que un 550 se clasifica como rechazo y no como fallo de
+red.
+
+**Gates aplicados.** `QG`: cero secretos, el error del proveedor saneado antes de llegar a una
+pantalla de HQ, ningún token ni cuerpo persistido · alimenta **D8** y **D7**.
+
+**Verificación.** `test:correo` **95** comprobaciones contra SMTP real · `check:ci` en verde ·
+`check:fronteras`, `check:brakes` y `test:db` sin fallos.
+
+**Residual.** El barrendero existe pero **nadie lo arranca todavía**: `architecture` §6.2 pone el
+ejecutor dentro de `slg-web` y **DU-09 fija el intervalo** (la restricción dura es < 60 s). Hasta
+entonces la cola se barre a mano. Es correcto que sea así —el intervalo es una decisión de DU-09, no
+de esta unidad— pero conviene no olvidarlo: hoy un correo que falle se queda esperando.
+
+**Siguiente.** Con P-3 y P-4 respondidas y los registros del subdominio publicados, FU-08 cierra y
+**FU-07** (invitaciones) queda desbloqueada.

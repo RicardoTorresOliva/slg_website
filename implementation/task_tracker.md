@@ -38,7 +38,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 34 `pending` · **1 `in_progress`** (FU-05) · **4 `done`** (FU-02, FU-03, FU-04, FU-06) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
+**Estado global:** 33 `pending` · **2 `in_progress`** (FU-05, FU-08) · **4 `done`** (FU-02, FU-03, FU-04, FU-06) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -58,7 +58,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | ━━━ | ━━━ | **▼ M0-B · FUNDACIONES: IDENTIDAD Y SERVICIOS COMPARTIDOS** | ━━━ | ━━━ | ━━━ |
 | FU-06 | FU | Módulo de identidad y autorización | M0-B | FU-04, FU-05 | `done` |
 | FU-07 | FU | Servicio de invitaciones | M0-B | FU-06, FU-08 | `pending` |
-| FU-08 | FU | Adaptador de correo transaccional | M0-B | FU-05 · F.2-4 | `pending` |
+| FU-08 | FU | Adaptador de correo transaccional | M0-B | FU-05 · F.2-4 | `in_progress` — código cerrado (criterios 1, 2, 5, 7); faltan P-3/P-4, los registros del subdominio y los tres buzones |
 | FU-09 | FU | Almacenamiento de archivos y URLs firmadas | M0-B | FU-05 · `api_contracts` | `pending` |
 | DU-01 | DU | Acceso, sesión y recuperación por los tres métodos | M0-B | FU-06, FU-07, FU-08 · F.2-2, F.2-3 | `pending` |
 | ━━━ | ━━━ | **▼ M1-A · CAPA PÚBLICA: COMPUERTAS, COMPONENTES Y ARMAZÓN** | ━━━ | ━━━ | ━━━ |
@@ -200,3 +200,11 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   (funciones `SECURITY DEFINER` estrechas) y **D-54** (`invitation.token_hash` opcional).
   Cuatro defectos corregidos, tres anteriores a la unidad — el más grave: las dos constructoras del
   `AuthContext` lanzaban `ReferenceError` al llamarlas, y nadie las había llamado nunca.
+- `2026-09-12` — **FU-08 `in_progress`.** `lib/mail/` construido y verificado: el puerto de una sola
+  operación, el adaptador SMTP, las cuatro plantillas en dos idiomas y la cola con espera creciente.
+  **Criterios 1, 2, 5 y 7 cerrados**; el 2 demostrado corriendo la suite entera contra **dos
+  servidores SMTP distintos** solo con variables de entorno. Registradas **D-55** (desaparece la
+  variable con nombre de producto: `api_contracts` §11.3 dice que su ausencia es la decisión) y
+  **D-56** (los correos con enlace no se reintentan; reintentar es reemitir). **P-3 y P-4 siguen
+  abiertas**, con propuesta escrita en `decision_log`: `mail.softlandingglobal.com` y
+  `no-reply@mail.softlandingglobal.com`.

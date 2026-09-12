@@ -8,9 +8,16 @@ timestamp: 2026-09-12
 
 # Project memory — slg_website
 
-> **Punto de retomada en una línea:** cinco unidades tocadas — FU-02, FU-03, FU-04 y **FU-06**
-> `done`; FU-05 `in_progress` esperando el despliegue de Ricardo. La siguiente es **FU-07**
-> (invitaciones), que necesita **FU-08** (correo) para entregar.
+> **Punto de retomada en una línea:** seis unidades tocadas — FU-02, FU-03, FU-04 y FU-06 `done`;
+> **FU-05 y FU-08 `in_progress`**, las dos esperando cosas de Ricardo, no código. La siguiente por
+> construir es **FU-07** (invitaciones), que ya tiene todo lo que necesita en el repositorio.
+
+## Lo que espera a Ricardo, y solo a él
+1. **Despliegue** — `docs/deployment.md` §3 a §5. Cierra FU-05 (criterios 1, 2, 3 y 8).
+2. **P-3 y P-4** — dirección remitente y subdominio de envío. Hay propuesta en `decision_log`:
+   `no-reply@mail.softlandingglobal.com` sobre `mail.softlandingglobal.com`. Una palabra basta.
+3. **Registros del subdominio de envío** en Hostinger, y el interruptor de seguimiento **apagado** en
+   el panel del proveedor de correo. Cierran FU-08 (criterios 3, 4 y 6).
 
 ## Current state
 - **Fase**: **ejecución**. Compuerta de Planificación **abierta** (Ricardo, 2026-09-08).
@@ -18,6 +25,8 @@ timestamp: 2026-09-12
 - **Contrato de entrada**: `START_PROJECT.md` v1.1, fase *Specify* de SDD.
 
 ## Última unidad completada
+- **FU-08** — adaptador de correo (2026-09-12), `in_progress`: el código está cerrado y verificado con
+  **95 comprobaciones contra SMTP real**; falta dominio verificado y tres buzones.
 - **FU-06** — módulo de identidad y autorización (2026-09-12). `lib/auth/` es el único sitio que sabe
   de sesión, rol, empresa y clave. Los siete criterios verificados; la frontera del módulo es un freno
   de CI, no una promesa de revisión. **53 comprobaciones** contra PostgreSQL real y **214** sobre la
@@ -42,9 +51,19 @@ timestamp: 2026-09-12
     monitor. **Paso a paso completo en `docs/deployment.md`.**
 
 ## Próxima unidad
-- **FU-07** — servicio de invitaciones (M0-B). Depende de FU-06 (hecha) y **FU-08** (adaptador de
-  correo), que a su vez espera a **P-3 y P-4**: dirección remitente y nombre del subdominio de envío.
-  Es decir: **el siguiente paso real es fijar P-3 y P-4 y construir FU-08**, no FU-07.
+- **FU-07** — servicio de invitaciones (M0-B). Ya tiene lo que necesita: FU-06 hecha y el módulo de
+  correo construido. Que P-3 y P-4 sigan abiertas **no la bloquea**: son valores de variable de
+  entorno, no decisiones de diseño.
+
+## Lo que hay que saber de `lib/mail/` antes de tocarlo
+- **Una puerta pública**: `@/lib/mail`. `nodemailer` vive solo en `smtp.ts`; importarlo fuera pone el
+  CI en rojo (`check:fronteras`).
+- **Las variables son de transporte, no de marca** (D-55). No hay `<PRODUCTO>_API_KEY` y esa ausencia
+  es la decisión: el proveedor se configura con su servidor y su clave en `MAIL_SMTP_*`.
+- **Los correos con enlace no se reintentan** (D-56): su token no se guarda, así que reintentar es
+  **reemitir**, y eso es de FU-07 y DU-01.
+- **El barrendero existe pero nadie lo arranca**: el intervalo lo fija DU-09 (< 60 s). Hoy la cola se
+  barre a mano.
 
 ## Lo que hay que saber de `lib/auth/` antes de tocarlo
 - **Dos puertas públicas, no una**: `@/lib/auth` (servidor) y `@/lib/auth/edge` (middleware, donde no
@@ -87,7 +106,8 @@ Detalle y justificación en `docs/decision_log.md`. **No se re-exploran.**
 - 13 HITL de Ricardo en `START_PROJECT.md` §7 y §10 · **D-14…D-24** · **D-25…D-42** (las que tomaron
   los `design_docs`; D-26 y D-27 marcadas **[IRREVERSIBLE-TRAS-FU-04]**, y FU-04 ya corrió) ·
   **D-43…D-46** · **D-47…D-51** (ejecución) · **D-52…D-54** (FU-06: sin plugin `apiKey`, funciones
-  `SECURITY DEFINER` estrechas, `invitation.token_hash` opcional).
+  `SECURITY DEFINER` estrechas, `invitation.token_hash` opcional) · **D-55…D-56** (FU-08: variables de
+  transporte y no de marca; los correos con enlace no se reintentan).
 
 ## Blockers
 - **Ninguno de decisión.** Lo que falta de FU-05 es acceso a paneles, y tiene runbook.

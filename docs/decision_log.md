@@ -85,6 +85,28 @@ unidad.
 | D-53 | 2026-09-12 | **La pertenencia y la clave de API se resuelven por dos funciones `SECURITY DEFINER` estrechas** (`app_memberships_de_usuario`, `app_clave_api_por_hash`), no relajando las políticas de fila. Cada una contesta una pregunta, no acepta filtros, lleva `search_path` fijado y solo tiene `EXECUTE` el rol de aplicación. | (a) Añadir `'system'` a la política de las ocho tablas con `organization_id`; (b) conectar el módulo de identidad con el rol dueño | El inicio de sesión y la verificación de una clave ocurren **antes** de saber la empresa —esa es la pregunta—, así que no hay contexto que fijar y `membership` y `api_key`, bajo RLS forzada, devuelven cero. (a) abriría de golpe `project`, `deliverable`, `announcement` y `contact` a cualquier código que llame a `withSystemScope`: el agujero sería ocho veces mayor que el problema. (b) es repetir el hallazgo de FU-04 —el dueño lleva `BYPASSRLS` y apaga el aislamiento entero—. Las funciones son auditables en una línea de `\df+` y su llamante único lo vigila `check:auth-boundary`. |
 | D-54 | 2026-09-12 | **`invitation.token_hash` pasa a opcional** (migración 0005), conservando su índice único. | Mantenerla obligatoria y que el plugin `organization` no pueda crear invitaciones | Dos flujos escriben en `invitation` y no escriben lo mismo: el plugin crea la fila y usa el id como referencia; el servicio de FU-07 genera el enlace firmado del correo y guarda su hash. Con la columna obligatoria, el adaptador avisa de que «inserts into invitation will fail». Se vuelve opcional porque **lo es**: una invitación existe antes de tener enlace enviado. **No se relaja nada más**: en PostgreSQL un índice único admite varios NULL, así que dos enlaces iguales siguen siendo imposibles. |
 
+## Decisiones de FU-08 (D-55…D-56) y propuesta de P-3/P-4
+
+| # | Fecha | Decisión | Alternativas consideradas | Razón |
+|---|-------|----------|---------------------------|-------|
+| D-55 | 2026-09-12 | **Desaparece `RESEND_API_KEY` de `.env.example`; las variables de correo son de TRANSPORTE, no de marca**: `MAIL_SMTP_HOST`, `MAIL_SMTP_PORT`, `MAIL_SMTP_USERNAME`, `MAIL_SMTP_PASSWORD`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME`, `MAIL_REPLY_TO`, `MAIL_ALERTS_TO`. | Mantener una variable con el nombre del producto junto al bloque SMTP | `api_contracts` §11.3 lo dice con todas las letras: «**no hay `RESEND_API_KEY` como tal**, y esa ausencia es la decisión». `.env.example` la traía desde FU-02 y contradecía a D-36. El proveedor elegido se configura poniendo su servidor en `MAIL_SMTP_HOST` y su clave de API en `MAIL_SMTP_PASSWORD`. Verificado en la práctica: la suite corre entera contra **dos servidores SMTP distintos** cambiando solo variables (criterio 2). |
+| D-56 | 2026-09-12 | **Los correos con enlace (`invitation`, `password_reset`) NO los reintenta el barrendero**: quedan `failed` desde el primer fallo, con el motivo escrito. Reintentar significa **volver a emitir**, y eso lo hace FU-07 o DU-01 con un token nuevo. Los dos avisos internos sí se recomponen desde `lead_capture` y sí se reintentan. | Guardar los datos de plantilla —incluido el token— en `email_delivery` para poder reenviar el mismo correo | `architecture` §8.2 prohíbe que el puerto lleve a la base el cuerpo del correo y los tokens. Guardarlos convertiría la tabla de correo en un **almacén de credenciales activas**: cualquiera con lectura sobre `email_delivery` tendría enlaces de acceso vigentes. El coste asumido es que una invitación fallida exige reemitir, que además es lo correcto: el token original ya arrastra su caducidad. |
+
+### P-3 y P-4 — propuesta, pendiente de una palabra de Ricardo
+
+Siguen **abiertas** y son las únicas condiciones de entrada de FU-08 que el código no puede resolver:
+son valores, no decisiones de diseño, y por eso no bloquearon la construcción. Propuesta:
+
+| Sub-decisión | Propuesta | Por qué |
+|---|---|---|
+| **P-4** · nombre del subdominio de envío | **`mail.softlandingglobal.com`** | Es el nombre que `architecture` §10.1 ya usa como ejemplo, el más reconocible para un filtro antispam y el que menos explicación necesita en una revisión de entregabilidad |
+| **P-3** · dirección remitente (`From`) | **`no-reply@mail.softlandingglobal.com`** | Deja claro al destinatario que responder a esa dirección no llega a una persona, mientras el `Reply-To` sigue siendo `support@softlandingglobal.com` y **toda respuesta acaba ahí** (RF-117). La alternativa, un `From` que parezca humano, produce hilos perdidos en un buzón que nadie lee |
+
+Con esas dos palabras, `MAIL_FROM_ADDRESS` y `MAIL_REPLY_TO` se rellenan en Easypanel y el código no
+cambia. **El brief §5.1 y RF-117 quedan desactualizados** en el punto en que dicen que el remitente es
+`support@softlandingglobal.com`: desde D-24, `support@` es el `Reply-To` y el destinatario de los
+avisos, no el `From`.
+
 ## Acciones de seguridad previas a la ejecución
 
 | # | Acción | Dónde se sigue |

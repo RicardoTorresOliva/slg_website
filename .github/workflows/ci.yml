@@ -92,9 +92,10 @@ jobs:
       - name: Toda migración está declarada en el journal
         run: npm run check:migrations
 
-      # Criterio 1 de FU-06: cero lógica de identidad fuera de lib/auth/.
-      - name: Frontera del módulo de identidad
-        run: npm run check:auth-boundary
+      # Criterio 1 de FU-06 y de FU-08: cero lógica de identidad fuera de
+      # lib/auth/, cero transporte de correo fuera de lib/mail/.
+      - name: Fronteras de los módulos encapsulados
+        run: npm run check:fronteras
 
       # La matriz B.3 entera —15 acciones × 4 roles, más los seis alcances—
       # sin base de datos: es tabla de permisos, no estado.
@@ -179,5 +180,5 @@ jobs:
       - name: Datos de ejemplo
         run: npm run db:seed
 
-      - name: Aislamiento, contratos del esquema, caso hostil y autorización
+      - name: Aislamiento, contratos, caso hostil, autorización y correo
         run: npm run test:db

@@ -41,10 +41,20 @@ const RULES: ReadonlyArray<Rule> = [
     re: /\b(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|redis|amqp):\/\/[^\s:@/]+:[^\s:@/]+@/,
   },
   {
-    // `SECRET=` con algo detrás. `SECRET=` a secas es exactamente lo que
-    // .env.example debe tener, y pasa.
+    /**
+     * `SECRET=` con un LITERAL detrás. Dos precisiones que no son laxitud:
+     *
+     *   · `SECRET=` a secas es exactamente lo que `.env.example` debe tener.
+     *   · Asignar desde una variable —`PASSWORD = config.clave`— no es un
+     *     secreto en el código: el secreto estará donde se construya esa
+     *     variable, y ahí lo pilla esta misma regla o el escáner del pipeline.
+     *     Exigir literal es lo que dice el nombre de la regla, «con valor».
+     *
+     * Sin la segunda precisión la regla marca en rojo todo módulo que lea su
+     * configuración, que es justo lo que queremos que la gente haga.
+     */
     name: "variable de secreto con valor",
-    re: /\b(?:[A-Z0-9_]*(?:SECRET|PASSWORD|PASSWD|TOKEN|API_KEY|ACCESS_KEY|PRIVATE_KEY))\s*[:=]\s*["']?(?!["']?\s*$)(?!\$\{)(?!process\.env)[^\s"',;)}]{8,}/,
+    re: /\b(?:[A-Z0-9_]*(?:SECRET|PASSWORD|PASSWD|TOKEN|API_KEY|ACCESS_KEY|PRIVATE_KEY))\s*[:=]\s*(["'])(?!\s*\1)[^\s"',;)}]{8,}\1/,
   },
 ];
 
