@@ -56,6 +56,7 @@ export function FichaDeDocumento({ slug, locale }: { slug: string; locale: Local
       <section className="superficie-suave mt-10 rounded-lg border border-line bg-paper-2 p-6">
         {!hayArchivo && <p className="mb-4 text-ink-2">{t["download.comingSoonBody"]}</p>}
         <FormularioDeCaptura
+          origen="download"
           slug={slug}
           rutaDePagina={rutaDePagina}
           strings={t}

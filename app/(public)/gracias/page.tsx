@@ -11,8 +11,8 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
 export default async function PaginaDeGracias({
   searchParams,
 }: {
-  searchParams: Promise<{ e?: string; p?: string }>;
+  searchParams: Promise<{ e?: string; v?: string }>;
 }) {
-  const { e, p } = await searchParams;
-  return <Gracias locale="es" eventoId={e} pendiente={p === "1"} />;
+  const { e, v } = await searchParams;
+  return <Gracias locale="es" eventoId={e} variante={v} />;
 }

@@ -20,16 +20,23 @@ import { ruta, type Locale } from "@/lib/routes/map";
 export async function Gracias({
   locale,
   eventoId,
-  pendiente,
+  variante,
 }: {
   locale: Locale;
   eventoId?: string;
-  pendiente: boolean;
+  /** `download` (con archivo) · `contact` · `doctrine-request` · `coming-soon`. */
+  variante?: string;
 }) {
   const t = loadUiStrings()[locale];
 
-  // Variante «próximamente»: se capturó el correo, no hay archivo que entregar.
-  if (pendiente) {
+  // Una ruta, tres variantes según el origen de la captura (§3.6). Tres rutas
+  // distintas serían tres plantillas que divergen.
+  if (variante === "contact") {
+    return <Marco titulo={t["thanks.contactTitle"]} cuerpo={t["thanks.contactBody"]} locale={locale} t={t} />;
+  }
+  if (variante) {
+    // `doctrine-request` y descarga en «próximamente» comparten mensaje: en los
+    // dos casos se avisará por correo cuando el documento exista.
     return (
       <Marco titulo={t["thanks.comingSoonTitle"]} cuerpo={t["thanks.comingSoonBody"]} locale={locale} t={t} />
     );

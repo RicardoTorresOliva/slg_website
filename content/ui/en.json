@@ -114,5 +114,12 @@
   "doctrine.pillarsTitle": "The three pillars of DAL OS",
   "doctrine.fullDocTitle": "The full document",
   "doctrine.fullDocPending": "The full Phoenix Doctrine document is available on request. While we enable the online request, write to us and we'll send it.",
-  "download.consentNotice": "By submitting you accept the {{privacyLink}}."
+  "download.consentNotice": "By submitting you accept the {{privacyLink}}.",
+  "contact.title": "Contact",
+  "contact.intro": "Write to us and we'll reply. No endless forms, no sales calls.",
+  "doctrine.fullDocBody": "Leave your corporate email and we'll send you the full Phoenix Doctrine document as soon as it's available.",
+  "thanks.contactTitle": "Received",
+  "thanks.contactBody": "Your message arrived. We'll reply to the address you left us.",
+  "contact.submit": "Send",
+  "doctrine.requestButton": "Request the document"
 }

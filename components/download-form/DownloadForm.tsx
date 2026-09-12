@@ -42,6 +42,13 @@ export type DownloadFormProps = {
   variante: "completo" | "proximamente";
   /** Solo la variante `/contacto` pide mensaje (§3.3). */
   conMensaje?: boolean;
+  /**
+   * Clave de `content/ui` para el texto del botón. Por defecto, el de descarga.
+   * Existe porque el mismo componente sirve a tres puertas (RF-43, RF-44) y un
+   * formulario de contacto cuyo botón dice «Descargar el documento» promete
+   * algo que no va a pasar.
+   */
+  claveDeBoton?: string;
   privacyHref?: string;
   onSubmit: (datos: DatosDeEnvio) => Promise<ResultadoEnvio>;
   onExito?: (resultado: Extract<ResultadoEnvio, { estado: "exito" }>) => void;
@@ -57,6 +64,7 @@ type EstadoFormulario =
 export function DownloadForm({
   strings: t,
   variante,
+  claveDeBoton,
   conMensaje = false,
   privacyHref = "/legal/privacidad",
   onSubmit,
@@ -223,7 +231,13 @@ export function DownloadForm({
             : `rounded-md bg-stop px-4 py-2 font-medium text-paper disabled:opacity-50 ${TAP_FEEDBACK}`
         }
       >
-        {enviando ? "…" : esProximamente ? t["download.notifyButton"] : t["download.cta"]}
+        {enviando
+          ? "…"
+          : claveDeBoton
+            ? t[claveDeBoton]
+            : esProximamente
+              ? t["download.notifyButton"]
+              : t["download.cta"]}
       </button>
 
       {esProximamente && <p className="text-sm text-ink-2">{t["download.comingSoonBody"]}</p>}

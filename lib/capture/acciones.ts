@@ -47,20 +47,36 @@ function utmDe(busqueda: string | null): Record<string, string> | null {
   return Object.keys(utm).length ? utm : null;
 }
 
+/**
+ * Los tres orígenes de captura (RF-43, RF-44).
+ *
+ * Una sola máquina con tres puertas, no tres máquinas: las tres recorren la
+ * misma validación, la misma persistencia y la misma cola de entrega al CRM.
+ * Tres caminos separados serían tres sitios donde arreglar el mismo fallo.
+ */
+export type OrigenDeCaptura = "download" | "contact" | "doctrine-request";
+
 export async function enviarCaptura(
-  slugDeDescarga: string,
+  origen: OrigenDeCaptura,
+  slugDeDescarga: string | null,
   rutaDePagina: string,
   busqueda: string | null,
   datos: DatosDeCaptura,
 ): Promise<ResultadoDeAccion> {
   const locale = localeDeRuta(rutaDePagina);
-  const documento = buscarDocumento(slugDeDescarga, locale);
-  if (!documento) return { estado: "error_servidor" };
+
+  // Solo una descarga tiene documento detrás. Contacto y solicitud de Doctrina
+  // capturan igual y no entregan archivo — el mismo trato que un documento en
+  // «próximamente» (RF-40, RF-44).
+  const documento = origen === "download" && slugDeDescarga
+    ? buscarDocumento(slugDeDescarga, locale)
+    : null;
+  if (origen === "download" && !documento) return { estado: "error_servidor" };
 
   const resultado = await capturar(datos, {
-    origen: "download",
+    origen,
     slugDeDescarga,
-    claveDeArchivo: documento.claveDeArchivo,
+    claveDeArchivo: documento?.claveDeArchivo ?? null,
     rutaDePagina,
     locale,
     utm: utmDe(busqueda),
@@ -73,9 +89,10 @@ export async function enviarCaptura(
   // URL firmada en la barra de direcciones acaba en el historial, en el
   // `Referer` y en cualquier captura de pantalla (RF-42, `architecture` §4).
   const gracias = ruta("gracias", locale);
-  return {
-    estado: "exito",
-    hayArchivo: resultado.hayArchivo,
-    destino: resultado.hayArchivo ? `${gracias}?e=${resultado.eventoId}` : `${gracias}?p=1`,
-  };
+  if (resultado.hayArchivo) {
+    return { estado: "exito", hayArchivo: true, destino: `${gracias}?e=${resultado.eventoId}` };
+  }
+  // `v` distingue las tres variantes de `/gracias` (§3.6): sin ella, quien
+  // escribe a contacto vería el texto de «te avisamos cuando el documento esté».
+  return { estado: "exito", hayArchivo: false, destino: `${gracias}?v=${origen}` };
 }

@@ -1,3 +1,4 @@
+import { FormularioDeCaptura } from "@/components/downloads/FormularioDeCaptura";
 import { bloquesDe } from "@/lib/content/bloques";
 import { loadCollection, loadUiStrings } from "@/lib/content/loader";
 import { ruta, type Locale } from "@/lib/routes/map";
@@ -70,14 +71,24 @@ export function Doctrina({ locale }: { locale: Locale }) {
         )}
       </section>
 
-      {/* ③ Documento completo a solicitud — criterio 4: estado vacío redactado
-          mientras DU-10 no exista. Se enuncia la vía, no se finge un formulario. */}
+      {/* ③ Documento completo a solicitud (DU-10, RF-44) */}
       <section className="superficie-suave mt-12 rounded-lg border border-line bg-paper-2 p-6">
         <h2 className="text-2xl font-bold text-blue-deep">{t["doctrine.fullDocTitle"]}</h2>
-        <p className="mt-3 text-ink-2">{t["doctrine.fullDocPending"]}</p>
-        <p className="mt-4">
-          <a href={ruta("contacto", locale)}>{t["service.contactLink"]} →</a>
-        </p>
+        <p className="mt-3 mb-4 text-ink-2">{t["doctrine.fullDocBody"]}</p>
+        {/*
+          Mismo formulario, misma validación y misma cola que una descarga
+          (RF-44). No hay archivo detrás todavía, así que se comporta como un
+          documento en «próximamente»: captura el correo, no emite URL firmada
+          y no registra descarga.
+        */}
+        <FormularioDeCaptura
+          origen="doctrine-request"
+          rutaDePagina={ruta("doctrina", locale)}
+          strings={t}
+          variante="proximamente"
+          claveDeBoton="doctrine.requestButton"
+          privacyHref={ruta("legalPrivacidad", locale)}
+        />
       </section>
     </div>
   );

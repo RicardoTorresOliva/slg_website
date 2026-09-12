@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { DownloadForm, type DatosDeEnvio, type ResultadoEnvio } from "../download-form/DownloadForm";
-import { enviarCaptura } from "@/lib/capture/acciones";
+import { enviarCaptura, type OrigenDeCaptura } from "@/lib/capture/acciones";
 
 /**
  * Puente entre `DownloadForm` (FU-10, sin servidor) y la Server Action de
@@ -16,16 +16,24 @@ import { enviarCaptura } from "@/lib/capture/acciones";
  * resuelve el estado del documento por su cuenta de todos modos.
  */
 export function FormularioDeCaptura({
-  slug,
+  origen = "download",
+  slug = null,
   rutaDePagina,
   strings,
   variante,
+  conMensaje,
+  claveDeBoton,
   privacyHref,
 }: {
-  slug: string;
+  origen?: OrigenDeCaptura;
+  slug?: string | null;
   rutaDePagina: string;
   strings: Record<string, string>;
   variante: "completo" | "proximamente";
+  /** Solo el formulario de contacto pide mensaje libre (§3.3). */
+  conMensaje?: boolean;
+  /** Clave de `content/ui` para el botón; por defecto el de descarga. */
+  claveDeBoton?: string;
   privacyHref: string;
 }) {
   const router = useRouter();
@@ -33,7 +41,7 @@ export function FormularioDeCaptura({
 
   async function alEnviar(datos: DatosDeEnvio): Promise<ResultadoEnvio> {
     const busqueda = typeof window !== "undefined" ? window.location.search : null;
-    const r = await enviarCaptura(slug, rutaDePagina, busqueda, {
+    const r = await enviarCaptura(origen, slug, rutaDePagina, busqueda, {
       nombre: datos.name,
       correo: datos.email,
       empresa: datos.company,
@@ -67,6 +75,8 @@ export function FormularioDeCaptura({
       <DownloadForm
         strings={strings}
         variante={variante}
+        conMensaje={conMensaje}
+        claveDeBoton={claveDeBoton}
         privacyHref={privacyHref}
         onSubmit={alEnviar}
       />

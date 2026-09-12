@@ -1610,3 +1610,43 @@ solicitud» de Doctrina muestra su estado vacío redactado y ofrece la vía de c
 sin fingir un formulario que todavía no existe. Y el `[PENDIENTE]` del resumen ejecutivo de The
 Phoenix Doctrine sigue esperando dato externo: `doctrine-summary.md` prohíbe rellenarlo por
 inferencia, así que la página muestra estado vacío en vez de una frase inventada con voz de doctrina.
+
+---
+
+## DU-10 — Contacto y solicitud del documento completo de Doctrina · `done` (2026-09-11)
+
+`/contacto` (`/en/contact`) y el formulario de «documento completo a solicitud» en Doctrina. Las dos
+puertas nuevas **reutilizan la máquina de DU-08 entera**: misma validación de FU-11, misma
+persistencia, misma cola de entrega al CRM, mismo `/gracias`. Una sola máquina con tres puertas —
+tres caminos separados serían tres sitios donde arreglar el mismo fallo.
+
+**Verificado contra Postgres real, las tres puertas**, enviando los formularios en el navegador:
+
+| `source` | Página | Campos guardados |
+|---|---|---|
+| `download` | `/descargas/[slug]` | correo + slug del documento |
+| `contact` | `/contacto` | correo, nombre, empresa, cargo, mensaje |
+| `doctrine-request` | `/doctrina` | correo |
+
+Las tres filas quedaron con `crm_sync_status: pending`, que es lo que exigen los criterios 1 y 2: la
+misma cola. La entrega efectiva al CRM es DU-09.
+
+**Criterio 7 verificado**: `/gracias` distingue las tres variantes por el parámetro de origen —
+`contact` recibe «Recibido · Tu mensaje llegó», y `doctrine-request` comparte el mensaje de
+«te avisamos» con una descarga en «próximamente», porque en los dos casos se avisará por correo.
+Una ruta con tres variantes, no tres rutas que divergen (§3.6).
+
+**Hallazgo de producto, corregido**: el formulario de contacto mostraba el botón **«Descargar el
+documento»**. El componente de FU-10 elegía la etiqueta solo por variante (`completo` /
+`proximamente`), y al reutilizarlo para una tercera puerta la etiqueta dejó de tener sentido: un
+formulario de contacto cuyo botón ofrece descargar promete algo que no va a pasar. Añadida
+`claveDeBoton` — contacto dice «Enviar», Doctrina «Solicitar el documento», descarga mantiene la
+suya.
+
+**Cierra además el criterio 3 de DU-06**: los legales ya están enlazados desde **todo** formulario
+público, que era lo único que mantenía aquella unidad abierta.
+
+**Sin agenda embebida ni widget de terceros** (RF-08) y sin mención de «Sesión Cero» en ninguna
+superficie pública (RF-96).
+
+Gate D1 tras la unidad: Performance 100 · Accesibilidad 100 · Best Practices 100 · SEO 100 · LCP 1,7 s.

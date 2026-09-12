@@ -114,5 +114,12 @@
   "doctrine.pillarsTitle": "Los tres pilares de DAL OS",
   "doctrine.fullDocTitle": "El documento completo",
   "doctrine.fullDocPending": "El documento completo de The Phoenix Doctrine se entrega a solicitud. Mientras habilitamos la solicitud en línea, escríbenos y te lo enviamos.",
-  "download.consentNotice": "Al enviar aceptas la {{privacyLink}}."
+  "download.consentNotice": "Al enviar aceptas la {{privacyLink}}.",
+  "contact.title": "Contacto",
+  "contact.intro": "Escríbenos y te respondemos. Sin formularios eternos y sin llamadas de venta.",
+  "doctrine.fullDocBody": "Déjanos tu correo corporativo y te enviamos el documento completo de The Phoenix Doctrine en cuanto esté disponible.",
+  "thanks.contactTitle": "Recibido",
+  "thanks.contactBody": "Tu mensaje llegó. Te respondemos al correo que nos dejaste.",
+  "contact.submit": "Enviar",
+  "doctrine.requestButton": "Solicitar el documento"
 }
