@@ -72,6 +72,10 @@ export const user = pgTable(
     // Campos propios, encima de lo que crea Better Auth
     role: text("role").notNull().default("client_member"),
     locale: text("locale").notNull().default("es"),
+    // Plugin `admin` de Better Auth (FU-06). Suspensión de cuenta.
+    banned: boolean("banned").default(false),
+    banReason: text("ban_reason"),
+    banExpires: timestamp("ban_expires", { withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -91,6 +95,7 @@ export const account = pgTable(
     refreshToken: text("refresh_token"),
     idToken: text("id_token"),
     accessTokenExpiresAt: timestamp("access_token_expires_at", { withTimezone: true }),
+    refreshTokenExpiresAt: timestamp("refresh_token_expires_at", { withTimezone: true }),
     scope: text("scope"),
     password: text("password"),
     createdAt: createdAt(),
@@ -111,6 +116,14 @@ export const session = pgTable(
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     ipAddress: text("ip_address"),
     userAgent: text("user_agent"),
+    /**
+     * Plugin `organization`. COMODIDAD DE INTERFAZ, NO AUTORIZACIÓN: el
+     * `organization_id` autoritativo se resuelve contra la base en cada
+     * petición (architecture §2.4). Esta columna NUNCA se usa como filtro.
+     */
+    activeOrganizationId: text("active_organization_id"),
+    /** Plugin `admin`. Declarada para el adaptador; NO se habilita en v1. */
+    impersonatedBy: text("impersonated_by"),
     createdAt: createdAt(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -128,6 +141,7 @@ export const verification = pgTable(
     value: text("value").notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     createdAt: createdAt(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("idx_verification_identifier").on(t.identifier)],
 );
@@ -144,6 +158,9 @@ export const organization = pgTable(
     slug: text("slug").notNull(),
     type: text("type").notNull().default("client"),
     status: text("status").notNull().default("active"),
+    // Plugin `organization` de Better Auth (FU-06).
+    logo: text("logo"),
+    metadata: text("metadata"),
     createdAt: createdAt(),
   },
   (t) => [uniqueIndex("uq_organization_slug").on(t.slug)],
@@ -212,6 +229,13 @@ export const invitation = pgTable(
       .references(() => organization.id, { onDelete: "cascade" }),
     role: text("role").notNull().default("client_member"),
     tokenHash: text("token_hash").notNull(),
+    /**
+     * Los CUATRO valores del plugin, con su grafía (`canceled`), para no pelear
+     * con su lógica interna. «Caducada» NO es un valor: se deduce de
+     * `expires_at < now()` sobre una `pending` (data_model §3.5).
+     */
+    status: text("status").notNull().default("pending"),
+    inviterId: text("inviter_id").references(() => user.id, { onDelete: "set null" }),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     acceptedAt: timestamp("accepted_at", { withTimezone: true }),
     createdAt: createdAt(),

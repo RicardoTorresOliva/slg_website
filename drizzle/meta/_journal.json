@@ -8,6 +8,34 @@
       "when": 1788918109303,
       "tag": "0000_inicial",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788918109304,
+      "tag": "0001_restricciones_aislamiento",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788918109305,
+      "tag": "0002_rol_de_aplicacion",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788918109306,
+      "tag": "0003_politica_auditoria",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788918109307,
+      "tag": "0004_identidad",
+      "breakpoints": true
     }
   ]
 }

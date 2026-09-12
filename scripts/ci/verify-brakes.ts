@@ -48,6 +48,12 @@ const CASOS: Caso[] = [
     env: { JS_BUDGET_BYTES: "1024" },
   },
   {
+    freno: "migración no declarada en el journal",
+    script: "check-migrations.ts",
+    espera: "NO está en meta/_journal.json",
+    env: { MIGRATIONS_DIR: path.join(HERE, "negative/migrations") },
+  },
+  {
     freno: ".env.example con un valor",
     script: "check-env-example.ts",
     espera: "lleva VALOR",
@@ -80,8 +86,13 @@ for (const c of CASOS) {
   }
 }
 
-console.log("\nContraprueba — contra el repositorio real, los tres deben PASAR:\n");
-for (const script of ["check-secrets.ts", "check-js-budget.ts", "check-env-example.ts"]) {
+console.log("\nContraprueba — contra el repositorio real, los cuatro deben PASAR:\n");
+for (const script of [
+  "check-secrets.ts",
+  "check-js-budget.ts",
+  "check-env-example.ts",
+  "check-migrations.ts",
+]) {
   const res = spawnSync(process.execPath, [path.join(HERE, script)], {
     encoding: "utf8",
     cwd: REPO_ROOT,
@@ -121,4 +132,4 @@ if (fallos) {
   console.error(`\n✗ ${fallos} freno(s) no se comportaron como deben.\n`);
   process.exit(1);
 }
-console.log("\n✓ Los seis frenos del criterio 4 fallan cuando deben y pasan cuando deben.\n");
+console.log("\n✓ Los siete frenos del criterio 4 fallan cuando deben y pasan cuando deben.\n");

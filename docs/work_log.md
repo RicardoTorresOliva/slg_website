@@ -278,3 +278,47 @@ el gate.**
 **Siguiente.** Ricardo ejecuta `docs/deployment.md` §2 a §5 para cerrar los criterios 1, 2, 3 y 8.
 En paralelo, la unidad siguiente por dependencia es **FU-06** (identidad y autorización), que solo
 espera a que FU-05 esté desplegada.
+
+---
+
+## 2026-09-12 · Defecto corregido — las migraciones `0001`, `0002` y `0003` nunca se aplicaban
+
+Encontrado al levantar PostgreSQL para empezar **FU-06**. No es una unidad: es una reparación.
+
+**Qué pasaba.** `drizzle-kit migrate` solo aplica lo que `drizzle/meta/_journal.json` declara, y el
+journal listaba **una sola entrada**: `0000_inicial`. Las tres migraciones escritas a mano en FU-04
+—restricciones y aislamiento, rol de aplicación, política de auditoría— estaban en el repositorio,
+revisadas y en el diff, pero **ningún despliegue las habría ejecutado**. drizzle-kit no avisa: desde
+su punto de vista un `.sql` que nadie declaró no es una migración, es un archivo.
+
+**Qué habría pasado en producción.** Las 19 tablas creadas **sin row level security, sin el rol
+`slg_app` y sin la política de `audit_log`**. El aislamiento entre empresas no habría estado roto:
+habría estado **ausente**, con DoD #5 y el gate D9 sin cumplir y sin una sola señal en el despliegue.
+Verificado: contra una base recién migrada solo con `0000`, `test:isolation` cae con
+`role "slg_app" does not exist`.
+
+**Por qué FU-04 no lo vio.** Aplicó las tres a mano durante la unidad y verificó el resultado —por eso
+sus 24 comprobaciones eran ciertas—, pero verificó **el estado de la base**, no **el camino que lleva
+a ese estado**. Es la diferencia entre probar el resultado y probar el procedimiento.
+
+**Corregido y verificado.** Las tres entradas añadidas al journal. Contra una base creada desde cero:
+19 tablas, 10 políticas, `slg` (dueño, con BYPASSRLS) y `slg_app` (aplicación, sin BYPASSRLS), y las
+**29 comprobaciones** de `npm run test:db` en verde.
+
+**Freno nuevo, para que no vuelva.** `scripts/ci/check-migrations.ts`: falla si un `.sql` de
+`drizzle/` no está declarado, si el journal declara algo que no existe, o si la secuencia se rompe.
+Con su prueba negativa (`npm run check:brakes`, ahora **siete** frenos) y su paso en el pipeline.
+
+---
+
+## 2026-09-12 · FU-05 — corrección del runbook tras ver la infraestructura real
+
+Ricardo mandó captura del proyecto `slg_website` en Easypanel: **los cinco servicios ya existen**.
+`docs/deployment.md` §2 les decía que los crearan. Reescrito con los nombres reales —`slgwebpostgres`,
+`minio`, `slg-web`, `slgweb-staging`, `umami` + `umami-db`— y reducido a lo que de verdad queda:
+contraseña del rol `slg_app`, variables de entorno y el `deploy command`. El nombre importa más allá
+de la etiqueta: en las cadenas internas el host es `slgwebpostgres`, no `slg-db`.
+
+**Lección, escrita para no repetirla:** el runbook se redactó desde `architecture` §7 sin comprobar el
+estado real del panel. Un procedimiento que supone un punto de partida equivocado hace perder más
+tiempo que no tenerlo.

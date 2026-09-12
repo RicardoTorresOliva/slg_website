@@ -53,110 +53,71 @@ de entorno de Easypanel y en el panel del proveedor de DNS.
 
 ---
 
-## 2. Los cinco servicios de Easypanel
+## 2. Los cinco servicios — YA EXISTEN
 
-Todos dentro del proyecto **`website`**. El proyecto `clientes` (donde vive el CRM)
-**no se toca**.
+Panel: **`buul2l.easypanel.host`**, proyecto **`slg_website`**. Los servicios ya están creados y
+corriendo. **No hay que crear nada.** Lo que cambia respecto al diseño son los nombres:
 
-### 2.1 `slg-db` — PostgreSQL 16
+| `architecture` §7.1 dice | En Easypanel se llama | Qué es |
+|---|---|---|
+| `slg-db` | **`slgwebpostgres`** | PostgreSQL |
+| `slg-files` | **`minio`** | MinIO, buckets `downloads` y `deliverables` |
+| `slg-web` | **`slg-web`** | La aplicación, rama `main` |
+| `slg-web-staging` | **`slgweb-staging`** | La misma imagen, rama `develop` |
+| `slg-analytics` | **`umami`** + **`umami-db`** | Umami y su base propia |
 
-1. **Create Service → Postgres**. Nombre: `slg-db`. Versión: `16`.
-2. Usuario `slg`, base de datos `slg`, contraseña generada por Easypanel.
-3. **No publicar puerto.** Solo red interna: `architecture` §7.1 lo exige.
-4. Tras el primer despliegue de `slg-web`, abre una consola contra la base y pon
-   contraseña al rol de aplicación —la migración `0002` lo crea con `LOGIN` pero
-   **sin contraseña**, a propósito:
+Los nombres reales mandan. En las cadenas de conexión internas el host es el nombre del servicio:
+la base de datos es **`slgwebpostgres`**, no `slg-db`.
 
-   ```sql
-   ALTER ROLE slg_app WITH PASSWORD '<la que generaste en §1>';
-   ```
+### 2.1 Lo único que queda por hacer en estos servicios
 
-   **Por qué dos roles:** el usuario que crea la imagen de PostgreSQL es
-   superusuario y lleva `rolbypassrls`. Conectando con él **las políticas de fila no
-   se aplican** y todo el aislamiento entre empresas es decorativo. Lo encontró
-   FU-04 y la prueba `test:isolation` falla si alguien vuelve a apuntar
-   `DATABASE_URL` al dueño.
+**a) Contraseña del rol de aplicación.** La migración crea el rol `slg_app` con `LOGIN` y **sin
+contraseña**, a propósito: el repositorio es público. Hay que ponérsela una vez, en la consola de
+`slgwebpostgres`:
 
-### 2.2 `slg-files` — MinIO (API S3)
-
-1. **Create Service → MinIO** (o App con la imagen `minio/minio`). Nombre: `slg-files`.
-2. Dos buckets, los dos **privados**: `downloads` y `deliverables`.
-3. Sin acceso anónimo de lectura. Ninguna ruta de la aplicación lista un bucket
-   (RF-123, gate D10): todo acceso es por URL firmada.
-4. Anota endpoint interno, `access key` y `secret key` → van a `S3_*` en §2.4.
-
-### 2.3 `slg-analytics` — Umami
-
-1. **Create Service → App**, imagen oficial de Umami. Nombre: `slg-analytics`.
-2. Base de datos: una propia dentro de `slg-db` o un Postgres aparte; no comparte
-   esquema con la aplicación.
-3. Dominio interno o subdominio propio, a elección. **No entra en la lista de
-   nombres protegidos** porque es nuevo.
-4. Anota `script url` y `website id` → `NEXT_PUBLIC_UMAMI_*`.
-
-### 2.4 `slg-web` — la aplicación (producción)
-
-1. **Create Service → App**. Nombre: `slg-web`.
-2. **Source**: GitHub, repositorio `RicardoTorresOliva/slg_website`, rama **`main`**.
-3. **Build**: `Dockerfile` (está en la raíz; ya produce la salida `standalone`).
-4. **Port**: `3000`.
-5. **Domains**: `softlandingglobal.com` y `www.softlandingglobal.com`, HTTPS con
-   Let's Encrypt, redirección de HTTP a HTTPS activada.
-6. **Environment**: copia los NOMBRES de `.env.example` y rellena los valores aquí.
-   Para el arranque de M0 bastan estos; el resto entra con su unidad:
-
-   | Variable | Valor |
-   |---|---|
-   | `DATABASE_URL` | `postgresql://slg_app@slg-db:5432/slg` — intercala la contraseña de `slg_app` tras `slg_app` y antes de `@` |
-   | `DATABASE_URL_MIGRATIONS` | `postgresql://slg@slg-db:5432/slg` — igual, con la contraseña del rol dueño |
-   | `NEXT_PUBLIC_SITE_URL` | `https://softlandingglobal.com` |
-   | `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | de §2.2 |
-   | `S3_BUCKET_DOWNLOADS` / `S3_BUCKET_DELIVERABLES` | `downloads` / `deliverables` |
-   | `NEXT_PUBLIC_UMAMI_SCRIPT_URL` / `NEXT_PUBLIC_UMAMI_WEBSITE_ID` | de §2.3 |
-
-
-   > Las dos cadenas se escriben **sin contraseña** en este documento a propósito: el
-   > análisis de secretos (`npm run check:secrets`) marca en rojo cualquier cadena de
-   > conexión con contraseña dentro del repositorio, y tiene razón al hacerlo aunque
-   > sea un ejemplo. La forma es la estándar de PostgreSQL: usuario, dos puntos,
-   > contraseña, arroba, host, dos puntos, puerto, barra, base de datos.
-
-   **`STAGING_BASIC_AUTH_USER` y `STAGING_BASIC_AUTH_PASSWORD` NO se definen aquí.**
-   El middleware se activa por la presencia de esas dos variables: definirlas en
-   producción pondría un candado delante del sitio público.
-
-7. **Deploy command** (paso previo al arranque): `npm run db:migrate`.
-   Usa `DATABASE_URL_MIGRATIONS`, el rol dueño. El runtime nunca migra.
-
-### 2.5 `slg-web-staging` — la misma imagen desde `develop`
-
-Idéntico a §2.4 salvo cuatro cosas:
-
-| Campo | Valor |
-|---|---|
-| Nombre | `slg-web-staging` |
-| Rama | **`develop`** |
-| Dominio | `staging.softlandingglobal.com` |
-| Extra | `STAGING_BASIC_AUTH_USER` y `STAGING_BASIC_AUTH_PASSWORD` **sí se definen** |
-
-Con esas dos variables definidas, el middleware devuelve `401` con
-`WWW-Authenticate: Basic` y `X-Robots-Tag: noindex` en todas las rutas **menos
-`/api/health`**, que queda abierta a propósito: UptimeRobot no lleva credenciales
-y un monitor que recibe `401` estaría midiendo la compuerta, no el servicio.
-
-Base de datos de staging: **una distinta**. Nunca la de producción.
-
-**Comprobación del criterio 1** (con los valores reales, desde tu máquina):
-
-```bash
-curl -sI https://staging.softlandingglobal.com/            # 401 + WWW-Authenticate + X-Robots-Tag: noindex
-curl -sI -u "$USUARIO:$CLAVE" https://staging.softlandingglobal.com/   # 200 + X-Robots-Tag: noindex
-curl -s  https://staging.softlandingglobal.com/api/health  # {"status":"ok"}
+```sql
+ALTER ROLE slg_app WITH PASSWORD 'la-que-generes';
 ```
 
-Lo mismo ya está probado **de forma automatizada** contra el servidor real en
-`npm run check:runtime` (19 comprobaciones). Este `curl` solo confirma que el
-despliegue lleva las variables puestas.
+**Por qué dos roles y no uno:** el usuario que crea la imagen de PostgreSQL es superusuario y lleva
+`rolbypassrls`. Conectando con él **las políticas de fila no se aplican** y el aislamiento entre
+empresas se vuelve decorativo. Lo encontró FU-04.
+
+**b) Variables de entorno de `slg-web`** (pestaña *Environment*). Los nombres salen de
+`.env.example`; para M0 bastan estas:
+
+| Variable | Valor |
+|---|---|
+| `DATABASE_URL` | `postgresql://slg_app@slgwebpostgres:5432/slg` — con la contraseña de (a) intercalada tras `slg_app` |
+| `DATABASE_URL_MIGRATIONS` | `postgresql://slg@slgwebpostgres:5432/slg` — igual, con la del rol dueño |
+| `NEXT_PUBLIC_SITE_URL` | `https://softlandingglobal.com` |
+| `S3_ENDPOINT` | el endpoint interno de `minio` |
+| `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_REGION` | del servicio `minio` |
+| `S3_BUCKET_DOWNLOADS` / `S3_BUCKET_DELIVERABLES` | `downloads` / `deliverables` |
+| `NEXT_PUBLIC_UMAMI_SCRIPT_URL` / `NEXT_PUBLIC_UMAMI_WEBSITE_ID` | del servicio `umami` |
+
+> Las cadenas van **sin contraseña** en este documento a propósito: el análisis de secretos marca en
+> rojo cualquier cadena de conexión con contraseña dentro del repositorio, y tiene razón aunque sea
+> un ejemplo.
+
+**`STAGING_BASIC_AUTH_USER` y `STAGING_BASIC_AUTH_PASSWORD` NO se definen en `slg-web`.** El
+middleware se activa por la presencia de esas dos variables: ponerlas en producción pondría un
+candado delante del sitio público.
+
+**c) Variables de `slgweb-staging`.** Las mismas, **más** `STAGING_BASIC_AUTH_USER` y
+`STAGING_BASIC_AUTH_PASSWORD`, y con `NEXT_PUBLIC_SITE_URL` apuntando a
+`https://staging.softlandingglobal.com`. Base de datos **distinta** de la de producción.
+
+**d) Deploy command** en `slg-web` y `slgweb-staging`: `npm run db:migrate`. Usa
+`DATABASE_URL_MIGRATIONS`, el rol dueño. El runtime nunca migra.
+
+### 2.2 Qué hace la compuerta de staging
+
+Con esas dos variables puestas, `slgweb-staging` devuelve `401` con `WWW-Authenticate: Basic` y
+`X-Robots-Tag: noindex` en todas las rutas **menos `/api/health`**, que queda abierta a propósito:
+UptimeRobot no lleva credenciales y un monitor que recibe `401` estaría midiendo la compuerta, no el
+servicio. Está verificado de forma automatizada en `check:runtime` (19 comprobaciones sobre el
+servidor real); en el despliegue solo hay que confirmar que las variables están puestas.
 
 ---
 

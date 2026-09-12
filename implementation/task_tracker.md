@@ -181,3 +181,14 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   tracker y en el `work_log` **sin entrada**, y D-50 (`crm_delivery.cycle`) no tenía número.
   Efecto en el plan: **DU-16 deja de depender de un spec-delta del `data_model`** — CF-1 quedó
   resuelto por D-50 y la vía está construida desde FU-04.
+
+- `2026-09-12` — **Defecto corregido, no unidad:** las migraciones `0001`, `0002` y `0003` no estaban
+  declaradas en `drizzle/meta/_journal.json` y **ningún despliegue las aplicaba**: producción habría
+  nacido sin row level security, sin el rol `slg_app` y sin la política de auditoría. Registradas y
+  verificadas contra PostgreSQL real (19 tablas, 10 políticas, 29 comprobaciones en verde). Freno
+  nuevo `check:migrations` con prueba negativa; el pipeline pasa a **siete** frenos.
+  **FU-04 sigue `done`**: su resultado era cierto, lo que faltaba era el camino que lleva a él.
+- `2026-09-12` — **FU-06 arrancada** (sigue `pending` hasta que cierre): migración `0004_identidad`
+  aplicada y verificada —columnas de Better Auth y la función `app_memberships_de_usuario`, única vía
+  para resolver la pertenencia durante el inicio de sesión sin abrir las ocho tablas bajo RLS—, y
+  `lib/auth/` con la matriz B.3 como datos y su aplicación en servidor.

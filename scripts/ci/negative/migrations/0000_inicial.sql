@@ -1,0 +1,1 @@
+-- FIXTURE NEGATIVO — contenido irrelevante.

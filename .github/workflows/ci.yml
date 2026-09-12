@@ -85,6 +85,13 @@ jobs:
       - name: .env.example completo y sin valores
         run: npm run check:env
 
+      # El fallo que este paso impide ya ocurrió: tres migraciones escritas a
+      # mano, en el repositorio, y sin declarar en el journal. drizzle-kit solo
+      # aplica lo declarado, así que el despliegue habría creado las tablas SIN
+      # row level security y sin decir nada.
+      - name: Toda migración está declarada en el journal
+        run: npm run check:migrations
+
       - name: Compilación autocontenida
         run: npm run build:standalone
 
