@@ -8,8 +8,11 @@ import { loadCollection } from "@/lib/content/loader";
  * El contenido se carga y valida en tiempo de build: un frontmatter inválido
  * detiene el despliegue en vez de publicar una página a medias.
  */
+/** `home` se excluye: la portada inglesa vive en `/en` (DU-03). Ver la nota en la ruta española. */
 export async function generateStaticParams() {
-  return loadCollection("page", "en").map((p) => ({ slug: p.slug }));
+  return loadCollection("page", "en")
+    .filter((p) => p.slug !== "home")
+    .map((p) => ({ slug: p.slug }));
 }
 
 export const dynamicParams = false;

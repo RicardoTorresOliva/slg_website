@@ -8,8 +8,16 @@ import { loadCollection } from "@/lib/content/loader";
  * El contenido se carga y valida en tiempo de build: un frontmatter inválido
  * detiene el despliegue en vez de publicar una página a medias.
  */
+/**
+ * `home` se excluye a propósito: la portada tiene su propia ruta (`/`, DU-03).
+ * Sin esta exclusión existirían dos URLs con el mismo contenido —`/` y
+ * `/home`— que es contenido duplicado para un buscador justo en la página que
+ * más importa posicionar.
+ */
 export async function generateStaticParams() {
-  return loadCollection("page", "es").map((p) => ({ slug: p.slug }));
+  return loadCollection("page", "es")
+    .filter((p) => p.slug !== "home")
+    .map((p) => ({ slug: p.slug }));
 }
 
 export const dynamicParams = false;

@@ -38,9 +38,9 @@ se ha producido ningún entregable.
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 27 `pending` · 3 `in_progress` (FU-07, FU-08, FU-11) · 0 `blocked` · 0 `review` ·
-**9 `done`** (FU-02, FU-03, FU-04 · 2026-09-08; FU-05, FU-06, FU-09 · 2026-09-10; FU-01, FU-10,
-DU-02 · 2026-09-11). **M0-A completo.** Siguiente: DU-03 (Home), ya desbloqueada. FU-07 y FU-08
+**Estado global:** 26 `pending` · 3 `in_progress` (FU-07, FU-08, FU-11) · 0 `blocked` · 0 `review` ·
+**10 `done`** (FU-02, FU-03, FU-04 · 2026-09-08; FU-05, FU-06, FU-09 · 2026-09-10; FU-01, FU-10,
+DU-02, DU-03 · 2026-09-11). **M0-A y M1-A completos.** Siguiente: DU-04 (overviews de rama). FU-07 y FU-08
 cierran cuando se verifique de punta a punta contra staging; mientras tanto, DU-01 sigue esperando
 a F.2-2/F.2-3.
 
@@ -69,7 +69,7 @@ a F.2-2/F.2-3.
 | FU-01 | FU | Copy maestro bilingüe — compuerta única de aprobación | M1-A | FU-03 · SLG_Overhauling | `done` |
 | FU-10 | FU | Sistema de componentes C.5 con prototipo interactivo aprobado | M1-A | FU-02 | `done` |
 | DU-02 | DU | Armazón público: navegación, sheet móvil, pie y conmutador de idioma | M1-A | FU-03, FU-10 | `done` |
-| DU-03 | DU | Portada (Home) ES/EN | M1-A | FU-01, FU-10, DU-02 | `pending` |
+| DU-03 | DU | Portada (Home) ES/EN | M1-A | FU-01, FU-10, DU-02 | `done` |
 | ━━━ | ━━━ | **▼ M1-B · CAPA PÚBLICA: PÁGINAS** | ━━━ | ━━━ | ━━━ |
 | DU-04 | DU | Overviews de rama (`/ai`, `/ai/academy`, `/ai/enterprise`, `/ai/factory`) | M1-B | DU-03 | `pending` |
 | DU-05 | DU | Las once páginas de servicio (contrato A.3) | M1-B | DU-04 | `pending` |
@@ -231,3 +231,12 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   `check:content`. **Hallazgo propio corregido**: `<html lang>` decía `es` en todo el sitio,
   incluidas las páginas bajo `/en` (defecto real de accesibilidad y SEO, vivo desde FU-02).
   Detalle en `docs/work_log.md`. Siguiente: DU-03 (Home).
+- `2026-09-11` — **DU-03 → `done`**. `/` y `/en` con los siete bloques de RF-09; retirado el
+  marcador de posición de FU-02 que ocupaba la raíz. **Gate D1, primera medición sobre la Home real**
+  (criterio 6, R-21): Performance 97 · Accesibilidad 100 · Best Practices 100 · SEO 100 · LCP 2,5 s
+  — LCP justo en el umbral, sin margen. **D-67** resuelve una contradicción real entre
+  `ui_wireframes` §2.1 y el criterio 2 (bloque 5 oculto si vacío, bloque 6 con estado vacío escrito).
+  **D-68** corrige dos incumplimientos medidos de WCAG AA: el pie daba 4,37:1 en TODAS las páginas
+  desde FU-10, y la franja oscura 3,32:1. Corregido además que `/home` y `/` servían la misma página
+  (contenido duplicado) y que el freno de secretos analizaba `node_modules` anidados (33 falsos
+  positivos). Detalle en `docs/work_log.md`. **M1-A cerrado.**

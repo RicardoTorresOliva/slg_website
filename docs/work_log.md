@@ -1229,3 +1229,64 @@ cada archivo se analizara dos veces.
 `/blog`, `/descargas`, `/contacto` y `/legal/*`, que **todavía no existen** — son DU-04, DU-05,
 DU-06, DU-08 y DU-11. El armazón está listo antes que las habitaciones, que es el orden correcto,
 pero hasta que esas unidades existan el menú lleva a 404.
+
+---
+
+## DU-03 — Portada (Home) ES/EN · `done` (2026-09-11)
+
+`/` y `/en` con los siete bloques de RF-09. Se retiró `app/page.tsx`, el marcador de posición de
+FU-02 que ocupaba la raíz. El copy sale íntegro de `content/pages/{es,en}/home.md` (aprobado en
+FU-01) y las etiquetas de interfaz de `content/ui`: cero cadenas de negocio en componentes.
+
+**`lib/content/home.ts` hace cumplir el criterio 1, no solo lo declara**: si falta un bloque o están
+desordenados, `cargarHome` lanza y la página no se renderiza a medias. Mismo trato que
+`validateServiceSections` da al contrato A.3.
+
+**Conflicto real entre documentos, resuelto y registrado (D-67).** `ui_wireframes` §2.1 dice que el
+bloque 5 (últimos artículos) **no se renderiza** cuando está vacío («una portada con estados vacíos
+visibles no es una portada»). El criterio 2 de esta unidad dice que ese mismo bloque resuelve su
+estado vacío **con redacción propia**. `design_summary` no cataloga la contradicción. Resuelto a
+favor del wireframe para el bloque 5 (es la instrucción específica para esta situación exacta) y a
+favor del criterio para el bloque 6, que conserva estado vacío escrito porque es el **único CTA de
+la portada** y esconderlo dejaría la página sin camino de conversión. Hoy los dos únicos artículos
+del repositorio están en `status: draft`, así que el bloque 5 no aparece en ninguno de los idiomas.
+
+**Gate D1, primera medición sobre la Home real (criterio 6, mitigación de R-21):**
+`Performance 97 · Accesibilidad 100 · Best Practices 100 · SEO 100 · LCP 2,5 s`. LCP queda **justo
+en el umbral**: 2,5 s es el máximo que el gate admite. No hay margen — la primera imagen pesada o
+script de terceros que entre en la portada la tumba.
+
+**Tres defectos de contraste encontrados midiendo, no leyendo. Dos eran reales y preexistentes:**
+
+1. **El pie, en todas las páginas del sitio**: enlaces de 14 px en `--blue-primary` sobre
+   `--paper-2` = **4,37:1**, por debajo del 4,5:1 de WCAG AA. Lo más señalado: `brand-tokens.md` ya
+   lo prohibía por escrito («ahí solo en tamaño grande ≥ 24 px») y el pie lo hacía igual desde
+   FU-10. Corregido a `--blue-deep` (>14:1), que sigue siendo color de marca.
+2. **La franja Doctrina** (defecto propio, introducido aquí): el enlace salía en azul de marca sobre
+   el azul oscuro = **3,32:1**. Causa de fondo que conviene conocer para las próximas unidades: la
+   regla `a { color: … }` de `globals.css` vive **fuera de toda `@layer`**, así que en la cascada de
+   Tailwind v4 gana a cualquier utilidad de color. `className="text-paper"` sobre un enlace **no
+   hace nada**. Por eso el arreglo (`.seccion-oscura a`) vive en `globals.css`, junto a la regla que
+   lo causa. Quien construya DU-04/05/06 con enlaces de color: esto te va a pasar.
+3. **Falso positivo, documentado para que nadie "arregle" un token que está bien**: Lighthouse mide
+   a veces el subtítulo del hero **durante su animación de entrada**, con `opacity` cerca de 0, y
+   reporta el color ya mezclado con el fondo (3,4:1). El estado final es 6,0:1, exactamente lo que
+   `brand-tokens.md` documenta. Es intermitente entre ejecuciones. No se tocó la animación: alterar
+   un motion ya aprobado en su compuerta para contentar a una métrica transitoria sería optimizar el
+   número, no la experiencia.
+
+**Hallazgo aparte, corregido**: `/home` y `/` servían la misma página (el `[slug]` incluía el
+registro `home` en sus parámetros). Contenido duplicado para un buscador, justo en la página que más
+importa posicionar. `home` queda excluido de `generateStaticParams` en los dos idiomas.
+
+**Y una corrección en el freno de secretos**: `IGNORAR` comparaba rutas desde la raíz, así que solo
+excluía el `node_modules` de primer nivel. Un `node_modules` anidado —el del worktree del agente que
+construía FU-14 en paralelo— entró entero en el análisis y produjo **33 falsos positivos** de golpe,
+todos fixtures de bibliotecas. Ninguno era un secreto real ni estaba en archivo versionado, pero así
+es exactamente como un hallazgo de verdad se vuelve invisible. Ahora se ignora cualquier directorio
+`node_modules` a cualquier profundidad, y `.claude/worktrees` por ruta. Verificado que el escáner
+sigue detectando lo que debe: sus pruebas negativas siguen en verde.
+
+**Cambio de alcance declarado**: ocho claves nuevas en `content/ui` (`home.*`, más `nav.offline` de
+DU-02). Son textos visibles posteriores a la compuerta de FU-01, redactados por el agente, y quedan
+**pendientes de ratificación de Ricardo**.

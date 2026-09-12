@@ -34,7 +34,23 @@ const PATRONES: ReadonlyArray<{ re: RegExp; que: string }> = [
 const IGNORAR = [
   "node_modules", ".next", ".git", "dist", "coverage",
   "package-lock.json", ".env", "docs/infra",
+  // Copias de trabajo de agentes en paralelo: son otro checkout del mismo
+  // repositorio, con su propio `npm install`. Lo que haya ahí se analiza en
+  // SU rama, no en esta.
+  ".claude/worktrees",
 ];
+
+/**
+ * Directorios de dependencias de terceros, a cualquier profundidad.
+ *
+ * `IGNORAR` compara rutas desde la raíz, así que solo excluía el
+ * `node_modules` de primer nivel: un `node_modules` anidado —el de un
+ * worktree, el de un paquete con dependencias propias— se colaba entero en el
+ * análisis y llenaba la salida de fixtures de bibliotecas. 33 falsos
+ * positivos de golpe, que es exactamente como un hallazgo real se vuelve
+ * invisible.
+ */
+const NOMBRES_SIEMPRE_IGNORADOS = new Set(["node_modules"]);
 
 // El propio detector contiene los patrones que busca: se excluye para no
 // denunciarse a sí mismo.
@@ -49,7 +65,11 @@ function recorrer(dir: string) {
     const abs = path.join(dir, e.name);
     const rel = path.relative(RAIZ, abs);
     if (IGNORAR.some((i) => rel === i || rel.startsWith(i + path.sep))) continue;
-    if (e.isDirectory()) { recorrer(abs); continue; }
+    if (e.isDirectory()) {
+      if (NOMBRES_SIEMPRE_IGNORADOS.has(e.name)) continue;
+      recorrer(abs);
+      continue;
+    }
     if (!/\.(ts|tsx|js|jsx|mjs|cjs|json|md|mdx|css|ya?ml|sql|sh|env\.example|Dockerfile)$/i.test(e.name)
         && e.name !== "Dockerfile" && e.name !== "docker-compose.yml") continue;
     if (AUTOEXCLUIDOS.includes(rel)) continue;

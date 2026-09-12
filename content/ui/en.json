@@ -65,5 +65,13 @@
   "invitation.confirmEmail.label": "Confirm your email to complete linking",
   "invitation.confirmEmail.button": "Confirm",
   "invitation.error.emailMismatch": "That email doesn't match the invitation.",
-  "invitation.error.generic": "Something failed. Try again."
+  "invitation.error.generic": "Something failed. Try again.",
+  "home.doctrine.link": "Read The Phoenix Doctrine",
+  "home.doctrine.empty": "The public summary of The Phoenix Doctrine will be published here.",
+  "home.latestPosts.title": "Latest articles",
+  "home.latestPosts.all": "All articles",
+  "home.featuredDownload.title": "Featured download",
+  "home.featuredDownload.empty": "The documents will be available soon.",
+  "home.doorsHeading": "The two branches",
+  "home.cardsHeading": "The three SLG_AI lines"
 }

@@ -130,6 +130,37 @@ a[class*="button"] {
   text-decoration: none;
 }
 
+/* ── Enlaces del pie ───────────────────────────────────────────────────────
+ * El pie vive sobre `--paper-2` y sus enlaces son de 14 px. `brand-tokens.md`
+ * ya lo prohibía por escrito —«`--blue-primary`: 4,4:1 sobre blanco roto → ahí
+ * solo en tamaño grande (≥ 24 px)»— pero el pie lo hacía igualmente: Lighthouse
+ * lo midió en **4,37:1**, por debajo del 4,5:1 de WCAG AA, en TODAS las
+ * páginas del sitio. Se usa `--blue-deep`, que sobre `--paper-2` pasa de 14:1
+ * y sigue siendo color de marca.
+ */
+footer a {
+  color: var(--slg-blue-deep);
+}
+
+/* ── Enlaces sobre secciones oscuras (C.3) ─────────────────────────────────
+ * En una franja oscura (`--blue-deep` o `--indigo`) el color de enlace de
+ * marca deja de cumplir: medido con Lighthouse, `--slg-link` sobre
+ * `--slg-blue-deep` da **3,32:1**, por debajo del 4,5:1 que WCAG AA pide para
+ * texto normal.
+ *
+ * Y no basta con poner una utilidad de color en el elemento: la regla `a` de
+ * arriba vive fuera de toda `@layer`, así que en la cascada de Tailwind v4
+ * gana a cualquier utilidad —que sí está en capa—. Por eso el arreglo vive
+ * aquí, junto a la regla que lo causa, y no en el componente.
+ */
+.seccion-oscura a {
+  color: var(--slg-paper);
+  text-decoration-color: color-mix(in srgb, var(--slg-paper) 55%, transparent);
+}
+.seccion-oscura a:hover {
+  text-decoration-color: var(--slg-paper);
+}
+
 /* ── Foco · D-44 ───────────────────────────────────────────────────────────
  * Token ÚNICO para todo elemento interactivo. Escribir un anillo de foco a
  * mano en un componente rechaza la unidad en revisión (FU-02, criterio 5).

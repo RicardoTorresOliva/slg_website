@@ -65,5 +65,13 @@
   "invitation.confirmEmail.label": "Confirma tu correo para completar la vinculación",
   "invitation.confirmEmail.button": "Confirmar",
   "invitation.error.emailMismatch": "Ese correo no coincide con la invitación.",
-  "invitation.error.generic": "Algo falló. Vuelve a intentarlo."
+  "invitation.error.generic": "Algo falló. Vuelve a intentarlo.",
+  "home.doctrine.link": "Leer The Phoenix Doctrine",
+  "home.doctrine.empty": "El resumen público de The Phoenix Doctrine se publicará aquí.",
+  "home.latestPosts.title": "Últimos artículos",
+  "home.latestPosts.all": "Todos los artículos",
+  "home.featuredDownload.title": "Descarga destacada",
+  "home.featuredDownload.empty": "Los documentos estarán disponibles próximamente.",
+  "home.doorsHeading": "Las dos ramas",
+  "home.cardsHeading": "Las tres líneas de SLG_AI"
 }
