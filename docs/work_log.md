@@ -1433,3 +1433,42 @@ El contenido no trae figuras propias y no se ha inventado ninguna.
 los 11 documentos existe todavía** (EXT-1), así que las 11 secciones ⑤ muestran «disponible
 próximamente». Las páginas están completas como máquina; el contenido que les falta solo lo puede
 dar Ricardo o SLG_Overhauling.
+
+---
+
+## EXT-2 (parcial) — Isotipo real en cabecera y pie · (2026-09-11)
+
+Ricardo aportó la carpeta de marca
+(`~/Vaults/BizPart/03_Operaciones/Marca/Kit_Marca_SLG`). Integrado el **isotipo corporativo**, no un
+logotipo completo, y la razón es de norma, no de gusto: los tres lockups oficiales dicen
+«Softlanding Global», «Softlanding Global Academy» o llevan el tagline *The discipline of going
+global*, y la marca pública de este sitio es **SLG Agency** (§10-4, `naming-rules.md`) —
+«Softlanding Global» solo se usa en el contexto de `SLG_Holdings`, y `SLG_Academy` es **una línea**
+dentro de `SLG_AI`, no la marca. Un logotipo con lettering en la cabecera habría contradicho el copy
+que se aprobó en FU-01. El isotipo no dice ninguna de las dos cosas.
+
+**Vectorial de verdad**: convertido desde `Isotipo-SLG.pdf` con `pdftocairo -svg`. Ni recortado de un
+PNG ni redibujado a mano — 4 paths, 3,5 KB. El `viewBox` se ajustó al contenido real (`216 352 648
+376`) calculando el recuadro de píxeles opacos sobre un render de 1080 px, porque el original venía
+centrado en un lienzo cuadrado con mucho aire: sin ese ajuste, la marca habría salido diminuta dentro
+de su propia caja.
+
+**Hallazgo del camino**: `NavBar` y `Footer` tenían «SLG Agency» escrito a mano en su JSX en vez de
+usar el componente `Wordmark`, que existe desde FU-02 precisamente para que cambiar la marca sea
+tocar un archivo y no cada página (R-35). Ahora los dos lo usan.
+
+**Nota de método, por si vuelve a pasar**: durante la integración el hero se quedó en `opacity: 0` y
+la página parecía rota. La causa era un `ReferenceError: Wordmark is not defined` que **rompía la
+hidratación de toda la página** — pero era un artefacto del Fast Refresh del servidor de desarrollo
+tras muchas ediciones seguidas (su propio registro decía «unrecoverable error... performing full
+reload»), no un defecto del código. Reiniciar el servidor lo resolvió y el build de producción nunca
+estuvo afectado. Conviene recordarlo: **un fallo de hidratación deja las animaciones de entrada en su
+estado inicial**, así que "el texto no aparece" es un síntoma de hidratación rota, no de motion.
+
+**Gate D1 con el logo dentro**: Performance 100 · Accesibilidad 100 · Best Practices 100 · SEO 100 ·
+LCP 1,7 s.
+
+**Lo que sigue faltando de EXT-2**: favicon e imagen Open Graph (esta última es de DU-07). Y queda la
+decisión de marca de fondo, que es de Ricardo: si el sitio debe llevar el isotipo corporativo (el que
+está puesto) o el de Academy (la flecha con el triángulo rojo) — los dos existen sin lettering y
+cambiarlo es sustituir un archivo en `public/marca/`.

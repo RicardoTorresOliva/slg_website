@@ -2,6 +2,7 @@
 
 import { useState, useSyncExternalStore } from "react";
 
+import { Wordmark } from "../Wordmark.tsx";
 import { MobileSheet } from "./MobileSheet.tsx";
 import { TAP_FEEDBACK } from "../shared/interaction.ts";
 
@@ -46,8 +47,8 @@ export function NavBar({ logoHref, items, signInLabel, signInHref, locale, switc
         style={{ backdropFilter: "var(--slg-blur)" }}
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
-          <a href={logoHref} className="no-underline font-bold text-blue-deep">
-            SLG Agency
+          <a href={logoHref} className="no-underline">
+            <Wordmark />
           </a>
 
           <nav aria-label="Principal" className="hidden items-center gap-6 md:flex">

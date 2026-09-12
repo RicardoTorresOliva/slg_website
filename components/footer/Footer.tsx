@@ -10,6 +10,8 @@
  * Agency Inc.", el aviso de jurisdicción pendiente) viene de `content/ui`.
  */
 
+import { Wordmark } from "../Wordmark.tsx";
+
 export type FooterNavItem = { href: string; label: string };
 
 export type FooterProps = {
@@ -40,7 +42,7 @@ export function Footer({
   return (
     <footer className="border-t border-line bg-paper-2">
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-6 py-10 text-sm text-ink-2">
-        <p className="font-bold text-blue-deep">SLG Agency</p>
+        <Wordmark className="-ml-[0.72em]" />
 
         <nav aria-label="Ramas" className="flex flex-wrap gap-x-4 gap-y-1">
           {ramas.map((item, i) => (

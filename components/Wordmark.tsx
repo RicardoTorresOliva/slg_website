@@ -34,17 +34,38 @@ export function Wordmark({ label = "SLG Agency", className = "" }: WordmarkProps
       style={{
         // El margen de respeto del kit: 1 altura de la «S» ≈ 0.72em
         padding: "0.72em",
-        display: "inline-block",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "0.5em",
         color: "var(--slg-blue-deep)",
         fontFamily: "var(--slg-font-sans)",
         fontWeight: 700,
         fontSize: "1.25rem",
         letterSpacing: "-0.01em",
         lineHeight: 1,
-        // Sin deformación: la caja se adapta al texto, no al revés
+        // Sin deformación: la caja se adapta al contenido, no al revés
         whiteSpace: "nowrap",
       }}
     >
+      {/*
+        Isotipo corporativo, sin lettering. Se usa el isotipo y NO el logotipo
+        completo por una razón de marca, no de estética: los lockups oficiales
+        dicen «Softlanding Global» o «Softlanding Global Academy», y la marca
+        pública de este sitio es **SLG Agency** (§10-4, `naming-rules.md`) —
+        «Softlanding Global» solo se usa en el contexto de `SLG_Holdings`. El
+        isotipo no dice ninguna de las dos cosas, así que aporta identidad
+        visual real sin contradecir la norma.
+
+        Vectorial, convertido desde el `Isotipo-SLG.pdf` oficial: ni recortado
+        de un PNG ni redibujado. `alt=""` porque es decorativo — el nombre
+        accesible lo da el texto de al lado, y anunciarlo dos veces sería ruido
+        para un lector de pantalla.
+      */}
+      <img
+        src="/marca/isotipo-slg.svg"
+        alt=""
+        style={{ height: "1.15em", width: "auto", display: "block" }}
+      />
       {label}
     </span>
   );
