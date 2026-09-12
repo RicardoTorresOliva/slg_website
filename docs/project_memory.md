@@ -17,26 +17,34 @@ timestamp: 2026-09-11
   punta; Ricardo ya cargó las credenciales reales (Google, Microsoft, Resend) en `slgweb-staging`,
   pero **falta la verificación real** (login de punta a punta, envío real de correo) — ver detalle
   más abajo.
-- **M1-A**: **FU-01 y FU-10 `done`**. FU-01 se cerró el 2026-09-11 con aprobación explícita de
-  Ricardo ("Apruebo todos los copy", registrada en `work_log.md`). **Consecuencia directa: DU-02 y
-  DU-03 quedan desbloqueadas** — es la unidad de trabajo más natural para la próxima sesión.
-- **M2**: FU-11 `in_progress` — mecanismo propio construido y probado contra Postgres real; dos de
-  sus seis criterios dependen de páginas/formularios que no existen todavía (DU-02/03/08).
+- **M1-A COMPLETO** (FU-01, FU-10, DU-02, DU-03 · 2026-09-11). El sitio público ya tiene armazón
+  navegable y portada real en los dos idiomas.
+- **M2**: FU-11 `in_progress` — dos de sus seis criterios dependen de un formulario real (DU-08).
+- **M5**: FU-14 `in_progress` — construida y verificada; le faltan dos criterios que no son código
+  (ver su sección).
 - 39 unidades totales (Anexo E). Nada pusheado a `origin` — todo commiteado en `develop` local.
+
+## Plazo real declarado por Ricardo (2026-09-11)
+
+Presentación al directorio el **lunes 14** y arranque de campaña de venta el **martes 15**. Alcance
+que pidió: todo el recorrido hasta el CRM (DU-04, DU-05, DU-06, DU-08, DU-09). **Tres cosas que
+ningún trabajo de código resuelve y que gatean ese plazo**: los 11 documentos de descarga no existen
+(EXT-1 — sin ellos la campaña no tiene oferta), falta el texto legal (F.2-1 — sin él no se pueden
+activar formularios en producción) y faltan las dos claves del CRM (F.2-5). Además hay **69
+marcadores `[PENDIENTE]` en 63 archivos**, prohibidos en `main` por DoD #10.
 
 ## Qué hacer a continuación (en orden razonable)
 
-1. **DU-02 (armazón público) y DU-03 (Home)** — ya desbloqueadas, sin ningún pendiente de este
-   repositorio. El copy real de Home vive en `content/pages/{es,en}/home.md` (con varios
-   `[PENDIENTE]` explícitos — ver más abajo, no bloquean construir, sí bloquean que la página llegue
-   completa a `main`). Los componentes ya existen y están probados en `/prototipos` (FU-10): `NavBar`,
-   `Footer`, `Hero`, `BranchCard`, `QueIncluye`. Es la unidad de mayor impacto para la próxima sesión.
+1. **DU-04 (overviews de rama)** y luego **DU-05 (las 11 páginas de servicio)** — es el camino
+   crítico para la campaña: hoy la navegación enlaza `/ai`, `/holdings`, `/blog`, `/descargas`,
+   `/contacto` y `/legal/*`, que **todavía no existen y dan 404**. El armazón (DU-02) y la portada
+   (DU-03) ya están y verificados en navegador real.
 2. **Verificar de punta a punta FU-07/FU-08** contra staging: login real de Google/Microsoft (las
    redirect URIs ya están confirmadas exactas por Ricardo) y un envío real de correo por Resend
    (dominio `mailweb.softlandingglobal.com`, ya verificado). Necesita acceso a staging con sesión
    real o que Ricardo lo pruebe y reporte.
-3. **FU-14 (backups)** — bucket, los dos tokens de R2, la clave de cifrado y el mecanismo de cron ya
-   resueltos (D-65, D-66); lista para construirse en una sesión.
+3. **FU-14** — construida y fusionada; le quedan pasos manuales de Ricardo (tercer token de R2 y
+   ensayo de restauración en staging). Ver su sección.
 4. Contenido pendiente de FU-01 que solo Ricardo (o SLG_Overhauling) puede dar — ver lista abajo.
 
 ## FU-01 · Copy maestro bilingüe · `done` (2026-09-11)
@@ -127,38 +135,59 @@ DU-13/DU-18.
 real (binario Homebrew local, sin Docker) y en CI. Sin llamador real todavía (DU-08, DU-13/DU-15) —
 hueco de esquema anotado aparte (`task_fb516747`), no bloquea el cierre de FU-09.
 
-## FU-14 · Backups cifrados a R2 · sin empezar — preparación completa, lista para construir (2026-09-11)
+## FU-14 · Backups cifrados a R2 · `in_progress` (2026-09-11)
 
-**Hecho por Ricardo, con el agente guiando el navegador (Claude in Chrome) en directo, D-65**:
-1. Bucket `slg-backups` creado en Cloudflare R2.
-2. **Dos tokens de cuenta creados** (verificados en pantalla, `Account API tokens`):
-   - `slg-backup-write` — `Object Read & Write`, acotado a `slg-backups`, TTL `Forever`. Para el
-     proceso de copia.
-   - `slg-backup-purge` — mismo permiso y bucket, TTL `Forever`, guardado **por separado** del
-     anterior. Para la purga de copias antiguas.
-   - Nota real (D-65): R2 **no tiene un nivel de permiso "escribe sin borrar"** — los dos tokens son
-     técnicamente capaces de borrar; la mitigación de R-37 es de procedimiento (cada proceso solo
-     tiene acceso a su propio token), no una restricción que Cloudflare aplique por sí sola.
-   - Ricardo tiene ambos secretos guardados en su gestor de contraseñas — **el agente nunca los vio**
-     (a propósito: no deben pasar por el chat).
-3. Account ID: `b1e37064c773099db5e12fbaa6134a55`. Endpoint S3:
-   `https://b1e37064c773099db5e12fbaa6134a55.r2.cloudflarestorage.com`.
+**Construida y verificada** contra PostgreSQL 16 y MinIO reales (MinIO hace de R2: misma API S3),
+con las dos imágenes Docker ejecutadas y el cron de D-66 disparando solo dentro del contenedor. La
+restauración se probó **desde una copia antigua**. Código en `lib/backups/` (puerto §8.3, cifrado
+AES-256-GCM en flujo, generaciones), `scripts/backups/` (copia, purga, restauración, inventario,
+25 pruebas) y `ops/backups/{copia,purga}/` (Dockerfile + crontab por servicio). Decisiones nuevas:
+**D-69** (tercer token de R2, de solo lectura), **D-70** (dos servicios App, no uno), **D-71** (el
+paquete de volúmenes guarda el papel del cubo, no su nombre — evitaba que restaurar en staging
+escribiera en producción) y **D-72** (retención por conteo de ejecuciones, nunca por antigüedad).
 
-**Resuelto en esta sesión (D-66)**:
-1. **Clave de cifrado** generada (`openssl rand -hex 32`, 256 bits) y entregada a Ricardo por chat,
-   fuera del repositorio — para su gestor de contraseñas y, al construir FU-14, como variable de
-   entorno **solo del servicio de copia** (nunca en `slgweb-staging`/`slg-web`).
-2. **Mecanismo de cron confirmado contra la documentación oficial de Easypanel**: no tiene programador
-   nativo para scripts arbitrarios (solo Dockerfile+crontab, o un cron de terceros contra un endpoint
-   HTTP). Sí tiene un backup nativo programable a S3-compatible (incluido R2), pero **no sirve**: no
-   cifra antes de subir y su credencial necesita permiso de borrado para la retención — rompe la
-   mitigación 1 de R-37 y el criterio 3 de FU-14. Mecanismo elegido: servicio App aparte en Easypanel
-   con su propio Dockerfile+crontab. Detalle completo en `docs/decision_log.md` D-66 y
-   `design_docs/architecture.md` §9.1.
+**Los dos criterios que faltan no son código**:
+- Criterio 4: R2 no ofrece «escribe pero no borra» (ya asumido en D-65). La separación es de proceso
+  y de código, no un permiso del proveedor.
+- Criterio 6: falta el **ensayo de restauración cronometrado sobre `slgweb-staging` real**.
 
-**FU-14 queda listo para construirse.** Único detalle a confirmar ya al construir (no bloquea
-empezar): el timezone del servidor en el propio panel de Easypanel (el cron sigue la hora del
-servidor, no UTC por defecto).
+**Pasos manuales pendientes de Ricardo (en este orden):**
+
+*Cloudflare*
+1. Crear un tercer token **`slg-backup-restore`** con permiso **`Object Read only`**, acotado al
+   bucket `slg-backups`, TTL `Forever`, guardado por separado (D-69). Sin él la restauración no
+   arranca — el código no tiene recurso a los otros dos tokens, a propósito.
+
+*Easypanel*
+2. Servicio App **`slg-backup`** — `Dockerfile` en `ops/backups/copia/Dockerfile`, contexto de build
+   la raíz. Variables: `R2_*` de escritura, `BACKUP_ENCRYPTION_KEY` (la de D-66), `BACKUP_DATABASE_URL`
+   (**el rol dueño**, no `slg_app`: con el rol de aplicación el RLS está activo y el volcado saldría
+   con la mitad de las filas), `FILES_S3_*`, `FILES_BUCKET_*`, `MAIL_SMTP_*` y `MAIL_ALERTS_TO`.
+   **Ninguna variable `_PRUNE`**: si aparece, el servicio no arranca, y es deliberado.
+3. Servicio App **`slg-backup-purga`** — `ops/backups/purga/Dockerfile`. Solo `R2_*` de purga y las
+   cuatro `BACKUP_RETENTION_*`. **Ni clave de cifrado, ni base de datos, ni `FILES_*`.** Retención
+   sugerida: 14 diarias, 8 semanales, 12 mensuales, 30 pre-migración (~34 copias, caben de sobra en
+   los 10 GB del tramo gratuito).
+4. Cambiar el paso de despliegue a `npm run db:deploy`, que ya hace la copia previa a la migración.
+5. **Confirmar el timezone del servidor**: el cron sigue la hora de la máquina, no UTC. Los crontabs
+   están a las 02:15 (copia) y lunes 04:30 (purga), separados ocho horas para que una copia a medio
+   subir no entre en el listado de la purga.
+6. Arrancar `slg-backup` y comprobar en sus registros la primera línea JSON con `"ok":true`.
+
+*El ensayo de restauración (criterio 6, DoD #8), con el token de lectura ya creado*
+```
+npm run backup:restore -- --listar
+npm run backup:restore -- --staging --generacion weekly
+```
+Sin `--indice` coge la **más antigua**, que es lo que R-37 quiere probar. `RESTORE_DATABASE_URL` debe
+apuntar a staging: el script se niega a arrancar si coincide con `DATABASE_URL` o si falta
+`--staging`. Después, las cuatro comprobaciones que el propio script enumera, y **anotar la duración**.
+
+**Contexto para no re-explorar**: las copias usan `@aws-sdk/client-s3` (el mismo cliente de FU-09),
+cero líneas específicas de Cloudflare. `BACKUP_PG_DUMP_BIN`/`BACKUP_PSQL_BIN` son la costura para
+máquinas sin cliente de PostgreSQL; en producción van vacías. **R-41 sigue abierto y ahora pesa un
+poco más**: el proceso de copia lee los dos cubos de `slg-files` con la credencial de administrador
+de MinIO — un consumidor más a revisar cuando se rote.
 
 ## Entorno local
 

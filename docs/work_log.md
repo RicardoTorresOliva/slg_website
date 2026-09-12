@@ -1290,3 +1290,59 @@ sigue detectando lo que debe: sus pruebas negativas siguen en verde.
 **Cambio de alcance declarado**: ocho claves nuevas en `content/ui` (`home.*`, más `nav.offline` de
 DU-02). Son textos visibles posteriores a la compuerta de FU-01, redactados por el agente, y quedan
 **pendientes de ratificación de Ricardo**.
+
+---
+
+## FU-14 — Copias de seguridad cifradas a R2 y restauración probada · `in_progress` (2026-09-11)
+
+Construida **en paralelo** a DU-02/DU-03 por un agente en un worktree aislado, por decisión explícita
+de Ricardo ante el plazo del lunes. Para no pisar los cuatro archivos de seguimiento mientras dos
+hilos trabajaban, el agente escribió sus notas aparte y esta entrada es su integración; la rama se
+fusionó sin conflictos.
+
+**Construido**: `lib/backups/` (el puerto de §8.3 —solo `depositar`—, cifrado AES-256-GCM en flujo,
+generaciones, y **tres lectores de configuración separados**, uno por proceso, que leen solo sus
+credenciales) · `scripts/backups/` (copia, purga, restauración, inventario, comprobación de
+encapsulación en CI y 25 pruebas) · `ops/backups/copia/` y `ops/backups/purga/` con sus Dockerfile y
+crontab.
+
+**Verificado contra piezas reales**: PostgreSQL 16.15 y MinIO locales (MinIO hace de R2 — los dos
+hablan API S3, que es justo lo que D-20/D-21 permiten), las dos imágenes Docker construidas y
+ejecutadas, y **el mecanismo de D-66 probado de punta a punta**: el cron horneado disparó solo dentro
+del contenedor y dejó los tres objetos cifrados en el destino con su línea JSON de resultado. La
+**restauración se ejecutó desde una copia ANTIGUA** y se comprobaron las dos caras: vuelven los datos
+viejos y **no** aparecen los recientes — sin esa segunda mitad, la prueba pasaría restaurando
+cualquier cosa. La clave de cifrado real de D-66 no se pidió ni se vio: se usó una de prueba.
+
+**Cuatro hallazgos propios, los cuatro encontrados ejecutando y no razonando:**
+
+1. **Restaurar en staging podía escribir en los cubos de PRODUCCIÓN** — el peor fallo posible en un
+   procedimiento de emergencia. El paquete de volúmenes guardaba `<nombre-del-cubo>/<clave>`, y un
+   paquete hecho en producción lleva dentro los nombres de producción. Corregido (D-71): el paquete
+   guarda el **papel** (`downloads`/`deliverables`) y cada entorno lo traduce con su propia
+   configuración, así que el nombre de producción ya no está escrito en ninguna parte.
+2. **Dos copias en el mismo segundo compartían clave y una pisaba a la otra.** Con el cron diario no
+   puede pasar; con `--pre-migration` en un despliegue que aplica dos migraciones seguidas, sí.
+   Corregido con un identificador propio por ejecución.
+3. **Una copia que fallaba a mitad registraba `depositos: []`** aunque el volcado sí hubiera subido —
+   justo el dato que hace falta para decidir si se reintenta.
+4. **`crond` de busybox sí propaga el entorno del contenedor**, al revés que el cron de Debian. Por
+   eso **no** hay ningún `.env` dentro de las imágenes: si se cambiara la base a Debian, los secretos
+   acabarían en un archivo dentro de la imagen. Queda anotado para quien la toque.
+
+**Por qué queda `in_progress` y no `done`** — seis de los ocho criterios están cerrados y verificados;
+los otros dos no dependen de código:
+- **Criterio 4** (credencial de copia sin borrado): construido hasta donde R2 permite. D-65 ya
+  registró que R2 no ofrece «escribe pero no borra»; la separación es de proceso y de código (dos
+  servicios, dos entornos, y `leerConfigDeCopia()` **lanza** si ve una variable de purga), no un
+  permiso que Cloudflare aplique.
+- **Criterio 6** (restauración verificada en staging): el mecanismo está probado, pero falta el
+  ensayo cronometrado sobre `slgweb-staging` con datos reales. Es operación, no código.
+
+**Y falta una credencial que D-65 no creó** (D-69): un tercer token `slg-backup-restore` de **solo
+lectura**. `architecture` §8.3 y §9.3 lo exigen —restaurar no debe usar el token que escribe a diario,
+ni el que puede borrar— y el código no tiene recurso a los otros dos, a propósito: sin ese token, la
+restauración no arranca.
+
+Los ocho pasos manuales que quedan en Easypanel y Cloudflare están detallados en la entrada de
+`docs/project_memory.md`.

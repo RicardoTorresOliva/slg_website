@@ -38,7 +38,7 @@ se ha producido ningún entregable.
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 26 `pending` · 3 `in_progress` (FU-07, FU-08, FU-11) · 0 `blocked` · 0 `review` ·
+**Estado global:** 25 `pending` · 4 `in_progress` (FU-07, FU-08, FU-11, FU-14) · 0 `blocked` · 0 `review` ·
 **10 `done`** (FU-02, FU-03, FU-04 · 2026-09-08; FU-05, FU-06, FU-09 · 2026-09-10; FU-01, FU-10,
 DU-02, DU-03 · 2026-09-11). **M0-A y M1-A completos.** Siguiente: DU-04 (overviews de rama). FU-07 y FU-08
 cierran cuando se verifique de punta a punta contra staging; mientras tanto, DU-01 sigue esperando
@@ -98,7 +98,7 @@ a F.2-2/F.2-3.
 | ━━━ | ━━━ | **▼ M5 · API PARA AGENTES Y GO-LIVE** | ━━━ | ━━━ | ━━━ |
 | DU-22 | DU | API v1 de lectura: clave, alcances, límites y auditoría | M5 | FU-06, DU-17, DU-19 · `api_contracts` | `pending` |
 | DU-23 | DU | API v1 de escritura y especificación OpenAPI | M5 | DU-22 | `pending` |
-| FU-14 | FU | Copias de seguridad cifradas a destino externo y restauración probada | M5 | FU-05 | `pending` |
+| FU-14 | FU | Copias de seguridad cifradas a destino externo y restauración probada | M5 | FU-05 | `in_progress` |
 | DU-24 | DU | README operativo y prueba de Literacy | M5 | DU-11, DU-14, DU-17, FU-14 | `pending` |
 | DU-25 | DU | Go-live: contenido, DNS raíz, monitor y auditoría final | M5 | todas las anteriores | `pending` |
 
@@ -240,3 +240,13 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   desde FU-10, y la franja oscura 3,32:1. Corregido además que `/home` y `/` servían la misma página
   (contenido duplicado) y que el freno de secretos analizaba `node_modules` anidados (33 falsos
   positivos). Detalle en `docs/work_log.md`. **M1-A cerrado.**
+- `2026-09-11` — **FU-14 → `in_progress`**. Construida en paralelo a DU-02/DU-03 en un worktree
+  aislado y fusionada sin conflictos. Seis de los ocho criterios cerrados y verificados contra
+  PostgreSQL y MinIO reales, con las dos imágenes Docker ejecutadas y el cron de D-66 disparando solo
+  dentro del contenedor; la restauración se probó **desde una copia antigua**, comprobando que vuelven
+  los datos viejos y que no aparecen los recientes. **Hallazgo grave corregido (D-71)**: restaurar en
+  staging podía escribir en los cubos de producción. Decisiones nuevas **D-69** (falta un tercer token
+  de R2, de solo lectura, para restaurar), **D-70** (dos servicios App, no uno), **D-71** y **D-72**.
+  **No cierra** porque el criterio 4 depende de un permiso que R2 no ofrece (ya asumido en D-65) y el
+  criterio 6 exige un ensayo de restauración cronometrado sobre el staging real — operación, no
+  código. Detalle en `docs/work_log.md`.
