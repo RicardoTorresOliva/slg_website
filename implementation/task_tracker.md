@@ -38,7 +38,7 @@ se ha producido ningún entregable.
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 23 `pending` · 4 `in_progress` (FU-07, FU-08, FU-11, FU-14) · 0 `blocked` · 0 `review` ·
+**Estado global:** 22 `pending` · 5 `in_progress` (FU-07, FU-08, FU-11, FU-14, DU-08) · 0 `blocked` · 0 `review` ·
 **12 `done`** (FU-02, FU-03, FU-04 · 2026-09-08; FU-05, FU-06, FU-09 · 2026-09-10; FU-01, FU-10,
 DU-02, DU-03, DU-04, DU-05 · 2026-09-11). **M0-A y M1-A completos.** Siguiente: DU-06 (Doctrina, Nosotros y legales), que necesita F.2-1. FU-07 y FU-08
 cierran cuando se verifique de punta a punta contra staging; mientras tanto, DU-01 sigue esperando
@@ -77,7 +77,7 @@ a F.2-2/F.2-3.
 | DU-07 | DU | SEO técnico, 404/500 y cierre de los gates D1–D6 | M1-B | DU-03, DU-04, DU-05, DU-06 | `pending` |
 | ━━━ | ━━━ | **▼ M2 · CONVERSIÓN Y CONTENIDO** | ━━━ | ━━━ | ━━━ |
 | FU-11 | FU | Anti-abuso propio: límite, honeypot y dominios gratuitos | M2 | FU-04, FU-05 | `in_progress` |
-| DU-08 | DU | Biblioteca de descargas, formulario de captura y entrega firmada | M2 | FU-09, FU-11, DU-05 | `pending` |
+| DU-08 | DU | Biblioteca de descargas, formulario de captura y entrega firmada | M2 | FU-09, FU-11, DU-05 | `in_progress` |
 | DU-09 | DU | Captura al CRM: adaptador de dos modos, cola y aviso | M2 | FU-08, DU-08 · F.2-5 · S-01 | `pending` |
 | DU-10 | DU | Contacto y solicitud del documento completo de Doctrina | M2 | DU-06, DU-09 | `pending` |
 | DU-11 | DU | Blog: índice, artículo, etiquetas, RSS y borradores | M2 | FU-03, DU-02 | `pending` |
@@ -263,3 +263,10 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   resueltos con redacción propia. **Hace visible el hueco de contenido**: 6 de los 11 servicios
   tienen secciones en `[PENDIENTE]` y ninguno de los 11 documentos existe (EXT-1). Detalle en
   `docs/work_log.md`.
+- `2026-09-11` — **DU-08 → `in_progress`**. Biblioteca, ficha con formulario, captura, `/gracias` y
+  ruta de entrega construidas y **probadas de punta a punta contra Postgres real**: se envió el
+  formulario en el navegador y la fila apareció en `lead_capture` con todos los campos de RF-37.
+  Los 11 documentos se listan con su estado. **No cierra** porque los criterios 3, 6 y 8 exigen un
+  archivo real en el bucket (el camino está construido, no ejercido) y falta la batería del
+  criterio 11. **Corrección de fondo**: la vigencia del enlace la decide el reloj de la base de
+  datos, no el del proceso web. Detalle en `docs/work_log.md`.

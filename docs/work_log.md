@@ -1472,3 +1472,55 @@ LCP 1,7 s.
 decisión de marca de fondo, que es de Ricardo: si el sitio debe llevar el isotipo corporativo (el que
 está puesto) o el de Academy (la flecha con el triángulo rojo) — los dos existen sin lettering y
 cambiarlo es sustituir un archivo en `public/marca/`.
+
+---
+
+## DU-08 — Biblioteca, captura y entrega firmada · `in_progress` (2026-09-11)
+
+La máquina de conversión, construida y probada de punta a punta contra Postgres real. Queda
+`in_progress` a propósito: tres criterios no se pueden cerrar sin un archivo real en el bucket, y
+las pruebas automatizadas del criterio 11 no están escritas.
+
+**Construido**: `lib/capture/` (el núcleo de captura y la Server Action), `lib/content/downloads.ts`
+(los tres estados de un documento), `/descargas` y `/en/downloads` (biblioteca), `/descargas/[slug]`
+y su par inglés (ficha + formulario), `/gracias` y `/en/thank-you`, y `app/api/descarga/[evento]`
+(la entrega).
+
+**El orden de los pasos ES el requisito**, no un detalle: honeypot (descarte silencioso) → límite de
+peticiones por IP **y** por correo → dominio gratuito → **persistir antes de responder** (RF-37) →
+firma. La entrega al CRM no ocurre aquí: es asíncrona y el visitante nunca la espera (RF-39).
+
+**Verificado de verdad, no argumentado**: se envió el formulario en el navegador real y la fila
+apareció en `lead_capture` con correo, dominio, `source`, `download_slug`, `page_path`, `locale`,
+`consent_at`, `privacy_version` y `crm_sync_status: pending`. Los 11 documentos se listan en la
+biblioteca con su estado; ninguno emite URL firmada porque ninguno tiene archivo todavía, que es
+exactamente el criterio 7.
+
+**Dos decisiones de seguridad que conviene no deshacer**:
+1. **`/gracias` recibe el identificador del EVENTO, nunca la URL firmada.** Una URL firmada en la
+   barra de direcciones acaba en el historial, en la cabecera `Referer` de la siguiente petición y en
+   cualquier captura de pantalla que el visitante comparta. La firma se emite al pulsar, en
+   `/api/descarga/[evento]`, y vive los minutos que dura.
+2. **El estado del documento y su clave de archivo se resuelven en el servidor a partir del slug**,
+   nunca llegan del cliente. Si llegaran, bastaría con enviar una clave a mano para pedir una URL
+   firmada de cualquier objeto del bucket.
+
+**Hallazgo del linter, y la corrección es mejor que el parche**: `Date.now()` dentro del render de un
+componente. Se podía haber sacado a una constante, pero el arreglo correcto era otro: la vigencia del
+enlace la decide ahora **el reloj de la base de datos** (`expires_at > now()` en SQL), que es el mismo
+que escribió la caducidad. Comparar en el proceso web metía la desviación de reloj entre los dos
+servidores justo en la comprobación que protege un secreto.
+
+**Lo que falta para cerrar**:
+- Criterios 3, 6 y 8 exigen un **archivo real** en el bucket privado: subir un PDF, poner
+  `status: published` y `file_key`, y recorrer descarga y finalización. El camino está construido
+  pero no ejercido.
+- Criterio 11: la batería automatizada del recorrido completo, incluido el caso «sin archivo».
+- `PRIVACY_POLICY_VERSION` se queda en `sin-publicar` hasta que F.2-1 entregue el texto legal. Es
+  deliberado: escribir «v1» aparentaría una versión que nadie ha redactado, y el consentimiento
+  guardado tiene que decir a qué se consintió de verdad.
+
+**Hueco de esquema, heredado y anotado**: la tabla espejo `download` que `data_model` §5.10 pide
+—con `download_event` apuntando a ella por clave foránea real— sigue sin existir; hoy `download_slug`
+es texto. No bloquea ningún criterio de esta unidad (el contenido es la fuente), pero DU-13 la
+necesitará para el tablero.

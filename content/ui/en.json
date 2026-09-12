@@ -86,5 +86,21 @@
   "service.contactLink": "Write to us",
   "service.sectionPending": "We're still writing this section.",
   "service.includesPending": "The detail of this service will be published here.",
-  "service.downloadPending": "This service's document will be published here."
+  "service.downloadPending": "This service's document will be published here.",
+  "downloads.libraryTitle": "Documents",
+  "downloads.libraryIntro": "Working material for people who decide, not sales brochures. We ask for a corporate email because we write for a specific reader.",
+  "downloads.libraryEmpty": "No documents published yet.",
+  "downloads.statusAvailable": "Available",
+  "downloads.untitled": "Document in preparation",
+  "downloads.whatYouLearn": "What you learn",
+  "downloads.forWhom": "Who it is for",
+  "thanks.title": "Done",
+  "thanks.downloadReady": "Your document is ready to download.",
+  "thanks.downloadCta": "Download the document",
+  "thanks.expired": "This link has expired.",
+  "thanks.expiredBody": "Download links are short-lived on purpose. Request the document again and we'll send a new one.",
+  "thanks.comingSoonTitle": "We'll let you know",
+  "thanks.comingSoonBody": "The document isn't published yet. We've saved your email and will write the day it's out.",
+  "thanks.nextStep": "If after reading it you'd like to talk, write to us.",
+  "thanks.notFound": "We couldn't find that download."
 }

@@ -61,6 +61,11 @@ export function Wordmark({ label = "SLG Agency", className = "" }: WordmarkProps
         accesible lo da el texto de al lado, y anunciarlo dos veces sería ruido
         para un lector de pantalla.
       */}
+      {/* eslint-disable-next-line @next/next/no-img-element --
+          `next/image` no optimiza SVG (lo sirve tal cual) y además añadiría
+          un componente cliente y una petición al optimizador para un archivo
+          de 3,5 KB que ya es vectorial. Aquí `<img>` es la opción correcta,
+          no el atajo. */}
       <img
         src="/marca/isotipo-slg.svg"
         alt=""

@@ -86,5 +86,21 @@
   "service.contactLink": "Escríbenos",
   "service.sectionPending": "Estamos terminando de redactar esta sección.",
   "service.includesPending": "El detalle de este servicio se publicará aquí.",
-  "service.downloadPending": "El documento de este servicio se publicará aquí."
+  "service.downloadPending": "El documento de este servicio se publicará aquí.",
+  "downloads.libraryTitle": "Documentos",
+  "downloads.libraryIntro": "Material de trabajo para quien decide, no folletos comerciales. Te pedimos un correo corporativo porque escribimos para un lector concreto.",
+  "downloads.libraryEmpty": "Todavía no hay documentos publicados.",
+  "downloads.statusAvailable": "Disponible",
+  "downloads.untitled": "Documento en preparación",
+  "downloads.whatYouLearn": "Qué aprendes",
+  "downloads.forWhom": "Para quién",
+  "thanks.title": "Listo",
+  "thanks.downloadReady": "Tu documento está listo para descargar.",
+  "thanks.downloadCta": "Descargar el documento",
+  "thanks.expired": "Este enlace ya caducó.",
+  "thanks.expiredBody": "Los enlaces de descarga duran poco a propósito. Vuelve a pedir el documento y te enviamos uno nuevo.",
+  "thanks.comingSoonTitle": "Te avisamos en cuanto esté",
+  "thanks.comingSoonBody": "El documento todavía no está publicado. Guardamos tu correo y te escribimos el día que salga.",
+  "thanks.nextStep": "Si después de leerlo quieres conversar, escríbenos.",
+  "thanks.notFound": "No encontramos esa descarga."
 }
