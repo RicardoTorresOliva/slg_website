@@ -17,7 +17,19 @@ import fs from "node:fs";
 import path from "node:path";
 
 const RAIZ = path.resolve(import.meta.dirname, "../..");
-const PERMITIDOS = new Set(["lib/files/client.ts", "lib/files/signed-urls.ts"]);
+// `lib/backups/destination.ts` (FU-14) es el OTRO puerto S3 del proyecto: el
+// destino de copias de `architecture` §8.3. Instancia su propio cliente porque
+// habla con otro servicio, con otras credenciales y con otro contrato —solo
+// `depositar`—, y `scripts/backups/check-backup-encapsulado.ts` le aplica una
+// comprobación más estricta que ésta: allí, que no lea, no liste, no borre y
+// no sobrescriba. No se reutiliza `lib/files/client.ts` a propósito: compartir
+// el constructor del cliente invitaría a compartir la configuración, y son dos
+// credenciales que no deben encontrarse nunca.
+const PERMITIDOS = new Set([
+  "lib/files/client.ts",
+  "lib/files/signed-urls.ts",
+  "lib/backups/destination.ts",
+]);
 const COMANDO_DE_LISTADO = new RegExp("\\bListObjects" + "(V2)?Command\\b");
 
 function archivosTs(dir: string): string[] {

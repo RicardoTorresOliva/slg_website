@@ -72,6 +72,11 @@ jobs:
       - name: FU-09 · cero archivos gated en control de versiones (criterio 5, RNF-27)
         run: node scripts/files/check-no-gated-files.ts
 
+      - name: FU-14 · puerto de copias que solo deposita, purga aislada (criterio 4)
+        # Las mitigaciones 1 y 2 de R-37 en su versión estática. La dinámica la
+        # impone `leerConfigDeCopia()`, y `test:backups` la ejecuta.
+        run: node scripts/backups/check-backup-encapsulado.ts
+
       - name: Freno 2 · Frontmatter y contrato A.3
         run: node scripts/content/check-frontmatter.ts
 
@@ -274,6 +279,31 @@ jobs:
         # credenciales reales Better Auth ni registra esos proveedores — ver
         # docs/decision_log.md D-55/D-56/D-57.
         run: node scripts/db/test-invitations.ts
+
+      - name: FU-14 · copia cifrada, generaciones, purga y restauración desde una copia ANTIGUA
+        # Contra MinIO real (el mismo binario del paso de FU-09, ya descargado
+        # en el otro job — aquí se baja de nuevo porque son runners distintos) y
+        # contra el PostgreSQL real de este job. NO prueba R2 de verdad: eso
+        # exige los tokens que Ricardo custodia y que el agente nunca ve.
+        env:
+          FILES_S3_ENDPOINT: http://127.0.0.1:9500
+          FILES_S3_REGION: us-east-1
+          FILES_S3_ACCESS_KEY_ID: ci
+          FILES_S3_SECRET_ACCESS_KEY: ci-relleno-no-es-real
+          FILES_BUCKET_DOWNLOADS: ci-backup-downloads
+          FILES_BUCKET_DELIVERABLES: ci-backup-deliverables
+          BACKUP_PG_DUMP_BIN: pg_dump
+          BACKUP_PSQL_BIN: psql
+        run: |
+          curl -sSL https://dl.min.io/server/minio/release/linux-amd64/minio -o /tmp/minio
+          chmod +x /tmp/minio
+          MINIO_ROOT_USER=ci MINIO_ROOT_PASSWORD=ci-relleno-no-es-real \
+            /tmp/minio server /tmp/minio-backups --address 127.0.0.1:9500 --console-address 127.0.0.1:9501 &
+          for i in $(seq 1 30); do
+            curl -sSf http://127.0.0.1:9500/minio/health/live >/dev/null 2>&1 && break
+            sleep 1
+          done
+          node scripts/backups/test-backups.ts
 
       - name: Datos de ejemplo
         run: node scripts/db/seed.ts

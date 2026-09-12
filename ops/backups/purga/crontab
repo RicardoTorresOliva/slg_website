@@ -1,0 +1,18 @@
+# ============================================================================
+# Crontab del servicio de PURGA (FU-14, mitigación 2 de R-37)
+# ----------------------------------------------------------------------------
+# SEMANAL, no diaria, y a una hora muy separada de la copia (02:15). Dos
+# motivos, los dos deliberados:
+#
+#  · La retención es por CONTEO de ejecuciones, no por antigüedad: purgar cada
+#    día no conserva nada distinto de purgar cada semana. Menos ejecuciones es
+#    menos superficie para el único proceso del sistema que puede borrar.
+#  · Si la copia y la purga coincidieran, una copia a medio subir podría entrar
+#    en el listado de la purga. Separarlas ocho horas hace imposible ese cruce
+#    sin necesidad de coordinación entre dos servicios que, a propósito, no se
+#    hablan.
+#
+# Lunes a las 04:30, hora del servidor.
+# ============================================================================
+
+30 4 * * 1 cd /app && node scripts/backups/prune-backups.ts
