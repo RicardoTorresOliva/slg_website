@@ -1,4 +1,5 @@
 import { loadCollection } from "./loader.ts";
+import { textoPlano } from "./inline.ts";
 import type { Lang } from "./schema.ts";
 
 /**
@@ -71,7 +72,7 @@ function parsearPuertas(texto: string, seccion: string, file: string): PuertaDeH
   }
   return entradas.map((m) => ({
     nombre: m[1].trim(),
-    descripcion: m[2].replace(/\s+/g, " ").trim(),
+    descripcion: textoPlano(m[2].replace(/\s+/g, " ").trim()),
     href: m[3].trim(),
   }));
 }
@@ -105,7 +106,7 @@ export function cargarHome(lang: Lang): ContenidoDeHome {
     (titulo) => secciones.get(titulo)!,
   );
 
-  const parrafosHero = heroT.split(/\n\s*\n/).map((p) => p.replace(/\s+/g, " ").trim());
+  const parrafosHero = heroT.split(/\n\s*\n/).map((p) => textoPlano(p.replace(/\s+/g, " ").trim()));
 
   return {
     titulo: registro.data.title,
@@ -113,7 +114,7 @@ export function cargarHome(lang: Lang): ContenidoDeHome {
     hero: { titular: parrafosHero[0], subtitular: parrafosHero[1] ?? null },
     puertas: parsearPuertas(puertasT, esperados[1], registro.file),
     tarjetas: parsearPuertas(tarjetasT, esperados[2], registro.file),
-    doctrina: contenidoOHueco(doctrinaT.replace(/\s+/g, " ").trim()),
-    descargaDestacada: contenidoOHueco(descargaT.replace(/\s+/g, " ").trim()),
+    doctrina: contenidoOHueco(textoPlano(doctrinaT.replace(/\s+/g, " ").trim())),
+    descargaDestacada: contenidoOHueco(textoPlano(descargaT.replace(/\s+/g, " ").trim())),
   };
 }

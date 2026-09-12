@@ -1390,3 +1390,12 @@ que `home` en DU-03 — si no, `/slg-ai` y `/ai` servirían lo mismo. La lista v
 (`PAGINAS_CON_RUTA_PROPIA`), porque tenerla copiada en las rutas ES y EN es garantía de que un día
 diverjan. En inglés la exclusión se identifica por `pair`, no por el slug: los slugs ingleses no
 siguen una regla única y compararlos por texto fallaría en silencio.
+
+**Corrección visible, encontrada mirando la página y no el código** (misma sesión, tras cerrar
+DU-04): las páginas mostraban los acentos graves del markdown en crudo — «`SLG_Academy` reúne la
+formación…». En `content/` los nombres literales se escriben entre acentos graves siguiendo la
+convención de `knowledge/` y los `design_docs`, donde tiene sentido; en la página no, porque el
+nombre literal ya es `SLG_Academy` con su guion bajo y eso es lo que el visitante debe leer. Añadido
+`lib/content/inline.ts` (`textoPlano`), aplicado a Home y a los overviews. **No** se convierten a
+`<code>`: pondría tipografía monoespaciada de programador en medio de una frase de marca. Verificado
+en las diez rutas que hoy existen: cero markdown sin renderizar.

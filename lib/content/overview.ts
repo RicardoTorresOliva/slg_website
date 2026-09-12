@@ -1,4 +1,5 @@
 import { loadCollection, type ContentRecord } from "./loader.ts";
+import { textoPlano } from "./inline.ts";
 import type { Lang } from "./schema.ts";
 import { RUTAS_ESTRUCTURALES, canonicalizarRuta, type NombreDeRuta } from "../routes/map.ts";
 
@@ -126,7 +127,7 @@ export function cargarOverview(slugEs: SlugDeOverview, lang: Lang): ContenidoDeO
 
   const entradas: EntradaDeOverview[] = [...cuerpo.matchAll(ENTRADA)].map((m) => ({
     nombre: m[1].trim(),
-    descripcion: m[2].replace(/\s+/g, " ").trim(),
+    descripcion: textoPlano(m[2].replace(/\s+/g, " ").trim()),
     href: m[3].trim(),
   }));
 
@@ -140,7 +141,7 @@ export function cargarOverview(slugEs: SlugDeOverview, lang: Lang): ContenidoDeO
   validarCobertura(slugEs, entradas, registro.file);
 
   const primeraEntrada = cuerpo.indexOf("**");
-  const intro = cuerpo.slice(0, primeraEntrada).replace(/\s+/g, " ").trim();
+  const intro = textoPlano(cuerpo.slice(0, primeraEntrada).replace(/\s+/g, " ").trim());
 
   return {
     titulo: registro.data.title as string,
