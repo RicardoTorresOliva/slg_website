@@ -1,0 +1,195 @@
+/* ============================================================================
+ * motion.css — El contrato de movimiento (C.4), como CSS.
+ * ----------------------------------------------------------------------------
+ * Fuente: `planning/requirements.md` RNF-09…RNF-12, RNF-45, RNF-46, y la copia
+ * de mano de `design_docs/style_guide.md` §6. Ante cualquier diferencia manda
+ * `requirements.md`.
+ *
+ * LA REGLA QUE GOBIERNA TODO ESTE ARCHIVO: **solo `transform` y `opacity`**.
+ * Nada que provoque reflow durante la animación —ni `width`, ni `height`, ni
+ * `top`, ni `margin`—, porque cada reflow es un salto de fotograma en el móvil
+ * de alguien, no una imperfección teórica.
+ * ========================================================================== */
+
+:root {
+  /**
+   * Spring por defecto: `damping` 1.0, `response` 0.3–0.4 s (RNF-09).
+   *
+   * `damping` 1.0 es amortiguación crítica: llega y para, sin rebotar. Como
+   * curva de CSS eso es un ease-out sin sobreimpulso. El rebote existe, pero
+   * solo después de un gesto con momentum, y eso NO se hace con una curva: se
+   * calcula en JavaScript desde la velocidad real del dedo (`lib/design/motion.ts`).
+   */
+  --slg-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --slg-spring-duration: 350ms;
+
+  /** Feedback en `pointerdown`: 100 ms exactos (RNF-10). */
+  --slg-press-duration: 100ms;
+  --slg-press-scale: 0.97;
+
+  /** Reveal al scroll: opacidad + 8 px, una sola vez (RNF-46). */
+  --slg-reveal-offset: 8px;
+}
+
+/* ── Feedback a la entrada (RNF-10) ────────────────────────────────────────
+ * Se aplica en `pointerdown`, no en `:active`, porque `:active` en iOS llega
+ * tarde y a veces no llega. La clase la pone el componente.
+ * CERO RETARDOS ARTIFICIALES: no hay `transition-delay` en ninguna parte de
+ * esta ruta.
+ */
+.slg-pressable {
+  transition: transform var(--slg-press-duration) var(--slg-spring);
+  transform: translateZ(0);
+}
+.slg-pressable[data-pressed="true"] {
+  transform: scale(var(--slg-press-scale));
+}
+
+/* ── Reveal al scroll (RNF-46) ─────────────────────────────────────────────
+ * Opacidad y 8 px. UNA SOLA VEZ por elemento: el observador se desconecta al
+ * primer cruce. Sin parallax, sin fondos en movimiento, sin bucles lentos.
+ */
+.slg-reveal {
+  opacity: 0;
+  transform: translateY(var(--slg-reveal-offset));
+  transition:
+    opacity var(--slg-spring-duration) var(--slg-spring),
+    transform var(--slg-spring-duration) var(--slg-spring);
+}
+.slg-reveal[data-revealed="true"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Superficie translúcida (C.3) ──────────────────────────────────────────── */
+.slg-material {
+  background: color-mix(in srgb, var(--slg-paper) 72%, transparent);
+  backdrop-filter: var(--slg-blur);
+  -webkit-backdrop-filter: var(--slg-blur);
+}
+
+/* ── Anillo de foco de dos capas (D-44) ────────────────────────────────────
+ * Token único. Escribir un foco a mano en un componente rechaza la unidad.
+ * `:focus-visible` y no `:focus`: el anillo es para quien navega con teclado,
+ * y aparecer al hacer clic con el ratón es ruido que la gente termina
+ * desactivando.
+ */
+.slg-focusable:focus-visible,
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: none;
+  box-shadow: var(--slg-focus-ring);
+  border-radius: var(--slg-radius-sm);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * Las TRES preferencias del sistema (criterio 5 de FU-10)
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * 1 · `prefers-reduced-motion: reduce` — todo degrada a cross-fade de 200 ms.
+ *
+ * SIN DESPLAZAMIENTOS Y SIN REBOTES. Y no se desactiva el movimiento del todo:
+ * un cambio instantáneo también desorienta. Se sustituye por lo único que no
+ * provoca malestar vestibular, que es un fundido.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 200ms !important;
+    animation-iteration-count: 1 !important;
+    transition-property: opacity !important;
+    transition-duration: 200ms !important;
+    transition-timing-function: ease !important;
+    scroll-behavior: auto !important;
+  }
+
+  .slg-reveal {
+    transform: none;
+  }
+  .slg-reveal[data-revealed="true"] {
+    transform: none;
+  }
+  .slg-pressable[data-pressed="true"] {
+    transform: none;
+  }
+}
+
+/**
+ * 2 · `prefers-reduced-transparency` — toda superficie translúcida se vuelve
+ * sólida. El difuminado desaparece: para quien lo pide, el texto sobre un
+ * fondo que se mueve por debajo es ilegible, no elegante.
+ */
+@media (prefers-reduced-transparency: reduce) {
+  .slg-material {
+    background: var(--slg-paper);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/**
+ * 3 · `prefers-contrast: more` — bordes definidos y fondos casi sólidos.
+ * El borde de una tarjeta deja de ser una insinuación y pasa a ser un borde.
+ */
+@media (prefers-contrast: more) {
+  .slg-material {
+    background: var(--slg-paper);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-bottom: 1px solid var(--slg-ink-2);
+  }
+  .slg-card,
+  .slg-field {
+    border-color: var(--slg-ink-2);
+  }
+}
+
+/* ── Barra de navegación: móvil = rápido, escritorio = profundo (C.6 §5) ──── */
+@media (max-width: 48rem) {
+  [data-slg-desktop] {
+    display: none !important;
+  }
+  [data-slg-mobile] {
+    display: inline-block !important;
+  }
+}
+
+/* ── Tabla de app en móvil: ficha por fila, no zoom (C.6 §5) ───────────────
+ * La tabla de HQ NO se lee en móvil con zoom. Cada fila se apila como ficha y
+ * `data-label` pone el nombre de la columna delante de su valor: la misma
+ * información, dispuesta para un pulgar.
+ */
+@media (max-width: 48rem) {
+  [data-slg-tabla] thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  [data-slg-tabla] tr {
+    display: block;
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--slg-line);
+    border-radius: var(--slg-radius-sm);
+    padding: 0.25rem 0.75rem;
+  }
+  [data-slg-tabla] td {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: none;
+    padding: 0.5rem 0;
+  }
+  [data-slg-tabla] td::before {
+    content: attr(data-label);
+    color: var(--slg-ink-2);
+    font-size: 0.8125rem;
+  }
+}

@@ -1,0 +1,5 @@
+/* FIXTURE NEGATIVO — las tres formas de perder fotogramas. */
+.malo {
+  transition: width 300ms ease, transform 300ms ease;
+  will-change: left;
+}

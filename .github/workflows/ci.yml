@@ -102,6 +102,16 @@ jobs:
       - name: Archivos — sin listado de buckets ni entregables versionados
         run: npm run check:archivos
 
+      # Gate D2, medido sobre los tokens reales: contraste AA en cada
+      # combinación, y los pares prohibidos siguen sin llegar a AA.
+      - name: Contraste
+        run: npm run check:contraste
+
+      # Las tres reglas de C.4 que se ven leyendo. La revisión cuadro a cuadro
+      # del gate D3 sigue siendo obligatoria y no la sustituye este paso.
+      - name: Motion
+        run: npm run check:motion
+
       # La matriz B.3 entera —15 acciones × 4 roles, más los seis alcances—
       # sin base de datos: es tabla de permisos, no estado.
       - name: Matriz B.3
@@ -116,8 +126,19 @@ jobs:
       - name: Cabeceras de seguridad y compuerta de staging, sobre el servidor real
         run: npm run check:runtime
 
+      # El gate D3 exige revisión CUADRO A CUADRO del sheet, no inspección del
+      # código. Por eso aquí hay un navegador de verdad: mide la traslación
+      # presentada en cada fotograma y comprueba las cuatro cláusulas de
+      # RNF-45. Encontró dos defectos que ningún `grep` podía ver —la CSP que
+      # impedía hidratar y el cierre que ignoraba la velocidad del dedo—.
+      - name: Navegador para la medición del gesto
+        run: npx playwright install --with-deps chromium
+
+      - name: Las cuatro cláusulas del sheet, cuadro a cuadro (gate D3)
+        run: npm run test:gesto
+
       # Criterio 5: cada freno se ve en ROJO por el motivo esperado.
-      - name: Prueba negativa de los seis frenos
+      - name: Prueba negativa de los trece frenos
         run: npm run check:brakes
 
   # ──────────────────────────────────────────────────────────────────────────

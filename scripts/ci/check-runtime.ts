@@ -134,6 +134,65 @@ async function produccion(base: string) {
     salud.status === 200,
     `status ${salud.status}`,
   );
+
+  await politicaPorSuperficie(base, r);
+}
+
+/**
+ * Las DOS políticas de script (D-67), comprobadas donde de verdad importan: en
+ * la cabecera que sale por el socket y en el HTML que llega al navegador.
+ *
+ * El origen de esto fue un fallo real y silencioso: `script-src 'self'` a secas
+ * bloqueaba los scripts en línea de Next y **la hidratación no ocurría**. El
+ * sitio devolvía 200, las cabeceras parecían impecables y nada funcionaba. Estas
+ * comprobaciones son lo que hace ruido si alguien vuelve a dejarlo así.
+ */
+async function politicaPorSuperficie(base: string, publica: Response) {
+  const cspPublica = publica.headers.get("content-security-policy") ?? "";
+  const scriptPublica = /script-src ([^;]*)/.exec(cspPublica)?.[1] ?? "";
+  check(
+    "CSP · la página prerrenderizada permite su script en línea",
+    scriptPublica.includes("'unsafe-inline'"),
+    `script-src público: «${scriptPublica}». Sin esto el HTML estático no hidrata: ` +
+      "se ve y no funciona.",
+  );
+  check(
+    "CSP · la página prerrenderizada NO promete un nonce que su HTML no lleva",
+    !scriptPublica.includes("nonce-"),
+    `script-src público: «${scriptPublica}»`,
+  );
+
+  // Superficie dinámica: ahí manda la política estricta.
+  const uno = await fetch(`${base}/acceder`);
+  const cspUno = uno.headers.get("content-security-policy") ?? "";
+  const scriptUno = /script-src ([^;]*)/.exec(cspUno)?.[1] ?? "";
+  const nonceUno = /'nonce-([^']+)'/.exec(scriptUno)?.[1] ?? "";
+  check(
+    "CSP · la superficie dinámica lleva nonce y strict-dynamic",
+    !!nonceUno && scriptUno.includes("'strict-dynamic'"),
+    `script-src dinámico: «${scriptUno}»`,
+  );
+  check(
+    "CSP · la superficie dinámica NO lleva unsafe-inline",
+    !scriptUno.includes("'unsafe-inline'"),
+    `script-src dinámico: «${scriptUno}». Es la que refleja datos de personas: ahí no.`,
+  );
+
+  const html = await uno.text();
+  check(
+    "CSP · el nonce de la cabecera es el que Next puso en el HTML",
+    !nonceUno || html.includes(`nonce="${nonceUno}"`),
+    "la cabecera promete un nonce que el HTML no lleva: el navegador bloquearía los scripts",
+  );
+
+  const dos = await fetch(`${base}/acceder`);
+  const nonceDos =
+    /'nonce-([^']+)'/.exec(dos.headers.get("content-security-policy") ?? "")?.[1] ?? "";
+  check(
+    "CSP · el nonce cambia en cada petición",
+    !!nonceDos && nonceDos !== nonceUno,
+    `dos peticiones seguidas devolvieron «${nonceUno}» y «${nonceDos}»`,
+  );
 }
 
 async function staging(base: string) {

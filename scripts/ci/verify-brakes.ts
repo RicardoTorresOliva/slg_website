@@ -21,8 +21,12 @@ const REPO_ROOT = path.resolve(HERE, "../..");
 type Caso = {
   freno: string;
   script: string;
-  /** Fragmento que debe salir: prueba que falló por lo que esperábamos. */
-  espera: string;
+  /**
+   * Fragmento —o fragmentos— que deben salir: prueban que falló por lo que
+   * esperábamos y no por otra cosa. Varios cuando un solo fixture tiene que
+   * disparar varias comprobaciones distintas, como el del gesto.
+   */
+  espera: string | string[];
   env?: Record<string, string>;
   args?: string[];
 };
@@ -66,6 +70,18 @@ const CASOS: Caso[] = [
     env: { ARCHIVOS_ROOT: path.join(HERE, "negative/archivos") },
   },
   {
+    freno: "anima algo que provoca reflow",
+    script: "check-motion.ts",
+    espera: "solo se animan transform y opacity",
+    env: { MOTION_ROOT: path.join(HERE, "negative/motion") },
+  },
+  {
+    freno: "@keyframes en una interacción agarrable",
+    script: "check-motion.ts",
+    espera: "@keyframes en un componente agarrable",
+    env: { MOTION_ROOT: path.join(HERE, "negative/motion") },
+  },
+  {
     freno: "frontera de módulo cruzada",
     script: "check-fronteras.ts",
     espera: "importa el framework de identidad",
@@ -83,6 +99,20 @@ const CASOS: Caso[] = [
     espera: "lleva VALOR",
     env: { ENV_EXAMPLE_PATH: path.join(HERE, "negative/env/.env.example") },
   },
+  {
+    // Un solo fixture, las CUATRO cláusulas de RNF-45 incumplidas. El medidor
+    // tiene que ver las cuatro: si solo viera una, las otras tres serían un
+    // verde sin respaldo.
+    freno: "las cuatro cláusulas del sheet, medidas cuadro a cuadro",
+    script: "test-gesto.ts",
+    espera: [
+      "✗ 1:1",
+      "✗ rubber-band",
+      "✗ un lanzamiento rápido y corto CIERRA",
+      "✗ la velocidad se transfiere",
+    ],
+    env: { GESTO_URL: `file://${path.join(HERE, "negative/gesto/roto.html")}` },
+  },
 ];
 
 let fallos = 0;
@@ -97,20 +127,22 @@ for (const c of CASOS) {
   });
   const salida = `${res.stdout ?? ""}${res.stderr ?? ""}`;
   const rojo = res.status === 1;
-  const porElMotivo = salida.includes(c.espera);
+  const esperados = Array.isArray(c.espera) ? c.espera : [c.espera];
+  const faltan = esperados.filter((e) => !salida.includes(e));
+  const porElMotivo = faltan.length === 0;
 
   if (rojo && porElMotivo) {
-    console.log(`  ✓ ${c.freno}: falló como debía (exit 1, mencionó «${c.espera}»)`);
+    console.log(`  ✓ ${c.freno}: falló como debía (exit 1, mencionó «${esperados.join("», «")}»)`);
   } else {
     fallos++;
     console.error(`  ✗ ${c.freno}: NO falló como debía.`);
     console.error(`      exit esperado 1, obtenido ${res.status}`);
-    if (!porElMotivo) console.error(`      no mencionó «${c.espera}»`);
+    if (!porElMotivo) console.error(`      no mencionó «${faltan.join("», «")}»`);
     console.error(salida.split("\n").slice(0, 10).map((l) => `      | ${l}`).join("\n"));
   }
 }
 
-console.log("\nContraprueba — contra el repositorio real, los seis deben PASAR:\n");
+console.log("\nContraprueba — contra el repositorio real, los ocho deben PASAR:\n");
 for (const script of [
   "check-secrets.ts",
   "check-js-budget.ts",
@@ -118,6 +150,8 @@ for (const script of [
   "check-migrations.ts",
   "check-fronteras.ts",
   "check-archivos.ts",
+  "check-contraste.ts",
+  "check-motion.ts",
 ]) {
   const res = spawnSync(process.execPath, [path.join(HERE, script)], {
     encoding: "utf8",
@@ -158,4 +192,4 @@ if (fallos) {
   console.error(`\n✗ ${fallos} freno(s) no se comportaron como deben.\n`);
   process.exit(1);
 }
-console.log("\n✓ Los diez frenos del criterio 4 fallan cuando deben y pasan cuando deben.\n");
+console.log("\n✓ Los trece frenos del criterio 4 fallan cuando deben y pasan cuando deben.\n");

@@ -8,10 +8,11 @@ timestamp: 2026-09-12
 
 # Project memory — slg_website
 
-> **Punto de retomada en una línea:** **M0 construido y FU-01 esqueletada**. Diez unidades tocadas —
-> cinco `done` y cinco `in_progress`, y **ninguna esperando código**. La siguiente construible es
-> **FU-10** (sistema de componentes), que no depende del copy. **M1-A no empieza hasta que Ricardo
-> cierre la compuerta de FU-01.**
+> **Punto de retomada en una línea:** **M0 construido, FU-01 esqueletada y FU-10 construida**. Once
+> unidades tocadas — cinco `done` y seis `in_progress`, y **ninguna esperando código**. **No queda
+> nada construible sin Ricardo**: las dos compuertas abiertas —copy (FU-01) y prototipos (FU-10)—
+> bloquean todas las DU de página, y el resto espera paneles externos. El paso a paso de cada cosa
+> está en `docs/handoff.md`.
 
 ## Lo que espera a Ricardo, y solo a él
 1. **Despliegue** — `docs/deployment.md` §3 a §5. Cierra FU-05 (criterios 1, 2, 3 y 8).
@@ -64,10 +65,10 @@ timestamp: 2026-09-12
     monitor. **Paso a paso completo en `docs/deployment.md`.**
 
 ## Próxima unidad
-- **FU-10** — sistema de componentes C.5 con prototipo interactivo aprobado. Depende de **FU-02**, no
-  del copy: se valida contra el contenido marcador que ya existe. Es lo único construible ahora.
-- **M1-A (DU-02 en adelante) NO empieza** hasta que la compuerta de FU-01 se cierre con una aprobación
-  con fecha en `docs/work_log.md`.
+- **DU-02** — armazón público (navegación, sheet, pie, conmutador de idioma). **No empieza** hasta que
+  se cierren **las dos compuertas**: la de FU-01 (copy) y la de FU-10 (los nueve prototipos), ambas
+  con aprobación fechada en `docs/work_log.md`.
+- **No hay ninguna unidad construible sin Ricardo.** Lo que falta está en `docs/handoff.md`.
 
 ## El esqueleto de contenido, de un vistazo
 - **71 registros**: 22 `service` (las once páginas × 2 idiomas, con los seis bloques de A.3), 22
@@ -131,6 +132,7 @@ timestamp: 2026-09-12
 | Que los frenos sigan frenando | `npm run check:brakes` |
 | DNS tras cualquier cambio de zona | `npm run check:dns` (antes: `npm run check:dns:baseline`) |
 | Aislamiento entre empresas | `npm run test:db` (necesita PostgreSQL) |
+| Las cuatro cláusulas del sheet, cuadro a cuadro | `npm run test:gesto` (necesita el build y Chromium) |
 
 ## Entorno local
 - `docker-compose.yml` levanta `slg-db` (PostgreSQL 16) en el **puerto 5434**. El 5432 lo ocupa la
@@ -170,21 +172,45 @@ Detalle y justificación en `docs/decision_log.md`. **No se re-exploran.**
 - **Cerradas, no reabrir**: ~~P-5~~ (D-43) · ~~CF-3~~ (D-44) · ~~CF-4~~ (D-45) · ~~EXT-7~~ (D-49) ·
   ~~H-04~~ (D-48) · ~~CF-1~~ (D-50, y con ella **DU-16 deja de esperar un spec-delta**).
 
-## Riesgo abierto que conviene mirar antes de FU-10
-**El presupuesto de JavaScript va al 89 % con la portada vacía.** 133,9 KB comprimidos de los 150 KB
-del gate D1, y son runtime de React 19 más Next 16: no hay nada nuestro que recortar. Cuando entren
-DU-03 y FU-10 el margen es de **16 KB**. Decidir antes de FU-10: llevar componentes a Server
-Components, o subir el presupuesto con decisión escrita. **Desactivar el gate no es una opción.**
+## El presupuesto de JS, y por qué ya no asusta
+Iba al **89 %** (133,9 KB de 150 KB) con la portada vacía, y la duda era qué pasaría al entrar FU-10.
+Respuesta medida: **no se movió ni un byte**. Siete de los nueve componentes son de **servidor**, y
+los dos que no —formulario y sheet— viven en rutas que ya cargaban React. La regla que lo mantiene
+así: **`"use client"` solo donde hay gesto o estado**, y el resto en `components/piezas.tsx`.
 
-## Migraciones: ocho, y todas declaradas
-`0000`…`0007`. **Ojo con el journal**: una migración escrita a mano no se registra sola, y hasta el
+## Lo que hay que saber de la CSP antes de tocarla
+**Hay dos políticas, y no es un descuido (D-68).** Las páginas prerrenderizadas llevan
+`script-src 'self' 'unsafe-inline'`; las dinámicas —`(auth)`, `(hq)`, `(portal)`, `/api`— llevan
+**nonce nuevo por petición + `'strict-dynamic'` y sin `'unsafe-inline'`**. Las dos se emiten desde
+**`middleware.ts`**, nunca desde `next.config.ts`: una cabecera declarada allí es la misma para todas
+las peticiones y no puede llevar un nonce. **Si alguien vuelve a declarar la CSP en `next.config.ts`,
+las dos políticas se intersecan y el sitio deja de hidratar**: se ve y no funciona. `check:runtime` lo
+comprueba sobre el servidor real.
+
+## Lo que hay que saber del sheet antes de tocarlo
+El cierre es **estado de render**, no `style` escrito sobre el nodo (**D-69**). Escribirlo a mano
+parecía funcionar y no funcionaba: el render que dispara el propio gesto reescribía la duración recién
+calculada y el sheet cerraba **siempre** en 350 ms. Si vuelves a necesitar animar algo desde un
+manejador, pásalo por estado. Lo vigila `npm run test:gesto`, que lo mide cuadro a cuadro con un
+Chromium real.
+
+## Migraciones: diez, y todas declaradas
+`0000`…`0009`. **Ojo con el journal**: una migración escrita a mano no se registra sola, y hasta el
 2026-09-12 tres de ellas no se aplicaban. Lo vigila `npm run check:migrations`.
 
 ## Base de datos para verificar sin Docker
 `bash scripts/db/local-pg.sh up` levanta PostgreSQL 16, migra y siembra; `down` lo borra. Existe
 porque lo que se prueba son **políticas de fila reales**, y contra un doble siempre saldría verde.
 
-## Archivos clave tocados esta sesión (FU-05 y FU-06)
+## Archivos clave de FU-10
+- `components/`: `FormularioDeDescarga.tsx`, `BarraDeNavegacion.tsx`, `SheetMovil.tsx`, `piezas.tsx`,
+  `Reveal.tsx`, `ShellDeApp.tsx`, `VisorDeEntregables.tsx`
+- `app/motion.css` (las tres preferencias del sistema) · `lib/design/motion.ts` (la física del gesto) ·
+  `app/(auth)/prototipo/page.tsx` (los nueve, navegables)
+- `middleware.ts` (las dos CSP) · `next.config.ts` (ya no lleva CSP) ·
+  `scripts/ci/check-contraste.ts`, `check-motion.ts`, `test-gesto.ts`, `negative/gesto/roto.html`
+
+## Archivos clave tocados en sesiones anteriores (FU-05 y FU-06)
 - `middleware.ts` · `.github/workflows/ci.yml` · `.gitleaks.toml`
 - `scripts/ci/`: `check-js-budget.ts`, `check-secrets.ts`, `check-env-example.ts`, `check-runtime.ts`,
   `verify-brakes.ts`, `check-dns.sh`, `negative/`

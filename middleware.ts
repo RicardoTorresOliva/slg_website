@@ -62,13 +62,127 @@ function credencialCorrecta(cabecera: string | null, usuario: string, clave: str
   );
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+ * CSP — dos políticas, según la superficie
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * POR QUÉ LA CSP SE EMITE AQUÍ Y NO EN `next.config.ts`.
+ *
+ * Hallazgo de FU-10, medido con un navegador real: con `script-src 'self'` a
+ * secas, Chromium **rechaza los scripts en línea que Next inyecta** —los que
+ * llevan los datos de la página— y la hidratación muere con el error 412 de
+ * React. El HTML se ve; **nada funciona**. Ni el formulario de descarga, ni el
+ * sheet, ni el conmutador de idioma: el sitio entero queda mudo en producción,
+ * y ninguna comprobación que no abra un navegador lo ve. Por eso existe
+ * `scripts/ci/test-gesto.ts`.
+ *
+ * LA POLÍTICA NO PUEDE SER LA MISMA EN LAS DOS MITADES DEL SITIO, y la razón es
+ * de arquitectura, no de comodidad:
+ *
+ *   · Las páginas públicas se **prerrenderizan en la compilación**. Su HTML es
+ *     un archivo escrito antes de que exista la petición, así que **no puede
+ *     llevar un nonce por petición**: el nonce que el navegador exigiría no
+ *     estaría en el archivo. Lo que sí es cierto de ellas es que su contenido
+ *     sale de `content/` —del repositorio, revisado— y **no refleja ni un solo
+ *     dato que venga de fuera**. Ahí `'unsafe-inline'` no abre ninguna puerta
+ *     que el atacante pueda cruzar: no hay por dónde inyectar.
+ *   · Las superficies que **sí** renderizan datos de personas —`(auth)`,
+ *     `(hq)`, `(portal)` y la API— se renderizan por petición. Ahí manda la
+ *     política ESTRICTA: nonce nuevo en cada respuesta, `'strict-dynamic'` y
+ *     **sin `'unsafe-inline'`**. Son justo las que un XSS querría.
+ *
+ * La alternativa —hacer dinámica toda la web pública para poder ponerle nonce—
+ * cambiaría el renderizado de 26 páginas de marketing por una protección que
+ * en esas páginas no protege de nada.
+ *
+ * `style-src` conserva `'unsafe-inline'` en ambas **a propósito**: los estilos
+ * en línea de React (`style={{…}}`) son atributos, y un nonce no los cubre.
+ */
+const BASE_CSP = [
+  "default-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  // Montserrat se sirve desde nuestro dominio (RNF-14): sin terceros.
+  "font-src 'self'",
+  "connect-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  "upgrade-insecure-requests",
+];
+
+/**
+ * Prefijos que se renderizan por petición. Todo lo que pueda mostrar un dato
+ * que no venga del repositorio tiene que estar en esta lista: entrar aquí
+ * ENDURECE la política, nunca la relaja.
+ */
+const SUPERFICIES_DINAMICAS = [
+  "/hq",
+  "/portal",
+  "/api",
+  "/acceder",
+  "/recuperar",
+  "/restablecer",
+  "/invitacion",
+  "/en/sign-in",
+  "/en/recover",
+  "/prototipo",
+];
+
+function esDinamica(pathname: string): boolean {
+  return SUPERFICIES_DINAMICAS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
+function politicaEstricta(nonce: string): string {
+  // `'strict-dynamic'` es lo que permite que el bootstrap con nonce cargue los
+  // chunks; sin él habría que nombrar cada uno. `'self'` queda detrás como
+  // repliegue para navegadores que no entienden `'strict-dynamic'`.
+  return [`script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`, ...BASE_CSP].join("; ");
+}
+
+function politicaPublica(): string {
+  return [`script-src 'self' 'unsafe-inline'`, ...BASE_CSP].join("; ");
+}
+
+function nonceNuevo(): string {
+  // El runtime edge no trae `node:crypto`; `crypto` global sí está.
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  let bruto = "";
+  for (const b of bytes) bruto += String.fromCharCode(b);
+  return btoa(bruto);
+}
+
+/**
+ * La respuesta base de toda petición. En las superficies dinámicas el nonce
+ * viaja en la cabecera de PETICIÓN —de ahí lo lee Next para firmar sus propios
+ * scripts— y la política en la de RESPUESTA, que es la que aplica el navegador.
+ */
+function respuestaBase(request: NextRequest): NextResponse {
+  if (!esDinamica(request.nextUrl.pathname)) {
+    const respuesta = NextResponse.next();
+    respuesta.headers.set("Content-Security-Policy", politicaPublica());
+    return respuesta;
+  }
+  const nonce = nonceNuevo();
+  const politica = politicaEstricta(nonce);
+  const cabeceras = new Headers(request.headers);
+  cabeceras.set("x-nonce", nonce);
+  cabeceras.set("Content-Security-Policy", politica);
+  const respuesta = NextResponse.next({ request: { headers: cabeceras } });
+  respuesta.headers.set("Content-Security-Policy", politica);
+  return respuesta;
+}
+
 export function middleware(request: NextRequest) {
   const usuario = process.env.STAGING_BASIC_AUTH_USER;
   const clave = process.env.STAGING_BASIC_AUTH_PASSWORD;
 
   // Producción: ninguna de las dos está definida. La compuerta de staging no
   // aplica, y se pasa directamente a la clasificación de §2.
-  if (!usuario || !clave) return clasificar(request, NextResponse.next());
+  if (!usuario || !clave) return clasificar(request, respuestaBase(request));
 
   const { pathname } = request.nextUrl;
 
@@ -78,6 +192,9 @@ export function middleware(request: NextRequest) {
         status: 401,
         headers: {
           "WWW-Authenticate": REALM,
+          // Un 401 no ejecuta nada, pero se sirve desde el mismo origen: la
+          // política no se relaja por ser una página de error.
+          "Content-Security-Policy": politicaEstricta(nonceNuevo()),
           // Un 401 también se indexa si algún buscador lo intenta. No.
           "X-Robots-Tag": "noindex, nofollow, noarchive, nosnippet",
           "Cache-Control": "no-store",
@@ -89,7 +206,7 @@ export function middleware(request: NextRequest) {
   // Autenticado (o sonda): pasa a la clasificación de §2, pero NUNCA indexable
   // (RF-122, criterio 1). El `noindex` se pone AL FINAL para que la
   // clasificación no pueda ablandarlo.
-  const respuesta = clasificar(request, NextResponse.next());
+  const respuesta = clasificar(request, respuestaBase(request));
   respuesta.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet");
   return respuesta;
 }

@@ -18,29 +18,22 @@ const nextConfig: NextConfig = {
    * `frame-ancestors 'none'` protege la aplicación de ser embebida. El visor de
    * entregables HTML es el caso contrario —él SÍ se embebe— y por eso vive en un
    * ORIGEN SEPARADO con su propia política (D-45), no bajo estas cabeceras.
+   *
+   * LA CSP NO ESTÁ AQUÍ. Vive en `middleware.ts` porque lleva un **nonce
+   * distinto en cada petición**, y una cabecera declarada en este archivo es la
+   * misma para todas. Con la CSP estática que había —`script-src 'self'`— el
+   * navegador rechazaba los scripts en línea de Next y **la hidratación no
+   * ocurría**: el sitio se veía y no funcionaba. Está medido con un navegador
+   * real en `scripts/ci/test-gesto.ts`. Si alguien vuelve a declararla aquí,
+   * las dos políticas se INTERSECAN y el sitio se queda mudo otra vez.
+   *
+   * Las de abajo sí son constantes, y por eso siguen aquí.
    */
   async headers() {
-    const csp = [
-      "default-src 'self'",
-      // Next inyecta estilos en línea; el nonce llega en FU-06 con el middleware.
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob:",
-      // Montserrat se sirve desde nuestro dominio (RNF-14): sin terceros.
-      "font-src 'self'",
-      "script-src 'self'",
-      "connect-src 'self'",
-      "object-src 'none'",
-      "base-uri 'self'",
-      "form-action 'self'",
-      "frame-ancestors 'none'",
-      "upgrade-insecure-requests",
-    ].join("; ");
-
     return [
       {
         source: "/:path*",
         headers: [
-          { key: "Content-Security-Policy", value: csp },
           // Dos años y precarga: el sitio es HTTPS puro desde el primer día.
           { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
           { key: "X-Content-Type-Options", value: "nosniff" },

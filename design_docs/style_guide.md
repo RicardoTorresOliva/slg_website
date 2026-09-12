@@ -81,8 +81,8 @@ Cero valores hexadecimales literales fuera del archivo de tokens (criterio 2 de 
 | Token | Valor | Uso en la web | Contraste |
 |---|---|---|---|
 | `--blue-primary` | `#2878B4` | Color de marca: H2, botón secundario (texto blanco), líneas estructurales, eyebrows, bordes de bloque | **4,7:1** sobre `--paper` (AA texto) · **4,4:1** sobre `--paper-2` → ahí **solo a ≥ 24 px** |
-| `--blue-deep` | `#24394D` | Hero y H1, texto de enlace, títulos de bloque, superficies de HQ y portal, cifras grandes | **6,5:1** sobre `--paper` · **6,0:1** sobre `--paper-2` · blanco encima: **6,5:1** *(medido)* |
-| `--cyan` | `#50B4DC` | Highlights, marcador de palabras clave, iconos, subrayados | **2,4:1** sobre `--paper` → **nunca texto sobre claro** · `--ink` encima: **8,3:1** · sobre `--indigo`: **5,3:1** · sobre `--blue-deep`: **2,8:1** *(medido)* → **tampoco ahí** |
+| `--blue-deep` | `#24394D` | Hero y H1, texto de enlace, títulos de bloque, superficies de HQ y portal, cifras grandes | **11,9:1** sobre `--paper` · **11,0:1** sobre `--paper-2` · blanco encima: **11,9:1** *(medido por `npm run check:contraste`, D-66)* |
+| `--cyan` | `#50B4DC` | Highlights, marcador de palabras clave, iconos, subrayados | **2,4:1** sobre `--paper` → **nunca texto sobre claro** · `--ink` encima: **8,3:1** · sobre `--indigo`: **5,3:1** · sobre `--blue-deep`: **5,0:1** *(medido, D-66)* → **sí alcanza AA ahí** |
 | `--blue-tint` | `#78B4DC` | Fondos de tabla y áreas de respiración, al 20–40 % de opacidad | **Solo fondo** (2,2:1 sobre `--paper`, *medido*) · `--ink` encima: **8,8:1** |
 | `--indigo` | `#282878` | H3, elementos secundarios de marca, `SLG_Academy`, datos destacados en tablas | **12,6:1** sobre `--paper` · **11,7:1** sobre `--paper-2` *(medido)* · blanco encima: **12,6:1** *(medido)* |
 | `--red` | `#DC141E` | **Detención visual**: botón del CTA de descarga (texto blanco) y alertas críticas en HQ | **5,0:1** sobre `--paper` · blanco sobre rojo: **5,0:1** |
@@ -120,10 +120,15 @@ Estas tres no admiten excepción y se verifican en cada DU de interfaz:
 
 Ambas se derivan de los mismos hexadecimales del kit, no de una preferencia:
 
-- **`--cyan` sobre `--blue-deep` es 2,8:1** *(medido)*. El §7 admite el cyan como acento en secciones
-  oscuras; en `--blue-deep` ese acento **no puede llevar texto ni ser un borde que deba percibirse**
-  (no alcanza ni 3:1). Sobre `--indigo` sí (5,3:1). Traducción operativa: **si la sección oscura
-  necesita cyan legible, la sección es `--indigo`, no `--blue-deep`**.
+- **`--cyan` sobre `--blue-deep` es 5,0:1** *(medido sobre los tokens reales, **D-66**)*. Este número
+  **no es el que este documento traía**: decía 2,8:1, que es lo que mide el cyan sobre `#14648C`, el
+  `--blue-deep` **anterior**. La celda del §2.2 ya llevaba `#24394D` —y es lo que define
+  `app/globals.css`—, pero las cifras derivadas no se recalcularon. Con el token que el sitio usa de
+  verdad, el par **alcanza AA**: el cyan sí puede llevar texto sobre `--blue-deep`. Sobre `--indigo`,
+  5,3:1. La restricción de D-42 —«si la sección oscura necesita cyan legible, la sección es
+  `--indigo`»— deja de ser necesaria por contraste; sigue valiendo como preferencia de composición,
+  no como regla de accesibilidad. Lo encontró la medición, no una relectura: `npm run check:contraste`
+  mide los 20 pares contra los tokens del kit en cada push.
 - **`--line` `#C8CCD3` es 1,6:1** *(medido)*. Sirve para dividir, no para delimitar un control. El
   borde de un campo de formulario, el anillo de foco y cualquier límite que el usuario deba percibir
   se construyen con `--blue-primary`, `--ink-2` o `--ink`.
@@ -248,9 +253,10 @@ inspección del código (RNF-45, criterio 10 de FU-10).
 ### 7.1 Secciones oscuras (permitidas, acotadas)
 
 - Fondo: **`--blue-deep`** o **`--indigo`**. Ningún otro.
-- Texto: **blanco** (6,5:1 sobre `--blue-deep`, 12,6:1 sobre `--indigo` — ambos *medidos*).
-- Acento: **`--cyan`**, con el límite del §2.3 — legible como texto solo sobre `--indigo` (5,3:1);
-  sobre `--blue-deep` (2,8:1) es acento gráfico no informativo o no se usa.
+- Texto: **blanco** (11,9:1 sobre `--blue-deep`, 12,6:1 sobre `--indigo` — ambos *medidos*, D-66).
+- Acento: **`--cyan`**, legible como texto sobre `--indigo` (5,3:1) **y sobre `--blue-deep`** (5,0:1).
+  Las cifras 6,5:1 y 2,8:1 que este párrafo traía eran del `--blue-deep` anterior (`#14648C`); ver
+  §2.3 y D-66. Sobre fondo **claro** el cyan sigue prohibido como texto (2,4:1).
 - **Sin logo dentro** (regla 4 del kit, §3 de este documento). En una sección oscura el nombre de
   marca, si aparece, es texto compuesto, no el logotipo.
 - El rojo sigue contando: **1–2 instancias por viewport**, secciones oscuras incluidas.

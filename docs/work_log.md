@@ -722,3 +722,121 @@ en verde contra el contenido real · `check:ci` en verde · el presupuesto de JS
 **Siguiente.** Con la compuerta abierta, M1-A no empieza. Lo que **sí** puede construirse en paralelo
 es **FU-10** (sistema de componentes C.5), que depende de FU-02 y no del copy: su prototipo se valida
 con el contenido marcador que ahora existe.
+
+---
+
+## 2026-09-12 · FU-10 — Sistema de componentes C.5 con prototipo interactivo · `in_progress` · **COMPUERTA ABIERTA**
+
+**Qué se construyó.** Los **nueve componentes de C.5**, en el orden que impone RF-134 —el formulario
+de descarga primero, los otros ocho en el orden literal del anexo (**D-67**)—, más el contrato de
+movimiento de C.4 partido en dos: lo que se puede expresar en CSS vive en `app/motion.css`, y lo que
+no —proyección de momentum, rubber-band, transferencia de velocidad— en `lib/design/motion.ts`,
+porque es cálculo y no curva.
+
+| # | Componente | Archivo | Cliente |
+|---|---|---|---|
+| 1 | Formulario de descarga | `components/FormularioDeDescarga.tsx` | sí (5 estados) |
+| 2 | Barra de navegación + sheet móvil | `components/BarraDeNavegacion.tsx` · `components/SheetMovil.tsx` | sí |
+| 3 | Hero tipográfico | `components/piezas.tsx` | no (servidor) |
+| 4 | Tarjeta de rama/servicio | `components/piezas.tsx` | no |
+| 5 | Bloque «Qué incluye» | `components/piezas.tsx` | no |
+| 6 | Tarjeta de artículo | `components/piezas.tsx` | no |
+| 7 | Pie | `components/piezas.tsx` | no |
+| 8 | Shell de app | `components/ShellDeApp.tsx` | no |
+| 9 | Visor de entregables | `components/VisorDeEntregables.tsx` | no |
+
+Siete de los nueve son componentes de **servidor**: el presupuesto de JS no se movió un byte —26
+rutas, la más pesada sigue siendo la portada con **133,9 KB**—.
+
+**Los nueve, navegables, en `/prototipo`.** El criterio 1 dice que una imagen no cierra esta
+compuerta, así que el prototipo es la página real, con los nueve componentes y sus estados. Es lo que
+Ricardo abre para aprobar, y es lo que mide `test:gesto`.
+
+### Tres defectos que ningún `grep` podía ver
+
+El criterio 10 exige verificar el sheet **cuadro a cuadro, no por inspección del código**. Convertir
+esa frase en un freno ejecutable (**D-70**) —un Chromium real, viewport de móvil, la traslación
+presentada muestreada en cada `requestAnimationFrame`— encontró tres cosas en su primera ejecución:
+
+1. **La hidratación no ocurría. En todo el sitio.** `script-src 'self'` a secas hacía que el navegador
+   rechazara los scripts en línea de Next y React moría con el error 412. El servidor devolvía 200,
+   las cabeceras parecían impecables y **nada funcionaba**: ni el formulario, ni el sheet, ni el
+   conmutador de idioma. Corregido con **dos políticas según la superficie** (**D-68**), y ahora
+   `check:runtime` lo vigila: nonce en las superficies dinámicas, distinto en cada petición y el mismo
+   que Next puso en el HTML; `'unsafe-inline'` **solo** en las prerrenderizadas, que no reflejan ni un
+   dato externo.
+2. **El sheet cerraba siempre en 350 ms**, viniera el dedo como viniera. El `setState` del gesto
+   provoca un render justo después de soltar y React reescribía la duración recién calculada: la
+   cláusula 4 de RNF-45 estaba incumplida y el código parecía correcto. El cierre pasa a ser **estado
+   de render** (**D-69**).
+3. **La velocidad no caducaba**: arrastrar rápido, pararse un segundo y soltar cerraba el sheet contra
+   un dedo que se había detenido a propósito. Ventana de 100 ms (**D-69**).
+
+Como efecto del mismo cambio, agarrar a mitad del cierre continúa ahora **desde el valor presentado**
+—lo que RNF-12 exige y el comentario del componente ya prometía sin que el código lo hiciera—.
+
+### Los trece criterios
+
+| # | Criterio | Estado | Evidencia |
+|---|---|---|---|
+| 1 | Nueve prototipos reales, navegables con teclado y con gesto | **cerrado** | `/prototipo` sirve los nueve; `test:gesto` los conduce con puntero real |
+| 2 | El formulario demuestra el camino completo del visitante | **cerrado** | Cinco estados en `FormularioDeDescarga.tsx`: validación de correo corporativo con mensaje en el idioma de la página, error en línea, envío, «disponible próximamente» y error de servidor |
+| 3 | Contraste AA en todas las combinaciones; cyan nunca como texto sobre claro | **cerrado** | `check:contraste`: **21** mediciones sobre los tokens reales, más **4 pares prohibidos** que se comprueba que NO llegan a AA. Corrige de paso las cifras obsoletas del `style_guide` (**D-66**) |
+| 4 | Teclado completo con foco visible; anillo de dos capas de D-44 **medido** | **cerrado** | Medido, no afirmado: **capa interior sobre `--paper` 4,7:1** y **sobre `--paper-2` 4,4:1**, ambos sobre el mínimo de 3:1 que exige RNF-05. Y el par que **rechaza la unidad** también se mide: un anillo de **una sola capa** en `--cyan` da **2,4:1** sobre `--paper` y el gate lo tiene declarado como prohibido |
+| 5 | Las tres preferencias del sistema | **cerrado** | Los tres bloques en `app/motion.css`: `prefers-reduced-motion` degrada a cross-fade de 200 ms sin desplazamientos, `prefers-reduced-transparency` vuelve sólida toda superficie translúcida, `prefers-contrast: more` define bordes y casi elimina la transparencia |
+| 6 | Springs `damping` 1.0, `response` 0.3–0.4 s; rebote solo tras momentum | **cerrado** | `SPRING` en `lib/design/motion.ts` (1.0 / 0.35); `SPRING_CON_REBOTE` existe y **no se usa en ninguna transición provocada por un clic** |
+| 7 | Feedback en `pointerdown` y cero retardos artificiales | **cerrado** | `.slg-pressable` → `scale(0.97)` en 100 ms; `check:motion` no encuentra ningún retardo en la ruta de entrada |
+| 8 | Solo `transform` y `opacity`; `will-change` acotado | **cerrado** | `check:motion`: **87** archivos. Y medido: el panel **no cambia de tamaño en ningún fotograma** durante el gesto |
+| 9 | Se reanuda desde el valor presentado; cero `@keyframes` agarrables | **cerrado** | `check:motion` prohíbe `@keyframes` en los componentes agarrables; `test:gesto` mide que el primer fotograma tras soltar sigue donde lo dejó el dedo |
+| 10 | Las cuatro cláusulas de RNF-45, **cuadro a cuadro** | **cerrado** | `test:gesto`: **10** comprobaciones sobre un Chromium real. 1:1 con ≤ 1 px de desviación · rubber-band sobre la curva de iOS con ≤ 1 px · un lanzamiento rápido y **corto** cierra mientras un arrastre lento que llega **más lejos** no · el cierre hereda la velocidad |
+| 11 | Reveals: opacidad + 8 px, una sola vez, sin parallax | **cerrado** | `REVEAL` y `components/Reveal.tsx`: `IntersectionObserver` que se desconecta al disparar |
+| 12 | La lente de los ocho principios de C.6, respondida por escrito | **cerrado** | Abajo |
+| 13 | **Aprobación explícita registrada aquí, con fecha** | **ABIERTA** | Es la compuerta. Ver abajo |
+
+### La lente de C.6, respondida
+
+| # | Principio | Respuesta |
+|---|---|---|
+| 1 | **Propósito** | Se decidió **no** construir un carrusel, un buscador, un selector de vista ni un menú de segundo nivel. Nadie los echa de menos porque el sitio tiene 26 rutas y cinco destinos: buscar es más trabajo que leer el menú |
+| 2 | **Agencia** | El sheet se cierra de cuatro formas —gesto, telón, Escape y el propio destino—, y ninguna pide confirmación porque ninguna destruye nada. La única confirmación del sistema vive donde sí es irreversible: cerrar todas las sesiones (DU-01) |
+| 3 | **Responsabilidad** | El formulario de descarga pide **un** campo: el correo. Ni cargo, ni empresa, ni teléfono. El documento se entrega por un enlace firmado, así que no hay ningún dato más que sirva para entregarlo |
+| 4 | **Familiaridad** | Un solo anillo de foco, un solo token de radio por familia, un solo patrón de error en línea, y el wordmark siempre arriba a la izquierda llevando a la portada. El shell de app repite la misma jerarquía tipográfica que el sitio público |
+| 5 | **Flexibilidad** | Móvil = rápido: un botón y un sheet arrastrable. Escritorio = profundo: los cinco destinos a la vista, sin esconderlos tras un icono. La tabla del shell **se apila como ficha por fila** en móvil en vez de pedir zoom |
+| 6 | **Simplicidad** | Hay jerarquía, no minimalismo: el hero usa `clamp()` hasta 3,25 rem contra un cuerpo de 1 rem, y el rojo aparece **una vez por viewport** —en el CTA—, que es lo que lo hace funcionar como CTA |
+| 7 | **Craft** | Cada espaciado, radio, sombra y `timing` sale de un token de `app/tokens.css` o de una cifra de C.4. `check:contraste` mide los colores y `check:motion` vigila las animaciones: no hay ningún valor «a ojo» |
+| 8 | **Deleite** | El único movimiento que no es respuesta directa a una acción es el reveal al scroll, y son 8 px de desplazamiento **una sola vez**. Lo demás —press, sheet, cierre— es consecuencia del dedo |
+
+**Wayfinding.** **Dónde estoy**: el enlace activo lleva `aria-current="page"` y el título de sección
+encabeza cada pantalla del shell. **A dónde puedo ir**: los cinco destinos están a la vista en
+escritorio y a un toque en móvil. **Cómo salgo**: el wordmark siempre vuelve a la portada, y el sheet
+tiene tirador, telón y Escape.
+
+**Gates aplicados.** **D2** (accesibilidad, 21 mediciones + 4 pares prohibidos) · **D2b** (marca) ·
+**D3** (motion, con la revisión cuadro a cuadro convertida en freno) · alimenta **D1** (el
+presupuesto no se movió).
+
+**Verificación.** `check:ci` en verde, ahora con `test:gesto` dentro · `check:brakes`: **trece**
+frenos, cada uno visto en rojo por su motivo · `test:db`: **264** comprobaciones contra PostgreSQL,
+SMTP y servidores HTTP reales · `npx tsc --noEmit` y `eslint` limpios.
+
+### LA COMPUERTA SIGUE ABIERTA (criterio 13)
+
+**Ninguna DU de página empieza hasta que Ricardo apruebe los nueve prototipos**, y la aprobación se
+registra aquí con fecha. Paso a paso, sin dar por supuesto dónde va cada cosa:
+
+1. Abre el navegador y entra en **`https://staging.softlandingglobal.com/prototipo`**. Si el navegador
+   pide usuario y contraseña, son las de la compuerta de staging, las mismas que configuraste en
+   Easypanel en el servicio `slgweb-staging` (variables `STAGING_BASIC_AUTH_USER` y
+   `STAGING_BASIC_AUTH_PASSWORD`).
+2. Míralo **primero en el móvil**, no en el ordenador: el sheet arrastrable solo existe ahí. Toca
+   «Menú», arrastra el panel hacia abajo con el dedo y suéltalo; prueba también a lanzarlo rápido y
+   corto, y a arrastrarlo hacia arriba para notar la resistencia.
+3. En el ordenador, recorre la página **solo con el teclado**, con la tecla Tab. Lo que tienes que ver
+   es un anillo de foco visible en **todos** los elementos por los que pases, sin excepción.
+4. Escríbeme **una sola respuesta** con una de estas dos cosas: «apruebo FU-10» —y lo registro aquí
+   con la fecha—, o la lista de lo que quieres cambiar. Como en FU-01, **una sola ronda**: una segunda
+   es cambio de alcance, no un paso del plan.
+
+**Mientras esto no se cierre, DU-02, DU-03 y las demás DU de página no arrancan.** No es una
+formalidad: son el marco por el que se navega todo lo demás, y rehacerlas después de construir diez
+páginas encima cuesta diez veces más.

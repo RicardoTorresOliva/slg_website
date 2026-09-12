@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sheet roto — prueba negativa de las cuatro cláusulas de RNF-45</title>
+<!--
+  Prueba negativa del freno `test:gesto` (R-26).
+
+  Esta página implementa un sheet que INCUMPLE las cuatro cláusulas, cada una
+  con el error real que se comete en la práctica:
+
+    1. 1:1     — aplica el delta multiplicado por 0.6 y con una transición de
+                 250 ms durante el arrastre, así que el panel va por detrás del
+                 dedo. Es el error que el comentario de `SheetMovil` advierte.
+    2. banda   — el límite superior se CLAVA en 0 en vez de resistir.
+    3. proy.   — decide con la POSICIÓN al soltar, no con la proyección: un
+                 lanzamiento rápido y corto vuelve a subir.
+    4. veloc.  — cierra siempre en 350 ms y arrancando desde 0, no desde el
+                 valor presentado: el micro-parón y el salto.
+
+  Si el medidor no se pone en ROJO contra esta página, el medidor no mide.
+-->
+<style>
+  body { margin: 0; font: 16px system-ui, sans-serif; height: 200vh; }
+  #telon { position: fixed; inset: 0; background: rgb(10 10 20 / .32); display: none; align-items: flex-end; }
+  #telon[data-abierto] { display: flex; }
+  #panel { width: 100%; background: #fff; border-radius: 16px 16px 0 0; touch-action: none; padding-bottom: 24px; }
+  #tirador { width: 36px; height: 4px; margin: 12px auto 16px; border-radius: 999px; background: #ddd; }
+  li { padding: 14px 8px; list-style: none; }
+</style>
+</head>
+<body>
+<button type="button" aria-haspopup="dialog" aria-expanded="false" id="abrir">Menú</button>
+
+<div id="telon" role="dialog" aria-modal="true" aria-label="Menú">
+  <div id="panel">
+    <div id="tirador" aria-hidden="true"></div>
+    <ul style="margin:0;padding:0"><li>SLG_AI</li><li>Doctrina</li><li>Blog</li><li>Nosotros</li></ul>
+  </div>
+</div>
+
+<script>
+  const telon = document.getElementById("telon");
+  const panel = document.getElementById("panel");
+  let y = 0, arrastrando = false, inicioY = 0;
+
+  document.getElementById("abrir").addEventListener("click", () => {
+    y = 0;
+    panel.style.transform = "translate3d(0,0,0)";
+    telon.setAttribute("data-abierto", "");
+  });
+
+  panel.addEventListener("pointerdown", (e) => {
+    panel.setPointerCapture(e.pointerId);
+    arrastrando = true;
+    inicioY = e.clientY;
+    // INCUMPLE 1: transición durante el arrastre. El panel persigue al dedo.
+    panel.style.transition = "transform 250ms linear";
+  });
+
+  panel.addEventListener("pointermove", (e) => {
+    if (!arrastrando) return;
+    const delta = e.clientY - inicioY;
+    // INCUMPLE 1 (multiplicador) e INCUMPLE 3 (tope duro en vez de banda).
+    y = delta > 0 ? delta * 0.6 : 0;
+    panel.style.transform = `translate3d(0,${y}px,0)`;
+  });
+
+  panel.addEventListener("pointerup", () => {
+    arrastrando = false;
+    const alto = panel.offsetHeight;
+    // INCUMPLE 2: decide con la posición, no con la proyección.
+    if (y > alto / 2) {
+      // INCUMPLE 4: duración fija y arranque desde 0, no desde lo presentado.
+      panel.style.transition = "none";
+      panel.style.transform = "translate3d(0,0,0)";
+      void panel.offsetHeight;
+      panel.style.transition = "transform 350ms linear";
+      panel.style.transform = `translate3d(0,${alto}px,0)`;
+      setTimeout(() => telon.removeAttribute("data-abierto"), 350);
+    } else {
+      panel.style.transition = "transform 350ms linear";
+      y = 0;
+      panel.style.transform = "translate3d(0,0,0)";
+    }
+  });
+</script>
+</body>
+</html>

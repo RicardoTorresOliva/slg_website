@@ -22,12 +22,15 @@
     "check:migrations": "node scripts/ci/check-migrations.ts",
     "check:fronteras": "node scripts/ci/check-fronteras.ts",
     "check:archivos": "node scripts/ci/check-archivos.ts",
+    "check:contraste": "node scripts/ci/check-contraste.ts",
+    "check:motion": "node scripts/ci/check-motion.ts",
     "check:js-budget": "node scripts/ci/check-js-budget.ts",
     "check:runtime": "node scripts/ci/check-runtime.ts",
+    "test:gesto": "node scripts/ci/test-gesto.ts",
     "check:brakes": "node scripts/ci/verify-brakes.ts",
     "check:dns": "bash scripts/ci/check-dns.sh",
     "check:dns:baseline": "bash scripts/ci/check-dns.sh --baseline",
-    "check:ci": "npm run lint && npm run check:content && npm run check:secrets && npm run check:env && npm run check:migrations && npm run check:fronteras && npm run check:archivos && npm run test:permisos && npm run build:standalone && npm run check:js-budget && npm run check:runtime",
+    "check:ci": "npm run lint && npm run check:content && npm run check:secrets && npm run check:env && npm run check:migrations && npm run check:fronteras && npm run check:archivos && npm run check:contraste && npm run check:motion && npm run test:permisos && npm run build:standalone && npm run check:js-budget && npm run check:runtime && npm run test:gesto",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "node scripts/db/seed.ts",
     "test:isolation": "node scripts/db/test-isolation.ts",
@@ -65,9 +68,10 @@
     "drizzle-kit": "0.31.10",
     "eslint": "9.39.5",
     "eslint-config-next": "16.3.4",
+    "playwright": "1.63.0",
     "smtp-server": "3.19.12",
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3"
   },
-  "description": "Website p\u00fablica, HQ y portal de clientes de SLG Agency"
+  "description": "Website pública, HQ y portal de clientes de SLG Agency"
 }
