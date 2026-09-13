@@ -1,10 +1,10 @@
 ---
 type: page
-title: "Home"
-description: "SLG Agency ayuda a directorios y comités de dirección a operar en la era de la inteligencia artificial."
+title: "SLG_Holdings"
+description: "La segunda puerta de SLG: construcción y operación de compañías, no solo asesoría."
 lang: es
-pair: "home"
-nav_order: 1
+pair: "holdings"
+nav_order: 6
 updated: "2026-09-12"
 ---
 

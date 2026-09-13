@@ -17,36 +17,53 @@ import { Wordmark } from "./Wordmark";
  *
  * Las tres preguntas de wayfinding (C.6), respondidas:
  *   · **dónde estoy** — el enlace activo lleva `aria-current="page"`;
- *   · **a dónde puedo ir** — los destinos están a la vista, no tras un icono;
+ *   · **a dónde puedo ir** — los cinco destinos están a la vista, no tras un
+ *     icono ni tras un desplegable, que convertiría cinco en dieciséis (RF-01);
  *   · **cómo salgo** — el wordmark siempre vuelve a la portada.
+ *
+ * NI UNA CADENA DE TEXTO SE ESCRIBE AQUÍ (RF-16). Todas llegan por props desde
+ * `ArmazonPublico`, que las lee de `content/ui`. Lo vigila `check:cadenas`.
  */
 export type Enlace = { href: string; etiqueta: string };
+
+export type Conmutador = {
+  /** `null` cuando esta página todavía no existe en el otro idioma. */
+  href: string | null;
+  etiqueta: string;
+  /** Qué se lee cuando no hay pareja. Se dibuja; no se esconde. */
+  etiquetaNoDisponible: string;
+  /** El idioma AL QUE lleva, para el atributo `hreflang`. */
+  idiomaDestino: string;
+};
 
 export function BarraDeNavegacion({
   enlaces,
   activo,
-  etiquetaMenu,
-  etiquetaIdioma,
-  hrefIdioma,
+  acceso,
+  conmutador,
+  inicio,
+  textos,
 }: {
   enlaces: readonly Enlace[];
   activo?: string;
-  etiquetaMenu: string;
-  etiquetaIdioma: string;
-  hrefIdioma: string;
+  acceso: Enlace;
+  conmutador: Conmutador;
+  /** A dónde lleva el logo: `/` en español, `/en` en inglés. */
+  inicio: string;
+  textos: { menu: string; navegacion: string; inicio: string };
 }) {
   const [abierto, setAbierto] = useState(false);
 
   return (
     <>
       <header className="slg-material" style={barra}>
-        <nav style={fila} aria-label={etiquetaMenu}>
-          <Link href="/" style={{ display: "flex", alignItems: "center" }} aria-label="SLG Agency">
+        <nav style={fila} aria-label={textos.navegacion}>
+          <Link href={inicio} style={{ display: "flex", alignItems: "center" }} aria-label={textos.inicio}>
             <Wordmark />
           </Link>
 
-          {/* Escritorio: los destinos a la vista. Móvil = rápido, escritorio =
-              profundo (C.6, principio 5). */}
+          {/* Escritorio: los cinco destinos a la vista. Móvil = rápido,
+              escritorio = profundo (C.6, principio 5). */}
           <ul style={listaEscritorio} data-slg-desktop>
             {enlaces.map((e) => (
               <li key={e.href}>
@@ -64,8 +81,13 @@ export function BarraDeNavegacion({
               </li>
             ))}
             <li>
-              <Link href={hrefIdioma} style={enlaceEstilo} lang={hrefIdioma.startsWith("/en") ? "en" : "es"}>
-                {etiquetaIdioma}
+              <ConmutadorDeIdioma conmutador={conmutador} />
+            </li>
+            <li>
+              {/* Secundario a propósito: el CTA de la capa pública es la
+                  descarga, no el login (§10-8). Nunca rojo. */}
+              <Link href={acceso.href} style={botonAcceso}>
+                {acceso.etiqueta}
               </Link>
             </li>
           </ul>
@@ -79,32 +101,62 @@ export function BarraDeNavegacion({
             onClick={() => setAbierto(true)}
             style={botonMenu}
           >
-            {etiquetaMenu}
+            {textos.menu}
           </button>
         </nav>
       </header>
 
-      <SheetMovil abierto={abierto} onCerrar={() => setAbierto(false)} etiqueta={etiquetaMenu}>
+      <SheetMovil abierto={abierto} onCerrar={() => setAbierto(false)} etiqueta={textos.navegacion}>
         <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: "0.25rem" }}>
           {enlaces.map((e) => (
             <li key={e.href}>
               <Link
                 href={e.href}
                 aria-current={activo === e.href ? "page" : undefined}
-                style={{ ...enlaceEstilo, display: "block", padding: "0.875rem 0.5rem", fontSize: "1.0625rem" }}
+                style={enlaceDeSheet}
               >
                 {e.etiqueta}
               </Link>
             </li>
           ))}
           <li>
-            <Link href={hrefIdioma} style={{ ...enlaceEstilo, display: "block", padding: "0.875rem 0.5rem" }}>
-              {etiquetaIdioma}
+            <Link href={acceso.href} style={enlaceDeSheet}>
+              {acceso.etiqueta}
             </Link>
+          </li>
+          <li style={{ paddingTop: "0.5rem", borderTop: "1px solid var(--slg-line)" }}>
+            <ConmutadorDeIdioma conmutador={conmutador} bloque />
           </li>
         </ul>
       </SheetMovil>
     </>
+  );
+}
+
+/**
+ * El conmutador lleva a **la misma página** en el otro idioma (RF-04, DoD #2).
+ *
+ * Cuando esa página no existe todavía, **no se enlaza a la portada**: se dibuja
+ * desactivado y se dice por qué. Mandar al visitante a la portada porque su
+ * página no está traducida le hace perder dónde estaba, y encima sin avisar.
+ */
+function ConmutadorDeIdioma({ conmutador, bloque }: { conmutador: Conmutador; bloque?: boolean }) {
+  const base = bloque ? enlaceDeSheet : enlaceEstilo;
+  if (!conmutador.href) {
+    return (
+      <span
+        aria-disabled="true"
+        title={conmutador.etiquetaNoDisponible}
+        style={{ ...base, color: "var(--slg-ink-3, var(--slg-ink-2))", opacity: 0.55, cursor: "not-allowed" }}
+      >
+        {conmutador.etiqueta}
+      </span>
+    );
+  }
+  return (
+    <Link href={conmutador.href} hrefLang={conmutador.idiomaDestino} lang={conmutador.idiomaDestino} style={base}>
+      {conmutador.etiqueta}
+    </Link>
   );
 }
 
@@ -138,6 +190,21 @@ const enlaceEstilo: React.CSSProperties = {
   color: "var(--slg-ink-2)",
   textDecoration: "none",
   fontSize: "0.9375rem",
+};
+
+const enlaceDeSheet: React.CSSProperties = {
+  ...enlaceEstilo,
+  display: "block",
+  padding: "0.875rem 0.5rem",
+  fontSize: "1.0625rem",
+};
+
+const botonAcceso: React.CSSProperties = {
+  ...enlaceEstilo,
+  padding: "0.5rem 0.875rem",
+  border: "1px solid var(--slg-line)",
+  borderRadius: "var(--slg-radius-sm)",
+  color: "var(--slg-ink)",
 };
 
 const botonMenu: React.CSSProperties = {

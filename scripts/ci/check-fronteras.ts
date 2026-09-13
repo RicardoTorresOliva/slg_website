@@ -133,7 +133,11 @@ type Hallazgo = { archivo: string; linea: number; regla: Regla };
 function archivos(): string[] {
   const extensiones = new Set([".ts", ".tsx"]);
   if (SCAN_ROOT === REPO_ROOT) {
-    return execFileSync("git", ["ls-files", "-z", "*.ts", "*.tsx"], {
+  // `--cached --others --exclude-standard`, y no solo lo indexado: un archivo
+  // NUEVO todavía sin `git add` es código que YA corre, y el freno tiene que
+  // verlo. Sin esto una unidad entera pasa en verde contra sus propios archivos
+  // sin versionar y el CI se pone rojo en el primer push. Pasó con FU-10.
+    return execFileSync("git", ["ls-files", "-z", "--cached", "--others", "--exclude-standard", "*.ts", "*.tsx"], {
       cwd: REPO_ROOT,
       encoding: "utf8",
     })

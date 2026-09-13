@@ -162,16 +162,20 @@ Todo el pipeline, en local y de una vez: `npm run check:ci`.
 
 ## 4. DNS
 
-### 4.1 Primero, la línea base — **antes de tocar nada**
+> **Aquí NO hay nada que teclear.** Los dos comandos que esta sección tenía
+> —línea base y verificación— **los ejecuta el asistente**, no tú. Tu parte es el
+> panel de Hostinger, y son tres entradas.
 
-```bash
-npm run check:dns:baseline     # escribe docs/dns_baseline.txt
-git add docs/dns_baseline.txt && git commit -m "FU-05: estado anterior de la zona DNS"
-```
+### 4.1 La línea base — **ya está hecha**
 
-Necesita `dig` (`apt-get install -y dnsutils` en Debian/Ubuntu; en macOS ya viene).
-Consulta a un resolutor **público** a propósito: el resolutor local puede tener la
-zona cacheada de antes del cambio y dar un verde falso.
+El estado anterior de la zona está capturado en **`docs/dns_baseline.txt`**, en el
+repositorio, con fecha. Se tomó contra un resolutor público (8.8.8.8) a propósito:
+el resolutor de una máquina concreta puede llevar la zona cacheada de antes del
+cambio y dar un verde falso.
+
+Y ya dice algo útil: **la raíz, `www` y `staging` YA resuelven a `167.88.42.76`**.
+Los tres registros de §4.3 estaban puestos antes de empezar. Lo que queda de esta
+sección es comprobar que nada se movió, no crear nada.
 
 ### 4.2 Lo que NO se toca — léelo antes de abrir el panel
 
@@ -195,15 +199,14 @@ TTL corto durante el cambio; súbelo a 3600 cuando todo esté estable.
 
 ### 4.4 Verificación (criterio 3)
 
-```bash
-npm run check:dns
-```
+**La ejecuta el asistente** (`npm run check:dns`) y pega la salida en
+`docs/work_log.md`, que es lo que pide el criterio 3. Compara **nombre por
+nombre** contra `docs/dns_baseline.txt` y falla si un nombre protegido se movió.
 
-Compara **nombre por nombre** contra la línea base y falla si un nombre protegido
-se movió. Pega la salida en `docs/work_log.md`: el criterio 3 pide exactamente eso.
-
-Si un nombre protegido cambió: **revierte esa entrada en el panel antes de seguir**.
-Un `crm` caído es el CRM de la empresa fuera de servicio.
+**Lo único que es tuyo**: si el freno dice que un nombre protegido cambió, entra
+en Hostinger → *Dominios* → `softlandingglobal.com` → *DNS / Nameservers*, busca
+esa entrada y devuélvela a como está en `docs/dns_baseline.txt` **antes de
+seguir**. Un `crm` caído es el CRM de la empresa fuera de servicio.
 
 ---
 
@@ -251,6 +254,34 @@ tiene que estar también de su lado.
 **Evidencia del criterio 6**: una captura de *Domains → Tracking* mostrando que **no existe ningún
 subdominio de tracking**. Va al `work_log`.
 
+### 4bis.0 CORRECCIÓN URGENTE — el remitente configurado está mal
+
+**Lo que hay puesto hoy en `slg-web` es `noreply@mail.softlandingglobal.com`, y ese dominio no
+existe.** Comprobado contra un resolutor público el 2026-09-12:
+
+| Nombre consultado | Respuesta |
+|---|---|
+| `resend._domainkey.mailweb.softlandingglobal.com` | clave DKIM publicada ✅ |
+| `send.mailweb.softlandingglobal.com` | `v=spf1 ip4:52.3.252.119 …` ✅ |
+| `resend._domainkey.mail.softlandingglobal.com` | **no existe** ❌ |
+| `send.mail.softlandingglobal.com` | **no existe** ❌ |
+
+El dominio verificado es **`mailweb.`**, con `web`. Enviar desde `mail.` significa **salir sin firma
+DKIM**: no rebota con un error claro, se entrega directo a la carpeta de spam, y desde fuera parece
+que todo funciona.
+
+**Qué hacer, paso a paso:**
+
+1. Entra en **Easypanel** → proyecto **`slg`** → servicio **`slg-web`**.
+2. Pestaña **Environment**.
+3. Busca la línea `MAIL_FROM_ADDRESS=noreply@mail.softlandingglobal.com`.
+4. Cámbiala por: `MAIL_FROM_ADDRESS=noreply@mailweb.softlandingglobal.com`
+5. Botón **Save**, y luego **Deploy** para que el servicio recoja el cambio.
+6. Repite lo mismo en el servicio **`slgweb-staging`**.
+
+La tabla de §4bis.2 ya lleva el valor correcto. Lo demás que tienes puesto —host, puerto, usuario
+`resend`, la clave `re_…`, el `Reply-To` y `MAIL_ALERTS_TO`— **está bien**.
+
 ### 4bis.2 La credencial SMTP — de dónde sale, exactamente
 
 **No hay una «contraseña SMTP» aparte. La clave de API ES la contraseña SMTP.** Eso confunde siempre,
@@ -273,7 +304,7 @@ En Easypanel, en `slg-web` y en `slgweb-staging`:
 | `MAIL_SMTP_PORT` | `587` |
 | `MAIL_SMTP_USERNAME` | `resend` |
 | `MAIL_SMTP_PASSWORD` | la clave de API que acabas de crear |
-| `MAIL_FROM_ADDRESS` | `no-reply@mailweb.softlandingglobal.com` |
+| `MAIL_FROM_ADDRESS` | `noreply@mailweb.softlandingglobal.com` — **con `web`**, ver §4bis.0 |
 | `MAIL_FROM_NAME` | `SLG Agency` |
 | `MAIL_REPLY_TO` | `support@softlandingglobal.com` |
 | `MAIL_ALERTS_TO` | `support@softlandingglobal.com` |
@@ -284,13 +315,37 @@ código.
 
 ### 4bis.3 La prueba de bandeja de entrada (criterio 3)
 
-Con las variables puestas, manda una invitación de prueba a **tres buzones de proveedores distintos**
-—por ejemplo uno de Gmail, uno de Outlook y uno de otro— y anota en cuál cayó en **bandeja de
-entrada** y en cuál en spam. Esa tabla cierra el criterio 3 y va al `work_log`.
+**No tienes que mandar el correo desde ninguna cuenta tuya.** El correo lo manda **el sitio**, desde
+`MAIL_FROM_ADDRESS`, usando la credencial SMTP que ya pusiste. Tu papel es decir a qué tres buzones
+tiene que llegar, y luego mirar si llegaron.
 
-Si alguno cae en spam, el sospechoso habitual es el DMARC: comprueba si existe
-`_dmarc.mailweb` y, si no, añádelo con `v=DMARC1; p=none;`. Solo en el subdominio; el de la raíz
-no se toca.
+Se hace desde el navegador, con la página `/api/ops`. Paso a paso:
+
+1. **Inventa un testigo largo.** Cualquier cadena aleatoria de 40 caracteres o más, sin espacios. Por
+   ejemplo la que te dé cualquier generador de contraseñas. Llamémosla `TESTIGO`.
+2. **Easypanel** → proyecto **`slg`** → servicio **`slg-web`** → pestaña **Environment**. Añade estas
+   dos líneas al final:
+   ```
+   OPS_TOKEN=TESTIGO
+   OPS_MAIL_TO=tu-correo@gmail.com,otro@outlook.com,torresoliva.ricardo@gmail.com
+   ```
+   Las tres direcciones tienen que ser de **proveedores distintos**: ahí está la gracia de la prueba.
+3. **Save** y luego **Deploy**.
+4. Cuando el despliegue termine, abre en el navegador:
+   `https://softlandingglobal.com/api/ops?token=TESTIGO`
+   (sustituyendo `TESTIGO` por el tuyo).
+5. Verás una página con dos bloques y una lista de ✅ y ❌. Comprueba:
+   - **DKIM y SPF del remitente** — si sale ❌, es lo de §4bis.0: el remitente apunta a un dominio sin
+     verificar.
+   - **Un correo por destinatario** — ✅ significa que el servidor SMTP lo aceptó.
+6. **Abre los tres buzones** y anota en cuál cayó en bandeja de entrada y en cuál en spam. Mándame esa
+   lista: es lo que cierra el criterio 3 y va al `work_log`.
+7. **Cuando esté cerrado, borra `OPS_TOKEN` y `OPS_MAIL_TO`** en Easypanel y vuelve a hacer **Deploy**.
+   Sin `OPS_TOKEN` la página deja de existir: devuelve 404 como cualquier dirección inventada.
+
+Si alguno cae en spam, el sospechoso habitual es el DMARC: dime si aparece o no
+`_dmarc.mailweb.softlandingglobal.com` en la página y te doy la entrada exacta a añadir. Solo en el
+subdominio; el de la raíz no se toca.
 
 ---
 
@@ -298,8 +353,23 @@ no se toca.
 
 Servicio **`minio`** del proyecto `slg_website`. Es lo único que le falta a FU-09.
 
-1. Abre la consola de MinIO (el servicio la publica en su propio puerto/dominio).
-2. **Buckets → Create Bucket**. Crea **`downloads`** y **`deliverables`**.
+**Cómo se abre la consola de MinIO si solo tienes Easypanel.** El servicio `minio` trae dos puertos:
+el **9000** es la API (por ahí habla el sitio) y el **9001** es la **consola web** (por ahí entras
+tú). Para poder abrirla desde el navegador:
+
+1. **Easypanel** → proyecto **`slg_website`** → servicio **`minio`** → pestaña **Domains**.
+2. Si ya hay un dominio apuntando al puerto **9001**, ábrelo y pasa al paso 5.
+3. Si no lo hay: botón **Add Domain**. *Host*: `minio.softlandingglobal.com`. *Port*: **9001**.
+   Marca **HTTPS**. **Create**.
+4. Añade en Hostinger un registro `A` con nombre `minio` y valor `167.88.42.76`. (Este nombre **no**
+   está en la lista de protegidos: se puede crear sin riesgo.)
+5. Abre `https://minio.softlandingglobal.com`. El usuario y la contraseña son los que el servicio
+   tiene en **Easypanel → `minio` → Environment**, en `MINIO_ROOT_USER` y `MINIO_ROOT_PASSWORD`.
+
+Con la consola abierta:
+
+1. Ya dentro de la consola de MinIO.
+2. **Buckets → Create Bucket**. Crea **`downloads`** y **`deliverables`** (si ya existen, sáltatelo).
 3. En cada uno: **Access Policy → Private**. Ninguno es público, y ninguno lleva *Anonymous access*.
    - `downloads` guarda los documentos D-01…D-11, que se entregan **a cambio de un correo**: si el
      bucket fuera público, el formulario de captura no serviría para nada.
@@ -316,8 +386,15 @@ Servicio **`minio`** del proyecto `slg_website`. Es lo único que le falta a FU-
 | `S3_BUCKET_DELIVERABLES` | `deliverables` |
 | `SIGNED_URL_TTL_*_MINUTES` | **déjalas vacías**: los defectos (15/10/30) son los del contrato |
 
-6. Comprobación: pide una URL firmada y ábrela; luego quítale la firma y vuelve a abrirla. La segunda
-   debe dar **AccessDenied**. Si da el archivo, el bucket quedó público y hay que volver al paso 3.
+6. **Comprobación, desde el navegador y sin tocar nada más.** Es la misma página de §4bis.3: con
+   `OPS_TOKEN` puesta, abre `https://softlandingglobal.com/api/ops?token=TESTIGO` y mira el bloque
+   **Almacenamiento**. Hace por ti las tres cosas que hay que comprobar:
+   - sube un archivo de prueba con URL firmada,
+   - lo lee con la firma —tiene que funcionar—,
+   - **lo intenta leer SIN la firma, y eso tiene que FALLAR**. Si esa línea sale ✅ en verde diciendo
+     que lo leyó, **el bucket es público**: vuelve al paso 3 y ponlo en *Private* antes de subir nada
+     real.
+   Luego borra solo el objeto de prueba, que se llama `ops/comprobacion-…`.
 
 > **Nunca** subas un documento de descarga ni un entregable al repositorio: es público, y
 > `npm run check:archivos` pone el CI en rojo si aparece uno.

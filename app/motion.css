@@ -193,3 +193,29 @@ textarea:focus-visible,
     font-size: 0.8125rem;
   }
 }
+
+/* ── Saltar al contenido (DU-02) ───────────────────────────────────────────
+ * Fuera de la vista hasta que recibe el foco. NO con `display:none`: eso lo
+ * saca del orden del tabulador y entonces no sirve para nada, que es el error
+ * habitual. Se mueve con `transform`, como todo lo demás (RNF-11).
+ */
+.slg-saltar {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 60;
+  padding: 0.625rem 1rem;
+  background: var(--slg-paper);
+  color: var(--slg-blue-deep);
+  border: 1px solid var(--slg-line);
+  border-radius: var(--slg-radius-sm);
+  font-size: 0.9375rem;
+  text-decoration: none;
+  box-shadow: var(--slg-shadow-lg);
+  transform: translateY(calc(-100% - 1rem));
+  transition: transform 160ms var(--slg-spring);
+}
+
+.slg-saltar:focus-visible {
+  transform: translateY(0);
+}

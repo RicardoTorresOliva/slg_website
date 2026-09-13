@@ -49,8 +49,8 @@ Cuando una instrucción incumple esto, la instrucción está mal escrita. Se ree
 
 **Fase:** ejecución. Compuerta de Planificación abierta por Ricardo el 2026-09-08.
 
-**Once unidades tocadas:** cinco `done` (FU-02, FU-03, FU-04, FU-06, FU-07) y seis `in_progress`
-(FU-05, FU-08, FU-09, DU-01, FU-01, FU-10).
+**Doce unidades tocadas:** siete `done` (FU-02, FU-03, FU-04, FU-06, FU-07, **FU-10**, **DU-02**) y
+cinco `in_progress` (FU-05, FU-08, FU-09, DU-01, FU-01).
 
 **Todo lo que está `in_progress` lo está por algo que no es código.** No hay ninguna unidad esperando
 a que alguien escriba una función. Lo que falta es: dos compuertas de aprobación de Ricardo, y acceso
@@ -67,22 +67,11 @@ real.
 
 Van en orden de lo que más desbloquea. Cada una tiene su paso a paso en el documento que se indica.
 
-### 1. Aprobar los nueve prototipos de FU-10 — desbloquea DU-02, DU-03 y todas las DU de página
+### ~~1. Aprobar los nueve prototipos de FU-10~~ — **hecho el 2026-09-12**
 
-1. Abre **`https://staging.softlandingglobal.com/prototipo`** en el navegador.
-2. Si pide usuario y contraseña, son las de la compuerta de staging: las que pusiste en Easypanel, en
-   el servicio **`slgweb-staging`**, pestaña *Environment*, variables `STAGING_BASIC_AUTH_USER` y
-   `STAGING_BASIC_AUTH_PASSWORD`.
-3. **Míralo primero en el móvil**: el sheet arrastrable solo existe ahí. Toca «Menú», arrastra el
-   panel hacia abajo con el dedo y suéltalo. Prueba también a lanzarlo rápido y corto, y a arrastrarlo
-   hacia arriba para notar la resistencia.
-4. En el ordenador, recorre la página **solo con la tecla Tab**. Tienes que ver un anillo de foco en
-   **todos** los elementos por los que pases.
-5. Responde una sola cosa: **«apruebo FU-10»**, o la lista de cambios. **Una sola ronda.**
+Aprobada por Ricardo. FU-10 `done`, y con ella DU-02 construida.
 
-Paso a paso completo: `docs/work_log.md`, entrada de FU-10.
-
-### 2. Cerrar la compuerta del copy (FU-01) — desbloquea M1-A entero
+### 1. Cerrar la compuerta del copy (FU-01) — desbloquea M1-A entero
 
 El esqueleto bilingüe está completo: **71 registros**, las once páginas de servicio con los seis
 bloques del contrato A.3, en los dos idiomas. **El copy no está escrito, y es deliberado**: son
@@ -94,23 +83,27 @@ ramas → el resto. **Una sola ronda.**
 
 Paso a paso: `docs/work_log.md`, entrada de FU-01.
 
-### 3. Desplegar — cierra FU-05
+### 2. Desplegar — cierra FU-05
 
 `docs/deployment.md`, secciones **§3 a §5**. Los cinco servicios de Easypanel ya existen con sus
 nombres reales (`slgwebpostgres`, `minio`, `slg-web`, `slgweb-staging`, `umami` + `umami-db`).
 
-### 4. La credencial SMTP y la prueba de bandeja — cierra FU-08
+### 3. Corregir el remitente y hacer la prueba de bandeja — cierra FU-08
 
-El subdominio **`mailweb.softlandingglobal.com`** está verificado desde el 2026-09-11. **No hay que
-crear el subdominio de tracking.** Falta la credencial SMTP en Easypanel y probar que el correo llega
-a tres buzones. Paso a paso: `docs/deployment.md` **§4bis**.
+La credencial SMTP ya está puesta. **Pero el remitente apunta a un dominio que no existe**:
+`MAIL_FROM_ADDRESS` dice `mail.softlandingglobal.com` y el verificado es `mailweb.` (con `web`).
+Comprobado por DNS el 2026-09-12: `mail.` no tiene ni DKIM ni SPF. Corregirlo son dos clics y está en
+`docs/deployment.md` **§4bis.0**. La prueba de bandeja se hace **desde el navegador**, con la página
+`/api/ops`: **§4bis.3**.
 
-### 5. Confirmar los dos buckets de MinIO — cierra FU-09
+### 4. Confirmar los dos buckets de MinIO — cierra FU-09
 
-`downloads` y `deliverables`, los dos **privados**, más las seis variables `S3_*`. Paso a paso:
-`docs/deployment.md` **§4ter**.
+`downloads` y `deliverables`, los dos **privados**, más las seis variables `S3_*`. La consola de MinIO
+se abre publicando su puerto 9001 desde Easypanel: los clics exactos están en `docs/deployment.md`
+**§4ter**. Que los buckets sean realmente privados **lo comprueba `/api/ops` por ti**, sin entrar en
+la consola.
 
-### 6. Los dos registros de OAuth — cierra los criterios 1 y 3 de DU-01
+### 5. Los dos registros de OAuth — cierra los criterios 1 y 3 de DU-01
 
 Consentimiento de Google Cloud y registro de aplicación en Entra ID, con las URL de retorno exactas.
 Paso a paso: `docs/deployment.md` **§4quater**.

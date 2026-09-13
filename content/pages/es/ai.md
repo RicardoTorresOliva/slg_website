@@ -1,10 +1,10 @@
 ---
 type: page
-title: "Home"
-description: "SLG Agency ayuda a directorios y comités de dirección a operar en la era de la inteligencia artificial."
+title: "SLG_AI"
+description: "Las tres líneas de SLG_AI: SLG_Academy, SLG_Enterprise y SLG_Factory."
 lang: es
-pair: "home"
-nav_order: 1
+pair: "ai"
+nav_order: 2
 updated: "2026-09-12"
 ---
 

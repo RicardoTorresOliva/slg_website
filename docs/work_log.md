@@ -819,7 +819,15 @@ presupuesto no se movió).
 frenos, cada uno visto en rojo por su motivo · `test:db`: **264** comprobaciones contra PostgreSQL,
 SMTP y servidores HTTP reales · `npx tsc --noEmit` y `eslint` limpios.
 
-### LA COMPUERTA SIGUE ABIERTA (criterio 13)
+### COMPUERTA CERRADA — aprobada por Ricardo el **2026-09-12**
+
+> **«apruebo FU-10»** — Ricardo Torres Oliva, 2026-09-12.
+
+Con esto el **criterio 13 queda cerrado**, FU-10 pasa a `done` y **DU-02 arranca**. El texto de abajo
+es el procedimiento con el que se pasó la compuerta; se conserva porque es el que se repetirá en las
+compuertas siguientes.
+
+### El procedimiento de la compuerta (criterio 13)
 
 **Ninguna DU de página empieza hasta que Ricardo apruebe los nueve prototipos**, y la aprobación se
 registra aquí con fecha. Paso a paso, sin dar por supuesto dónde va cada cosa:
@@ -840,3 +848,137 @@ registra aquí con fecha. Paso a paso, sin dar por supuesto dónde va cada cosa:
 **Mientras esto no se cierre, DU-02, DU-03 y las demás DU de página no arrancan.** No es una
 formalidad: son el marco por el que se navega todo lo demás, y rehacerlas después de construir diez
 páginas encima cuesta diez veces más.
+
+---
+
+## 2026-09-12 · DU-02 — Armazón público: navegación, sheet, pie y conmutador · `done`
+
+**El marco por el que se navega todo lo demás.** Navegación con los cinco destinos de RF-01, sheet
+móvil arrastrable en producción, pie, conmutador de idioma y salto al contenido, aplicados a las
+**29 rutas públicas** en los dos idiomas.
+
+### Tres rutas del menú no existían
+
+RF-01 pide cinco destinos. Al construir la barra, tres no resolvían: `/ai` estaba como `/slg-ai`, y
+**`/holdings` y `/blog` no existían en absoluto**. El mapa de rutas canónico vive en
+`ui_wireframes` §1.1 y es la referencia de todo lo demás —las tres salidas del 404, los enlaces del
+hero, el mapa del sitio—, así que mandan sus rutas y se movió el contenido, que son marcadores sin
+copy (**D-71**). De paso se retiró la portada duplicada: era `/` **y** `/home`, y la misma página en
+dos URL divide los enlaces y duplica contenido para los buscadores.
+
+| Destino | Antes | Ahora |
+|---|---|---|
+| `SLG_AI` | `/slg-ai` | **`/ai`** · `/en/ai` |
+| `SLG_Holdings` | *no existía* | **`/holdings`** · `/en/holdings` |
+| Doctrina | `/doctrina` | sin cambios |
+| Blog | *no existía* | **`/blog`** · `/en/blog` (solo el índice; el resto es DU-11) |
+| Nosotros | `/nosotros` | sin cambios |
+| Portada | `/` y `/home` | **`/`** y **`/en`** |
+
+### El falso verde de FU-10, y por qué importa más que el resto
+
+**FU-10 se declaró verificada con `check:ci` en verde, y ese verde era falso.** Cinco frenos barrían
+con `git ls-files`, que **no ve los archivos todavía sin `git add`**: los archivos nuevos de FU-10 no
+entraron en el barrido. Al hacer commit entraron, y dos frenos se pusieron en rojo — el CI de GitHub
+habría fallado en el primer push de una unidad dada por terminada.
+
+Es la misma familia que R-26 —un barrido que no mira nada siempre pasa— y se cierra en los cinco a la
+vez con `--cached --others --exclude-standard` (**D-74**). De rebote destapó dos defectos más en
+`check:motion`: se ponía rojo por **los comentarios que documentan la regla que vigila**, y no
+reconocía `animationName`, que es la forma que toma un keyframe en un `.tsx` — es decir, **un
+componente de React con un keyframe pasaba entero**. Su fixture negativo tampoco lo probaba: disparaba
+desde un comentario. Los tres, corregidos.
+
+### Los siete criterios
+
+| # | Criterio | Estado | Evidencia |
+|---|---|---|---|
+| 1 | Cinco destinos más «Acceder»; ninguna etiqueta genérica; el logo lleva a Home | **cerrado** | `check:armazon`: los cinco `href` en las dos barras, el botón de acceso, el logo a `/` y `/en`, y **cero etiquetas «Inicio/Home»** como destino de menú |
+| 2 | Desde cualquier ruta, el conmutador lleva a **esa misma página** en el otro idioma | **cerrado** | `check:armazon` recorre las **29 rutas**: sigue el conmutador, comprueba que el destino responde 200, y que **el viaje de vuelta devuelve a la ruta de partida**. Un conmutador que apunte a la portada desde una página interior es rojo |
+| 3 | Español en la raíz, inglés bajo `/en`; ninguna redirección por idioma | **cerrado** | `/doctrina` con `Accept-Language: en-US` sigue sirviendo español y **no redirige**; y al revés |
+| 4 | El sheet cumple **en producción** las cuatro cláusulas, cuadro a cuadro | **cerrado** | `test:gesto` mide ahora **dos** páginas: `/prototipo` y `/doctrina`, que es una página pública prerrenderizada de verdad. **20 comprobaciones** sobre Chromium real |
+| 5 | Ni la navegación ni el pie enlazan `/hq` ni `/portal` | **cerrado** | `check:armazon`, sobre el HTML servido, en los dos idiomas |
+| 6 | Estados resueltos: navegación en carga, sheet sin conexión, ruta sin par de idioma | **cerrado** | La ruta sin pareja dibuja el conmutador **desactivado y con motivo** (**D-73**), no lo esconde ni manda a la portada. El sheet no necesita red: es estado local. El salto al contenido es la **primera** parada del tabulador, comprobado |
+| 7 | Todo el texto de navegación y pie sale de `content/ui`: cero literales | **cerrado** | Freno nuevo `check:cadenas`, con prueba negativa: caza el texto visible de JSX y los atributos que un lector de pantalla lee en voz alta |
+
+### La lente de C.6, respondida
+
+| # | Principio | Respuesta |
+|---|---|---|
+| 1 | **Propósito** | No hay menú desplegable, ni buscador, ni mapa del sitio en el pie. Un desplegable convertiría cinco destinos en dieciséis y rompería RF-01; y un pie que repite la navegación con otro formato es ruido |
+| 2 | **Agencia** | El sheet se cierra de cuatro formas —gesto, telón, Escape, o el propio destino— y ninguna pide confirmación, porque ninguna destruye nada |
+| 3 | **Responsabilidad** | El armazón no pide ni un dato. No hay banner de cookies porque no hay cookies que consentir en la capa pública: la analítica es sin cookies |
+| 4 | **Familiaridad** | Mismo sitio en las 29 rutas: logo arriba a la izquierda, destinos a la derecha, conmutador junto al botón de acceso, pie idéntico. El sheet repite el orden exacto de la barra de escritorio |
+| 5 | **Flexibilidad** | Móvil = rápido: un botón, un sheet que se cierra con el dedo. Escritorio = profundo: los cinco a la vista, sin esconderlos tras un icono |
+| 6 | **Simplicidad** | Hay jerarquía: el botón «Acceder» es **secundario a propósito** y nunca rojo, porque el CTA de la capa pública es la descarga (§10-8) |
+| 7 | **Craft** | Cada medida sale de un token. El salto al contenido se mueve con `transform`, no con `display:none`, que lo sacaría del orden del tabulador y lo dejaría inútil |
+| 8 | **Deleite** | El único movimiento del armazón es el del dedo sobre el sheet y el anillo de foco. Ninguna animación de entrada de la barra: aparecer no es una acción |
+
+**Wayfinding.** **Dónde estoy**: `aria-current="page"` en el destino activo. **A dónde puedo ir**: los
+cinco, a la vista. **Cómo salgo**: el logo, siempre, a la portada del idioma en que estás.
+
+**Gates aplicados.** **D2** (accesibilidad: foco, salto al contenido, `aria-current`) · **D3**
+(el sheet, cuadro a cuadro, en una página pública) · **D4** (paridad) · alimenta **D1**: las rutas
+públicas subieron de 26 a **29** y la más pesada es `/ai` con **136,1 KB** de 150 KB.
+
+**Verificación.** `check:ci` en verde con dos frenos nuevos dentro · `check:brakes`: **quince**
+frenos, cada uno visto en rojo por su motivo · `check:armazon`: 50 comprobaciones · `test:gesto`: 20 ·
+`test:db`: 264.
+
+**Lo que este armazón NO es.** Las páginas siguen siendo provisionales: muestran su título, su bajada
+y su `[PENDIENTE]`, porque el copy es de FU-01 y su compuerta sigue abierta. Cuando se cierre,
+aparecerá el copy definitivo **sin tocar una línea de código**: para eso el contenido vive en
+`content/`. Las páginas de verdad, con los seis bloques del contrato A.3, son DU-04 y DU-05.
+
+---
+
+## 2026-09-12 · FU-05 — DNS: línea base y verificación (criterio 3)
+
+**La comprobación ya no exige `dig` ni una terminal.** El script pasó de bash a Node (`node:dns`
+contra el resolutor público 8.8.8.8), así que lo ejecuta quien construye o el CI. Ricardo solo toca
+el panel de Hostinger, y solo si algo se movió.
+
+**Línea base**, tomada el 2026-09-12 y versionada en `docs/dns_baseline.txt`. Y dice algo que no
+estaba escrito en ningún sitio: **los tres registros que §4.3 pedía crear ya estaban puestos**.
+
+**Verificación (criterio 3), salida literal:**
+
+```
+Resolutor: 8.8.8.8 · línea base: docs/dns_baseline.txt
+
+Nombres protegidos (deben seguir IGUAL):
+  · crm.softlandingglobal.com          A      sin cambios
+  · crm.softlandingglobal.com          CNAME  sin cambios
+  · n8n.softlandingglobal.com          A      sin cambios
+  · n8n.softlandingglobal.com          CNAME  sin cambios
+  · evolution.softlandingglobal.com    A      sin cambios
+  · evolution.softlandingglobal.com    CNAME  sin cambios
+  · academy.softlandingglobal.com      A      es un CNAME: se compara el CNAME, no sus IP
+  · academy.softlandingglobal.com      CNAME  sin cambios
+  · softlandingglobal.com              MX     sin cambios
+  · softlandingglobal.com              TXT    sin cambios
+
+Nombres nuevos (deben resolver a la IP del VPS):
+  · softlandingglobal.com              A      167.88.42.76
+  · www.softlandingglobal.com          CNAME  softlandingglobal.com
+  · staging.softlandingglobal.com      A      167.88.42.76
+
+✓ DNS: 12 comprobaciones. Los nombres protegidos no se movieron.
+```
+
+**Dos rojos falsos, encontrados y cerrados al primer uso:**
+
+1. **Un timeout del resolutor se leía como «el registro cambió».** Habría mandado a alguien a
+   revertir a mano una entrada que nadie tocó. Ahora se distingue «no hay registro» (`ENOTFOUND`,
+   `ENODATA`) de «no contestó», que reintenta y, si insiste, dice explícitamente que **no significa
+   que haya cambiado nada**.
+2. **`academy` es un CNAME a Vercel, y Vercel rota las IP de detrás.** Sus `A` cambiaron entre la
+   línea base y la verificación sin que nadie tocara la zona. Lo que tiene que seguir igual es
+   **nuestra entrada** —el CNAME—, no la infraestructura de un tercero, así que el `A` de un nombre
+   que es CNAME ya no se compara.
+
+**Hallazgo de correo, del mismo barrido de DNS.** El remitente configurado en Easypanel es
+`noreply@mail.softlandingglobal.com` y **`mail.` no existe**: no tiene DKIM ni SPF. El dominio
+verificado en Resend es **`mailweb.`**. Enviar desde `mail.` es enviar **sin firmar**: no rebota, se
+entrega a spam, y desde fuera parece que funciona. La corrección, con los clics exactos, en
+`docs/deployment.md` §4bis.0.

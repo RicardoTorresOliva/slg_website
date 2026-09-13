@@ -3,7 +3,7 @@ type: page
 title: "SLG_AI"
 description: "The three lines of SLG_AI: SLG_Academy, SLG_Enterprise and SLG_Factory."
 lang: en
-pair: "slg-ai"
+pair: "ai"
 nav_order: 2
 updated: "2026-09-12"
 ---

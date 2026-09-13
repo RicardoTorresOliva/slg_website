@@ -98,7 +98,11 @@ lines.forEach((line, i) => {
 // Regla 3 — toda variable de entorno que el código lee está listada.
 function archivosDeCodigo(): string[] {
   try {
-    return execFileSync("git", ["ls-files", "-z", "*.ts", "*.tsx", "*.mjs", "*.js"], {
+  // `--cached --others --exclude-standard`, y no solo lo indexado: un archivo
+  // NUEVO todavía sin `git add` es código que YA corre, y el freno tiene que
+  // verlo. Sin esto una unidad entera pasa en verde contra sus propios archivos
+  // sin versionar y el CI se pone rojo en el primer push. Pasó con FU-10.
+    return execFileSync("git", ["ls-files", "-z", "--cached", "--others", "--exclude-standard", "*.ts", "*.tsx", "*.mjs", "*.js"], {
       cwd: REPO_ROOT,
       encoding: "utf8",
     })
@@ -111,19 +115,43 @@ function archivosDeCodigo(): string[] {
   }
 }
 
-const usadas = new Map<string, string>();
+/** Dónde se lee cada variable. Todos los sitios, no solo el primero. */
+const usadas = new Map<string, string[]>();
+const anota = (nombre: string, rel: string) => {
+  const sitios = usadas.get(nombre) ?? [];
+  if (!sitios.includes(rel)) sitios.push(rel);
+  usadas.set(nombre, sitios);
+};
+
 for (const abs of archivosDeCodigo()) {
   const texto = fs.readFileSync(abs, "utf8");
-  for (const m of texto.matchAll(/process\.env\.([A-Z][A-Z0-9_]*)/g)) {
-    if (!usadas.has(m[1])) usadas.set(m[1], path.relative(REPO_ROOT, abs));
-  }
-  for (const m of texto.matchAll(/process\.env\[["']([A-Z][A-Z0-9_]*)["']\]/g)) {
-    if (!usadas.has(m[1])) usadas.set(m[1], path.relative(REPO_ROOT, abs));
-  }
+  const relativo = path.relative(REPO_ROOT, abs).split(path.sep).join("/");
+  for (const m of texto.matchAll(/process\.env\.([A-Z][A-Z0-9_]*)/g)) anota(m[1], relativo);
+  for (const m of texto.matchAll(/process\.env\[["']([A-Z][A-Z0-9_]*)["']\]/g)) anota(m[1], relativo);
 }
 
-for (const [nombre, donde] of usadas) {
+/**
+ * Una variable que SOLO leen los scripts no es configuración de despliegue.
+ *
+ * `.env.example` documenta lo que hay que rellenar en Easypanel para que el
+ * sitio funcione. `MOTION_ROOT` o `GESTO_URL` son perillas de una prueba: no
+ * existen en producción, nadie las rellena, y exigirlas allí convierte el
+ * archivo en una lista de cosas que no hay que hacer.
+ *
+ * Antes esto era una lista escrita a mano, y cada perilla nueva ponía el CI en
+ * rojo hasta que alguien se acordaba de añadirla. Ahora se deduce de DÓNDE se
+ * lee, que es el criterio que de verdad importa.
+ */
+const soloEnScripts = (sitios: string[]) => sitios.every((f) => f.startsWith("scripts/"));
+
+let perillas = 0;
+for (const [nombre, sitios] of usadas) {
   if (DE_LA_PLATAFORMA.has(nombre) || DE_LOS_SCRIPTS.has(nombre)) continue;
+  if (soloEnScripts(sitios)) {
+    perillas++;
+    continue;
+  }
+  const donde = sitios[0];
   checked++;
   if (!declaradas.has(nombre)) {
     failures.push({
@@ -142,5 +170,6 @@ if (failures.length > 0) {
 
 console.log(
   `✓ .env.example: ${declaradas.size} variables declaradas, todas documentadas y sin valores; ` +
+    `${perillas} perillas de scripts fuera del archivo a propósito; ` +
     `${usadas.size} leídas por el código, todas presentes.`,
 );

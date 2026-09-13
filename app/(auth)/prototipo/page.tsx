@@ -69,9 +69,15 @@ export default function Prototipo() {
       <BarraDeNavegacion
         enlaces={ENLACES}
         activo="/ai"
-        etiquetaMenu="Menú"
-        etiquetaIdioma="EN"
-        hrefIdioma="/en/sign-in"
+        acceso={{ href: "/acceder", etiqueta: t["nav.signin"] }}
+        inicio="/"
+        conmutador={{
+          href: "/en/ai",
+          etiqueta: t["nav.lang"],
+          etiquetaNoDisponible: t["nav.langUnavailable"],
+          idiomaDestino: "en",
+        }}
+        textos={{ menu: t["nav.menu"], navegacion: t["nav.aria"], inicio: t["nav.home"] }}
       />
 
       <div style={contenedor}>

@@ -43,7 +43,11 @@ const ORDENES_DE_LISTADO = [
  */
 function ficheros(): string[] {
   if (BARRIDO_NORMAL) {
-    return execFileSync("git", ["ls-files", "-z"], { cwd: REPO_ROOT, encoding: "utf8" })
+  // `--cached --others --exclude-standard`, y no solo lo indexado: un archivo
+  // NUEVO todavía sin `git add` es código que YA corre, y el freno tiene que
+  // verlo. Sin esto una unidad entera pasa en verde contra sus propios archivos
+  // sin versionar y el CI se pone rojo en el primer push. Pasó con FU-10.
+    return execFileSync("git", ["ls-files", "-z", "--cached", "--others", "--exclude-standard"], { cwd: REPO_ROOT, encoding: "utf8" })
       .split("\0")
       .filter(Boolean)
       .map((r) => path.join(REPO_ROOT, r));

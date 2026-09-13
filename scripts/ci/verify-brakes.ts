@@ -12,7 +12,7 @@
  * Ejecutar con `npm run check:brakes`. Requiere un build previo para el
  * presupuesto de JS.
  */
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import path from "node:path";
 
 const HERE = import.meta.dirname;
@@ -100,6 +100,12 @@ const CASOS: Caso[] = [
     env: { ENV_EXAMPLE_PATH: path.join(HERE, "negative/env/.env.example") },
   },
   {
+    freno: "texto del armazón escrito a mano en vez de leído de content/ui",
+    script: "check-cadenas.ts",
+    espera: ["texto visible escrito a mano", "atributo que se lee en voz alta"],
+    env: { CADENAS_ROOT: path.join(HERE, "negative/cadenas") },
+  },
+  {
     // Un solo fixture, las CUATRO cláusulas de RNF-45 incumplidas. El medidor
     // tiene que ver las cuatro: si solo viera una, las otras tres serían un
     // verde sin respaldo.
@@ -142,7 +148,7 @@ for (const c of CASOS) {
   }
 }
 
-console.log("\nContraprueba — contra el repositorio real, los ocho deben PASAR:\n");
+console.log("\nContraprueba — contra el repositorio real, los nueve deben PASAR:\n");
 for (const script of [
   "check-secrets.ts",
   "check-js-budget.ts",
@@ -152,6 +158,7 @@ for (const script of [
   "check-archivos.ts",
   "check-contraste.ts",
   "check-motion.ts",
+  "check-cadenas.ts",
 ]) {
   const res = spawnSync(process.execPath, [path.join(HERE, script)], {
     encoding: "utf8",
@@ -163,6 +170,45 @@ for (const script of [
     fallos++;
     console.error(`  ✗ ${script}: falla contra el repositorio real (exit ${res.status})`);
     console.error(`${res.stdout ?? ""}${res.stderr ?? ""}`);
+  }
+}
+
+console.log("\nFreno del armazón público — contra un armazón roto a propósito:\n");
+{
+  const fixture = spawn(process.execPath, [path.join(HERE, "negative/armazon/servidor.ts")], {
+    cwd: REPO_ROOT,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  const base = await new Promise<string>((resolve, reject) => {
+    const limite = setTimeout(() => reject(new Error("el fixture del armazón no arrancó")), 15_000);
+    fixture.stdout.on("data", (c: Buffer) => {
+      const m = /http:\/\/127\.0\.0\.1:\d+/.exec(c.toString());
+      if (m) {
+        clearTimeout(limite);
+        resolve(m[0]);
+      }
+    });
+  });
+  const res = spawnSync(process.execPath, [path.join(HERE, "check-armazon.ts")], {
+    encoding: "utf8",
+    cwd: REPO_ROOT,
+    env: { ...process.env, ARMAZON_BASE: base },
+  });
+  fixture.kill("SIGTERM");
+  const salida = `${res.stdout ?? ""}${res.stderr ?? ""}`;
+  const esperados = [
+    "la barra en español enlaza /holdings",
+    "ninguna etiqueta genérica",
+    "cero enlaces a superficies cerradas",
+    "el conmutador manda a la portada",
+  ];
+  const faltan = esperados.filter((e) => !salida.includes(e));
+  if (res.status === 1 && faltan.length === 0) {
+    console.log("  ✓ armazón público: falló como debía (RF-01, RF-04, RF-87 y el salto al contenido)");
+  } else {
+    fallos++;
+    console.error(`  ✗ armazón público: NO falló como debía (exit ${res.status}).`);
+    if (faltan.length) console.error(`      no mencionó: ${faltan.join(" · ")}`);
   }
 }
 
@@ -192,4 +238,4 @@ if (fallos) {
   console.error(`\n✗ ${fallos} freno(s) no se comportaron como deben.\n`);
   process.exit(1);
 }
-console.log("\n✓ Los trece frenos del criterio 4 fallan cuando deben y pasan cuando deben.\n");
+console.log("\n✓ Los quince frenos fallan cuando deben y pasan cuando deben.\n");

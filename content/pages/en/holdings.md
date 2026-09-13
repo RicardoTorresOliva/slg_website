@@ -1,10 +1,10 @@
 ---
 type: page
-title: "SLG_AI"
-description: "Las tres líneas de SLG_AI: SLG_Academy, SLG_Enterprise y SLG_Factory."
-lang: es
-pair: "slg-ai-en"
-nav_order: 2
+title: "SLG_Holdings"
+description: "SLG's second door: building and operating companies, not advisory alone."
+lang: en
+pair: "holdings"
+nav_order: 6
 updated: "2026-09-12"
 ---
 

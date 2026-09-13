@@ -19,6 +19,7 @@ import path from "node:path";
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 const SERVER = path.join(REPO_ROOT, ".next", "standalone", "server.js");
 
+const TESTIGO_OPS = "testigo-de-prueba-solo-en-memoria-0123456789";
 const USUARIO = "slg-staging";
 const CLAVE = "clave-de-prueba-solo-en-memoria";
 
@@ -136,6 +137,34 @@ async function produccion(base: string) {
   );
 
   await politicaPorSuperficie(base, r);
+
+  // `/api/ops` no existe mientras `OPS_TOKEN` esté vacía. Es una ruta que manda
+  // correo y escribe en un bucket: su estado por defecto tiene que ser «no
+  // existe», y 404 —no 403— porque un 403 confirma que está ahí (D-38).
+  const ops = await fetch(`${base}/api/ops`);
+  check(
+    "producción · /api/ops NO existe sin OPS_TOKEN",
+    ops.status === 404,
+    `status ${ops.status}; una ruta que envía correo no puede estar abierta por defecto`,
+  );
+}
+
+/** Con el testigo puesto, sigue sin abrirse a quien no lo trae. */
+async function opsConTestigo(base: string) {
+  const sinTestigo = await fetch(`${base}/api/ops`);
+  check("ops · sin testigo devuelve 404", sinTestigo.status === 404, `status ${sinTestigo.status}`);
+
+  const malTestigo = await fetch(`${base}/api/ops?token=incorrecto`);
+  check("ops · con testigo incorrecto devuelve 404", malTestigo.status === 404, `status ${malTestigo.status}`);
+
+  const bueno = await fetch(`${base}/api/ops?token=${TESTIGO_OPS}`);
+  check("ops · con el testigo correcto responde", bueno.status === 200, `status ${bueno.status}`);
+  const html = await bueno.text();
+  check(
+    "ops · la página dice qué comprueba",
+    html.includes("Comprobación de infraestructura"),
+    "no devolvió la página de comprobación",
+  );
 }
 
 /**
@@ -248,6 +277,10 @@ async function main() {
   await conServidor(
     { STAGING_BASIC_AUTH_USER: USUARIO, STAGING_BASIC_AUTH_PASSWORD: CLAVE },
     staging,
+  );
+  await conServidor(
+    { STAGING_BASIC_AUTH_USER: "", STAGING_BASIC_AUTH_PASSWORD: "", OPS_TOKEN: TESTIGO_OPS },
+    opsConTestigo,
   );
 
   if (fallos.length > 0) {

@@ -35,5 +35,19 @@
   "auth.invitation.orSignIn": "Already have an account? Sign in and the invitation will be linked to it.",
   "auth.reset.title": "Choose a new password",
   "auth.reset.submit": "Save password",
-  "auth.reset.newPassword": "New password"
+  "auth.reset.newPassword": "New password",
+  "nav.aria": "Main navigation",
+  "nav.menu": "Menu",
+  "nav.home": "SLG Agency — go to the home page",
+  "nav.skip": "Skip to content",
+  "nav.lang": "Español",
+  "nav.langUnavailable": "This page is not available in Spanish yet",
+  "footer.aria": "Footer",
+  "footer.doctrine": "Doctrine",
+  "footer.downloads": "Downloads",
+  "footer.contact": "Contact",
+  "footer.legalTerms": "Terms",
+  "footer.legalPrivacy": "Privacy",
+  "blog.title": "Blog",
+  "blog.empty": "No articles have been published in English yet."
 }

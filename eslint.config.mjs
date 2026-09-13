@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Los fixtures negativos están ROTOS a propósito: es su trabajo. Pasarlos
+    // por el linter es pedirle que arregle la prueba de que el freno frena.
+    "scripts/ci/negative/**",
   ]),
 ]);
 

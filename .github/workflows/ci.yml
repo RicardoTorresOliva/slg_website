@@ -112,6 +112,12 @@ jobs:
       - name: Motion
         run: npm run check:motion
 
+      # Criterio 7 de DU-02 (RF-16): el texto del armazón vive en content/ui.
+      # Un literal en un `.tsx` existe en UN idioma, no lo ve `check:pairs`, y
+      # aparece en inglés en la versión española el día del despliegue.
+      - name: Cero texto escrito a mano en el armazón público
+        run: npm run check:cadenas
+
       # La matriz B.3 entera —15 acciones × 4 roles, más los seis alcances—
       # sin base de datos: es tabla de permisos, no estado.
       - name: Matriz B.3
@@ -134,11 +140,18 @@ jobs:
       - name: Navegador para la medición del gesto
         run: npx playwright install --with-deps chromium
 
+      # Criterios 1, 2, 3, 5 y 6 de DU-02, sobre el servidor real: cinco
+      # destinos y un botón, el conmutador llevando a la MISMA página en el
+      # otro idioma, y cero enlaces a /hq y /portal mientras M3 y M4 sigan
+      # abiertos.
+      - name: Armazón público sobre el servidor real
+        run: npm run check:armazon
+
       - name: Las cuatro cláusulas del sheet, cuadro a cuadro (gate D3)
         run: npm run test:gesto
 
       # Criterio 5: cada freno se ve en ROJO por el motivo esperado.
-      - name: Prueba negativa de los trece frenos
+      - name: Prueba negativa de los quince frenos
         run: npm run check:brakes
 
   # ──────────────────────────────────────────────────────────────────────────

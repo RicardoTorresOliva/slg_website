@@ -8,11 +8,10 @@ timestamp: 2026-09-12
 
 # Project memory — slg_website
 
-> **Punto de retomada en una línea:** **M0 construido, FU-01 esqueletada y FU-10 construida**. Once
-> unidades tocadas — cinco `done` y seis `in_progress`, y **ninguna esperando código**. **No queda
-> nada construible sin Ricardo**: las dos compuertas abiertas —copy (FU-01) y prototipos (FU-10)—
-> bloquean todas las DU de página, y el resto espera paneles externos. El paso a paso de cada cosa
-> está en `docs/handoff.md`.
+> **Punto de retomada en una línea:** **M0 construido, FU-10 aprobada y el armazón público en pie**.
+> Doce unidades tocadas — **siete `done`** y cinco `in_progress`. Lo único que bloquea construir más
+> páginas es **la compuerta del copy (FU-01)**; el resto espera paneles externos. La lista de lo que
+> falta, con quién hace cada cosa, está en `docs/handoff.md`.
 
 ## Lo que espera a Ricardo, y solo a él
 1. **Despliegue** — `docs/deployment.md` §3 a §5. Cierra FU-05 (criterios 1, 2, 3 y 8).
@@ -65,10 +64,18 @@ timestamp: 2026-09-12
     monitor. **Paso a paso completo en `docs/deployment.md`.**
 
 ## Próxima unidad
-- **DU-02** — armazón público (navegación, sheet, pie, conmutador de idioma). **No empieza** hasta que
-  se cierren **las dos compuertas**: la de FU-01 (copy) y la de FU-10 (los nueve prototipos), ambas
-  con aprobación fechada en `docs/work_log.md`.
-- **No hay ninguna unidad construible sin Ricardo.** Lo que falta está en `docs/handoff.md`.
+- **DU-04** (overviews de rama) y **DU-05** (las once páginas de servicio) son las siguientes, y las
+  dos **necesitan el copy**: su contenido son los seis bloques del contrato A.3. **No empiezan hasta
+  que la compuerta de FU-01 se cierre.**
+- **DU-11** (blog completo: artículo, etiquetas, RSS, borradores) sí es construible sin copy nuevo:
+  DU-02 dejó hecho solo el índice, a propósito.
+- **DU-14** (analítica sin cookies) también, y no depende de nada abierto.
+
+## El mapa de rutas, que cambió en DU-02
+`/ai` · `/holdings` · `/doctrina` · `/blog` · `/nosotros`, y sus pares bajo `/en` (D-71). Antes eran
+`/slg-ai` y dos rutas que **no existían**. La portada es `/` y `/en`; `/home` y `/en/home-en` ya no
+se sirven. El par de idioma de cada ruta sale del campo `pair` del frontmatter, vía
+`lib/content/rutas.ts`.
 
 ## El esqueleto de contenido, de un vistazo
 - **71 registros**: 22 `service` (las once páginas × 2 idiomas, con los seis bloques de A.3), 22
@@ -133,6 +140,8 @@ timestamp: 2026-09-12
 | DNS tras cualquier cambio de zona | `npm run check:dns` (antes: `npm run check:dns:baseline`) |
 | Aislamiento entre empresas | `npm run test:db` (necesita PostgreSQL) |
 | Las cuatro cláusulas del sheet, cuadro a cuadro | `npm run test:gesto` (necesita el build y Chromium) |
+| El armazón público sobre el servidor real | `npm run check:armazon` (necesita el build) |
+| Que la zona DNS no se ha movido | `npm run check:dns` (ya no necesita `dig`) |
 
 ## Entorno local
 - `docker-compose.yml` levanta `slg-db` (PostgreSQL 16) en el **puerto 5434**. El 5432 lo ocupa la
@@ -186,6 +195,12 @@ así: **`"use client"` solo donde hay gesto o estado**, y el resto en `component
 las peticiones y no puede llevar un nonce. **Si alguien vuelve a declarar la CSP en `next.config.ts`,
 las dos políticas se intersecan y el sitio deja de hidratar**: se ve y no funciona. `check:runtime` lo
 comprueba sobre el servidor real.
+
+## Por qué los frenos barren también lo NO versionado
+`git ls-files` **no ve un archivo sin `git add`**. FU-10 pasó `check:ci` en verde contra sus propios
+archivos nuevos sin versionar, y al hacer commit dos frenos se pusieron rojos: el CI habría fallado en
+el primer push de una unidad dada por terminada. Los cinco frenos que barren el repositorio usan ahora
+`--cached --others --exclude-standard` (**D-74**). **Si añades un freno nuevo, cópialo de ahí.**
 
 ## Lo que hay que saber del sheet antes de tocarlo
 El cierre es **estado de render**, no `style` escrito sobre el nodo (**D-69**). Escribirlo a mano

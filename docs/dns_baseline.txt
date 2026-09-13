@@ -1,0 +1,22 @@
+# dns_baseline.txt — estado ANTERIOR de la zona de softlandingglobal.com
+# Generado por scripts/ci/check-dns.ts --baseline
+# Fecha: 2026-09-12T23:30:02Z · Resolutor: 8.8.8.8
+#
+# architecture §13.1: «Zona previa copiada a docs/ como estado anterior antes
+# de tocar nada». Este archivo es ese estado anterior.
+#
+# Formato: <nombre> <tipo> <respuestas separadas por |>
+
+crm.softlandingglobal.com A 167.88.42.76
+crm.softlandingglobal.com CNAME (vacío)
+n8n.softlandingglobal.com A 167.88.42.76
+n8n.softlandingglobal.com CNAME (vacío)
+evolution.softlandingglobal.com A 167.88.42.76
+evolution.softlandingglobal.com CNAME (vacío)
+academy.softlandingglobal.com A 216.150.1.1|216.150.16.1
+academy.softlandingglobal.com CNAME d705210bf404c0f8.vercel-dns-017.com
+softlandingglobal.com MX 0 softlandingglobal-com.mail.protection.outlook.com
+softlandingglobal.com TXT v=spf1 include:spf.protection.outlook.com -all
+softlandingglobal.com A 167.88.42.76
+www.softlandingglobal.com CNAME softlandingglobal.com
+staging.softlandingglobal.com A 167.88.42.76

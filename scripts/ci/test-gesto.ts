@@ -89,6 +89,17 @@ async function puertoLibre(): Promise<number> {
   });
 }
 
+/**
+ * Las DOS páginas donde se mide el sheet.
+ *
+ * `/prototipo` es la compuerta de FU-10. `/doctrina` es una página PÚBLICA de
+ * verdad, prerrenderizada y servida como la verá un visitante: el criterio 4 de
+ * DU-02 pide las cuatro cláusulas «en producción», y un componente que se porta
+ * bien en su prototipo y mal en la página real es exactamente el fallo que ese
+ * criterio existe para atrapar.
+ */
+const PAGINAS = ["/prototipo", "/doctrina"];
+
 async function arrancarServidor(): Promise<{ url: string; parar: () => void }> {
   const port = await puertoLibre();
   const base = `http://127.0.0.1:${port}`;
@@ -102,6 +113,9 @@ async function arrancarServidor(): Promise<{ url: string; parar: () => void }> {
       BETTER_AUTH_URL: base,
       BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? "solo-para-medir-el-gesto",
       NEXT_PUBLIC_SITE_URL: base,
+      // Sin compuerta de staging: aquí se mide el sitio, no la compuerta.
+      STAGING_BASIC_AUTH_USER: "",
+      STAGING_BASIC_AUTH_PASSWORD: "",
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -109,8 +123,8 @@ async function arrancarServidor(): Promise<{ url: string; parar: () => void }> {
   while (Date.now() < limite) {
     if (proc.exitCode !== null) throw new Error(`el servidor murió con código ${proc.exitCode}`);
     try {
-      const r = await fetch(`${base}/prototipo`);
-      if (r.ok) return { url: `${base}/prototipo`, parar: () => proc.kill("SIGTERM") };
+      const r = await fetch(`${base}${PAGINAS[0]}`);
+      if (r.ok) return { url: base, parar: () => proc.kill("SIGTERM") };
     } catch {
       /* todavía no escucha */
     }
@@ -380,14 +394,15 @@ let parar: (() => void) | null = null;
 let navegador: Browser | null = null;
 
 try {
-  let url = urlExterna;
-  if (!url) {
+  let urls: string[];
+  if (urlExterna) {
+    urls = [urlExterna];
+  } else {
     const servidor = await arrancarServidor();
     parar = servidor.parar;
-    url = servidor.url;
+    urls = PAGINAS.map((p) => `${servidor.url}${p}`);
   }
 
-  console.log(`Midiendo el sheet cuadro a cuadro en ${url}`);
   console.log(`Viewport ${VIEWPORT.width}×${VIEWPORT.height} — el sheet solo existe en móvil.`);
 
   navegador = await chromium.launch({
@@ -397,9 +412,12 @@ try {
   const contexto = await navegador.newContext({ viewport: VIEWPORT, hasTouch: true, isMobile: true });
   const page = await contexto.newPage();
 
-  await clausula1y3(page, url);
-  const rapido = await clausula2(page, url);
-  await clausula4(page, url, rapido);
+  for (const url of urls) {
+    console.log(`\n══ ${url}`);
+    await clausula1y3(page, url);
+    const rapido = await clausula2(page, url);
+    await clausula4(page, url, rapido);
+  }
 } finally {
   await navegador?.close();
   parar?.();
