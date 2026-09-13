@@ -68,6 +68,13 @@ export const SECCIONES: readonly Seccion[] = [
   // ── Portal ──────────────────────────────────────────────────────────────
   { clave: "announcements", href: "/portal", superficie: "portal", accion: "announcement.read" },
   { clave: "deliverables", href: "/portal/proyectos", superficie: "portal", accion: "deliverable.read" },
+  /**
+   * Los materiales de programa (DU-20). Misma acción que los proyectos **a
+   * propósito**: son los mismos datos vistos de otra manera, no un permiso
+   * nuevo. Una acción propia aquí inventaría un rol que puede ver materiales y
+   * no entregables, que no existe en B.3.
+   */
+  { clave: "materials", href: "/portal/materiales", superficie: "portal", accion: "deliverable.read" },
   { clave: "members", href: "/portal/miembros", superficie: "portal", accion: "member.invite" },
 ];
 

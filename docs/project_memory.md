@@ -75,6 +75,23 @@ timestamp: 2026-09-12
 - **DU-14 NO es analítica** —es empresas, proyectos y usuarios en HQ, y depende de DU-13 (M3)—. La
   analítica sin cookies está en **DU-12**, junto con los webhooks firmados, y depende de DU-09.
 
+## Los materiales se piden POR GRUPOS, y eso **es** el criterio (DU-20)
+`lib/portal/materiales.ts` tiene una sola función que consulta, `materialesPorProyecto()`, y devuelve
+`{ proyecto, materiales }[]`. **No hay ningún tipo en el que quepa un material suelto**, y por eso
+«no existe ruta ni entidad que liste materiales fuera del proyecto que los contiene» es cierto sin
+vigilar ninguna pantalla. Si alguna vez hace falta «solo la lista», la respuesta no es añadir un
+export: es preguntarse qué pantalla la quiere y por qué no puede enseñar el proyecto.
+`separarMateriales()` es el reparto compartido por las dos pantallas — no se repite con `filter`.
+
+## «Esto no es un LMS» es una frontera con freno, no una frase (DU-20)
+`check:alcance` mira `lib/`, `app/` y `drizzle/` —nunca `content/`, donde «progreso» es el negocio de
+SLG— y frena tres cosas: vocabulario de formación en el modelo, selección por el tipo `material`
+fuera de su módulo, y `membership` con columnas de expediente. La razón de que exista: esa frontera
+**se cruza con buena intención y de una línea en una** (un «visto», un porcentaje, una cohorte) y
+ninguno de esos pasos parece el paso. La otra mitad la sostiene la base: el índice parcial
+`uq_membership_una_empresa_cliente` (migración 0013) impide que una persona cuelgue de dos empresas
+cliente, que es por donde `membership` se convierte en matrícula.
+
 ## El mapa de rutas vive en `lib/content/rutas.ts`, y es EXPLÍCITO
 Cada página y cada servicio declara su ruta ES y su par EN (**D-79**). No se deriva del nombre del
 archivo: el Anexo A.2 anida la oferta (`/ai/academy/phoenix-peex`) y `/holdings` lo sirve un registro
@@ -163,6 +180,7 @@ se sirven. El par de idioma de cada ruta sale del campo `pair` del frontmatter, 
 | Que los frenos sigan frenando | `npm run check:brakes` |
 | DNS tras cualquier cambio de zona | `npm run check:dns` (antes: `npm run check:dns:baseline`) |
 | Aislamiento entre empresas | `npm run test:db` (necesita PostgreSQL) |
+| Que el portal no se esté volviendo un LMS | `npm run check:alcance` |
 | Las cuatro cláusulas del sheet, cuadro a cuadro | `npm run test:gesto` (necesita el build y Chromium) |
 | El armazón público sobre el servidor real | `npm run check:armazon` (necesita el build) |
 | Que la zona DNS no se ha movido | `npm run check:dns` (ya no necesita `dig`) |

@@ -215,6 +215,17 @@ export const membership = pgTable(
   },
   (t) => [
     uniqueIndex("uq_membership_user_org").on(t.userId, t.organizationId),
+    /**
+     * **UNA SOLA EMPRESA CLIENTE POR PERSONA** (DU-20, criterio 3 · RF-69 ·
+     * RF-144). El índice de arriba impide repetir el par, no estar en dos
+     * empresas: sin este, `membership` admite que alguien cuelgue de varias y
+     * la tabla pasa de decir «de quién es esta persona» a decir «en cuántos
+     * programas está apuntada» — que es una matrícula, y la frontera (b) de
+     * `scope.md` la excluye. Parcial porque a SLG no le aplica.
+     */
+    uniqueIndex("uq_membership_una_empresa_cliente")
+      .on(t.userId)
+      .where(sql`org_role IN ('client_admin', 'client_member')`),
     index("idx_membership_org").on(t.organizationId),
   ],
 );

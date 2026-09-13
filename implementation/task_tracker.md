@@ -38,7 +38,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 7 `pending` · **15 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01, DU-07, DU-08, DU-09, DU-13, DU-14, DU-15, DU-16, DU-17, DU-18, DU-19) · **17 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12, FU-12, FU-13) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
+**Estado global:** 6 `pending` · **16 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01, DU-07, DU-08, DU-09, DU-13, DU-14, DU-15, DU-16, DU-17, DU-18, DU-19, DU-20) · **17 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12, FU-12, FU-13) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -89,7 +89,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | FU-13 | FU | Batería de pruebas de aislamiento entre empresas | M4 | FU-04, FU-06, DU-15 | `done` — quince comprobaciones sobre las **funciones de la aplicación** (**D-121**), en `test:db` y en `check:ci`; prueba negativa registrada (**D-122**) |
 | DU-18 | DU | Inicio del portal con avisos | M4 | FU-12, FU-13, DU-15 | `in_progress` — construido y verificado; la pantalla **no recibe ningún `organization_id`** (**D-127**). Migración 0012: el aviso guarda **en qué idioma se escribió** (**D-126**). Falta la revisión visual, que espera a que el portal se abra |
 | DU-19 | DU | Proyectos, entregables y visor aislado | M4 | DU-18 · ✅ **subdominio fijado: `visor.softlandingglobal.com`** (**D-128**) | `in_progress` — las tres pantallas y el visor construidos; 25 comprobaciones contra un entregable hostil. El **criterio 3** espera al subdominio desplegado: pide la prueba contra el origen separado **definitivo** |
-| DU-20 | DU | Materiales de programa | M4 | DU-19 | `pending` |
+| DU-20 | DU | Materiales de programa | M4 | DU-19 | `in_progress` — los **cinco criterios verificados**: `/portal/materiales` agrupado por proyecto, la puerta devuelve grupos y no lista (**D-131**), migración **0013** con el índice parcial que hace explícita «una empresa por persona» (**D-132**) y el freno **`check:alcance`** para la frontera (b) (**D-133**). `test:materiales`: **21** comprobaciones contra PostgreSQL real. Queda **solo la revisión visual**, que espera a que se abra la superficie del portal (RF-87) |
 | DU-21 | DU | Miembros, perfil y paso «Agenda tu Sesión Cero» | M4 | FU-07, DU-18 · F.2-6 | `pending` |
 | ━━━ | ━━━ | **▼ M5 · API PARA AGENTES Y GO-LIVE** | ━━━ | ━━━ | ━━━ |
 | DU-22 | DU | API v1 de lectura: clave, alcances, límites y auditoría | M5 | FU-06, DU-17, DU-19 · `api_contracts` | `pending` |
@@ -351,6 +351,16 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   podía mentir — migración **0012** y lo elige quien publica (**D-126**). Y un fallo que solo sale
   encadenando la suite: `test:webhooks` borraba capturas sin borrar antes su traza de `crm_delivery`.
   `test:db` sube a **538**.
+- `2026-09-13` — **DU-20: materiales de programa, y la frontera (b) con freno.** El criterio 2 se
+  cumple en la **forma del resultado**: la única puerta devuelve `{ proyecto, materiales }[]`, así que
+  **no existe tipo en el que quepa un material suelto** (**D-131**). «Un usuario cliente pertenece a
+  una empresa» dejó de ser una frase y es un **índice parcial** (migración **0013**, **D-132**): el
+  índice que había impedía repetir el par usuario+empresa pero **dejaba estar en dos**. Y «esto no es
+  un LMS» gana freno propio, `check:alcance` (**D-133**), porque esa frontera se cruza con buena
+  intención y de una línea en una. Dos hallazgos de la ejecución: `download_event.completed_at` no es
+  una lección aprobada —el recuento de columnas prohibidas lo daba por tal— y el resumen de
+  `check:brakes` decía «veintidós» en letra cuando ya eran veinticinco; ahora **se calcula**.
+  `test:db` sube a **584**, `check:brakes` a **25**.
 - `2026-09-13` — **DU-19 casi, y el `[PENDIENTE]` de D-45 cerrado.** El subdominio del visor es
   **`visor.softlandingglobal.com`** (**D-128**): nombra el mecanismo, no el contenido. **Sin origen
   separado el visor no sirve nada** (**D-129**), y el caso que importa no es la variable vacía sino

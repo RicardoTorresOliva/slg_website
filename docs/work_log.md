@@ -2015,3 +2015,69 @@ apuntando al mismo servicio `slg-web`.
 
 **Verificación global.** Todos los frenos en verde · `check:brakes`: **veintidós** · `test:db`:
 **563** comprobaciones · las **cinco** rutas nuevas compilan.
+
+---
+
+## 2026-09-13 · DU-20 — Materiales de programa
+
+**Qué se construyó.** `/portal/materiales`, el bloque separado de materiales dentro de
+`/portal/proyectos/[id]`, el módulo `lib/portal/materiales.ts`, la migración **0013** y un freno
+nuevo, `check:alcance`, con su fixture negativo.
+
+**El criterio 2 está en la FORMA del resultado, no en la pantalla** (**D-131**). El criterio dice que
+«no existe ruta ni entidad que liste materiales fuera del proyecto que los contiene». Eso no se
+cumple acordándose de pintar el nombre del proyecto: se cumple cuando **no hay forma de construir la
+lista plana**. `materialesPorProyecto()` devuelve `{ proyecto, materiales }[]` y es el único export
+del módulo que consulta — no existe ningún tipo en el que quepa un material suelto, así que no hay
+pantalla que pueda enseñarlo suelto ni por descuido. La prueba lo comprueba en la forma: si el módulo
+gana otro export que consulte, `test:materiales` se pone en rojo.
+
+**Separados en la presentación, colgando del proyecto en el modelo** (criterio 1). Las dos pantallas
+reparten con la **misma función**, `separarMateriales()`, no con dos `filter` escritos a mano: dos
+pantallas que reparten igual porque reparten con el mismo código. Y se separan porque son dos cosas
+distintas para quien las lee —el entregable es *lo que SLG le entregó*, el material es *lo que usa
+durante el programa*—: mezclarlos hace que el informe que estaba esperando aparezca entre diez anexos.
+
+**«Una empresa por persona» pasó de frase a índice** (**D-132**). El criterio 3 pide que la
+restricción sea **explícita en el modelo**, y no lo era: `uq_membership_user_org` impide repetir el
+par usuario+empresa pero **permite que la misma persona cuelgue de dos empresas cliente**. Esa es
+exactamente la puerta por la que `membership` deja de decir «de quién es esta persona» y empieza a
+decir «en cuántos programas está apuntada». La migración 0013 añade un índice **parcial** —solo los
+roles de cliente— y la prueba comprueba **las dos mitades**: que rechaza la segunda empresa cliente,
+con el nombre del índice en el error, y que **no prohíbe de más**, porque la pertenencia con rol de
+SLG sigue siendo posible.
+
+**La frontera (b) gana un freno** (**D-133**). «Esto no es un LMS» es la frontera más fácil de cruzar
+de todas porque se cruza **con buena intención y de una línea en una**: primero un «visto», que es
+cómodo; luego un porcentaje, que es informativo; luego una cohorte, porque el cliente tiene dos
+grupos. Ninguno de esos pasos parece el paso. `check:alcance` mira tres cosas —vocabulario de
+formación en el modelo, selección de materiales fuera de su módulo, `membership` usada como
+expediente— y su fixture negativo cruza las tres como se cruzarían de verdad.
+
+**Lo que el freno NO mira, y es deliberado.** El texto editorial de `content/` queda fuera: SLG
+**imparte** programas, así que «progreso» en un artículo del blog es su trabajo, mientras que una
+columna `progress` es la frontera cruzada. Y `destinoDe()` puede seguir nombrando el tipo `material`
+para saber a qué bucket sube: lo prohibido es **seleccionar** por él fuera del módulo, no nombrarlo.
+
+**Dos cosas que encontró la ejecución y no la lectura.** La primera: el primer recuento de columnas
+prohibidas puso en rojo `download_event.completed_at` — **una descarga que terminó, no una lección
+aprobada**. La palabra solo significa matrícula cuando cuelga de una persona y un programa, y ese
+caso lo cubre exactamente la comprobación de las columnas de `membership`; dejarla habría sido un
+freno correcto en rojo contra un dato inocente, que es la forma en que un freno se acaba desactivando.
+La segunda: el resumen de `check:brakes` decía **«los veintidós frenos»** escrito en letra, y con los
+tres de esta unidad pasaron a ser veinticinco — el recuento ahora **se calcula**, porque un número que
+miente en el único sitio donde alguien lo lee es peor que no tenerlo.
+
+**Verificación — `test:materiales`, 21 comprobaciones contra PostgreSQL real.** Dos empresas, cuatro
+proyectos, un material `internal` que no debe salir y un material de la empresa de al lado. El
+criterio 4 se comprueba **contra el esquema real** —`information_schema`, no el código— porque una
+prueba contra el código mira lo que se escribió y esta mira lo que existe: ninguna tabla con columnas
+de lección, progreso, evaluación o certificado, ninguna tabla de curso, y `membership` con
+exactamente las cinco columnas de una pertenencia.
+
+**Verificación global.** Todos los frenos en verde · `check:brakes`: **25** (20 + 5 de contenido) ·
+`test:db`: **584** comprobaciones · `check:runtime` 33 · `check:js-budget` 142.3 KB · `test:permisos`
+214 · la ruta nueva compila como dinámica.
+
+**Lo que queda abierto.** Lo mismo que el resto de M4: el portal **sigue devolviendo 404** mientras
+M4 esté abierto (RF-87), así que la revisión visual espera a que se abra la superficie.

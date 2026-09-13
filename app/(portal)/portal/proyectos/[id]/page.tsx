@@ -8,17 +8,24 @@ import { exigirSuperficie } from "@/lib/auth";
 import { loadUiStrings } from "@/lib/content/loader";
 import { especificacionDe } from "@/lib/deliverables/renderers";
 import type { DeliverableType } from "@/lib/db/schema";
-import { entregablesDelCliente } from "@/lib/hq/entregables";
+import { type Entregable, entregablesDelCliente } from "@/lib/hq/entregables";
+import { separarMateriales } from "@/lib/portal/materiales";
 import { proyectoDelCliente } from "@/lib/portal/proyectos";
 
 /**
  * `/portal/proyectos/[id]` — los entregables **de visibilidad `client`** de ese
- * proyecto (DU-19 · RF-89, criterio 1).
+ * proyecto (DU-19 · RF-89, criterio 1), **en dos bloques** (DU-20, criterio 1).
  *
  * **SE PIDE POR LA PUERTA DEL CLIENTE**, `entregablesDelCliente()`, que no tiene
  * forma de devolver un `internal` (D-118). No hay filtro que olvidar aquí, y por
  * eso «los `internal` no aparecen ni por enlace directo» es cierto sin
  * comprobación extra: no hay identificador que pueda aparecer en esta pantalla.
+ *
+ * **DOS BLOQUES, NO DOS PANTALLAS.** DU-20 pide que los materiales de programa
+ * se vean separados de los entregables de trabajo; lo que NO pide —y la frontera
+ * (b) prohíbe— es que vivan fuera de su proyecto. Por eso el reparto es visual y
+ * pasa por `separarMateriales()`, la misma función que usa `/portal/materiales`:
+ * dos pantallas que reparten igual porque reparten con el mismo código.
  *
  * **Un proyecto ajeno es 404**, no un 403: decir «no puedes» confirmaría que ese
  * proyecto existe (D-38, RF-95). Y ni siquiera hace falta comprobarlo a mano:
@@ -40,6 +47,31 @@ export default async function Proyecto({ params }: { params: Promise<{ id: strin
 
   const t = loadUiStrings()[idiomaDeInterfaz(sesion.locale)];
   const lista = await entregablesDelCliente(sesion.ctx, id);
+  const { deProyecto, materiales } = separarMateriales(lista);
+
+  const bloque = (titulo: string, entregables: readonly Entregable[]) => (
+    <section style={{ display: "grid", gap: "0.75rem" }}>
+      <h2 style={{ margin: 0, fontSize: "1rem", color: "var(--slg-blue-deep)" }}>{titulo}</h2>
+      <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: "0.75rem" }}>
+        {entregables.map((e) => (
+          <li key={e.id} className="slg-card" style={ficha}>
+            <p style={{ margin: 0, display: "flex", gap: "0.5rem", alignItems: "baseline", flexWrap: "wrap" }}>
+              <strong>{e.titulo}</strong>
+              <span style={insignia}>{t[especificacionDe(e.tipo as DeliverableType).claveDeEtiqueta]}</span>
+              <span style={{ fontSize: "0.8125rem", color: "var(--slg-ink-2)" }}>
+                {t["portal.deliv.version"]} {e.version}
+              </span>
+            </p>
+            <p style={{ margin: "0.5rem 0 0" }}>
+              <Link href={`/portal/entregables/${e.id}`} style={{ color: "var(--slg-link)", fontSize: "0.875rem" }}>
+                {t["portal.deliv.open"]}
+              </Link>
+            </p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
 
   return (
     <div style={{ display: "grid", gap: "1.5rem" }}>
@@ -57,24 +89,10 @@ export default async function Proyecto({ params }: { params: Promise<{ id: strin
           textos={{ titulo: t["portal.deliv.empty"], texto: t["portal.deliv.emptyText"] }}
         />
       ) : (
-        <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: "0.75rem" }}>
-          {lista.map((e) => (
-            <li key={e.id} className="slg-card" style={ficha}>
-              <p style={{ margin: 0, display: "flex", gap: "0.5rem", alignItems: "baseline", flexWrap: "wrap" }}>
-                <strong>{e.titulo}</strong>
-                <span style={insignia}>{t[especificacionDe(e.tipo as DeliverableType).claveDeEtiqueta]}</span>
-                <span style={{ fontSize: "0.8125rem", color: "var(--slg-ink-2)" }}>
-                  {t["portal.deliv.version"]} {e.version}
-                </span>
-              </p>
-              <p style={{ margin: "0.5rem 0 0" }}>
-                <Link href={`/portal/entregables/${e.id}`} style={{ color: "var(--slg-link)", fontSize: "0.875rem" }}>
-                  {t["portal.deliv.open"]}
-                </Link>
-              </p>
-            </li>
-          ))}
-        </ul>
+        <>
+          {deProyecto.length > 0 && bloque(t["portal.deliv.work"], deProyecto)}
+          {materiales.length > 0 && bloque(t["portal.mat.title"], materiales)}
+        </>
       )}
     </div>
   );

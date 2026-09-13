@@ -92,6 +92,13 @@
       "when": 1788918112312,
       "tag": "0012_idioma_del_aviso",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1788918113312,
+      "tag": "0013_una_empresa_por_usuario",
+      "breakpoints": true
     }
   ]
 }

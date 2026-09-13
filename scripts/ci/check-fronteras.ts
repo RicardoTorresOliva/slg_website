@@ -199,6 +199,14 @@ for (const abs of archivos()) {
        * de tabla en cuatro inicios de sesión por HTTP.
        */
       rel.startsWith("scripts/hq/") ||
+      /**
+       * `scripts/portal/` por la misma razón exacta: `test-materiales.ts`
+       * comprueba que un material de otra empresa no sale **ni siendo
+       * `client_admin`**, y eso es recorrer la política de fila con un contexto
+       * por empresa y por rol. Con sesiones reales sería una prueba de red que
+       * tarda un minuto y prueba menos.
+       */
+      rel.startsWith("scripts/portal/") ||
       rel.startsWith("scripts/mail/") ||
       rel.startsWith("scripts/invitations/") ||
       rel.startsWith("scripts/files/")

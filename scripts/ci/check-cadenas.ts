@@ -59,6 +59,7 @@ const VIGILADOS = [
   "app/(portal)/portal/page.tsx",
   "app/(portal)/portal/proyectos/page.tsx",
   "app/(portal)/portal/proyectos/[id]/page.tsx",
+  "app/(portal)/portal/materiales/page.tsx",
   "app/(portal)/portal/entregables/[id]/page.tsx",
 ];
 

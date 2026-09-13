@@ -82,6 +82,24 @@ const CASOS: Caso[] = [
     env: { MOTION_ROOT: path.join(HERE, "negative/motion") },
   },
   {
+    freno: "vocabulario de plataforma de formación en el modelo",
+    script: "check-alcance.ts",
+    espera: "no hay lecciones, progreso, evaluaciones ni certificados",
+    env: { ALCANCE_ROOT: path.join(HERE, "negative/alcance") },
+  },
+  {
+    freno: "lista plana de materiales fuera de su proyecto",
+    script: "check-alcance.ts",
+    espera: "no existe ruta ni entidad que liste materiales fuera",
+    env: { ALCANCE_ROOT: path.join(HERE, "negative/alcance") },
+  },
+  {
+    freno: "membership usada como matrícula",
+    script: "check-alcance.ts",
+    espera: "no en qué programas está apuntada",
+    env: { ALCANCE_ROOT: path.join(HERE, "negative/alcance") },
+  },
+  {
     freno: "frontera de módulo cruzada",
     script: "check-fronteras.ts",
     espera: "importa el framework de identidad",
@@ -410,4 +428,15 @@ if (fallos) {
   console.error(`\n✗ ${fallos} freno(s) no se comportaron como deben.\n`);
   process.exit(1);
 }
-console.log("\n✓ Los veintidós frenos fallan cuando deben y pasan cuando deben.\n");
+/**
+ * El número SE CUENTA, no se escribe. Estuvo escrito en letra —«los veintidós
+ * frenos»— y quedó desfasado en cuanto DU-20 añadió tres: el resumen anunciaba
+ * veintidós mientras se ejecutaban veinticinco. Un recuento que miente en el
+ * único sitio donde alguien lo lee es peor que no tenerlo.
+ */
+const GATES_DE_CONTENIDO = 5; // los de `verify-gates.ts`, que se ejecutan arriba.
+console.log(
+  `\n✓ Los ${CASOS.length + GATES_DE_CONTENIDO} frenos ` +
+    `(${CASOS.length} aquí + ${GATES_DE_CONTENIDO} de contenido) ` +
+    `fallan cuando deben y pasan cuando deben.\n`,
+);
