@@ -60,7 +60,7 @@ a que alguien escriba una función. Lo que falta es: dos compuertas de aprobaci�
 a paneles externos.
 
 **Verificación en verde el 2026-09-13** (tras la revisión final): `check:brakes` con **40** frenos,
-cada uno visto en rojo por su motivo · `test:db` con **832** comprobaciones contra PostgreSQL, SMTP y
+cada uno visto en rojo por su motivo · `test:db` con **842** comprobaciones contra PostgreSQL, SMTP y
 servidores HTTP reales · `test:gesto` con **10** comprobaciones cuadro a cuadro sobre un Chromium
 real.
 
@@ -214,7 +214,7 @@ actualiza `docs/project_memory.md`.
 | Pipeline entero | `npm run check:ci` |
 | Que los **40** frenos siguen frenando (el número lo imprime el script) | `npm run check:brakes` |
 | El visor contra un entregable hostil | `npm run test:visor` |
-| Las **832** comprobaciones contra base, correo, archivos, CRM, webhooks, HQ, portal y API | `npm run test:db` |
+| Las **842** comprobaciones contra base, correo, archivos, CRM, webhooks, HQ, portal y API | `npm run test:db` |
 | Cero terceros en la capa pública, medido con un navegador | `npm run check:terceros` |
 | Las cuatro cláusulas del sheet, cuadro a cuadro | `npm run test:gesto` |
 

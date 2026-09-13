@@ -19,7 +19,7 @@ import { ErrorDeAutorizacion } from "./permissions.ts";
 import {
   ROLES_DE_PERSONA,
   RUTAS_SOLO_ADMIN,
-  SUPERFICIES_ABIERTAS,
+  superficieAbierta,
   superficieDelRol,
   type Superficie,
 } from "./roles.ts";
@@ -132,7 +132,12 @@ export async function exigirSuperficie(
   // RF-87 — Mientras su milestone siga abierto, la superficie no existe para
   // nadie, ni con sesión válida. Se apaga cambiando SUPERFICIES_ABIERTAS, no
   // borrando esta comprobación.
-  if (!SUPERFICIES_ABIERTAS[superficie]) {
+  //
+  // `superficieAbierta` y no el registro a secas: además del milestone, una
+  // superficie puede abrirse **solo en staging** para la revisión visual
+  // (`SUPERFICIES_EN_REVISION`), que es lo que deshace el punto muerto descrito
+  // en `roles.ts`. En producción esa vía no existe: exige compuerta delante.
+  if (!superficieAbierta(superficie)) {
     throw new ErrorDeAutorizacion(
       404,
       `superficie «${superficie}» cerrada por RF-87: su milestone sigue abierto`,

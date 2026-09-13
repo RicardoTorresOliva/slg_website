@@ -213,3 +213,51 @@ export const SUPERFICIES_ABIERTAS: Readonly<Record<Superficie, boolean>> = {
   hq: false, // se abre al cerrar M3
   portal: false, // se abre al cerrar M4
 };
+
+/**
+ * ══════════════════════════════════════════════════════════════════════════
+ * EL PUNTO MUERTO QUE ESTO DESHACE
+ * ══════════════════════════════════════════════════════════════════════════
+ *
+ * Cinco unidades de M3 y M4 —DU-15, DU-16, DU-17, DU-18 y DU-20— tenían **todo
+ * verificado menos la revisión visual**, y la revisión visual esperaba a que la
+ * superficie se abriera. La superficie se abre «al cerrar el milestone». El
+ * milestone no cierra hasta que sus unidades cierren. Y el criterio 1 de DU-14
+ * pide literalmente HQ abierta. Cada pieza era razonable y juntas no dejaban
+ * salir a nadie: nadie podía ver una sola pantalla de las intranets, **nunca**.
+ *
+ * DÓNDE ESTABA EL ERROR. No en el mecanismo, sino en leer RF-87 como si hablara
+ * de *el sitio*. Habla de **producción**: «M0 → M1 → M2 salen a producción antes
+ * de empezar M3; la web ya vende mientras se construyen las intranets». Lo que
+ * protege es que un cliente que entra a comprar no tropiece con media intranet.
+ * En **staging** no hay nadie a quien proteger: está detrás de autenticación
+ * básica, marcado `noindex`, y es justo donde una revisión visual debe hacerse.
+ *
+ * CÓMO SE ABRE, Y POR QUÉ ASÍ. `SUPERFICIES_EN_REVISION=hq,portal` abre una
+ * superficie **solo si delante hay compuerta de staging**, es decir solo si
+ * `STAGING_BASIC_AUTH_USER` y `STAGING_BASIC_AUTH_PASSWORD` están puestas. Esa
+ * condición no es adorno: si alguien copiara la variable a producción —que es el
+ * accidente que de verdad pasa al clonar entornos— **no haría nada**, porque
+ * producción no lleva compuerta y `check:runtime` lo comprueba sobre el servidor
+ * real. La apertura por variable es, por construcción, inalcanzable en producción.
+ *
+ * Y no sustituye a nada: dentro sigue haciendo falta sesión válida y el rol que
+ * la matriz B.3 exige. Lo único que esta variable retira es el 404 de «tu
+ * milestone sigue abierto».
+ *
+ * CUANDO M3 Y M4 CIERREN de verdad, se pone `true` arriba y se retira la
+ * variable del entorno. Esto es un andamio con fecha, y está escrito para que se
+ * note si se queda puesto.
+ */
+function hayCompuertaDeStaging(): boolean {
+  return Boolean(process.env.STAGING_BASIC_AUTH_USER && process.env.STAGING_BASIC_AUTH_PASSWORD);
+}
+
+export function superficieAbierta(superficie: Superficie): boolean {
+  if (SUPERFICIES_ABIERTAS[superficie]) return true;
+  if (!hayCompuertaDeStaging()) return false;
+  return (process.env.SUPERFICIES_EN_REVISION ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .includes(superficie);
+}

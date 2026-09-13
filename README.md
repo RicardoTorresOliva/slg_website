@@ -322,6 +322,7 @@ Los valores se ponen en **Easypanel → proyecto `slg_website` → el servicio �
 | `NEXT_PUBLIC_SITE_URL` · `BETTER_AUTH_URL` | La dirección pública de ese entorno | Tú |
 | `BETTER_AUTH_SECRET` | Una cadena larga al azar que generas una vez | Tú. Cambiarla **cierra todas las sesiones abiertas** |
 | `STAGING_BASIC_AUTH_USER` · `STAGING_BASIC_AUTH_PASSWORD` | Los eliges tú: es la puerta que tapa staging | Tú |
+| `SUPERFICIES_EN_REVISION` | Qué intranets se pueden mirar en staging mientras se revisan: `hq`, `portal`, o las dos. **Solo en `slgweb-staging`**; en producción no hace nada | Tú, cuando vayas a revisarlas |
 | `GOOGLE_CLIENT_ID` · `GOOGLE_CLIENT_SECRET` | Google Cloud → *APIs y servicios* → *Credenciales* | Tú, en Google Cloud |
 | `MICROSOFT_CLIENT_ID` · `MICROSOFT_TENANT_ID` | Entra ID → el registro de la aplicación | Tú, en Entra |
 | `MICROSOFT_CLIENT_SECRET` | Entra ID → *Certificados y secretos*. **Caduca** | Tú. Ver «Rotar el secreto de Microsoft» |

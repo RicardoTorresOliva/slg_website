@@ -147,6 +147,22 @@ async function produccion(base: string) {
     ops.status === 404,
     `status ${ops.status}; una ruta que envía correo no puede estar abierta por defecto`,
   );
+
+  /**
+   * **AQUÍ NO SE COMPRUEBA RF-87, Y CONVIENE DECIRLO.** La primera versión de
+   * este archivo pedía `/hq` y `/portal` sin sesión y comprobaba que no
+   * devolvían 200. Pasaba siempre — y habría pasado igual con la superficie
+   * abierta de par en par, porque **sin sesión la petición ni siquiera llega a
+   * la comprobación de RF-87**: `exigirSuperficie` corre después de
+   * `exigirSesion`, así que un anónimo se va al login en los dos casos. Una
+   * comprobación que no puede fallar es peor que ninguna: ocupa el sitio.
+   *
+   * La prueba de verdad —con sesión de `slg_admin`, con la variable puesta y sin
+   * compuerta delante— vive en `test:acceso`, que es quien sabe iniciar sesión.
+   * Este servidor arranca con `SUPERFICIES_EN_REVISION` puesta a propósito para
+   * que, si alguna vez alguien moviera la comprobación antes de la sesión, la
+   * diferencia se notara ahí y no aquí.
+   */
 }
 
 /** Con el testigo puesto, sigue sin abrirse a quien no lo trae. */
@@ -325,7 +341,16 @@ async function main() {
     await opsConTestigo(externo);
     return terminar();
   }
-  await conServidor({ STAGING_BASIC_AUTH_USER: "", STAGING_BASIC_AUTH_PASSWORD: "" }, produccion);
+  await conServidor(
+    {
+      STAGING_BASIC_AUTH_USER: "",
+      STAGING_BASIC_AUTH_PASSWORD: "",
+      // Puesta A PROPÓSITO: es el accidente que de verdad ocurre —copiar el
+      // bloque de variables de staging— y tiene que ser inerte aquí.
+      SUPERFICIES_EN_REVISION: "hq,portal",
+    },
+    produccion,
+  );
   await conServidor(
     { STAGING_BASIC_AUTH_USER: USUARIO, STAGING_BASIC_AUTH_PASSWORD: CLAVE },
     staging,

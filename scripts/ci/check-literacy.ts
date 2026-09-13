@@ -150,15 +150,23 @@ check("y ninguna lleva su valor escrito al lado", conValor.length === 0, conValo
  */
 const NOMBRES_DE_SECRETO = /(SECRET|PASSWORD|TOKEN|_KEY|KEY_)/;
 /**
- * `<entre ángulos>` SÍ pasa, y la diferencia no es cosmética: un marcador así,
+ * `<entre ángulos>` —y los puntos suspensivos— SÍ pasan, y la diferencia no es
+ * cosmética: un marcador así,
  * pegado tal cual, **falla en voz alta** —el servicio no arranca y quien lo hizo
  * se entera en el acto—. Una cadena que parece una contraseña, pegada tal cual,
  * **funciona**, y entonces la credencial de producción es la que salió escrita
  * en un repositorio público. El freno separa las dos por eso.
  */
-const ES_MARCADOR = /^<.*>$/;
+const ES_MARCADOR = /^(?:<.*>|…|\.\.\.)$/;
 const guia = leer("docs/deployment.md");
-const secretosConValor = [...guia.matchAll(/^\s*([A-Z][A-Z0-9_]{3,})=(.+)$/gm)]
+/**
+ * **También dentro de una tabla**, y no es un caso rebuscado: la guía tenía
+ * `STAGING_BASIC_AUTH_PASSWORD=lo-que-quieras` en una celda, que el barrido
+ * anclado a principio de línea no veía. Un valor de muestra se pega igual esté
+ * donde esté — y en una tabla se pega **más**, porque la tabla se lee como una
+ * lista de cosas que copiar.
+ */
+const secretosConValor = [...guia.matchAll(/\b([A-Z][A-Z0-9_]{3,})=(<[^>`|]*>|[^\s`|]+)/g)]
   .filter((m) => NOMBRES_DE_SECRETO.test(m[1]!) && !ES_MARCADOR.test(m[2]!.trim()))
   .map((m) => `${m[1]!} (línea con valor)`);
 check(

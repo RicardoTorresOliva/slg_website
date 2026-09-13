@@ -2637,3 +2637,64 @@ prometen. Ahora cada uno mide un fixture hecho para suspender:
 Nada de los revisores, salvo lo que espera al despliegue. Queda la deuda de fondo que esto deja
 dicha: **un freno se escribe con su prueba negativa o no se escribe**. Cuatro de ellos vivieron
 meses en verde sin que nadie los hubiera visto en rojo, y los cuatro tenían algo que decir.
+
+---
+
+## RF-87 — el punto muerto que no dejaba ver ninguna pantalla (2026-09-13)
+
+Al repasar qué quedaba pendiente apareció algo que no era una tarea sino un **círculo cerrado**:
+
+- **DU-15, DU-16, DU-17, DU-18 y DU-20** tenían todos sus criterios verificados **menos la revisión
+  visual**, y esa revisión esperaba a que la superficie se abriera.
+- La superficie se abría «al cerrar su milestone» (RF-87, `SUPERFICIES_ABIERTAS`).
+- El milestone no cerraba hasta que cerraran sus unidades.
+- Y el **criterio 1 de DU-14** pide, con esas palabras, HQ abierta.
+
+Cada pieza era razonable por separado. Juntas significaban que **nadie podía ver una sola pantalla de
+las intranets, nunca** — ni Ricardo, ni yo, ni el día del despliegue. Seis unidades detenidas por una
+condición que no se podía satisfacer.
+
+Conviene decir además que «falta la revisión visual» **no es un criterio de aceptación de ninguna de
+esas unidades**: aparece solo en `task_tracker.md`. Es una nota que se escribió en su día, se repitió
+de unidad en unidad, y acabó funcionando como un requisito que nadie había acordado. No por eso deja
+de ser buena idea mirar las pantallas antes de darlas por hechas; lo que no puede ser es que una nota
+bloquee seis unidades sin estar escrita en ningún criterio.
+
+### Dónde estaba el error
+
+No en el mecanismo: en leer RF-87 como si hablara del *sitio*. Habla de **producción**, y lo dice
+`user_units.md` §2: «M0 → M1 → M2 salen a producción antes de empezar M3. **La web ya vende** mientras
+se construyen las intranets». Lo que protege es que un cliente que entra a comprar no tropiece con
+media intranet. En **staging** no hay a quién proteger: está tras autenticación básica, marcado
+`noindex`, y es exactamente donde una revisión visual debe hacerse.
+
+### Lo que se hizo (D-159)
+
+`SUPERFICIES_EN_REVISION=hq,portal` retira el 404 de «tu milestone sigue abierto» — **y solo eso**:
+dentro siguen haciendo falta sesión válida y el rol de la matriz B.3. Las constantes de milestone
+siguen en `false` y se pondrán en `true` cuando M3 y M4 cierren; entonces la variable se retira.
+
+**La variable solo funciona donde hay compuerta de staging delante.** No es una precaución de más: el
+accidente que ocurre de verdad es copiar el bloque de variables de un entorno a otro, y ese fallo
+sería **silencioso** — una intranet a medias servida en el dominio que vende, sin que nada falle ni
+avise. Producción no lleva compuerta, y `check:runtime` lo comprueba sobre el servidor real.
+
+### La prueba, y el primer intento que no probaba nada
+
+La primera versión vivía en `check:runtime`: pedía `/hq` y `/portal` sin sesión y comprobaba que no
+devolvían 200. **Pasaba siempre — y habría pasado igual con la superficie abierta de par en par**,
+porque sin sesión la petición ni siquiera llega a la comprobación de RF-87: `exigirSuperficie` corre
+después de `exigirSesion`, así que un anónimo se va al login en los dos casos. Se retiró y quedó
+escrito en su sitio por qué.
+
+La prueba real vive en `test:acceso`, **con sesión de verdad** y en los dos sentidos: dos servidores,
+la misma variable, única diferencia la compuerta. Sin compuerta, **404**. Con compuerta, **200**. Si
+alguien quitara el acoplamiento, el primero devolvería 200 y esto se pondría rojo.
+`test:autorizacion` añade seis comprobaciones más sobre la función pura.
+
+**Y de paso**, `check:literacy` aprendió a mirar dentro de las tablas: la guía tenía
+`STAGING_BASIC_AUTH_PASSWORD=lo-que-quieras` en una celda, que el barrido anclado a principio de línea
+no veía. Un valor de muestra se pega igual esté donde esté — y en una tabla se pega **más**, porque
+una tabla se lee como una lista de cosas que copiar.
+
+`test:acceso` 39 → **42** · `test:autorizacion` 23 → **30** · `check:runtime` 33.

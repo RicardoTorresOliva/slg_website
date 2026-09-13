@@ -73,6 +73,7 @@ export {
   ROLES_DE_SLG,
   RUTAS_SOLO_ADMIN,
   SUPERFICIES_ABIERTAS,
+  superficieAbierta,
   superficieDelRol,
   type Accion,
   type ActorRole,

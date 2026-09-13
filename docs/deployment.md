@@ -297,7 +297,7 @@ Es el **mismo servicio con otras variables**. Copia todo lo del §2.1 en
 |---|---|---|
 | `NEXT_PUBLIC_SITE_URL` | `https://staging.softlandingglobal.com` | Si apunta a producción, los enlaces de los correos de prueba llevan al sitio real |
 | **Base de datos** | La misma cadena pero terminada en **`/slg_staging`** en vez de `/slg` | Probar con los datos de producción es probar con los datos de los clientes |
-| **Dos variables nuevas** | `STAGING_BASIC_AUTH_USER=slg` y `STAGING_BASIC_AUTH_PASSWORD=lo-que-quieras` | Son las que ponen el candado |
+| **Dos variables nuevas** | `STAGING_BASIC_AUTH_USER=<un usuario que elijas>` y `STAGING_BASIC_AUTH_PASSWORD=<una contraseña que elijas>` | Son las que ponen el candado. Sustituye lo de entre `<` y `>`, ángulos incluidos: un valor de muestra en una tabla se pega tal cual |
 
 **La base `slg_staging` hay que crearla una vez.** Cuando pongas la cadena terminada en
 `/slg_staging` y despliegues, `/api/ops` de staging te dirá que no existe. Para crearla: Easypanel →
@@ -309,6 +309,34 @@ psql -U postgres -c "CREATE DATABASE slg_staging;"
 ```
 
 Si contesta `CREATE DATABASE`, hecho. Si dice que ya existe, también.
+
+#### Y una cuarta cosa, cuando quieras mirar las intranets
+
+**Solo en `slgweb-staging`.** Añade una línea más en su **Environment**:
+
+```
+SUPERFICIES_EN_REVISION=hq,portal
+```
+
+Esta se pega **tal cual** —no es un secreto, es una lista de nombres— y con ella `/hq` y `/portal`
+dejan de dar 404 **en staging** y se pueden mirar. Sin ella siguen invisibles.
+
+**Por qué hacía falta.** Cinco pantallas de las intranets estaban construidas y probadas, y la única
+cosa que les faltaba era que alguien las mirara. Pero mirarlas exigía que la superficie se abriera, y
+la superficie se abría «al cerrar el milestone», y el milestone no cerraba hasta que las unidades
+cerraran. Nadie podía ver una sola pantalla, nunca. Esta variable rompe ese círculo por el único sitio
+donde es seguro romperlo.
+
+> **En `slg-web` NO.** Y si la pegas ahí por error, **no pasa nada**: la apertura solo funciona donde
+> hay candado de staging delante, y producción no lo lleva. Está comprobado con una sesión de verdad
+> en `npm run test:acceso`, no solo leyendo el código. Aun así, no la pongas: lo que está comprobado
+> es que no abre, no que sea buena idea tenerla ahí.
+>
+> **Sigue haciendo falta entrar.** Esto no abre las intranets al mundo: retira el «todavía no», nada
+> más. Dentro se sigue pidiendo sesión válida y el rol que corresponda.
+
+**Cuándo se quita.** Cuando M3 y M4 cierren, las superficies se abren en el código y esta variable se
+retira. Si sigue puesta después de eso, sobra.
 
 **Qué hace el candado de staging.** Con esas dos variables puestas, `slgweb-staging` pide usuario y
 contraseña en **todas** las rutas menos `/api/health`, y marca todo como `noindex` para que Google no

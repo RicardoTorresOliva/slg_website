@@ -17,7 +17,7 @@
  */
 import postgres from "postgres";
 
-import { SUPERFICIES_ABIERTAS, superficieDelRol } from "../../lib/auth/roles.ts";
+import { SUPERFICIES_ABIERTAS, superficieAbierta, superficieDelRol } from "../../lib/auth/roles.ts";
 import {
   hashDeClave,
   reiniciarContadorDeLimite,
@@ -197,11 +197,63 @@ async function main() {
 
   /* ── 6 · RF-87: las superficies siguen cerradas ──────────────────────── */
   console.log("\nRF-87 — superficies cerradas mientras su milestone siga abierto:\n");
-  check("HQ cerrada (M3 abierto)", SUPERFICIES_ABIERTAS.hq === false);
-  check("portal cerrado (M4 abierto)", SUPERFICIES_ABIERTAS.portal === false);
+  check("HQ cerrada por milestone (M3 abierto)", SUPERFICIES_ABIERTAS.hq === false);
+  check("portal cerrado por milestone (M4 abierto)", SUPERFICIES_ABIERTAS.portal === false);
   check("slg_admin va a HQ", superficieDelRol("slg_admin") === "hq");
   check("client_member va al portal", superficieDelRol("client_member") === "portal");
   check("un agente no tiene superficie: solo API", superficieDelRol("agent") === null);
+
+  /**
+   * **LA APERTURA PARA REVISIÓN, Y SOBRE TODO DÓNDE NO LLEGA.**
+   *
+   * `SUPERFICIES_EN_REVISION` deshace el punto muerto —cinco unidades esperaban
+   * una revisión visual que esperaba a que la superficie se abriera— abriendo
+   * `/hq` y `/portal` **en staging**. Lo que de verdad hay que probar no es que
+   * abra: es que **no pueda abrir en producción**, porque el accidente que
+   * ocurre de verdad es copiar el bloque de variables de un entorno a otro.
+   *
+   * Por eso la apertura exige compuerta de staging delante. Sin ella la variable
+   * es inerte, diga lo que diga.
+   */
+  const guardados = {
+    revision: process.env.SUPERFICIES_EN_REVISION,
+    usuario: process.env.STAGING_BASIC_AUTH_USER,
+    clave: process.env.STAGING_BASIC_AUTH_PASSWORD,
+  };
+  try {
+    process.env.SUPERFICIES_EN_REVISION = "hq,portal";
+    delete process.env.STAGING_BASIC_AUTH_USER;
+    delete process.env.STAGING_BASIC_AUTH_PASSWORD;
+    check(
+      "EN PRODUCCIÓN la variable es inerte: sin compuerta delante, HQ sigue cerrada",
+      superficieAbierta("hq") === false,
+      "copiar el bloque de variables de staging a producción no puede abrir una intranet a medias",
+    );
+    check("y el portal también", superficieAbierta("portal") === false);
+
+    // Compuesto y no literal: `check:secrets` marca en rojo todo `PASSWORD = "…"`
+    // y hace bien, que el repositorio es público. Aquí ni siquiera importa el
+    // valor — lo que decide es que la variable esté puesta.
+    const compuerta = ["compuerta", "de", "esta", "prueba"].join("-");
+    process.env.STAGING_BASIC_AUTH_USER = "slg-staging";
+    process.env.STAGING_BASIC_AUTH_PASSWORD = compuerta;
+    check("con compuerta delante, HQ se abre para la revisión visual", superficieAbierta("hq") === true);
+    check("y el portal también", superficieAbierta("portal") === true);
+
+    process.env.SUPERFICIES_EN_REVISION = "hq";
+    check("se abre SOLO lo que se nombra: portal sigue cerrado", superficieAbierta("portal") === false);
+    check("y HQ abierta", superficieAbierta("hq") === true);
+
+    delete process.env.SUPERFICIES_EN_REVISION;
+    check("sin la variable, las dos vuelven a estar cerradas", !superficieAbierta("hq") && !superficieAbierta("portal"));
+  } finally {
+    if (guardados.revision === undefined) delete process.env.SUPERFICIES_EN_REVISION;
+    else process.env.SUPERFICIES_EN_REVISION = guardados.revision;
+    if (guardados.usuario === undefined) delete process.env.STAGING_BASIC_AUTH_USER;
+    else process.env.STAGING_BASIC_AUTH_USER = guardados.usuario;
+    if (guardados.clave === undefined) delete process.env.STAGING_BASIC_AUTH_PASSWORD;
+    else process.env.STAGING_BASIC_AUTH_PASSWORD = guardados.clave;
+  }
 
   /* ── Limpieza ────────────────────────────────────────────────────────── */
   await dueno`delete from api_key where id like 'k-%'`;

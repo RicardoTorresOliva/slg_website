@@ -527,12 +527,101 @@ async function main() {
       segundoTrasCierre.status === 307 || segundoTrasCierre.status === 302 || segundoTrasCierre.status === 404,
       `status ${segundoTrasCierre.status}`,
     );
+    /* ── RF-87 · la apertura para revisión NO alcanza a producción ───────── */
+    await rf87(entorno, CLAVE_NUEVA);
   } finally {
     parar();
     await cerrarSmtp();
     await limpiar();
     await dueno.end({ timeout: 5 });
   }
+}
+
+/**
+ * **LA APERTURA PARA LA REVISIÓN VISUAL, PROBADA DONDE IMPORTA.**
+ *
+ * `SUPERFICIES_EN_REVISION` deshace un punto muerto real —cinco unidades de M3 y
+ * M4 esperaban una revisión visual que esperaba a que la superficie se abriera—
+ * abriendo `/hq` y `/portal` **solo donde hay compuerta de staging delante**.
+ *
+ * Lo que hay que probar no es que abra: es que **no pueda abrir en producción**,
+ * porque el accidente que ocurre de verdad es copiar el bloque de variables de
+ * un entorno a otro, y su fallo sería **silencioso**: una intranet a medias
+ * servida en el dominio que ya vende, sin que nada falle ni avise.
+ *
+ * Se prueba **con sesión**, y esa es la parte que costó: sin sesión la petición
+ * ni siquiera llega a la comprobación de RF-87 —`exigirSuperficie` corre después
+ * de `exigirSesion`— así que un anónimo se va al login con la superficie abierta
+ * y con ella cerrada. Una comprobación así pasa siempre y no prueba nada. La
+ * primera versión de esto vivía en `check:runtime` y era exactamente eso.
+ *
+ * Dos servidores, misma variable, única diferencia la compuerta. Si alguien
+ * quitara ese acoplamiento, el primero devolvería 200 y esto se pondría rojo.
+ */
+async function rf87(entorno: Record<string, string>, contrasena: string) {
+  console.log("\nRF-87 — la apertura para revisión visual no alcanza a producción:\n");
+
+  const REVISION = { SUPERFICIES_EN_REVISION: "hq,portal" };
+
+  async function entrarYPedirPortal(
+    extra: Record<string, string>,
+    cabeceras: Record<string, string> = {},
+  ): Promise<number> {
+    const { base, parar } = await arrancar((b) => ({ ...entorno, ...REVISION, ...extra, BETTER_AUTH_URL: b }));
+    try {
+      const navegador = new Navegador(base);
+      // La misma puerta y la misma contraseña que usa el criterio 6: a estas
+      // alturas de la prueba la contraseña ya se cambió, y entrar con la vieja
+      // dejaría estas comprobaciones sin sesión — que es justo lo que no puede
+      // pasar, porque sin sesión no se llega a la comprobación de RF-87.
+      //
+      // **Las cabeceras también en el inicio de sesión.** Con compuerta de
+      // staging delante, el POST de entrada pasa por ella igual que cualquier
+      // otra petición: sin la autenticación básica devuelve 401 y no hay cookie,
+      // y esta prueba diría «no abre» por el motivo equivocado.
+      await navegador.pedir("/api/acceso/contrasena", {
+        method: "POST",
+        body: new URLSearchParams({ email: CORREO, password: contrasena, lang: "es", volver: "/" }).toString(),
+        headers: { ...cabeceras, "content-type": "application/x-www-form-urlencoded" },
+      });
+      if (!navegador.tieneSesion()) return -1;
+      const r = await navegador.pedir("/portal", { headers: cabeceras });
+      return r.status;
+    } finally {
+      parar();
+    }
+  }
+
+  // 1) Como producción: la variable puesta y NINGUNA compuerta delante.
+  const enProduccion = await entrarYPedirPortal({
+    STAGING_BASIC_AUTH_USER: "",
+    STAGING_BASIC_AUTH_PASSWORD: "",
+  });
+  check(
+    "hubo sesión de verdad: si no, la comprobación siguiente no probaría nada",
+    enProduccion !== -1,
+    "el inicio de sesión no dejó cookie",
+  );
+  check(
+    "CON SESIÓN VÁLIDA y la variable puesta, producción sigue devolviendo 404",
+    enProduccion === 404,
+    `status ${enProduccion}; copiar el bloque de variables de staging no puede abrir una intranet a medias`,
+  );
+
+  // 2) Como staging: la misma variable, con la compuerta delante.
+  const USUARIO_DE_STAGING = "slg-staging";
+  const CLAVE_DE_STAGING = "otra-cadena-larga-solo-para-esta-prueba";
+  const enStaging = await entrarYPedirPortal(
+    { STAGING_BASIC_AUTH_USER: USUARIO_DE_STAGING, STAGING_BASIC_AUTH_PASSWORD: CLAVE_DE_STAGING },
+    {
+      authorization: `Basic ${Buffer.from(`${USUARIO_DE_STAGING}:${CLAVE_DE_STAGING}`).toString("base64")}`,
+    },
+  );
+  check(
+    "y en staging, con la MISMA variable, el portal sí se abre para revisarlo",
+    enStaging === 200,
+    `status ${enStaging}; si esto no abre, la revisión visual sigue sin poder hacerse`,
+  );
 }
 
 try {
