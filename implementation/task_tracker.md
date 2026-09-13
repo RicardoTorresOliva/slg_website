@@ -38,7 +38,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 10 `pending` · **13 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01, DU-07, DU-08, DU-09, DU-13, DU-14, DU-15, DU-16, DU-17) · **16 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12, FU-12) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
+**Estado global:** 9 `pending` · **13 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01, DU-07, DU-08, DU-09, DU-13, DU-14, DU-15, DU-16, DU-17) · **17 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12, FU-12, FU-13) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -86,7 +86,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | DU-16 | DU | Capturas web: lista, detalle de intentos y reintento manual | M3 | DU-09, DU-13 · ~~spec-delta del `data_model`~~ ✅ **CF-1 resuelto por D-50** (`crm_delivery.cycle`, ya construido en FU-04) | `in_progress` — lista, detalle y reintento construidos y verificados (23 comprobaciones); **CF-1 demostrado**: el ciclo nuevo no pisa la traza vieja (**D-111**). Falta la revisión visual, que espera a que HQ se abra |
 | DU-17 | DU | Claves de API y registro de auditoría | M3 | FU-06, DU-14 | `in_progress` — las dos pantallas construidas y verificadas (31 comprobaciones); el secreto **no pasa por la URL** (**D-114**) y la inmutabilidad de la auditoría se prueba intentando romperla **con el usuario dueño**. Falta la revisión visual, que espera a que HQ se abra |
 | ━━━ | ━━━ | **▼ M4 · PORTAL DE CLIENTES** | ━━━ | ━━━ | ━━━ |
-| FU-13 | FU | Batería de pruebas de aislamiento entre empresas | M4 | FU-04, FU-06, DU-15 | `pending` |
+| FU-13 | FU | Batería de pruebas de aislamiento entre empresas | M4 | FU-04, FU-06, DU-15 | `done` — quince comprobaciones sobre las **funciones de la aplicación** (**D-121**), en `test:db` y en `check:ci`; prueba negativa registrada (**D-122**) |
 | DU-18 | DU | Inicio del portal con avisos | M4 | FU-12, FU-13, DU-15 | `pending` |
 | DU-19 | DU | Proyectos, entregables y visor aislado | M4 | DU-18 · nombre del subdominio del visor (origen separado, D-45) | `pending` |
 | DU-20 | DU | Materiales de programa | M4 | DU-19 | `pending` |
@@ -337,3 +337,10 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   (**D-119**); y **`check:js-budget` se puso rojo** porque `error.tsx` importaba el JSON de cadenas
   entero, así que las 150 cadenas de HQ viajaban a cada página pública — partido, la ruta más pesada
   baja de **150,2 KB a 142,3 KB** (**D-120**). `test:db` sube a **504**.
+- `2026-09-13` — **FU-13 `done`.** La batería que demuestra el aislamiento **a nivel de aplicación**
+  (**D-121**): dos empresas con todo duplicado, y se comprueba en las dos direcciones —que se lea lo
+  propio importa tanto como que no se lea lo ajeno, o una función rota que nunca devuelve nada
+  pasaría por verde—. Corre en `test:db` **y en `check:ci`**. El fixture negativo tuvo que
+  reescribirse: el primero usaba `withSystemScope` y **no filtraba nada**, porque ese ámbito no abre
+  las tablas con `organization_id`; el fallo que sí pasa la política es construir el contexto **desde
+  el parámetro** (**D-122**). Van **veintidós** frenos y `test:db` sube a **519**.

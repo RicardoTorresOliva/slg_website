@@ -1797,3 +1797,45 @@ nombre · el aviso ligado a su empresa, guardado **tal como se escribió**, y si
 PostgreSQL real, un doble del CRM y un doble de S3. Lo que falta **no es código**: la revisión visual
 y el cierre de **DoD #4** necesitan la superficie abierta —HQ devuelve 404 mientras M3 esté abierto
 (RF-87)— y el gate **D8** necesita **F.2-2** y **F.2-3**, los dos inicios de sesión sociales.
+
+---
+
+## 2026-09-13 · FU-13 — Batería de pruebas de aislamiento entre empresas
+
+**Qué se construyó.** `scripts/auth/test-aislamiento.ts`: la batería que **demuestra** —no que
+sugiere— que un `client_*` no lee nada de otra empresa ni alcanza ninguna ruta de `/hq`. Corre en
+`test:db` **y en `check:ci`**, así que su fallo bloquea el despliegue (criterio 4, RNF-19).
+
+**Se escribe antes que las pantallas del portal**, que es la mitad de su valor: cuando DU-18…DU-21
+empiecen a leer datos de cliente, la red ya está puesta y una consulta que se salte el contexto se
+pone roja el mismo día, no en la auditoría final.
+
+**Convive con `test:isolation` y no la sustituye** (**D-121**). Aquella contesta «¿la política de
+fila acota?»; esta contesta «¿las consultas que las pantallas van a llamar pasan por la política?».
+Una política correcta con una consulta que la esquiva sigue siendo una fuga, y la consulta que la
+esquiva se escribe arriba, no en SQL.
+
+**Las quince comprobaciones.** Dos empresas con todo duplicado —proyecto, entregable, aviso,
+usuario— y se comprueba en las dos direcciones: A ve **lo suyo** y **nada** de B, y B al revés. Que
+se lea lo propio importa tanto como que no se lea lo ajeno: sin eso, una función rota que no
+devuelve nunca nada pasaría por verde. Después, el criterio 3: A **pidiendo explícitamente** los
+avisos de B recibe cero, y pidiendo los suyos los recibe — el filtro funciona, lo que no funciona es
+cruzarlo. Y las **nueve** secciones de HQ, con los dos roles de cliente: denegación en las dieciocho
+combinaciones.
+
+### El fixture negativo, y el hallazgo que dejó por el camino
+
+La primera versión del fixture usaba `withSystemScope`, y **no filtraba nada**: ese ámbito fija
+`app.actor_role = 'system'`, que no está en la lista de roles que la política deja pasar, así que la
+consulta mala devolvía cero. Hallazgo útil —**`withSystemScope` no abre las tablas con
+`organization_id`**— pero como prueba negativa no valía: un fixture que no rompe nada no demuestra
+que la batería sepa ponerse roja.
+
+El fallo que **sí** pasa la política es el que RF-71 prohíbe con todas las letras: **construir el
+contexto con un `organization_id` que llega en la petición** (**D-122**). Desde dentro de la base no
+hay nada raro —alguien dijo que el actor pertenece a esa empresa— y por eso hay que atraparlo
+arriba. Con el fixture puesto, la batería se pone roja y dice cuántas filas ajenas se filtraron.
+Queda registrado en `check:brakes`, que sube a **veintidós frenos**.
+
+**Verificación global.** `lint` · `check:fronteras` (188) · `check:secrets` (439) ·
+`check:brakes`: **veintidós** · `test:db`: **519** comprobaciones.

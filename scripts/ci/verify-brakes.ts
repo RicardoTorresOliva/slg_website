@@ -157,6 +157,22 @@ const CASOS: Caso[] = [
     ],
     env: { HQ_ROOT: path.join(HERE, "negative/hq") },
   },
+  {
+    freno: "aislamiento entre empresas · una consulta que toma el `organization_id` del parámetro",
+    /**
+     * La batería de FU-13 no vive en `scripts/ci/` porque no es un freno
+     * estático: necesita PostgreSQL con dos empresas sembradas. Se apunta por
+     * ruta relativa y se mide igual que los demás.
+     *
+     * El fixture construye el contexto **desde el parámetro** en vez de desde la
+     * sesión. La política de fila no lo para —desde dentro no hay nada raro:
+     * alguien dijo que el actor pertenece a esa empresa— y por eso es el fallo
+     * que hay que atrapar arriba, en la aplicación.
+     */
+    script: "../auth/test-aislamiento.ts",
+    espera: "devolvió 1 fila(s)",
+    env: { AISLAMIENTO_FIXTURE: "1" },
+  },
 ];
 
 let fallos = 0;
@@ -394,4 +410,4 @@ if (fallos) {
   console.error(`\n✗ ${fallos} freno(s) no se comportaron como deben.\n`);
   process.exit(1);
 }
-console.log("\n✓ Los veintiún frenos fallan cuando deben y pasan cuando deben.\n");
+console.log("\n✓ Los veintidós frenos fallan cuando deben y pasan cuando deben.\n");
