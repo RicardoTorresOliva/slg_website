@@ -21,7 +21,15 @@ import path from "node:path";
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 const RAIZ = process.env.CADENAS_ROOT;
 
-/** Los archivos del armazón. Si DU-02 crece, la lista crece con él. */
+/**
+ * Los archivos del armazón. Si DU-02 crece, la lista crece con él.
+ *
+ * **Y el armazón de aplicación también está aquí (FU-12)**, por un motivo más
+ * fuerte todavía que en la capa pública: ahí el idioma es una propiedad de la
+ * URL y una cadena escrita a mano sale mal solo en media web. Aquí el idioma es
+ * la **preferencia de la cuenta** (RF-72), así que una cadena escrita a mano
+ * sale mal **para la persona que eligió el otro idioma**, y nadie más la ve.
+ */
 const VIGILADOS = [
   "components/ArmazonPublico.tsx",
   "components/BarraDeNavegacion.tsx",
@@ -32,6 +40,10 @@ const VIGILADOS = [
   "components/PuertaDeAI.tsx",
   "components/OverviewDeRama.tsx",
   "components/PaginaDeServicio.tsx",
+  "components/app/ArmazonDeApp.tsx",
+  "components/app/EstadosCanonicos.tsx",
+  "components/app/PantallaDeApp.tsx",
+  "components/app/ContenidoEntregado.tsx",
 ];
 
 const ATRIBUTOS_QUE_SE_LEEN = ["aria-label", "title", "alt", "placeholder"];

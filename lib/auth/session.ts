@@ -27,7 +27,15 @@ import {
 export type SesionResuelta = {
   readonly ctx: AuthContext;
   readonly userId: string;
+  /**
+   * El identificador de ESTA sesión, no del usuario. Lo necesita «cerrar
+   * sesión» (FU-12): salir de aquí no puede cerrar las de los otros
+   * dispositivos, que es lo que hace `cerrarTodasLasSesiones`.
+   */
+  readonly sessionId: string;
   readonly role: UserRole;
+  /** El nombre para mostrar. La interfaz nunca enseña el correo en la barra. */
+  readonly nombre: string;
   readonly locale: string;
   readonly superficie: Superficie;
   readonly pertenencias: readonly Pertenencia[];
@@ -93,7 +101,9 @@ export async function sesionActual(): Promise<SesionResuelta | null> {
       organizationId,
     }),
     userId: user.id,
+    sessionId: resultado.session.id,
     role: user.role,
+    nombre: user.name,
     locale: typeof user.locale === "string" ? user.locale : "es",
     superficie,
     pertenencias,

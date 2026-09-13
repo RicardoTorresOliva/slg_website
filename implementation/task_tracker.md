@@ -38,7 +38,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 16 `pending` · **8 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01, DU-07, DU-08, DU-09) · **15 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
+**Estado global:** 15 `pending` · **8 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01, DU-07, DU-08, DU-09) · **16 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12, FU-12) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -70,16 +70,16 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | DU-04 | DU | Overviews de rama (`/ai`, `/ai/academy`, `/ai/enterprise`, `/ai/factory`) | M1-B | DU-03 | `done` — los cuatro en los dos idiomas; cada uno enlaza a todos sus servicios y a ninguno ajeno |
 | DU-05 | DU | Las once páginas de servicio (contrato A.3) | M1-B | DU-04 | `done` — las 22 páginas con las seis secciones en orden fijo y un solo CTA |
 | DU-06 | DU | Autoridad y legales: Doctrina, Nosotros y `/legal/*` | M1-B | DU-04 · F.2-1 | `done` — legales en `/legal/*`, públicas y sin sesión; doctrina desde su colección |
-| DU-07 | DU | SEO técnico, 404/500 y cierre de los gates D1–D6 | M1-B | DU-03, DU-04, DU-05, DU-06 | `pending` |
+| DU-07 | DU | SEO técnico, 404/500 y cierre de los gates D1–D6 | M1-B | DU-03, DU-04, DU-05, DU-06 | `in_progress` — criterios 1–6 y 8 cerrados y verificados (220 comprobaciones de `check:seo`, Lighthouse 96/97/90); el **criterio 7** —declarar D1–D6 en verde **en staging**— espera al despliegue |
 | ━━━ | ━━━ | **▼ M2 · CONVERSIÓN Y CONTENIDO** | ━━━ | ━━━ | ━━━ |
-| FU-11 | FU | Anti-abuso propio: límite, honeypot y dominios gratuitos | M2 | FU-04, FU-05 | `pending` |
-| DU-08 | DU | Biblioteca de descargas, formulario de captura y entrega firmada | M2 | FU-09, FU-11, DU-05 | `pending` |
-| DU-09 | DU | Captura al CRM: adaptador de dos modos, cola y aviso | M2 | FU-08, DU-08 · F.2-5 · S-01 | `pending` |
+| FU-11 | FU | Anti-abuso propio: límite, honeypot y dominios gratuitos | M2 | FU-04, FU-05 | `done` — campo trampa, límite con contador **en la base** (**D-83**) y dominios gratuitos **en tabla**, editables sin desplegar (**D-82**) |
+| DU-08 | DU | Biblioteca de descargas, formulario de captura y entrega firmada | M2 | FU-09, FU-11, DU-05 | `in_progress` — la máquina completa y probada (18 comprobaciones), con el orden verificar → persistir → firmar; falta la entrega real, que espera los buckets de FU-09 |
+| DU-09 | DU | Captura al CRM: adaptador de dos modos, cola y aviso | M2 | FU-08, DU-08 · F.2-5 · S-01 | `in_progress` — los dos modos, la cola que **sobrevive a un reinicio** y los cinco intentos, probados contra un doble (19 comprobaciones); el criterio 2 contra el CRM real espera **F.2-5** y **S-01** |
 | DU-10 | DU | Contacto y solicitud del documento completo de Doctrina | M2 | DU-06, DU-09 | `done` — las tres puertas por la misma máquina (**D-89**); `/gracias` distingue las tres variantes |
 | DU-11 | DU | Blog: índice, artículo, etiquetas, RSS y borradores | M2 | FU-03, DU-02 | `done` — ocho rutas prerrenderizadas en los dos idiomas; 33 comprobaciones sobre el servidor real |
 | DU-12 | DU | Webhooks salientes firmados y analítica privacy-first | M2 | DU-09, DU-11 | `done` — los nueve eventos firmados y con cola propia (**D-91**…**D-94**); `check:terceros` mide cero terceros en un navegador real (**D-95**) |
 | ━━━ | ━━━ | **▼ M3 · HQ (INTRANET SLG)** | ━━━ | ━━━ | ━━━ |
-| FU-12 | FU | Shell de aplicación para HQ y portal | M3 | FU-06, FU-10 | `pending` |
+| FU-12 | FU | Shell de aplicación para HQ y portal | M3 | FU-06, FU-10 | `done` — los seis estados como UN componente (**D-96**), la sección declara su acción de B.3 y el servidor la aplica (**D-97**), sin conmutador de idioma; `check:shell` + `test:shell` (32 combinaciones rol × sección) |
 | DU-13 | DU | Tablero de HQ | M3 | FU-12, DU-09, DU-11 · F.2-5 | `pending` |
 | DU-14 | DU | Empresas, proyectos, usuarios e invitaciones | M3 | FU-07, DU-13 | `pending` |
 | DU-15 | DU | Entregables y avisos | M3 | FU-09, DU-14 | `pending` |
@@ -283,3 +283,15 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   peticiones ajenas y cero cookies en seis páginas, **medido con un Chromium real** (**D-95**) —su
   propia prueba negativa destapó que sobre `file://` la mitad que busca cookies salía verde sin medir
   nada. Con `check:terceros` van **diecinueve** frenos y `test:db` sube a **320** comprobaciones.
+- `2026-09-13` — **FU-12 `done`.** El octavo componente de C.5, ya construido: barra lateral con las
+  secciones **filtradas por rol**, las tres preguntas de wayfinding respondidas sin abrir nada, y
+  los **seis estados canónicos** como UN componente que recibe el nombre del estado (**D-96**) —con
+  seis sueltos, una pantalla se escribe el sexto a mano y ese existe en un solo idioma. Cada sección
+  declara su acción de B.3 y **el servidor la aplica**: `test:shell` recorre las **32 combinaciones
+  de rol × sección** exigiendo que lo que se ve y lo que se permite coincidan (**D-97**). Dos
+  defectos los encontró la propia verificación —`slg_admin` veía el portal entero (**D-98**) y el
+  freno de fronteras cazó el módulo nuevo, que se resolvió abriendo `lib/auth/matriz.ts` (**D-99**)—
+  y uno el navegador: **`/prototipo` se revisaba a 416 px** dentro de la tarjeta de `(auth)`, así que
+  el armazón y el visor nunca se habían visto a su anchura (**D-100**). Freno nuevo `check:shell`:
+  van **veinte**. `test:db` sube a **338**. `SUPERFICIES_ABIERTAS` sigue en `false`: HQ y portal
+  siguen en 404 para todo el mundo (RF-87).

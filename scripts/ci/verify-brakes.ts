@@ -132,6 +132,16 @@ const CASOS: Caso[] = [
       TERCEROS_FIXTURE: path.join(HERE, "negative/terceros/roto.html"),
     },
   },
+  {
+    freno: "una pantalla autenticada que se inventa su estado o mete conmutador",
+    script: "check-shell.ts",
+    /**
+     * Dos fragmentos porque el fixture rompe DOS criterios a la vez, y un freno
+     * que solo viera uno de los dos daría por bueno el otro.
+     */
+    espera: ["ninguno con un estado propio", "ningún conmutador"],
+    env: { SHELL_ROOT: path.join(HERE, "negative/shell") },
+  },
 ];
 
 let fallos = 0;
@@ -369,4 +379,4 @@ if (fallos) {
   console.error(`\n✗ ${fallos} freno(s) no se comportaron como deben.\n`);
   process.exit(1);
 }
-console.log("\n✓ Los diecinueve frenos fallan cuando deben y pasan cuando deben.\n");
+console.log("\n✓ Los veinte frenos fallan cuando deben y pasan cuando deben.\n");

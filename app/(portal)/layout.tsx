@@ -1,5 +1,7 @@
+import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
+import { PantallaDeApp } from "@/components/app/PantallaDeApp";
 import { ErrorDeAutorizacion, exigirSuperficie, SinSesion } from "@/lib/auth";
 
 /**
@@ -13,13 +15,24 @@ import { ErrorDeAutorizacion, exigirSuperficie, SinSesion } from "@/lib/auth";
  * cambiando `SUPERFICIES_ABIERTAS.portal` en `lib/auth/roles.ts`.
  */
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
+  let sesion;
   try {
-    await exigirSuperficie("portal");
+    sesion = await exigirSuperficie("portal");
   } catch (e) {
     if (e instanceof SinSesion) redirect("/acceder");
     if (e instanceof ErrorDeAutorizacion) notFound();
     throw e;
   }
 
-  return <>{children}</>;
+  const ruta = (await headers()).get("x-slg-ruta") ?? "/portal";
+
+  return (
+    <PantallaDeApp
+      superficie="portal"
+      ruta={ruta}
+      sesion={{ ctx: sesion.ctx, locale: sesion.locale, nombre: sesion.nombre }}
+    >
+      {children}
+    </PantallaDeApp>
+  );
 }

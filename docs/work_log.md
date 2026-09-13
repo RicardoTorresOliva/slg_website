@@ -1380,3 +1380,90 @@ Se levantó un Umami de mentira, se reconstruyó con la variable puesta y se abr
 **Lo que sigue esperando.** El criterio 6 queda cerrado en su forma más exigente —cero terceros— y
 la analítica **no está desplegada todavía**: es un servicio `slg-analytics` en Easypanel y dos
 variables. Mientras no exista, el sitio no mide nada, que es el estado por defecto correcto.
+
+---
+
+## 2026-09-13 · FU-12 — Shell de aplicación para HQ y portal
+
+**Qué se construyó.** La implementación del **octavo componente de C.5**, ya con sesión detrás:
+`components/app/ArmazonDeApp.tsx` (barra lateral, cabecera de ubicación y salida),
+`components/app/EstadosCanonicos.tsx` (**un** componente para los seis estados),
+`components/app/ContenidoEntregado.tsx`, `components/app/PantallaDeApp.tsx` (el puente con la
+sesión), y `lib/app/` con la tabla de secciones, el vocabulario de estados y la resolución de
+idioma. Los layouts de `(hq)` y `(portal)` ya lo montan: la compuerta sigue siendo lo primero y el
+armazón se pinta **después** de verificar.
+
+**Las tres preguntas de wayfinding (RNF-43), respondidas sin abrir nada.** *Dónde estoy*: el nombre
+de la superficie y el de la sección, en la cabecera y en el enlace con `aria-current`, los dos
+sacados de la **misma tabla** para que no puedan discrepar. *A dónde puedo ir*: las secciones,
+permanentes. *Cómo salgo*: «cerrar sesión», visible y siempre en el mismo sitio — y es un
+**formulario POST**, no un enlace: un cierre de sesión por GET lo dispara cualquier `<img src>` de
+cualquier página y echa a la persona de su sesión desde fuera.
+
+**Los seis estados son un componente, no seis** (**D-96**). Y son seis porque las tres parejas no
+son redundantes: «todavía no hay nada» y «tu filtro no encuentra nada» se arreglan de formas
+distintas; «no se pudo cargar» y «la acción falló» dicen cosas opuestas sobre si se perdió algo.
+`sin_permiso` es uno solo y dice **«no encontrado»**: separar «no existe» de «no puedes» confirmaría
+la existencia del recurso a quien no debe verlo.
+
+**Esconder no es proteger** (**D-97**). Cada sección declara su acción de B.3 en la misma fila que
+pinta el enlace: la barra lateral filtra con `puede()` y la página aplica `exigirSeccion()`.
+`test:shell` recorre **las 32 combinaciones de rol × sección** y exige que lo que se ve y lo que el
+servidor permite coincidan.
+
+**Sin conmutador de idioma** (RF-72). La interfaz sale de `user.locale` y de nada más; cambiar de
+idioma es cambiar la preferencia de la cuenta, no la vista. El contenido entregado va aparte, con
+`lang` propio y `translate="no"`: traducirlo sería cambiar lo que se entregó, y sin `lang` un lector
+de pantalla lee un entregable inglés con fonética española.
+
+### Dos defectos que encontró la propia verificación
+
+1. **`slg_admin` veía el portal de cliente entero en su barra lateral.** B.3 le concede la lectura
+   de avisos y entregables —la tiene, y debe—, así que filtrar solo con `puede()` le ofrecía una
+   navegación que el layout rechaza después. Tener permiso sobre un dato y tener **superficie** son
+   cosas distintas (**D-98**). Lo cazó `test:shell` en su primera ejecución.
+2. **El freno de fronteras cazó el módulo nuevo**: `lib/app/navegacion.ts` entraba por archivos
+   internos de `lib/auth/`. La salida no fue relajar el freno sino abrir una **segunda puerta
+   pública con la mitad pura** del módulo, `lib/auth/matriz.ts` (**D-99**) — el mismo caso que
+   `@/lib/auth/edge`, al revés.
+
+### Y uno que solo se vio abriendo el navegador
+
+**La compuerta de revisión de C.5 se estaba mirando a 416 px de ancho.** `/prototipo` vivía en el
+grupo `(auth)`, que centra a sus hijos en una tarjeta de 26 rem — la anchura de un formulario de
+acceso. Los componentes de una columna aguantaban; el **armazón de aplicación** y el **visor de
+entregables**, que existen para una pantalla ancha, **nunca se habían visto a su tamaño**, ni
+siquiera cuando FU-10 se aprobó. Ahora `/prototipo` tiene su propio grupo y ocupa el ancho completo
+(**D-100**); el `noindex` se conserva por las dos vías que de verdad lo ponen.
+
+Medido después en un Chromium real, a 1280 y a 390: el armazón pasa de 406 px a **1110 px**, los
+seis estados se pintan, la lista de secciones se **tumba en una tira horizontal** en móvil sin
+plegarse, el botón de salida se ve en las dos anchuras, el contenido entregado sale con
+`lang="en" translate="no"`, la página **no desborda horizontalmente** y no hay ni un error de
+consola.
+
+*(Una hora perdida y vale la pena anotarla: durante varias medidas el navegador siguió viendo la
+versión vieja porque **un servidor de una ejecución anterior seguía escuchando en el puerto** y el
+arranque nuevo fallaba en silencio. La página parecía no cambiar por más que se reconstruyera. Si
+vuelve a pasar: `pkill -f standalone/server.js` antes de medir.)*
+
+### El freno nuevo: `check:shell`
+
+Comprueba lo mecanizable de los tres criterios: que los seis estados existan y tengan texto **en los
+dos idiomas**; que **ninguna pantalla** de `(hq)` o `(portal)` escriba su propio estado —se busca la
+**forma**: `role="alert"`, `aria-busy`, `data-slg-estado` fuera del componente canónico—; que no
+aparezca un conmutador de idioma; y que toda sección declare una acción que **existe** en B.3.
+Prueba negativa: una pantalla que rompe las dos cosas a la vez, y el freno se pone rojo por las dos.
+`components/app/*` entra además en `check:cadenas`.
+
+**Verificación global.** `lint` · `check:content` (1338) · `check:secrets` (402 archivos) ·
+`check:env` · `check:migrations` · `check:fronteras` (161) · `check:archivos` · `check:contraste` ·
+`check:motion` (212) · `check:cadenas` (13) · **`check:shell` (33)** · `build:standalone` ·
+`check:js-budget` (78 rutas) · `check:runtime` (30) · `check:armazon` (60) · `check:blog` (33) ·
+`check:paginas` (142) · `check:seo` (220) · `test:gesto` (20) · `check:terceros` (12) ·
+`check:lighthouse` (96/96/91) · `check:brakes`: **veinte frenos** · `test:db`: **338**
+comprobaciones.
+
+**Lo que NO cambia todavía.** `SUPERFICIES_ABIERTAS` sigue en `false` para las dos: HQ y el portal
+**siguen devolviendo 404 a todo el mundo** (RF-87). Lo que hay construido es el marco; las pantallas
+son DU-13 en adelante, y la superficie se abre al cerrar su milestone, no antes.

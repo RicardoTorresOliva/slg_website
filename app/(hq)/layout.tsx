@@ -1,5 +1,7 @@
+import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
+import { PantallaDeApp } from "@/components/app/PantallaDeApp";
 import { ErrorDeAutorizacion, exigirSuperficie, SinSesion } from "@/lib/auth";
 
 /**
@@ -18,13 +20,18 @@ import { ErrorDeAutorizacion, exigirSuperficie, SinSesion } from "@/lib/auth";
  * superficie. Se abre cambiando `SUPERFICIES_ABIERTAS.hq` en
  * `lib/auth/roles.ts`, no borrando esta comprobación.
  *
- * Las pantallas de HQ son de M3 (FU-12 en adelante). Aquí no hay interfaz
- * todavía, y eso es correcto: la compuerta se construye antes que lo que
- * protege.
+ * DESDE FU-12 ESTE LAYOUT TAMBIÉN PONE EL ARMAZÓN. La compuerta sigue siendo lo
+ * primero —el armazón se monta con la sesión ya verificada, nunca antes—, y por
+ * eso el `try` envuelve solo a `exigirSuperficie`: si esto fallara, no habría
+ * llegado a pintarse ni la barra lateral.
+ *
+ * Las pantallas siguen siendo de DU-13 en adelante. Lo que hay aquí es el marco
+ * por el que se navegarán, con las tres preguntas de RNF-43 ya respondidas.
  */
 export default async function HqLayout({ children }: { children: React.ReactNode }) {
+  let sesion;
   try {
-    await exigirSuperficie("hq");
+    sesion = await exigirSuperficie("hq");
   } catch (e) {
     // Sin sesión no es una fuga: cualquiera sabe que existe un login.
     if (e instanceof SinSesion) redirect("/acceder");
@@ -34,5 +41,19 @@ export default async function HqLayout({ children }: { children: React.ReactNode
     throw e;
   }
 
-  return <>{children}</>;
+  // La ruta sale de la cabecera que pone el middleware en cada petición: el
+  // layout no la recibe como prop, y sin ella la barra lateral no sabría cuál
+  // de sus enlaces está activo — la respuesta a «dónde estoy» se quedaría
+  // muda justo en la pantalla que la necesita.
+  const ruta = (await headers()).get("x-slg-ruta") ?? "/hq";
+
+  return (
+    <PantallaDeApp
+      superficie="hq"
+      ruta={ruta}
+      sesion={{ ctx: sesion.ctx, locale: sesion.locale, nombre: sesion.nombre }}
+    >
+      {children}
+    </PantallaDeApp>
+  );
 }

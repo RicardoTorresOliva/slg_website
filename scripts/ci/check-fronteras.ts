@@ -107,7 +107,10 @@ const REGLAS: readonly Regla[] = [
     nombre: "importa un archivo interno del módulo",
     // También los relativos que NO llevan el prefijo `lib/`: desde `lib/algo/`,
     // `../auth/db.ts` entra igual de dentro y el gate no lo veía.
-    re: /from\s+["'](?:@\/lib\/auth\/|(?:\.\.?\/)+(?:lib\/)?auth\/)(?!(?:edge|index\.ts)["'])[a-z]/,
+    // `matriz` es la segunda puerta pública: la mitad PURA del módulo —la
+    // matriz B.3 y su veredicto—, para el código que no puede arrastrar Better
+    // Auth ni el pool de PostgreSQL solo para preguntar quién puede qué.
+    re: /from\s+["'](?:@\/lib\/auth\/|(?:\.\.?\/)+(?:lib\/)?auth\/)(?!(?:edge|matriz|matriz\.ts|index\.ts)["'])[a-z]/,
     porQue:
       "la superficie pública es `@/lib/auth`. Entrar por un archivo interno " +
       "convierte un detalle en contrato y el módulo deja de poder reescribirse.",
@@ -181,6 +184,14 @@ for (const abs of archivos()) {
      */
     if (
       rel.startsWith("scripts/auth/") ||
+      /**
+       * `scripts/app/` entra en la misma categoría: `test-shell.ts` recorre la
+       * matriz B.3 rol por rol para demostrar que lo que la barra lateral pinta
+       * y lo que el servidor permite **coinciden**. Eso exige fabricar un
+       * contexto por rol; hacerlo con sesiones reales convertiría una prueba de
+       * tabla en una prueba de red que tarda un minuto y prueba menos.
+       */
+      rel.startsWith("scripts/app/") ||
       rel.startsWith("scripts/mail/") ||
       rel.startsWith("scripts/invitations/") ||
       rel.startsWith("scripts/files/")

@@ -235,6 +235,26 @@ archivos nuevos sin versionar, y al hacer commit dos frenos se pusieron rojos: e
 el primer push de una unidad dada por terminada. Los cinco frenos que barren el repositorio usan ahora
 `--cached --others --exclude-standard` (**D-74**). **Si añades un freno nuevo, cópialo de ahí.**
 
+## Un servidor viejo escuchando en el puerto hace parecer que el build no cambia
+Pasó en FU-12 y costó una hora: una ejecución anterior del navegador dejó vivo el
+`.next/standalone/server.js` en su puerto; el arranque nuevo falló en silencio por EADDRINUSE y
+cada medida siguió leyendo la versión vieja. Se reconstruyó tres veces, se borró `.next` entero, y
+la página seguía «sin cambiar». **Antes de medir con el navegador: `pkill -f standalone/server.js`.**
+Si algo no cambia por más que reconstruyas, sospecha del proceso, no del build.
+
+## Una compuerta de revisión puede estar enseñando otra cosa
+`/prototipo` —la compuerta de los nueve componentes de C.5, aprobada en FU-10— vivía dentro del
+grupo `(auth)`, que centra a sus hijos en una tarjeta de **26 rem**. Todo se revisó a **416 px de
+ancho**. Los componentes de una columna aguantaban; el armazón de aplicación y el visor de
+entregables **nunca se habían visto a su tamaño** (**D-100**). **Si una pantalla existe para un
+ancho, revísala a ese ancho** — y comprueba en qué layout cae antes de fiarte de lo que ves.
+
+## Permiso sobre un dato ≠ superficie donde vivir
+`slg_admin` puede leer avisos y entregables, así que filtrar la navegación solo con `puede()` le
+pintaba el **portal de cliente entero** en la barra lateral — enlaces a pantallas que el layout
+después rechaza. La navegación filtra **primero por superficie** (`superficieDelRol`) y luego por
+permiso (**D-98**). Lo cazó `test:shell` en su primera ejecución.
+
 ## Un fixture negativo servido como `file://` puede mentir
 Chromium **no guarda cookies de un origen `file://`**. La prueba negativa de `check:terceros` —una
 página que carga un script de terceros y escribe `_ga`— salía roja por las peticiones y **verde por

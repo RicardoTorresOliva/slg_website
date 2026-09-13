@@ -134,6 +134,25 @@ export async function cerrarTodasLasSesiones(userId: string): Promise<number> {
 }
 
 /**
+ * Cierra **solo esta** sesión (FU-12: la respuesta a «cómo salgo»).
+ *
+ * Es lo contrario de `cerrarTodasLasSesiones`, y las dos tienen que existir por
+ * separado: salir del portátil del trabajo no puede desconectarte del móvil, y
+ * sospechar que alguien entró no se arregla cerrando solo la pestaña que tienes
+ * delante. Confundirlas hace que una de las dos cosas no se pueda hacer.
+ *
+ * Borra la fila, no la marca: `session.ts` comprueba contra la base en cada
+ * petición, así que surte efecto en la siguiente.
+ */
+export async function cerrarSesion(sessionId: string): Promise<boolean> {
+  const filas = await dbDeAuth
+    .delete(sessionTable)
+    .where(eq(sessionTable.id, sessionId))
+    .returning({ id: sessionTable.id });
+  return filas.length > 0;
+}
+
+/**
  * Da el correo por verificado.
  *
  * Solo lo llama el canje de una invitación, y por un motivo concreto: **la

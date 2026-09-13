@@ -46,6 +46,7 @@ export {
   registrarFallo,
   registrarAcierto,
   reiniciarBloqueos,
+  cerrarSesion,
   cerrarTodasLasSesiones,
   sesionesVivas,
   marcarCorreoVerificado,

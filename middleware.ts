@@ -213,6 +213,18 @@ function respuestaBase(request: NextRequest): NextResponse {
   const cabeceras = new Headers(request.headers);
   cabeceras.set("x-nonce", nonce);
   cabeceras.set("Content-Security-Policy", politica);
+  /**
+   * La ruta pedida, para el armazón de HQ y del portal (FU-12).
+   *
+   * Un layout de Next **no recibe la ruta de su hija**, y sin ella la barra
+   * lateral no puede saber cuál de sus enlaces está activo: «dónde estoy» se
+   * quedaría sin respuesta justo en las pantallas que la necesitan. Se pone
+   * aquí y no se lee de `usePathname()` porque el armazón es de servidor.
+   *
+   * Solo viaja en superficies que YA se renderizan por petición: no convierte
+   * nada en dinámico que no lo fuera.
+   */
+  cabeceras.set("x-slg-ruta", request.nextUrl.pathname);
   const respuesta = NextResponse.next({ request: { headers: cabeceras } });
   respuesta.headers.set("Content-Security-Policy", politica);
   return respuesta;
@@ -274,7 +286,19 @@ const ALTA_PUBLICA = "/api/auth/sign-up";
 const CON_SESION = ["/hq", "/portal"];
 
 /** Prefijos del grupo `(auth)`: nunca indexables (§2.3, paso 3). */
-const GRUPO_AUTH = ["/acceder", "/recuperar", "/invitacion", "/en/sign-in", "/en/recover"];
+const GRUPO_AUTH = [
+  "/acceder",
+  "/recuperar",
+  "/invitacion",
+  "/en/sign-in",
+  "/en/recover",
+  /**
+   * `/prototipo` está aquí y ya no en el grupo `(auth)`: salió de ahí para
+   * poder revisarse a ancho completo (FU-12), y su `noindex` no puede depender
+   * de en qué carpeta viva. Es una herramienta de revisión, no una página.
+   */
+  "/prototipo",
+];
 
 function clasificar(request: NextRequest, respuesta: NextResponse): NextResponse {
   const { pathname } = request.nextUrl;

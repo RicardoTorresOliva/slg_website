@@ -1,3 +1,6 @@
+import { ArmazonDeApp } from "@/components/app/ArmazonDeApp";
+import { ContenidoEntregado } from "@/components/app/ContenidoEntregado";
+import { Estado } from "@/components/app/EstadosCanonicos";
 import { BarraDeNavegacion } from "@/components/BarraDeNavegacion";
 import { FormularioDeDescarga } from "@/components/FormularioDeDescarga";
 import { Reveal } from "@/components/Reveal";
@@ -16,6 +19,8 @@ import {
   TarjetaDeArticulo,
   TarjetaDeServicio,
 } from "@/components/piezas";
+import { ESTADOS_CANONICOS } from "@/lib/app/estados";
+import { SECCIONES } from "@/lib/app/navegacion";
 import { loadUiStrings } from "@/lib/content/loader";
 
 /**
@@ -26,8 +31,12 @@ import { loadUiStrings } from "@/lib/content/loader";
  * compuerta**. Esto no es una imagen: son los componentes que van a construir
  * las páginas, montados en una sola pantalla para poder recorrerlos.
  *
- * Vive en el grupo `(auth)` para heredar su `noindex`: es una herramienta de
- * revisión, no una página del sitio.
+ * Vive en su propio grupo, `(prototipo)`, y **a ancho completo**. Estuvo en
+ * `(auth)` para heredar su `noindex` y eso la metía en una tarjeta de 26 rem:
+ * el armazón de aplicación y el visor se revisaban a 416 px, que no es la
+ * anchura para la que existen. El `noindex` se conserva por otras dos vías —la
+ * lista `GRUPO_AUTH` del middleware y el `robots` de esta misma página—,
+ * ninguna de las cuales tenía que ver con el ancho.
  *
  * CÓMO SE REVISA, y es la parte que ningún script hace por nosotros:
  *   · con **teclado solo** —Tab por toda la pantalla— el anillo de dos capas
@@ -65,7 +74,7 @@ export default function Prototipo() {
   };
 
   return (
-    <div style={{ margin: "-2rem -1rem" }}>
+    <div>
       <BarraDeNavegacion
         enlaces={ENLACES}
         activo="/ai"
@@ -209,6 +218,60 @@ export default function Prototipo() {
               </div>
             </ShellDeApp>
           </div>
+        </Bloque>
+
+        <Bloque
+          n={8}
+          titulo="Armazón de aplicación, ya construido (FU-12)"
+          nota="El de arriba es el prototipo de C.5; este es la implementación. Las tres preguntas de wayfinding respondidas, los seis estados canónicos, y NINGÚN conmutador de idioma: la interfaz sale de la preferencia de la cuenta (RF-72)."
+        >
+          <div style={{ border: "1px solid var(--slg-line)", borderRadius: "var(--slg-radius-md)", overflow: "hidden" }}>
+            <ArmazonDeApp
+              superficie={t["app.shell.hq"]}
+              seccionActiva={SECCIONES.find((x) => x.clave === "captures") ?? null}
+              secciones={SECCIONES.filter((x) => x.superficie === "hq").map((x) => ({
+                clave: x.clave,
+                href: "#prototipo",
+                etiqueta: t[`app.nav.${x.clave}`],
+              }))}
+              textos={{
+                secciones: t["app.shell.sections"],
+                estasEn: t["app.shell.youAreHere"],
+                cerrarSesion: t["app.shell.signout"],
+                saltar: t["app.shell.skip"],
+                cuenta: t["app.shell.account"],
+              }}
+              usuario={{ nombre: "Ricardo Torres Oliva", cerrarSesionHref: "/api/acceso/salir" }}
+            >
+              <div style={{ display: "grid", gap: "1rem" }}>
+                {ESTADOS_CANONICOS.map((estado) => (
+                  <Estado
+                    key={estado}
+                    estado={estado}
+                    textos={{
+                      titulo: t[`app.state.${estado}.titulo`],
+                      texto: t[`app.state.${estado}.texto`],
+                      accion: t[`app.state.${estado}.accion`],
+                    }}
+                    accion={{ href: "#prototipo" }}
+                    identificador="req_7Q2M…"
+                  />
+                ))}
+
+                <ContenidoEntregado idioma="en">
+                  <p style={{ margin: 0, fontSize: "0.9375rem" }}>
+                    This deliverable was written in English and is shown exactly as delivered, even
+                    when the interface language is Spanish (RF-72).
+                  </p>
+                </ContenidoEntregado>
+              </div>
+            </ArmazonDeApp>
+          </div>
+          <p style={pista}>
+            Estréchalo a menos de 48rem: la barra lateral sube arriba y las secciones se tumban en
+            una tira que se desplaza. <strong>Nada se pliega</strong>: «a dónde puedo ir» se
+            responde sin abrir nada, también en móvil.
+          </p>
         </Bloque>
 
         <Bloque n={9} titulo="Visor de entregables" nota="Origen separado (D-45), sandbox sin allow-same-origin y CSP estricta como defensa en profundidad.">

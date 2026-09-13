@@ -211,6 +211,41 @@ textarea:focus-visible,
   }
 }
 
+/* ── Armazón de aplicación: la barra lateral en móvil (FU-12) ──────────────
+ * «Móvil = rápido, escritorio = profundo» (C.6, principio 5).
+ *
+ * UN SOLO MARCADO, dos disposiciones. En escritorio la superficie tiene dos
+ * columnas y las secciones son una columna a la izquierda; por debajo de 48rem
+ * pasa a una sola columna, la barra sube arriba y la lista **se tumba**: una
+ * tira horizontal que se desplaza con el dedo.
+ *
+ * NO SE PLIEGA. Nada queda escondido tras un icono ni tras un toque: la
+ * pregunta «a dónde puedo ir» (RNF-43) se responde sin abrir nada, también con
+ * la pantalla estrecha.
+ */
+@media (max-width: 48rem) {
+  [data-slg-armazon] {
+    grid-template-columns: 1fr;
+  }
+  [data-slg-armazon] > nav {
+    border-right: none;
+    border-bottom: 1px solid var(--slg-line);
+    grid-template-rows: auto auto auto;
+  }
+  [data-slg-lateral] {
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    overflow-x: auto;
+    gap: 0.25rem;
+    /* La tira se desplaza; la PÁGINA no. Un desbordamiento horizontal del
+       documento es el fallo que convierte cualquier pantalla en un mapa. */
+    overscroll-behavior-x: contain;
+  }
+  [data-slg-armazon] [data-slg-salida] {
+    padding-left: 0;
+  }
+}
+
 /* ── Saltar al contenido (DU-02) ───────────────────────────────────────────
  * Fuera de la vista hasta que recibe el foco. NO con `display:none`: eso lo
  * saca del orden del tabulador y entonces no sirve para nada, que es el error
