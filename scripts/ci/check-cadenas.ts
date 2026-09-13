@@ -27,7 +27,11 @@ const VIGILADOS = [
   "components/BarraDeNavegacion.tsx",
   "components/IndiceDeBlog.tsx",
   "components/PaginaProvisional.tsx",
-  "components/PortadaProvisional.tsx",
+  "components/Articulo.tsx",
+  "components/Portada.tsx",
+  "components/PuertaDeAI.tsx",
+  "components/OverviewDeRama.tsx",
+  "components/PaginaDeServicio.tsx",
 ];
 
 const ATRIBUTOS_QUE_SE_LEEN = ["aria-label", "title", "alt", "placeholder"];

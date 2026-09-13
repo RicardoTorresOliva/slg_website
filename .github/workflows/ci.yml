@@ -153,11 +153,21 @@ jobs:
       - name: Blog sobre el servidor real
         run: npm run check:blog
 
+      # Los criterios de DU-03, DU-04 y DU-05 sobre el HTML servido: el ORDEN de
+      # los bloques (RF-09 y RF-06), el CTA único (RF-07) y que cada overview
+      # enlaza a todos sus servicios y a ninguno ajeno.
+      - name: Portada, overviews y páginas de servicio
+        run: npm run check:paginas
+
       - name: Las cuatro cláusulas del sheet, cuadro a cuadro (gate D3)
         run: npm run test:gesto
 
+      # R-21: el rendimiento se mide DESDE AHORA, no en la última semana.
+      - name: Lighthouse móvil sobre las tres páginas (gate D6)
+        run: npm run check:lighthouse
+
       # Criterio 5: cada freno se ve en ROJO por el motivo esperado.
-      - name: Prueba negativa de los dieciséis frenos
+      - name: Prueba negativa de los diecisiete frenos
         run: npm run check:brakes
 
   # ──────────────────────────────────────────────────────────────────────────

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { CSSProperties } from "react";
 
 /**
@@ -63,9 +64,9 @@ export function TarjetaDeServicio({
       <h3 style={tarjetaTitulo}>
         {/* El enlace envuelve el título, no una flecha suelta: el destino se
             anuncia con el nombre del servicio en cualquier lector de pantalla. */}
-        <a href={href} style={{ color: "inherit", textDecoration: "none" }}>
+        <Link href={href} style={{ color: "inherit", textDecoration: "none" }}>
           {nombre}
-        </a>
+        </Link>
       </h3>
       <p style={tarjetaTexto}>{resumen}</p>
     </article>
@@ -79,17 +80,35 @@ export function TarjetaDeServicio({
  * de decidir si sigue leyendo: en prosa se pierde, y en `<ul>` la recorre un
  * lector de pantalla anunciando cuántos elementos hay.
  */
-export function BloqueQueIncluye({ titulo, elementos }: { titulo: string; elementos: readonly string[] }) {
+export function BloqueQueIncluye({
+  titulo,
+  elementos,
+}: {
+  /**
+   * Opcional a propósito. Dentro de una página de servicio el encabezado lo
+   * pone el contrato A.3 —«Qué incluye»— y repetirlo aquí produciría dos
+   * encabezados para una sola sección, o peor: un `<h2>` vacío, que un lector
+   * de pantalla anuncia como un nivel sin contenido.
+   */
+  titulo?: string;
+  elementos: readonly string[];
+}) {
+  const lista = (
+    <ul style={listaIncluye}>
+      {elementos.map((e) => (
+        <li key={e} style={itemIncluye}>
+          {e}
+        </li>
+      ))}
+    </ul>
+  );
+
+  if (!titulo) return lista;
+
   return (
     <section style={{ margin: "2.5rem 0" }}>
       <h2 style={tituloSeccion}>{titulo}</h2>
-      <ul style={listaIncluye}>
-        {elementos.map((e) => (
-          <li key={e} style={itemIncluye}>
-            {e}
-          </li>
-        ))}
-      </ul>
+      {lista}
     </section>
   );
 }
@@ -116,9 +135,9 @@ export function TarjetaDeArticulo({
         {fecha}
       </time>
       <h3 style={tarjetaTitulo}>
-        <a href={href} style={{ color: "inherit", textDecoration: "none" }}>
+        <Link href={href} style={{ color: "inherit", textDecoration: "none" }}>
           {titulo}
-        </a>
+        </Link>
       </h3>
       <p style={tarjetaTexto}>{resumen}</p>
       {etiquetas.length > 0 ? (

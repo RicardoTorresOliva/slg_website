@@ -56,5 +56,14 @@
   "blog.emptyTag": "Todavía no hay artículos con esta etiqueta.",
   "blog.backToIndex": "Volver al índice",
   "blog.by": "Por",
-  "blog.feed": "Canal RSS"
+  "blog.feed": "Canal RSS",
+  "home.services": "servicios",
+  "home.readDoctrine": "Leer la doctrina",
+  "overview.services": "Servicios de esta línea",
+  "overview.phoenixAcademy": "Phoenix Academy",
+  "overview.opensExternal": " (se abre en otro sitio)",
+  "service.includesEmpty": "El detalle de esta sección se publica con el copy definitivo.",
+  "service.noDocument": "Este servicio todavía no tiene documento asociado.",
+  "service.contact": "Escríbenos",
+  "overview.lines": "Las tres líneas"
 }

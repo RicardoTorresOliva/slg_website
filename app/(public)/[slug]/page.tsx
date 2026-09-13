@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArmazonPublico } from "@/components/ArmazonPublico";
 import { PaginaProvisional } from "@/components/PaginaProvisional";
 import { loadCollection } from "@/lib/content/loader";
+import { PAGINAS_CON_RUTA_PROPIA } from "@/lib/content/rutas";
 
 /**
  * Páginas públicas en ESPAÑOL, servidas desde la raíz (§10-5).
@@ -10,13 +11,14 @@ import { loadCollection } from "@/lib/content/loader";
  * El contenido se carga y valida en tiempo de build: un frontmatter inválido
  * detiene el despliegue en vez de publicar una página a medias.
  *
- * `home` queda FUERA de esta lista: su ruta es `/`, no `/home`. Servir la misma
- * página en dos URL distintas divide los enlaces y duplica el contenido para
- * los buscadores.
+ * Las páginas con ruta propia —la portada, `SLG_AI` y las tres líneas— quedan
+ * FUERA de esta lista: sus rutas son las del Anexo A.2, anidadas. Servir la
+ * misma página en dos URL divide los enlaces y duplica contenido para los
+ * buscadores.
  */
 export async function generateStaticParams() {
   return loadCollection("page", "es")
-    .filter((p) => p.slug !== "home")
+    .filter((p) => !PAGINAS_CON_RUTA_PROPIA.has(p.slug))
     .map((p) => ({ slug: p.slug }));
 }
 
@@ -25,7 +27,7 @@ export const dynamicParams = false;
 export default async function PublicPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const page = loadCollection("page", "es").find((p) => p.slug === slug);
-  if (!page) notFound();
+  if (!page || PAGINAS_CON_RUTA_PROPIA.has(slug)) notFound();
 
   return (
     <ArmazonPublico ruta={`/${slug}`}>

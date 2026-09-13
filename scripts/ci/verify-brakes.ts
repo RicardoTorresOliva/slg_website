@@ -212,6 +212,46 @@ console.log("\nFreno del armazón público — contra un armazón roto a propós
   }
 }
 
+console.log("\nFreno de las páginas — contra páginas con los bloques desordenados:\n");
+{
+  const fixture = spawn(process.execPath, [path.join(HERE, "negative/paginas/servidor.ts")], {
+    cwd: REPO_ROOT,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  const base = await new Promise<string>((resolve, reject) => {
+    const limite = setTimeout(() => reject(new Error("el fixture de páginas no arrancó")), 15_000);
+    fixture.stdout.on("data", (c: Buffer) => {
+      const m = /http:\/\/127\.0\.0\.1:\d+/.exec(c.toString());
+      if (m) {
+        clearTimeout(limite);
+        resolve(m[0]);
+      }
+    });
+  });
+  const res = spawnSync(process.execPath, [path.join(HERE, "check-paginas.ts")], {
+    encoding: "utf8",
+    cwd: REPO_ROOT,
+    env: { ...process.env, PAGINAS_BASE: base },
+  });
+  fixture.kill("SIGTERM");
+  const salida = `${res.stdout ?? ""}${res.stderr ?? ""}`;
+  const esperados = [
+    "los bloques aparecen en el orden de RF-09",
+    "seis secciones del contrato A.3",
+    "un solo enlace a su documento",
+    "sin formulario en la página",
+    "no enlaza ningún servicio de otra línea",
+  ];
+  const faltan = esperados.filter((e) => !salida.includes(e));
+  if (res.status === 1 && faltan.length === 0) {
+    console.log("  ✓ páginas: falló como debía (orden, secciones, CTA único y línea ajena)");
+  } else {
+    fallos++;
+    console.error(`  ✗ páginas: NO falló como debía (exit ${res.status}).`);
+    if (faltan.length) console.error(`      no mencionó: ${faltan.join(" · ")}`);
+  }
+}
+
 console.log("\nFreno del blog — contra un blog que publica sus borradores:\n");
 {
   const fixture = spawn(process.execPath, [path.join(HERE, "negative/blog/servidor.ts")], {
@@ -277,4 +317,4 @@ if (fallos) {
   console.error(`\n✗ ${fallos} freno(s) no se comportaron como deben.\n`);
   process.exit(1);
 }
-console.log("\n✓ Los dieciséis frenos fallan cuando deben y pasan cuando deben.\n");
+console.log("\n✓ Los diecisiete frenos fallan cuando deben y pasan cuando deben.\n");

@@ -1073,3 +1073,75 @@ dentro de un `.md` sale como texto.
 **Verificación.** `check:blog`: **33** comprobaciones sobre el servidor real, con su prueba negativa
 —un blog que publica sus borradores— en `check:brakes`. Van **dieciséis** frenos. `check:ci` en verde
 con 38 rutas bajo presupuesto; `test:db`: 264.
+
+---
+
+## 2026-09-13 · DU-03, DU-04 y DU-05 — La capa pública completa · `done`
+
+**58 rutas públicas**, las 67 páginas de la compilación, todas prerrenderizadas. La portada con sus
+siete bloques, los cuatro overviews de rama y las once páginas de servicio con el contrato A.3, en los
+dos idiomas.
+
+### Las rutas, ahora las del Anexo A.2
+
+DU-02 derivaba la ruta del nombre del archivo. No sirve para la oferta, que el Anexo A.2 **anida**:
+
+| Antes | Ahora |
+|---|---|
+| `/slg-academy` | `/ai/academy` |
+| *(no existía)* | `/ai/academy/phoenix-peex` … y los otros nueve servicios |
+| `/holdings` *(registro de página)* | `/holdings` *(el registro de **servicio**, con su contrato A.3 y su D-11)* |
+
+La tabla pasa a ser **explícita** (**D-79**): se lee de una vez y se compara con el Anexo A.2 línea a
+línea. Y el registro de página `holdings` que DU-02 había creado **se retira** (**D-80**): dos
+registros para una URL son dos fuentes para un solo texto, y la que se edita nunca es la que se sirve.
+
+### El orden de los bloques vive en el contenido
+
+La portada pide sus siete bloques y cada servicio sus seis **por posición** al cuerpo del `.md`
+(**D-81**). Es lo que hace cierto que **añadir un servicio sea añadir un archivo** (RF-27). El riesgo
+que abre —que alguien reordene o borre un bloque editando contenido— es justo lo que `check:paginas`
+comprueba en las 22 páginas de servicio y las dos portadas, en cada push.
+
+### Los criterios
+
+**DU-03 — portada.** Los siete bloques en el orden de RF-09, comprobado por posición en el HTML
+servido · los dos bloques vacíos —últimos artículos y descarga destacada— **redactados**, no huecos ·
+`pair` recíproco y paridad en verde · cero cadena de negocio en componentes (`check:cadenas`) · una
+idea por viewport y **cero fotografía**: el freno comprueba que no hay ni una `<img>` servida desde
+fuera del dominio.
+
+**DU-04 — los cuatro overviews.** Cada uno enlaza a **todos** sus servicios y a **ninguno ajeno**,
+comprobado contra la tabla de rutas y no contra una lista escrita a mano · `Phoenix Academy` se enlaza
+como **externo**, con `target="_blank"` y `rel="noopener"`, y el freno comprueba que **no hay ningún
+`iframe`**: la frontera (e) dice sin integración, sin sesión compartida y sin contenido embebido · un
+servicio sin registro de contenido **no rompe el índice**: se salta.
+
+**DU-05 — las once páginas de servicio.** Las seis secciones del contrato A.3 en orden fijo, en las 22
+páginas · **un solo llamado a la acción**: el freno cuenta los enlaces al documento y falla con dos,
+y falla también si aparece un `<form>` en la página · cero `iframe` y cero scripts de terceros ·
+la sección 6 enlaza a `/contacto` · ninguna ofrece «Sesión Cero» (`check:copy`) · estados resueltos:
+servicio sin documento asociado y bloque «Qué incluye» vacío.
+
+### Lighthouse, medido AHORA (criterio 6 de DU-03)
+
+El criterio pide medir «aquí, ya, no al final», como mitigación de **R-21**. Medido en **móvil**, con
+la simulación de red y CPU que Lighthouse aplica por defecto:
+
+| Página | Rendimiento | Accesibilidad | Buenas prácticas | SEO |
+|---|---|---|---|---|
+| `/` | **96** | **100** | **100** | **100** |
+| `/ai/enterprise/readiness` | **98** | **100** | **100** | **100** |
+| `/blog/mes-cuatro` | **93** | **100** | **100** | **100** |
+
+**Accesibilidad 100 en las tres**, que es lo que de verdad cuesta recuperar tarde. Queda como freno
+(`npm run check:lighthouse`) con los umbrales en variables de entorno, así que endurecerlos no toca
+código.
+
+**Verificación.** `check:paginas`: **142** comprobaciones sobre el HTML servido, con su prueba
+negativa —bloques desordenados, dos CTA, un formulario y un servicio de otra línea—. Van
+**diecisiete** frenos. `check:ci` en verde con **58 rutas** bajo presupuesto; `test:db`: 264.
+
+**Lo que falta para que estas páginas estén terminadas.** La **máquina** de la sección 5 —formulario
+de descarga, entrega por enlace firmado y captura al CRM— es **DU-08**: hoy la sección anuncia el
+documento y enlaza a su página. Y el copy sigue siendo temporal en los 74 registros.

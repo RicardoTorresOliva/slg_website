@@ -56,5 +56,14 @@
   "blog.emptyTag": "No articles carry this tag yet.",
   "blog.backToIndex": "Back to the index",
   "blog.by": "By",
-  "blog.feed": "RSS feed"
+  "blog.feed": "RSS feed",
+  "home.services": "services",
+  "home.readDoctrine": "Read the doctrine",
+  "overview.services": "Services in this line",
+  "overview.phoenixAcademy": "Phoenix Academy",
+  "overview.opensExternal": " (opens on another site)",
+  "service.includesEmpty": "The detail of this section is published with the final copy.",
+  "service.noDocument": "This service does not have an associated document yet.",
+  "service.contact": "Write to us",
+  "overview.lines": "The three lines"
 }

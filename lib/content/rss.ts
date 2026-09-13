@@ -6,8 +6,8 @@
  * borradores los publica: el RSS es una superficie pública más, no una copia
  * del repositorio.
  */
-import { articulos, prefijo } from "./blog";
-import type { Lang } from "./schema";
+import { articulos, prefijo } from "./blog.ts";
+import type { Lang } from "./schema.ts";
 
 /** Escapa lo que va dentro de un nodo XML. Sin esto, un `&` rompe el canal entero. */
 function xml(texto: string): string {

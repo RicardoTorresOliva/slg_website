@@ -12,8 +12,8 @@
  * puede existir solo en español, y su `pair` vale `null`. Es lo contrario de
  * las páginas, donde un huérfano rompe el build.
  */
-import { loadCollection } from "./loader";
-import type { Lang } from "./schema";
+import { loadCollection } from "./loader.ts";
+import type { Lang } from "./schema.ts";
 
 export type Articulo = {
   slug: string;

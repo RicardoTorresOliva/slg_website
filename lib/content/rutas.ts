@@ -1,23 +1,20 @@
 /**
- * rutas.ts — El mapa de rutas de la capa pública, y su pareja de idioma.
+ * rutas.ts — El mapa de rutas públicas, y el par de idioma de cada una.
  *
- * DOS COSAS QUE ESTE ARCHIVO RESUELVE, Y QUE SI NO VIVEN JUNTAS SE DESINCRONIZAN:
+ * **LA TABLA ES EXPLÍCITA, Y ESO ES LA DECISIÓN.** Podría derivarse del slug del
+ * registro —`/${slug}`— y así estaba hasta DU-04. No sirve: el Anexo A.2 anida
+ * la oferta (`/ai/academy/phoenix-peex`) mientras que el archivo se llama
+ * `phoenix-peex.md`, y `/holdings` lo sirve un registro de servicio y no uno de
+ * página. Una regla implícita que necesita cuatro excepciones ya no es una
+ * regla: es una tabla mal escrita.
  *
- *   1. **Los cinco destinos del menú** (RF-01). Cinco, ni uno más, y con las
- *      rutas canónicas de `ui_wireframes` §1.1. Las etiquetas NO viven aquí:
- *      viven en `content/ui`, porque RF-16 no admite literales en `.tsx`.
- *   2. **El par de idioma de CADA ruta** (RF-04 y DoD #2): el conmutador tiene
- *      que llevar a **la misma página** en el otro idioma, nunca a la portada.
- *      El par sale del campo `pair` del frontmatter, que es el mismo que
- *      `check:pairs` verifica, así que una página sin pareja no se puede colar.
- *
- * Se resuelve **en tiempo de build**: las páginas públicas se prerrenderizan y
- * nada de esto cuesta una petición.
+ * Aquí está la tabla. Se lee de una vez, se compara con el Anexo A.2 línea a
+ * línea, y `check:paginas` comprueba que cada ruta responde y que su par existe.
  */
-import { loadCollection } from "./loader";
-import { type Lang } from "./schema";
+import { loadCollection } from "./loader.ts";
+import type { Lang } from "./schema.ts";
 
-/** Las claves de `content/ui` de los cinco destinos, en el orden de A.1. */
+/** Los cinco destinos del menú (RF-01), con sus rutas canónicas de A.1. */
 export const DESTINOS = [
   { clave: "nav.ai", es: "/ai", en: "/en/ai" },
   { clave: "nav.holdings", es: "/holdings", en: "/en/holdings" },
@@ -33,13 +30,58 @@ export const DESTINOS = [
  */
 export const ACCESO = { clave: "nav.signin", es: "/acceder", en: "/en/sign-in" } as const;
 
+/** Las tres líneas de `SLG_AI`, con el slug de su registro de página. */
+export const RAMAS = [
+  { slug: "slg-academy", slugEn: "slg-academy-en", es: "/ai/academy", en: "/en/ai/academy" },
+  { slug: "slg-enterprise", slugEn: "slg-enterprise-en", es: "/ai/enterprise", en: "/en/ai/enterprise" },
+  { slug: "slg-factory", slugEn: "slg-factory-en", es: "/ai/factory", en: "/en/ai/factory" },
+] as const;
+
+export type Rama = (typeof RAMAS)[number];
+
 /**
- * Rutas que NO salen de la colección `page` y cuyo par se declara a mano: la
- * portada, el índice del blog y las dos pantallas del grupo `(auth)` que sí
- * tienen versión pública en los dos idiomas.
+ * Las once páginas de servicio (A.2), con su ruta anidada bajo la rama.
+ *
+ * `SLG_Holdings` NO cuelga de `/ai`: es la otra rama de la casa y vive en la
+ * raíz. Por eso su ruta se declara aquí y no se compone desde `RAMAS`.
  */
+export const SERVICIOS = [
+  { slug: "phoenix-peex", rama: "slg-academy", es: "/ai/academy/phoenix-peex" },
+  { slug: "phoenix-teax", rama: "slg-academy", es: "/ai/academy/phoenix-teax" },
+  { slug: "phoenix-retx", rama: "slg-academy", es: "/ai/academy/phoenix-retx" },
+  { slug: "customize-programs", rama: "slg-academy", es: "/ai/academy/customize-programs" },
+  { slug: "ai-coaching", rama: "slg-academy", es: "/ai/academy/ai-coaching" },
+  { slug: "readiness", rama: "slg-enterprise", es: "/ai/enterprise/readiness" },
+  { slug: "implement", rama: "slg-enterprise", es: "/ai/enterprise/implement" },
+  { slug: "app-building", rama: "slg-factory", es: "/ai/factory/app-building" },
+  { slug: "age-building", rama: "slg-factory", es: "/ai/factory/age-building" },
+  { slug: "coo-as-a-service", rama: "slg-factory", es: "/ai/factory/coo-as-a-service" },
+  { slug: "slg-holdings", rama: null, es: "/holdings" },
+] as const;
+
+export type Servicio = (typeof SERVICIOS)[number];
+
+/** La ruta en inglés de un servicio: la misma, bajo `/en`. */
+export const rutaEnDeServicio = (s: Servicio) => `/en${s.es}`;
+/** El slug del registro en inglés: el mismo con sufijo, como los creó FU-03. */
+export const slugEnDeServicio = (s: Servicio) => `${s.slug}-en`;
+
+/**
+ * Páginas que NO se sirven desde `/[slug]` porque tienen ruta propia. Si una
+ * página aparece en las dos partes, el mismo contenido queda en dos URL: los
+ * enlaces se dividen y los buscadores ven contenido duplicado.
+ */
+export const PAGINAS_CON_RUTA_PROPIA = new Set([
+  "home",
+  "ai",
+  ...RAMAS.map((r) => r.slug),
+  ...RAMAS.map((r) => r.slugEn),
+]);
+
+/** Pares declarados a mano: los que no salen de una colección. */
 const PARES_FIJOS: ReadonlyArray<readonly [string, string]> = [
   ["/", "/en"],
+  ["/ai", "/en/ai"],
   ["/blog", "/en/blog"],
   ["/acceder", "/en/sign-in"],
   ["/recuperar", "/en/recover"],
@@ -48,25 +90,6 @@ const PARES_FIJOS: ReadonlyArray<readonly [string, string]> = [
 /** El idioma es una propiedad de la RUTA, no una negociación (RF-03). */
 export function idiomaDeLaRuta(ruta: string): Lang {
   return ruta === "/en" || ruta.startsWith("/en/") ? "en" : "es";
-}
-
-type Par = { es: string; en: string };
-
-function paresDePaginas(): Par[] {
-  const es = loadCollection<{ pair?: string }>("page", "es");
-  const en = loadCollection<{ pair?: string }>("page", "en");
-  const slugsEn = new Set(en.map((r) => r.slug));
-  const pares: Par[] = [];
-  for (const registro of es) {
-    const pareja = registro.data.pair;
-    // Sin pareja declarada, o con una que no existe, NO se inventa un enlace:
-    // la ruta se queda sin par y el conmutador lo dice. Un conmutador que
-    // manda a la portada cuando no encuentra la página es peor que uno
-    // desactivado, porque el visitante pierde dónde estaba.
-    if (!pareja || !slugsEn.has(pareja)) continue;
-    pares.push({ es: `/${registro.slug}`, en: `/en/${pareja}` });
-  }
-  return pares;
 }
 
 let cache: Map<string, string> | null = null;
@@ -78,8 +101,24 @@ function mapa(): Map<string, string> {
     m.set(a, b);
     m.set(b, a);
   };
+
   for (const [a, b] of PARES_FIJOS) añadir(a, b);
-  for (const p of paresDePaginas()) añadir(p.es, p.en);
+  for (const r of RAMAS) añadir(r.es, r.en);
+  for (const s of SERVICIOS) añadir(s.es, rutaEnDeServicio(s));
+
+  // Las páginas sueltas —contacto, gracias, legales, descargas— siguen saliendo
+  // del campo `pair` del frontmatter, que es el que `check:pairs` verifica.
+  const es = loadCollection<{ pair?: string }>("page", "es");
+  const en = loadCollection<{ pair?: string }>("page", "en");
+  const slugsEn = new Set(en.map((r) => r.slug));
+  for (const registro of es) {
+    if (PAGINAS_CON_RUTA_PROPIA.has(registro.slug)) continue;
+    const pareja = registro.data.pair;
+    // Sin pareja declarada, o con una que no existe, NO se inventa un enlace.
+    if (!pareja || !slugsEn.has(pareja)) continue;
+    añadir(`/${registro.slug}`, `/en/${pareja}`);
+  }
+
   cache = m;
   return m;
 }

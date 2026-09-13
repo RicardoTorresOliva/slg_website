@@ -8,11 +8,12 @@ timestamp: 2026-09-12
 
 # Project memory — slg_website
 
-> **Punto de retomada en una línea:** **el copy existe y ya nada bloquea construir páginas.** Trece
-> unidades tocadas — **ocho `done`** y cinco `in_progress`. Los 74 registros públicos llevan copy
-> redactado y `copy: temporal` (**D-75**): cero `[PENDIENTE]` en todo el contenido. Lo siguiente son
-> **DU-03, DU-04 y DU-05** (portada, overviews y las once páginas de servicio), que ya son
-> construibles. Lo que falta de Ricardo está en `docs/handoff.md`.
+> **Punto de retomada en una línea:** **la capa pública está construida.** Dieciséis unidades tocadas
+> — **once `done`** y cinco `in_progress`. 58 rutas: portada, los cuatro overviews, las 22 páginas de
+> servicio, el blog completo y los legales, en los dos idiomas y todas prerrenderizadas. Lighthouse
+> móvil ya medido: **100 de accesibilidad en las tres páginas**. Lo siguiente es **DU-06** (Doctrina,
+> Nosotros y legales con sus rutas del A.2) o **DU-07/DU-08** (biblioteca de descargas y la máquina
+> del formulario). Lo que falta de Ricardo está en `docs/handoff.md`.
 
 ## Lo que espera a Ricardo, y solo a él
 1. **Despliegue** — `docs/deployment.md` §3 a §5. Cierra FU-05 (criterios 1, 2, 3 y 8).
@@ -65,10 +66,25 @@ timestamp: 2026-09-12
     monitor. **Paso a paso completo en `docs/deployment.md`.**
 
 ## Próxima unidad
-- **DU-03** (portada), **DU-04** (overviews de rama con rutas anidadas `/ai/academy`…) y **DU-05**
-  (las once páginas de servicio con los seis bloques de A.3). Las tres ya tienen su copy.
+- **DU-06** — Doctrina, Nosotros y `/legal/*`. Ojo: el Anexo A.2 los quiere en `/legal/privacidad` y
+  `/legal/terminos`, y hoy están en `/legal-privacidad` y `/legal-terminos`. **Esa corrección es de
+  DU-06**, igual que DU-04 corrigió las de la oferta.
+- **DU-07 y DU-08** — biblioteca de descargas y **la máquina del formulario**: validación de correo
+  corporativo, entrega por enlace firmado y captura al CRM. Hoy la sección 5 de cada servicio
+  anuncia el documento y enlaza; su motor es DU-08.
 - **DU-14 NO es analítica** —es empresas, proyectos y usuarios en HQ, y depende de DU-13 (M3)—. La
   analítica sin cookies está en **DU-12**, junto con los webhooks firmados, y depende de DU-09.
+
+## El mapa de rutas vive en `lib/content/rutas.ts`, y es EXPLÍCITO
+Cada página y cada servicio declara su ruta ES y su par EN (**D-79**). No se deriva del nombre del
+archivo: el Anexo A.2 anida la oferta (`/ai/academy/phoenix-peex`) y `/holdings` lo sirve un registro
+de **servicio**, no de página (**D-80**). Para añadir un servicio: su fila en `SERVICIOS`, su `.md` en
+los dos idiomas, y ya está — la ruta, el overview y el par de idioma salen solos.
+
+## El orden de los bloques está en el contenido, no en el componente
+La portada pide sus siete bloques y cada servicio sus seis **por posición** al cuerpo del `.md`
+(**D-81**). Si editas un `.md` y borras o mueves un `## `, la página cambia — y `check:paginas` te
+lo dice en el mismo push.
 
 ## El copy: qué hay y qué falta
 **74 registros con `copy: temporal`** (D-75). `check:copy` los lista en cada ejecución. Pasar uno a
@@ -151,6 +167,8 @@ se sirven. El par de idioma de cada ruta sale del campo `pair` del frontmatter, 
 | El armazón público sobre el servidor real | `npm run check:armazon` (necesita el build) |
 | Que la zona DNS no se ha movido | `npm run check:dns` (ya no necesita `dig`) |
 | El blog: borradores, etiquetas y RSS | `npm run check:blog` (necesita el build) |
+| Portada, overviews y páginas de servicio | `npm run check:paginas` (necesita el build) |
+| Rendimiento y accesibilidad, en móvil | `npm run check:lighthouse` (necesita el build y Chromium) |
 
 ## Entorno local
 - `docker-compose.yml` levanta `slg-db` (PostgreSQL 16) en el **puerto 5434**. El 5432 lo ocupa la

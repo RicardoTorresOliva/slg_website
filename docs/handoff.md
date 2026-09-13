@@ -49,8 +49,11 @@ Cuando una instrucción incumple esto, la instrucción está mal escrita. Se ree
 
 **Fase:** ejecución. Compuerta de Planificación abierta por Ricardo el 2026-09-08.
 
-**Trece unidades tocadas:** ocho `done` (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, DU-02,
-**DU-11**) y cinco `in_progress` (FU-05, FU-08, FU-09, DU-01, FU-01).
+**Dieciséis unidades tocadas:** once `done` (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, DU-02,
+**DU-03**, **DU-04**, **DU-05**, DU-11) y cinco `in_progress` (FU-05, FU-08, FU-09, DU-01, FU-01).
+
+**La capa pública está construida**: 58 rutas en los dos idiomas, todas prerrenderizadas, con
+Lighthouse móvil medido — **100 de accesibilidad** en portada, servicio y artículo.
 
 **Todo lo que está `in_progress` lo está por algo que no es código.** No hay ninguna unidad esperando
 a que alguien escriba una función. Lo que falta es: dos compuertas de aprobación de Ricardo, y acceso
