@@ -141,9 +141,9 @@ async function main() {
   const base = typeof dir === "object" && dir ? `http://127.0.0.1:${dir.port}` : "";
 
   process.env.CRM_BASE_URL = base;
-  // En una constante y no pegada a `CRM_API_KEY`: el escáner de secretos no
-  // distingue una credencial de prueba de una real, y hace bien en no hacerlo.
-  process.env.CRM_API_KEY = CLAVE_DE_PRUEBA;
+  // En una constante y no pegada al nombre de la variable: el escáner de
+  // secretos no distingue una credencial de prueba de una real, y hace bien.
+  process.env.CRM_API_KEY_CAPTURE = CLAVE_DE_PRUEBA;
   process.env.CRM_QUEUE_DISABLED = "1";
 
   await dueno`delete from crm_delivery where lead_capture_id in (select id from lead_capture where email like '%@crm-prueba.test')`;

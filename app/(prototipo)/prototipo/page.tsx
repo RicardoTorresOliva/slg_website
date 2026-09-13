@@ -4,13 +4,7 @@ import { Estado } from "@/components/app/EstadosCanonicos";
 import { BarraDeNavegacion } from "@/components/BarraDeNavegacion";
 import { FormularioDeDescarga } from "@/components/FormularioDeDescarga";
 import { Reveal } from "@/components/Reveal";
-import {
-  EstadoDeError,
-  EstadoVacio,
-  FichaDeApp,
-  ShellDeApp,
-  TablaDeApp,
-} from "@/components/ShellDeApp";
+import { FichaDeApp, TablaDeApp } from "@/components/app/TablaDeApp";
 import { VisorDeEntregables } from "@/components/VisorDeEntregables";
 import {
   BloqueQueIncluye,
@@ -175,55 +169,10 @@ export default function Prototipo() {
           />
         </Bloque>
 
-        <Bloque n={8} titulo="Shell de app" nota="Barra lateral, tabla, ficha, estado vacío y estado de error. En móvil la tabla se apila en fichas: no se lee con zoom.">
-          <div style={{ border: "1px solid var(--slg-line)", borderRadius: "var(--slg-radius-md)", overflow: "hidden" }}>
-            <ShellDeApp
-              titulo="HQ"
-              activa="#capturas"
-              secciones={[
-                { href: "#tablero", etiqueta: "Tablero" },
-                { href: "#capturas", etiqueta: "Capturas" },
-                { href: "#empresas", etiqueta: "Empresas" },
-              ]}
-            >
-              <div style={{ display: "grid", gap: "1.5rem" }}>
-                <TablaDeApp
-                  etiqueta="Capturas web recientes"
-                  columnas={["Correo", "Origen", "Estado"]}
-                  filas={[
-                    ["lead@empresa.com", "/ai/academy/phoenix-peex", "Entregada"],
-                    ["otro@empresa.com", "/contacto", "En cola"],
-                  ]}
-                />
-                <FichaDeApp
-                  titulo="Detalle de la captura"
-                  campos={[
-                    { etiqueta: "Documento", valor: "D-01" },
-                    { etiqueta: "Idioma", valor: "es" },
-                    { etiqueta: "Intentos", valor: "1 de 5" },
-                  ]}
-                />
-                <EstadoVacio
-                  titulo="Todavía no hay capturas"
-                  explicacion="Cuando alguien descargue un documento, aparecerá aquí con su estado de entrega al CRM."
-                  accion={{ href: "#tablero", etiqueta: "Volver al tablero" }}
-                />
-                <EstadoDeError
-                  titulo="No hemos podido cargar las capturas"
-                  explicacion="El listado no está disponible ahora mismo. Vuelve a intentarlo; si sigue igual, avísanos con este identificador."
-                  identificador="req_7Q2M…"
-                  reintentarHref="#capturas"
-                  etiquetaReintentar="Reintentar"
-                />
-              </div>
-            </ShellDeApp>
-          </div>
-        </Bloque>
-
         <Bloque
           n={8}
-          titulo="Armazón de aplicación, ya construido (FU-12)"
-          nota="El de arriba es el prototipo de C.5; este es la implementación. Las tres preguntas de wayfinding respondidas, los seis estados canónicos, y NINGÚN conmutador de idioma: la interfaz sale de la preferencia de la cuenta (RF-72)."
+          titulo="Shell de app"
+          nota="Barra lateral, tabla, ficha y los SEIS estados canónicos. Las tres preguntas de wayfinding respondidas, y NINGÚN conmutador de idioma: la interfaz sale de la preferencia de la cuenta (RF-72). En móvil la tabla se apila en fichas: no se lee con zoom."
         >
           <div style={{ border: "1px solid var(--slg-line)", borderRadius: "var(--slg-radius-md)", overflow: "hidden" }}>
             <ArmazonDeApp
@@ -244,6 +193,22 @@ export default function Prototipo() {
               usuario={{ nombre: "Ricardo Torres Oliva", cerrarSesionHref: "/api/acceso/salir" }}
             >
               <div style={{ display: "grid", gap: "1rem" }}>
+                <TablaDeApp
+                  etiqueta="Capturas web recientes"
+                  columnas={["Correo", "Origen", "Estado"]}
+                  filas={[
+                    ["lead@empresa.com", "/ai/academy/phoenix-peex", "Entregada"],
+                    ["otro@empresa.com", "/contacto", "En cola"],
+                  ]}
+                />
+                <FichaDeApp
+                  titulo="Detalle de la captura"
+                  campos={[
+                    { etiqueta: "Documento", valor: "D-01" },
+                    { etiqueta: "Idioma", valor: "es" },
+                    { etiqueta: "Intentos", valor: "1 de 5" },
+                  ]}
+                />
                 {ESTADOS_CANONICOS.map((estado) => (
                   <Estado
                     key={estado}

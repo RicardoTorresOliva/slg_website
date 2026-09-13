@@ -192,6 +192,13 @@ for (const abs of archivos()) {
        * tabla en una prueba de red que tarda un minuto y prueba menos.
        */
       rel.startsWith("scripts/app/") ||
+      /**
+       * `scripts/hq/` igual: `test-tablero.ts` comprueba que `client_*` NO
+       * llega al tablero y que `slg_*` sí, y eso es recorrer la matriz con un
+       * contexto por rol. Hacerlo con sesiones reales convertiría una prueba
+       * de tabla en cuatro inicios de sesión por HTTP.
+       */
+      rel.startsWith("scripts/hq/") ||
       rel.startsWith("scripts/mail/") ||
       rel.startsWith("scripts/invitations/") ||
       rel.startsWith("scripts/files/")

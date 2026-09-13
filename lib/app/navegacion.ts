@@ -49,7 +49,7 @@ export type Seccion = {
  */
 export const SECCIONES: readonly Seccion[] = [
   // ── HQ ──────────────────────────────────────────────────────────────────
-  { clave: "dashboard", href: "/hq", superficie: "hq", accion: "hq.dashboard.read" },
+  { clave: "dashboard", href: "/hq/tablero", superficie: "hq", accion: "hq.dashboard.read" },
   { clave: "captures", href: "/hq/capturas", superficie: "hq", accion: "capture.read" },
   { clave: "orgs", href: "/hq/empresas", superficie: "hq", accion: "org.read" },
   { clave: "apikeys", href: "/hq/claves", superficie: "hq", accion: "apikey.manage" },

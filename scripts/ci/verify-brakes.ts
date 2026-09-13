@@ -142,6 +142,21 @@ const CASOS: Caso[] = [
     espera: ["ninguno con un estado propio", "ningún conmutador"],
     env: { SHELL_ROOT: path.join(HERE, "negative/shell") },
   },
+  {
+    freno: "HQ cruzando la frontera (a): pipeline, escritura al CRM o clave equivocada",
+    script: "check-hq.ts",
+    /**
+     * Tres fragmentos porque el fixture cruza la frontera de TRES maneras, y un
+     * freno que solo viera una daría por buenas las otras dos — que son las que
+     * no se notan: escribir en el CRM desde HQ, y leer con la clave que escribe.
+     */
+    espera: [
+      "ninguno con vocabulario de pipeline",
+      "ninguna llamada al CRM que no sea GET",
+      "nunca la clave de captura",
+    ],
+    env: { HQ_ROOT: path.join(HERE, "negative/hq") },
+  },
 ];
 
 let fallos = 0;
@@ -379,4 +394,4 @@ if (fallos) {
   console.error(`\n✗ ${fallos} freno(s) no se comportaron como deben.\n`);
   process.exit(1);
 }
-console.log("\n✓ Los veinte frenos fallan cuando deben y pasan cuando deben.\n");
+console.log("\n✓ Los veintiún frenos fallan cuando deben y pasan cuando deben.\n");

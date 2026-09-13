@@ -235,6 +235,18 @@ archivos nuevos sin versionar, y al hacer commit dos frenos se pusieron rojos: e
 el primer push de una unidad dada por terminada. Los cinco frenos que barren el repositorio usan ahora
 `--cached --others --exclude-standard` (**D-74**). **Si añades un freno nuevo, cópialo de ahí.**
 
+## Vacío y error NO se pintan igual, y por eso un bloque no devuelve un array vacío
+En el tablero de HQ cada bloque devuelve **o datos o motivo** (`Bloque<T>`, **D-101**). Si devolviera
+un array vacío en los dos casos, el día que el CRM falle la pantalla diría «todavía no hay nada»: una
+mentira tranquilizadora, y además el estado canónico equivocado de los seis de FU-12. **Si escribes
+un bloque nuevo, distingue las dos cosas en el tipo**, no en el componente.
+
+## Dos claves del CRM, y la de lectura no es opcional
+`CRM_API_KEY_CAPTURE` escribe y `CRM_API_KEY_READ` solo lee (RF-56, **D-102**). Leer con la de
+captura **funciona igual de bien** — ese es el problema: el fallo aparece el día que hay que revocar
+la de lectura y se descubre que apaga también la captura de leads. `check:hq` lo comprueba, y
+`sanear()` borra las dos de cualquier texto que salga.
+
 ## Un servidor viejo escuchando en el puerto hace parecer que el build no cambia
 Pasó en FU-12 y costó una hora: una ejecución anterior del navegador dejó vivo el
 `.next/standalone/server.js` en su puerto; el arranque nuevo falló en silencio por EADDRINUSE y

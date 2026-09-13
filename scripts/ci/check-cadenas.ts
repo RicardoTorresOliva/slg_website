@@ -44,6 +44,8 @@ const VIGILADOS = [
   "components/app/EstadosCanonicos.tsx",
   "components/app/PantallaDeApp.tsx",
   "components/app/ContenidoEntregado.tsx",
+  "components/app/TablaDeApp.tsx",
+  "app/(hq)/hq/tablero/TableroDeHq.tsx",
 ];
 
 const ATRIBUTOS_QUE_SE_LEEN = ["aria-label", "title", "alt", "placeholder"];

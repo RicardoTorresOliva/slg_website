@@ -141,11 +141,16 @@ check(
 console.log("\n«Dónde estoy» — la ruta más larga gana:\n");
 
 check(
-  "/hq/capturas es «Capturas», no «Tablero», aunque /hq también encaje",
+  "/hq/capturas es «Capturas»",
   seccionDeLaRuta("/hq/capturas")?.clave === "captures",
   String(seccionDeLaRuta("/hq/capturas")?.clave),
 );
-check("/hq es «Tablero»", seccionDeLaRuta("/hq")?.clave === "dashboard");
+check("/hq/tablero es «Tablero»", seccionDeLaRuta("/hq/tablero")?.clave === "dashboard");
+check(
+  "/hq NO es una sección: es una puerta que redirige, no una pantalla",
+  seccionDeLaRuta("/hq") === null,
+  String(seccionDeLaRuta("/hq")?.clave),
+);
 check(
   "una ruta hija hereda su sección: /hq/capturas/abc sigue siendo «Capturas»",
   seccionDeLaRuta("/hq/capturas/abc")?.clave === "captures",

@@ -1467,3 +1467,94 @@ comprobaciones.
 **Lo que NO cambia todavía.** `SUPERFICIES_ABIERTAS` sigue en `false` para las dos: HQ y el portal
 **siguen devolviendo 404 a todo el mundo** (RF-87). Lo que hay construido es el marco; las pantallas
 son DU-13 en adelante, y la superficie se abre al cerrar su milestone, no antes.
+
+---
+
+## 2026-09-13 · DU-13 — Tablero de HQ
+
+**Qué se construyó.** `/hq/tablero` con los nueve bloques de RF-73…RF-76: las **capturas del día**
+filtrables por documento, página y fecha, con estado de entrega, intentos y **enlace directo al
+contacto en el CRM**; las **métricas del pipeline leídas del CRM** con caché de cinco minutos;
+empresas activas; proyectos y entregables recientes; **artículos publicados y borradores con sus
+tres extractos sociales listos para copiar**; actividad de agentes; auditoría reciente; el **modo del
+adaptador de captura**; y el botón «Abrir CRM». Detrás, `lib/hq/` —`tablero.ts`, `capturas.ts`,
+`metricas.ts`— y la vista en `app/(hq)/hq/tablero/`.
+
+**La decisión que gobierna el tablero: cada bloque cae solo** (**D-101**). El criterio 8 pide que con
+el CRM caído la pantalla **se degrade**, no que se quede en blanco, así que cada bloque devuelve o su
+contenido o su motivo. Y hay una segunda razón que solo se ve al pintarlo: **vacío y error son dos
+estados canónicos distintos** de FU-12. Si un bloque devolviera un array vacío para las dos cosas, el
+día que el CRM falle el tablero diría «todavía no hay nada» — una mentira tranquilizadora.
+
+**Dos claves del CRM, de verdad** (**D-102**). `CRM_API_KEY_CAPTURE` escribe, `CRM_API_KEY_READ` solo
+lee, y `sanear()` borra **las dos** de cualquier texto que salga. Leer con la clave de captura
+funcionaría igual de bien — ese es exactamente el problema: el fallo no aparece hasta el día que hay
+que revocar una y se descubre que apaga también la captura de leads. De paso se retiró un **bloque
+duplicado de variables de CRM** en `.env.example`: los nombres de planificación y los de
+implementación convivían, y una variable declarada dos veces es una variable que alguien pone en el
+sitio que no se lee.
+
+**El enlace profundo sale de la plantilla, y sin plantilla no hay enlace** (RF-54, criterio 2). No es
+un caso degradado: la ruta del frontend del CRM está sin confirmar, y un enlace inventado lleva a un
+404 que parece culpa del CRM. Lo mismo con una captura todavía en cola: sin contacto, sin enlace.
+
+**El trabajo manual, visible al abrir** (criterio 7). Mientras el adaptador siga en `contact_note`,
+el CRM no permite crear la oportunidad por clave de API: cada captura entregada deja un contacto y
+una nota, y **alguien tiene que abrir el hueco**. El tablero cuenta cuántas esperan. Sin esa cifra
+ese trabajo es invisible hasta que se pierde un lead.
+
+**Verificación — `test:hq`, 28 comprobaciones contra PostgreSQL real y un doble del CRM:**
+
+| Criterio | Cómo se comprueba |
+|---|---|
+| 1 · capturas del día | Se siembran tres: dos de hoy y una de hace dos días. Solo salen las dos |
+| 2 · enlace profundo | **Sin plantilla no se pinta enlace**; con plantilla se construye con el id del contacto; una captura en cola no tiene ninguno |
+| 3 · métricas | Marcadas `origen: "crm"` con marca de tiempo; la primera lectura llama a los **tres** informes de B.6 **con la clave de solo lectura**; la segunda **no vuelve a llamar** |
+| 5 · artículos | El publicado trae los tres extractos y su URL; **el borrador aparece marcado y sin URL** |
+| 7 · modo | El modo se ve, y con `contact_note` dice cuántas capturas esperan trabajo manual |
+| 8 · CRM caído | El bloque de métricas señala el fallo, **su motivo no lleva la clave**, y **los otros ocho bloques siguen trayendo sus datos**. Al volver el CRM, vuelven solas |
+| 9 · roles | `slg_admin` y `slg_operator` entran; `client_*` recibe **404**, que no confirma que el tablero exista |
+
+### El freno nuevo: `check:hq` — la frontera (a) del alcance
+
+RF-85 dice que HQ **no** gestiona leads, etapas, oportunidades ni pipeline. Eso escrito en un
+documento no sobrevive a la prisa: una frontera de alcance no se cruza de golpe, se cruza con «ya que
+estamos, un campito de etapa», y el campito no lo discute nadie porque parece pequeño. El freno
+(**D-105**) mira tres cosas sobre `app/(hq)/` y `lib/hq/`: **vocabulario de pipeline en el código**
+—no en los comentarios, que tienen que poder nombrar la regla—, **ninguna llamada al CRM que no sea
+`GET`**, y que el tablero use la clave de solo lectura. Busca sobre el código **normalizado**, porque
+con un `\b` a secas `etapaDelLead` y `pipelineStage` no caerían: en camelCase no hay frontera de
+palabra, y es justo como se escribe el código de verdad.
+
+Tiene **tres excepciones, nombradas y justificadas una a una**, todas para *contar* capturas que
+siguen sin oportunidad (criterio 7). Guardar el identificador que el CRM devolvió y contar los que
+faltan es lo contrario de gestionar: es señalar que el pipeline **está en otro sitio** y que alguien
+tiene que ir. Ampliar esa lista obliga a discutir por qué la aparición nueva tampoco es gestión, que
+es el efecto buscado.
+
+Prueba negativa: una pantalla que cruza la frontera de las **tres** maneras —mueve etapas en
+camelCase, hace `POST` al CRM y lee con la clave de captura—, y el freno se pone rojo por las tres.
+
+### Limpieza que arrastró la unidad
+
+`components/ShellDeApp.tsx` —el **prototipo** del octavo componente, de FU-10— tenía su propio
+«estado vacío» y su propio «estado de error» al lado de los seis canónicos de FU-12: **dos
+vocabularios para lo mismo**, que es exactamente lo que D-96 existe para impedir. Se retira; su tabla
+y su ficha, que no estaban duplicadas, pasan a `components/app/TablaDeApp.tsx`, y el bloque 8 de
+`/prototipo` enseña ahora el armazón de verdad con los seis estados.
+
+**Verificación global.** `lint` · `check:content` (1338) · `check:secrets` (411) · `check:env` ·
+`check:migrations` · `check:fronteras` (167) · `check:archivos` (220) · `check:contraste` ·
+`check:motion` (221) · `check:cadenas` (15) · `check:shell` (33) · **`check:hq` (4)** ·
+`build:standalone` · `check:js-budget` (78 rutas) · `check:runtime` (30) · `check:armazon` (60) ·
+`check:blog` (33) · `check:paginas` (142) · `check:seo` (220) · `test:gesto` (20) ·
+`check:terceros` (12) · `check:lighthouse` (96/97/93) · `check:brakes`: **veintiún frenos** ·
+`test:db`: **367** comprobaciones.
+
+**Lo que queda abierto, y por qué.** El tablero **no se ha visto renderizado en un navegador**:
+`SUPERFICIES_ABIERTAS.hq` sigue en `false` y HQ devuelve 404 a todo el mundo con sesión válida
+(RF-87), que es lo correcto mientras M3 siga abierto. Se comprobó que las rutas existen y responden
+—`/hq` y `/hq/tablero` redirigen a `/acceder` sin sesión— y toda la lógica está verificada contra
+PostgreSQL real y un doble del CRM. **La revisión visual del tablero queda como criterio abierto
+hasta que la superficie se abra al cerrar M3**, igual que el criterio 7 de DU-07 espera al
+despliegue. Y las métricas contra el **CRM real** siguen esperando **F.2-5**: las dos claves.
