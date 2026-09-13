@@ -94,6 +94,24 @@ const CASOS: Caso[] = [
     env: { ALCANCE_ROOT: path.join(HERE, "negative/alcance") },
   },
   {
+    freno: "un documento de diseño que el índice no enlaza",
+    script: "check-literacy.ts",
+    espera: "los documentos de diseño están todos en",
+    env: { LITERACY_ROOT: path.join(HERE, "negative/literacy") },
+  },
+  {
+    freno: "una de las siete tareas del manual que desaparece",
+    script: "check-literacy.ts",
+    espera: "las 7 tareas están en el README",
+    env: { LITERACY_ROOT: path.join(HERE, "negative/literacy") },
+  },
+  {
+    freno: "una variable de entorno sin explicar —o con su valor escrito al lado—",
+    script: "check-literacy.ts",
+    espera: ["todas las variables de", "ninguna lleva su valor escrito al lado"],
+    env: { LITERACY_ROOT: path.join(HERE, "negative/literacy") },
+  },
+  {
     freno: "la Sesión Cero ofrecida fuera del portal",
     script: "check-alcance.ts",
     espera: "la Sesión Cero NO se ofrece en ninguna superficie pública",

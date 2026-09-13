@@ -48,6 +48,7 @@ Los cinco están escritos, más un consolidado que los indexa. Se abren **por se
 
 | Dónde | Qué |
 |---|---|
+| [../README.md](../README.md) | **Manual de operación** (DU-24): las siete tareas que Ricardo hace sin ser programador —cambiar un texto, publicar un artículo, añadir una descarga, crear un cliente e invitar, crear una clave, desplegar y restaurar—, más de dónde sale cada variable de entorno. Es lo primero que se abre al **operar**; no hace falta para construir |
 | [../AGENTS.md](../AGENTS.md) | **Gobernanza.** Las 8 reglas. Vive ahí y solo ahí |
 | [../START_PROJECT.md](../START_PROJECT.md) | El contrato (brief v1.1). Fuente de verdad de todo este bundle. Se abre por anexo, no entero |
 | [../docs/decision_log.md](../docs/decision_log.md) | Decisiones de planificación desde `D-14`, e incidencias de seguridad |

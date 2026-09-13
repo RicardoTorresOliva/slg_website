@@ -2351,3 +2351,61 @@ privada por el canal privado. Paso a paso completo, con los clics, en **`docs/de
 Hasta que eso exista, el criterio 6 está demostrado **en el laboratorio** —copia, cifrado, subida,
 purga y restauración desde una copia antigua contra un almacenamiento real— pero **no en staging**, y
 el DoD #8 no se puede dar por cumplido.
+
+---
+
+## 2026-09-13 · DU-24 — README operativo y prueba de Literacy
+
+**Qué se construyó.** El **manual de operación** en la raíz del repositorio, el freno
+`check:literacy` (gate D12) con su prueba negativa, la entrada en `knowledge/log.md`, el enlace del
+manual desde `knowledge/index.md` y la tabla de caducidades en `docs/project_memory.md`.
+
+**La raíz se abre con el manual del proyecto, no con el de la fábrica** (**D-146**). El README era el
+del template APP_Builder; ahora vive en `docs/plantilla-app-builder.md`, enlazado desde la primera
+línea para quien venga a **construir**. Quien llega a este repositorio llega a operar `slg_website`, y
+el criterio 2 dice que Ricardo lo usa **sin ayuda técnica**: no puede empezar por preguntar dónde
+está el manual.
+
+**Las siete tareas se hacen solo desde el navegador** (**D-147**). Ricardo no tiene terminal, así que
+un manual con comandos sería un manual que no puede seguir — y RNF-39 lo mediría como lo que es: un
+defecto del manual. Escribirlo así obligó a **resolver de verdad** dónde se hace cada cosa en vez de
+dejar huecos: editar contenido es la interfaz web de GitHub sobre la rama `develop`; crear clientes,
+invitar y crear claves es `/hq`; desplegar es un pull request de `develop` a `main`; subir el PDF de
+una descarga es la consola de MinIO publicada desde Easypanel.
+
+**Y lo que no cabe en el navegador está escrito como lo que es.** Restaurar una copia no es una tarea
+de un botón: sustituye datos vivos por datos de antes. El manual lo dice, dice que se hace primero en
+staging, y dice que la clave privada viaja por el canal privado y se borra al terminar. Prometer un
+botón ahí habría sido el peor fallo posible de este documento.
+
+**`check:literacy` convierte el gate D12 en freno.** Vigila tres cosas que se pudren en silencio: un
+design doc que el índice no enlaza —**ya pasó una vez** con `design_summary.md`, y se arregló a mano—,
+un concepto sin entrada en el registro, y una variable de entorno que el manual no explica. Y una
+cuarta, que es la mitad menos obvia de R-28: que el manual **no lleve ningún valor escrito**. El
+fixture negativo escribe `BETTER_AUTH_SECRET=` con un valor al lado, que es exactamente como se cuela
+un secreto en una documentación — con la mejor intención, para que el ejemplo se entienda.
+
+**Lo que el freno NO puede comprobar, y está dicho en su cabecera:** si los pasos **funcionan**. Eso
+lo decide Ricardo ejecutándolos. El freno solo garantiza que las siete están escritas y que nada se ha
+caído por el camino.
+
+**Un defecto encontrado mientras se escribía la tabla de variables.** `.env.example` declaraba
+**dos juegos de variables para las copias de seguridad**: siete `R2_*` escritas en FU-05, cuando la
+unidad de backups todavía no existía, y las `BACKUP_*` que FU-14 construyó de verdad. Nadie las
+leía, pero estaban ahí esperando a que alguien rellenara el juego equivocado — y Ricardo está a punto
+de rellenarlas. Retiradas, con el motivo escrito en su sitio.
+
+**La caducidad del secreto de Entra ya tiene dónde vivir** (R-03): una tabla en
+`docs/project_memory.md`, con la fecha marcada `[PENDIENTE]` hasta que el secreto exista. No es un
+recordatorio en el calendario de nadie: quien abra una sesión dentro de un año tiene que poder verlo
+sin preguntar.
+
+**Verificación.** `check:literacy` **11** comprobaciones · `check:brakes` **29** frenos (24 + 5 de
+contenido), los tres nuevos vistos en rojo contra su fixture · `check:content` 1338 · `check:env` 77
+variables declaradas sin un solo valor · `check:secrets` en verde sobre 496 archivos.
+
+**Lo que queda de DU-24, y es el criterio 2.** Ricardo tiene que ejecutar **al menos tres** de las
+siete tareas —cambiar un texto, añadir una descarga y crear un cliente— **siguiendo solo el README**.
+Cada punto en el que se atasque es un defecto que se corrige antes de cerrar la unidad. Hasta
+entonces el manual está escrito y verificado por su forma, pero **no probado con una persona**, que es
+lo único que RNF-39 acepta como prueba.

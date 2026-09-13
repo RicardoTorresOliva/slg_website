@@ -38,7 +38,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 2 `pending` · **19 `in_progress`** (FU-05, FU-08, FU-09, FU-14, DU-01, FU-01, DU-07, DU-08, DU-09, DU-13, DU-14, DU-15, DU-16, DU-17, DU-18, DU-19, DU-20, DU-21, DU-23) · **18 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12, FU-12, FU-13, DU-22) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
+**Estado global:** 1 `pending` · **20 `in_progress`** (FU-05, FU-08, FU-09, FU-14, DU-01, FU-01, DU-07, DU-08, DU-09, DU-13, DU-14, DU-15, DU-16, DU-17, DU-18, DU-19, DU-20, DU-21, DU-23, DU-24) · **18 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12, FU-12, FU-13, DU-22) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -95,7 +95,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | DU-22 | DU | API v1 de lectura: clave, alcances, límites y auditoría | M5 | FU-06, DU-17, DU-19 · `api_contracts` | `done` — **los diez criterios verificados** con `test:api`: **74** comprobaciones por HTTP contra el servidor real, con las **doce celdas** de alcance × ruta recorridas. Migraciones **0014** (`audit_log.metadata`, **D-138**) y **0015** (la política nombra a `agent_slg`, **D-137**) |
 | DU-23 | DU | API v1 de escritura y especificación OpenAPI | M5 | DU-22 | `in_progress` — **las nueve rutas del contrato existen**; criterios 1…6 y 8 verificados con `test:api` (**124** comprobaciones, ejecutada tres veces). La especificación **se genera del catálogo** que valida las peticiones. El **criterio 7 es el DoD #6** y se comprueba en producción: aquí está probado todo lo que no exige el despliegue |
 | FU-14 | FU | Copias de seguridad cifradas a destino externo y restauración probada | M5 | FU-05 | `in_progress` — **criterios 1…5, 7 y 8 verificados** con `test:respaldos` (**27** comprobaciones con copia y restauración reales). Cifrado **asimétrico** (**D-143**), nada lista el bucket (**D-144**), el par de claves lo genera `/api/ops` (**D-145**). El **criterio 6** está demostrado en el laboratorio pero **no en staging**: necesita el bucket de R2, sus dos credenciales y la clave privada — `docs/deployment.md` **§4nonies** |
-| DU-24 | DU | README operativo y prueba de Literacy | M5 | DU-11, DU-14, DU-17, FU-14 | `pending` |
+| DU-24 | DU | README operativo y prueba de Literacy | M5 | DU-11, DU-14, DU-17, FU-14 | `in_progress` — **el manual está escrito y los criterios 1, 3, 4, 5, 6 y 7 verificados** por `check:literacy` (**11** comprobaciones, gate D12, con prueba negativa). Las siete tareas se hacen **solo desde el navegador** (**D-147**) y la raíz del repositorio se abre con el manual (**D-146**). Falta el **criterio 2**: que Ricardo ejecute tres de las siete **sin ayuda técnica** — cada atasco es un defecto del manual (RNF-39) |
 | DU-25 | DU | Go-live: contenido, DNS raíz, monitor y auditoría final | M5 | todas las anteriores | `pending` |
 
 ---
@@ -351,6 +351,15 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   podía mentir — migración **0012** y lo elige quien publica (**D-126**). Y un fallo que solo sale
   encadenando la suite: `test:webhooks` borraba capturas sin borrar antes su traza de `crm_delivery`.
   `test:db` sube a **538**.
+- `2026-09-13` — **DU-24: el manual de operación, y un freno para el gate D12.** La raíz del
+  repositorio se abre con el manual del proyecto y no con el del template (**D-146**), y las siete
+  tareas se escriben **solo desde el navegador** porque Ricardo no tiene terminal (**D-147**) — lo que
+  obligó a resolver de verdad dónde se hace cada cosa en vez de dejar huecos. `check:literacy` vigila
+  lo que se pudre en silencio: un design doc que el índice no enlaza (**ya pasó** con
+  `design_summary.md`), un concepto sin entrada en el registro, una variable sin explicar y —la mitad
+  menos obvia de R-28— **un valor escrito al lado de su nombre** en la documentación. Y se encontró un
+  defecto al escribir la tabla: `.env.example` tenía **dos juegos de variables** para las copias, y
+  Ricardo estaba a punto de rellenar el que no se lee. `check:brakes` sube a **29**.
 - `2026-09-13` — **FU-14: copias cifradas, y una restauración de verdad.** El cifrado es
   **asimétrico** porque «el VPS cifra» y «la clave no está en el VPS» no caben juntas con una
   contraseña compartida (**D-143**). Nada lista el bucket: las claves se calculan, así que la

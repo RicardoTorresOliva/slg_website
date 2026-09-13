@@ -142,6 +142,21 @@ variables en Easypanel** y **dejar dos tareas programadas**. Paso a paso con los
 vez**. Guárdala en tu gestor de contraseñas. Sin ella las copias son archivos ilegibles — y eso es a
 propósito: es lo que impide que quien entre en el servidor pueda leerlas.
 
+### 8. Probar el manual — es la prueba de aceptación de DU-24, y la haces tú
+
+El repositorio ahora se abre con un **manual de operación** (`README.md`): siete tareas, todas desde
+el navegador, ni un comando. Lo que falta no es escribirlo: es **que lo uses**.
+
+Haz **tres**, siguiendo solo el manual y sin preguntarme nada:
+
+1. **Cambiar un texto** de cualquier página.
+2. **Añadir un documento de descarga** (el PDF, y sus dos fichas).
+3. **Crear un cliente e invitar** a alguien.
+
+**Cada punto en el que te atasques es un defecto del manual, no un error tuyo.** Apúntalo —«en el paso
+4 no encuentro el botón», «no sé qué poner en `slug`»— y me lo pasas: se corrige y se vuelve a
+probar. Eso es literalmente lo que pide el criterio, y hasta que no ocurra la unidad no cierra.
+
 ---
 
 ## Cómo trabaja este proyecto (para quien abra la sesión)
@@ -214,6 +229,7 @@ criterio abierto, igual que el criterio 7 de DU-07 espera al despliegue.
 | 5ter | El **enlace del calendario** de la Sesión Cero (F.2-6) | Nada que abrir: **mándame la URL por el chat** | El criterio 4 de DU-21. Sin él el paso dice «Próximamente» y el portal funciona igual |
 | 5quater | El **bucket de copias** en R2, sus dos credenciales y las dos tareas programadas (FU-14) | `docs/deployment.md` §4nonies | El **DoD #8**. Es lo único de la lista que protege de lo que no se arregla después |
 | 6 | La **firma del copy** (FU-01) y las cuatro enumeraciones literales | `implementation/task_tracker.md` | Pasar de `copy: temporal` a `copy: aprobado` |
+| 6bis | **Probar el manual**: tres de las siete tareas siguiendo solo `README.md` | El propio `README.md` | El **DoD #9** y el cierre de DU-24. Cada atasco es un defecto del manual |
 | 7 | **S-01** | Canal privado, nunca aquí | El DoD de go-live |
 
 Opcionales, y el sitio funciona sin ellos: la **analítica autoalojada** (§4quinquies) y los

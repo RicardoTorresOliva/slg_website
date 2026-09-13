@@ -15,6 +15,21 @@ timestamp: 2026-09-12
 > Nosotros y legales con sus rutas del A.2) o **DU-07/DU-08** (biblioteca de descargas y la máquina
 > del formulario). Lo que falta de Ricardo está en `docs/handoff.md`.
 
+## Caducidades que hay que vigilar (R-03, R-14)
+
+**Aquí no hay ni un valor, solo fechas.** Una credencial que caduca sin avisar deja el sitio a medias
+de la peor forma: todo funciona menos una cosa, y nadie relaciona lo uno con lo otro.
+
+| Qué | Caduca el | Dónde se rota | Quién avisa |
+|---|---|---|---|
+| Secreto de cliente de **Microsoft Entra** (`MICROSOFT_CLIENT_SECRET`) | `[PENDIENTE: fecha — se anota al crearlo]` | `README.md` → «Rotar el secreto de Microsoft» | Nadie automáticamente: **por eso está escrito aquí** |
+| Credencial de **Google** (`GOOGLE_CLIENT_SECRET`) | No caduca por sí sola | Google Cloud → Credenciales | — |
+| **Claves de API** del sitio | Cada una la suya, elegida al crearla | `/hq/claves` | La pantalla las muestra con su fecha |
+
+**Cuando Ricardo cree o rote el secreto de Entra, la fecha se escribe en esta tabla en el mismo
+cambio.** Es el requisito R-03, y la razón de que viva en la memoria del proyecto y no en un
+calendario personal: quien abra una sesión dentro de un año tiene que poder verlo sin preguntar.
+
 ## Lo que espera a Ricardo, y solo a él
 1. **Despliegue** — `docs/deployment.md` §3 a §5. Cierra FU-05 (criterios 1, 2, 3 y 8).
 2. ~~**P-3 y P-4**~~ — **cerradas el 2026-09-12**: `no-reply@mailweb.softlandingglobal.com` sobre
@@ -242,6 +257,7 @@ se sirven. El par de idioma de cada ruta sale del campo `pair` del frontmatter, 
 | Que el portal no se esté volviendo un LMS | `npm run check:alcance` |
 | La API de agentes: 401, 403, 429, alcances y auditoría | `npm run test:api` (necesita el build) |
 | Que las copias se puedan **restaurar** | `npm run test:respaldos` (necesita PostgreSQL) |
+| Que el manual y el índice sigan completos | `npm run check:literacy` |
 | Las cuatro cláusulas del sheet, cuadro a cuadro | `npm run test:gesto` (necesita el build y Chromium) |
 | El armazón público sobre el servidor real | `npm run check:armazon` (necesita el build) |
 | Que la zona DNS no se ha movido | `npm run check:dns` (ya no necesita `dig`) |

@@ -13,6 +13,7 @@ en `knowledge/` (convención OKF, [README](README.md)).
 
 | Fecha | Concepto | Acción | Motivo |
 |---|---|---|---|
+| 2026-09-13 | `index.md` | cambiado | DU-24: la tabla «Fuera de este bundle» enlaza el **manual de operación** (`README.md`), que hasta hoy era el README del template. Sin ese enlace, el documento que Ricardo abre primero era invisible para el índice que se carga en todas las sesiones — el mismo fallo que tuvo `design_summary.md` y que ahora vigila `check:literacy` |
 | 2026-09-08 | `log.md` | cambiado | Sustituida la fila de ejemplo del template por el registro real. `type` migrado de `log` a `Registro`, uno de los seis tipos permitidos para este proyecto (§8 del brief) |
 | 2026-09-08 | `index.md` | cambiado | Sustituido el stub del template por el índice real de divulgación progresiva: siete conceptos y cinco design docs, cada uno con para qué sirve y en qué momento de la producción se necesita. `type` migrado de `knowledge-index` a `Índice` (§8) |
 | 2026-09-08 | `naming-rules` | añadido | Nomenclatura literal e intraducible, marca pública (`SLG Agency` vs "Softlanding Global" en contexto `SLG_Holdings`), regla dura de la "D" de DAL OS, tono y notación de origen. Fuente: §1 Constraints, A.1, gate D5 |
@@ -65,3 +66,15 @@ en `knowledge/` (convención OKF, [README](README.md)).
 - Sin efecto sobre este bundle, pero deben conocerse antes de producir: **D-43** (monitorización
   externa fuera del VPS; n8n queda como señal secundaria) y **D-45** (el visor de entregables HTML se
   sirve desde un **origen separado**, con `iframe sandbox` y CSP estricta como defensa en profundidad).
+
+## 2026-09-13 — DU-24, y un freno para que esto no vuelva a depender de la memoria
+
+- **`index.md` enlaza el manual de operación.** La raíz del repositorio pasó a abrirse con
+  `README.md` —el manual para operar el sitio sin ser programador— y el README del template se movió
+  a `docs/plantilla-app-builder.md`.
+- **`check:literacy` es el gate D12 convertido en freno.** Comprueba tres cosas que se pudren en
+  silencio: un design doc que el índice no enlaza, un concepto sin entrada en este registro, y una
+  variable de entorno que el manual no explica. Tiene prueba negativa, como todos.
+- **Lo que el freno NO puede comprobar, y queda dicho:** si los pasos del manual **funcionan**. Eso lo
+  decide Ricardo ejecutándolos, y cada fallo del manual es un defecto que se corrige antes de cerrar
+  la unidad (criterio 2 de DU-24, RNF-39).
