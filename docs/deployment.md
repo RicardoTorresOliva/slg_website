@@ -25,6 +25,30 @@ de entorno de Easypanel y en el panel del proveedor de DNS.
 
 ---
 
+## 0bis. EMPIEZA POR AQUÍ — la ruta corta
+
+Todo el resto de este documento es referencia. Para arrancar, esto es lo que hay que hacer, en
+orden, y **no hay ninguna consola ni ningún comando** salvo donde lo diga expresamente:
+
+1. **Enciende la página de puesta en marcha** (§2.1, paso 1): una variable en Easypanel y abrir una
+   URL. Esa página te dice, variable por variable, **qué falta**, y trae dos botones que hacen solos
+   lo que antes había que hacer a mano.
+2. **Base de datos** (§2.1, paso 2): tres variables, y el botón *«Ponerle la contraseña al usuario
+   de la base»*.
+3. **Archivos** (§2.1, paso 3): copiar dos valores del servicio `minio` a `slg-web`, y el botón
+   *«Crear los dos buckets y cerrarlos»*.
+4. **Correo** (§4bis): comprobar el remitente en staging y mirar el bloque de correo de la misma
+   página.
+5. **DNS** (§4) y **despliegue automático** (§3).
+
+Lo demás —analítica, webhooks, claves del CRM, monitor— es **opcional o posterior**, y cada apartado
+lo dice en su título.
+
+**Regla que no se rompe:** ninguna contraseña ni clave se pega en un chat, en un documento ni en este
+repositorio. Van de una pestaña de Easypanel a otra pestaña de Easypanel.
+
+---
+
 ## 0. Antes de empezar: el orden importa
 
 | # | Paso | Por qué va antes |
@@ -69,55 +93,233 @@ corriendo. **No hay que crear nada.** Lo que cambia respecto al diseño son los 
 Los nombres reales mandan. En las cadenas de conexión internas el host es el nombre del servicio:
 la base de datos es **`slgwebpostgres`**, no `slg-db`.
 
-### 2.1 Lo único que queda por hacer en estos servicios
+### 2.1 Lo que queda por hacer — **casi todo lo hace una página, tú pones valores**
 
-**a) Contraseña del rol de aplicación.** La migración crea el rol `slg_app` con `LOGIN` y **sin
-contraseña**, a propósito: el repositorio es público. Hay que ponérsela una vez, en la consola de
-`slgwebpostgres`:
+> **Antes de nada, lee esto:** hay una página en el propio sitio que **hace el trabajo** y que te
+> dice, variable por variable, qué falta. Se llama `/api/ops`. Lo único que tienes que hacer a mano
+> es **pegar valores en Easypanel**; ni consolas de PostgreSQL, ni consola de MinIO, ni comandos.
 
-```sql
-ALTER ROLE slg_app WITH PASSWORD 'la-que-generes';
+---
+
+#### Paso 1 · Encender la página de puesta en marcha
+
+1. Abre **Easypanel** → proyecto **`slg_website`** → servicio **`slg-web`**.
+2. Pestaña **Environment**. Es una caja de texto con una variable por línea, con la forma
+   `NOMBRE=valor`.
+3. Añade una línea nueva al final:
+
+   ```
+   OPS_TOKEN=inventate-aqui-una-palabra-larga-y-rara
+   ```
+
+   Cámbiala por lo que quieras, pero que sea larga (30 caracteres o más) y no la uses en otro sitio.
+   **Es la llave de esa página**: quien la tenga, la abre.
+4. Botón **Save**, y después botón **Deploy**. Espera a que el servicio quede verde.
+5. Abre en el navegador:
+
+   ```
+   https://softlandingglobal.com/api/ops?token=inventate-aqui-una-palabra-larga-y-rara
+   ```
+
+   (la misma palabra que pusiste arriba)
+
+**Qué vas a ver.** Una tabla con **todas** las variables, un ✅ o un ❌ en cada una, y debajo dos
+botones. Las que están en ❌ son las que faltan, con el nombre exacto que hay que escribir. **A
+partir de aquí, esa página es el guion**: pones lo que te pide, recargas, y vuelves a mirar.
+
+> Si te sale **«404 Not Found»**: o la variable `OPS_TOKEN` no se guardó, o no le diste a **Deploy**,
+> o la palabra de la URL no es idéntica a la de Easypanel. La página **no existe** sin esa variable,
+> y devuelve 404 en vez de «no autorizado» a propósito: un «no autorizado» le confirmaría a un
+> desconocido que la página está ahí.
+
+---
+
+#### Paso 2 · La base de datos
+
+Aquí hay **tres** variables, y las tres van en **Easypanel → `slg-web` → Environment**.
+
+**2.a — La contraseña del usuario del sitio.** Invéntate una larga (20 caracteres o más, letras y
+números, **sin comillas ni espacios**) y ponla en dos sitios:
+
+```
+APP_DB_PASSWORD=LaQueTeInventes123456
 ```
 
-**Por qué dos roles y no uno:** el usuario que crea la imagen de PostgreSQL es superusuario y lleva
-`rolbypassrls`. Conectando con él **las políticas de fila no se aplican** y el aislamiento entre
-empresas se vuelve decorativo. Lo encontró FU-04.
+**2.b — La cadena de conexión del sitio.** Lleva esa misma contraseña dentro. **No está escrita
+entera aquí a propósito**: el análisis de secretos del CI pone el pipeline en rojo si aparece una
+cadena de conexión con contraseña dentro del repositorio, y tiene razón aunque sea de ejemplo. Se
+escribe pegando estos **cinco trozos seguidos, sin espacios**, en una sola línea:
 
-**b) Variables de entorno de `slg-web`** (pestaña *Environment*). Los nombres salen de
-`.env.example`; para M0 bastan estas:
+| # | Trozo | Qué es | De dónde sale |
+|---|---|---|---|
+| 1 | `DATABASE_URL=postgresql://` | El principio | Siempre igual |
+| 2 | `slg_app` | El usuario con el que el sitio entra a la base | Lo crea la migración. **No lo cambies** |
+| 3 | `:` y después **la contraseña de 2.a** | Dos puntos pegados, y la contraseña | **Te la inventas tú** |
+| 4 | `@slgwebpostgres` | El nombre del servicio de PostgreSQL en Easypanel | Está en la tabla de arriba |
+| 5 | `:5432/slg` | El puerto y el nombre de la base | Siempre igual |
 
-| Variable | Valor |
-|---|---|
-| `DATABASE_URL` | `postgresql://slg_app@slgwebpostgres:5432/slg` — con la contraseña de (a) intercalada tras `slg_app` |
-| `DATABASE_URL_MIGRATIONS` | `postgresql://slg@slgwebpostgres:5432/slg` — igual, con la del rol dueño |
-| `NEXT_PUBLIC_SITE_URL` | `https://softlandingglobal.com` |
-| `S3_ENDPOINT` | el endpoint interno de `minio` |
-| `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_REGION` | del servicio `minio` |
-| `S3_BUCKET_DOWNLOADS` / `S3_BUCKET_DELIVERABLES` | `downloads` / `deliverables` |
-| `NEXT_PUBLIC_UMAMI_SCRIPT_URL` / `NEXT_PUBLIC_UMAMI_WEBSITE_ID` | del servicio `umami` |
+Con la contraseña del ejemplo (`LaQueTeInventes123456`) la línea empezaría por
+`DATABASE_URL=postgresql://slg_app:LaQueTe…` y terminaría en `@slgwebpostgres:5432/slg`.
 
-> Las cadenas van **sin contraseña** en este documento a propósito: el análisis de secretos marca en
-> rojo cualquier cadena de conexión con contraseña dentro del repositorio, y tiene razón aunque sea
-> un ejemplo.
+**2.c — La cadena del usuario dueño**, que es el que aplica las migraciones y el que le pondrá la
+contraseña a `slg_app`. **Mismos cinco trozos**, cambiando dos:
 
-**`STAGING_BASIC_AUTH_USER` y `STAGING_BASIC_AUTH_PASSWORD` NO se definen en `slg-web`.** El
-middleware se activa por la presencia de esas dos variables: ponerlas en producción pondría un
-candado delante del sitio público.
+| # | Trozo | Qué cambia |
+|---|---|---|
+| 1 | `DATABASE_URL_MIGRATIONS=postgresql://` | Otro nombre de variable |
+| 2 | `postgres` | Aquí va el usuario **dueño**, no `slg_app` |
+| 3 | `:` y después **la contraseña que ya existe** | **No te la inventas** — ver abajo |
+| 4 | `@slgwebpostgres` | Igual |
+| 5 | `:5432/slg` | Igual |
 
-**c) Variables de `slgweb-staging`.** Las mismas, **más** `STAGING_BASIC_AUTH_USER` y
-`STAGING_BASIC_AUTH_PASSWORD`, y con `NEXT_PUBLIC_SITE_URL` apuntando a
-`https://staging.softlandingglobal.com`. Base de datos **distinta** de la de producción.
+**La contraseña del dueño no te la inventas: ya existe.** Para verla: Easypanel → servicio
+**`slgwebpostgres`** → pestaña **Environment** → busca la línea `POSTGRES_PASSWORD=…`. Copia lo que
+haya después del `=` y pégalo ahí. Mira también `POSTGRES_USER=…`: si no pone `postgres`, usa ese
+nombre en vez de `postgres`.
 
-**d) Deploy command** en `slg-web` y `slgweb-staging`: `npm run db:migrate`. Usa
-`DATABASE_URL_MIGRATIONS`, el rol dueño. El runtime nunca migra.
+> **No pegues ninguna de estas dos cadenas en un chat ni en un documento.** Van de la pestaña de
+> Easypanel a la pestaña de Easypanel y nada más.
 
-### 2.2 Qué hace la compuerta de staging
+**2.d — Guardar, desplegar y pulsar el botón.**
 
-Con esas dos variables puestas, `slgweb-staging` devuelve `401` con `WWW-Authenticate: Basic` y
-`X-Robots-Tag: noindex` en todas las rutas **menos `/api/health`**, que queda abierta a propósito:
-UptimeRobot no lleva credenciales y un monitor que recibe `401` estaría midiendo la compuerta, no el
-servicio. Está verificado de forma automatizada en `check:runtime` (19 comprobaciones sobre el
-servidor real); en el despliegue solo hay que confirmar que las variables están puestas.
+1. **Save** y **Deploy** en `slg-web`.
+2. Vuelve a abrir `/api/ops?token=…`.
+3. Pulsa el botón **«Ponerle la contraseña al usuario de la base»**.
+4. Tiene que salir *El rol slg_app ya tiene contraseña* y, debajo, *Conecta como «slg_app»*.
+5. Si lo segundo sigue en rojo, pulsa **Restart** en `slg-web` y recarga: el servidor guarda
+   conexiones abiertas con la contraseña vieja y hay que echarlas.
+
+Eso sustituye entero al «hazlo en la consola de `slgwebpostgres`» de antes. **No hay consola que
+buscar.**
+
+---
+
+#### Paso 3 · Los archivos (MinIO)
+
+**No tienes que entrar a la consola de MinIO.** Lo que el sitio necesita es un usuario y una
+contraseña de MinIO, y **ya existen**: son las del propio servicio.
+
+1. Easypanel → servicio **`minio`** → pestaña **Environment**. Verás dos líneas parecidas a estas:
+
+   ```
+   MINIO_ROOT_USER=algo
+   MINIO_ROOT_PASSWORD=otra-cosa
+   ```
+
+2. Copia esos **dos valores**.
+3. Easypanel → servicio **`slg-web`** → **Environment**, y añade estas cinco líneas:
+
+   ```
+   S3_ENDPOINT=http://minio:9000
+   S3_REGION=us-east-1
+   S3_ACCESS_KEY_ID=<lo que ponía en MINIO_ROOT_USER>
+   S3_SECRET_ACCESS_KEY=<lo que ponía en MINIO_ROOT_PASSWORD>
+   S3_BUCKET_DOWNLOADS=downloads
+   S3_BUCKET_DELIVERABLES=deliverables
+   ```
+
+   `http://minio:9000` es el nombre del servicio y su puerto interno: los dos servicios viven en la
+   misma red de Easypanel y se llaman por su nombre. **No lleva `https` ni dominio.**
+
+4. **Save** → **Deploy**.
+5. Vuelve a `/api/ops?token=…` y pulsa **«Crear los dos buckets y cerrarlos»**.
+6. Mira el bloque **«Almacenamiento de archivos»** de la misma página. La línea que importa es
+   **«Lectura SIN firma (tiene que FALLAR)»**: si sale ✅, el bucket es privado y todo está bien.
+
+> **Si prefieres una clave aparte** en vez de la del administrador —es más limpio, y se puede hacer
+> después—: la consola de MinIO que te abrió Easypanel pide usuario y contraseña, y son **esos mismos
+> dos valores** de `MINIO_ROOT_USER` y `MINIO_ROOT_PASSWORD`. Dentro: **Access Keys → Create access
+> key → Create**, copias las dos cadenas que salen y sustituyes `S3_ACCESS_KEY_ID` y
+> `S3_SECRET_ACCESS_KEY`. Pero **para arrancar no hace falta**.
+
+---
+
+#### Paso 4 · Las variables que no se pueden inventar solas
+
+Estas cuatro van también en **`slg-web` → Environment**:
+
+```
+NEXT_PUBLIC_SITE_URL=https://softlandingglobal.com
+BETTER_AUTH_SECRET=otra-palabra-larga-distinta-de-la-de-OPS_TOKEN
+OPS_MAIL_TO=torresoliva.ricardo@gmail.com
+PRIVACY_POLICY_VERSION=2026-09-13
+```
+
+`BETTER_AUTH_SECRET` firma las sesiones: invéntala larga y **no la cambies después**, porque
+cambiarla cierra la sesión de todo el mundo.
+
+---
+
+#### Paso 5 · Lo que NO se pone en producción
+
+**`STAGING_BASIC_AUTH_USER` y `STAGING_BASIC_AUTH_PASSWORD` NO van en `slg-web`.** El candado de
+staging se enciende **por la mera presencia** de esas dos variables: ponerlas en producción deja el
+sitio público pidiendo usuario y contraseña. Si están, bórralas de `slg-web`.
+
+---
+
+#### Paso 6 · El comando de despliegue
+
+Easypanel → `slg-web` → pestaña **Deploy** (o **Build**, según la versión) → campo **Deploy command**
+(a veces se llama *Post-deploy command* o *Release command*):
+
+```
+npm run db:migrate
+```
+
+Eso aplica las migraciones usando `DATABASE_URL_MIGRATIONS`, o sea el usuario dueño. **El sitio en
+marcha nunca migra**, y por eso la migración va aquí y no en el arranque.
+
+Para comprobar que funcionó, vuelve a `/api/ops?token=…`: la línea **«Migraciones aplicadas»** tiene
+que decir un número, no «la base está vacía».
+
+---
+
+### 2.2 `slgweb-staging` — lo mismo, con tres diferencias
+
+Es el **mismo servicio con otras variables**. Copia todo lo del §2.1 en
+**Easypanel → `slgweb-staging` → Environment**, y cambia solo estas tres cosas:
+
+| Qué cambia | Valor en `slgweb-staging` | Por qué |
+|---|---|---|
+| `NEXT_PUBLIC_SITE_URL` | `https://staging.softlandingglobal.com` | Si apunta a producción, los enlaces de los correos de prueba llevan al sitio real |
+| **Base de datos** | La misma cadena pero terminada en **`/slg_staging`** en vez de `/slg` | Probar con los datos de producción es probar con los datos de los clientes |
+| **Dos variables nuevas** | `STAGING_BASIC_AUTH_USER=slg` y `STAGING_BASIC_AUTH_PASSWORD=lo-que-quieras` | Son las que ponen el candado |
+
+**La base `slg_staging` hay que crearla una vez.** Cuando pongas la cadena terminada en
+`/slg_staging` y despliegues, `/api/ops` de staging te dirá que no existe. Para crearla: Easypanel →
+servicio **`slgwebpostgres`** → pestaña **Console** (es una terminal dentro del propio panel, no hay
+que instalar nada) → escribe esto y pulsa Enter:
+
+```
+psql -U postgres -c "CREATE DATABASE slg_staging;"
+```
+
+Si contesta `CREATE DATABASE`, hecho. Si dice que ya existe, también.
+
+**Qué hace el candado de staging.** Con esas dos variables puestas, `slgweb-staging` pide usuario y
+contraseña en **todas** las rutas menos `/api/health`, y marca todo como `noindex` para que Google no
+lo encuentre. `/api/health` queda abierta a propósito: el monitor de caída no lleva credenciales, y
+si recibiera un 401 estaría midiendo el candado en vez del servicio. Está comprobado de forma
+automatizada en `check:runtime`.
+
+---
+
+### 2.3 Resumen: qué variables van en cada servicio
+
+| Variable | `slg-web` | `slgweb-staging` |
+|---|---|---|
+| `OPS_TOKEN` | sí (se borra al terminar) | sí |
+| `APP_DB_PASSWORD` | sí | sí |
+| `DATABASE_URL` | `…/slg` | `…/slg_staging` |
+| `DATABASE_URL_MIGRATIONS` | `…/slg` | `…/slg_staging` |
+| `NEXT_PUBLIC_SITE_URL` | `https://softlandingglobal.com` | `https://staging.softlandingglobal.com` |
+| `BETTER_AUTH_SECRET` | sí | sí (otra distinta) |
+| `S3_*` (seis) | sí | sí, las mismas |
+| `MAIL_*` (§4bis) | sí | sí |
+| `OPS_MAIL_TO` | sí | sí |
+| `PRIVACY_POLICY_VERSION` | sí | sí |
+| `STAGING_BASIC_AUTH_USER` / `_PASSWORD` | **NO** | **sí** |
 
 ---
 
@@ -254,10 +456,15 @@ tiene que estar también de su lado.
 **Evidencia del criterio 6**: una captura de *Domains → Tracking* mostrando que **no existe ningún
 subdominio de tracking**. Va al `work_log`.
 
-### 4bis.0 CORRECCIÓN URGENTE — el remitente configurado está mal
+### 4bis.0 El remitente — **`slg-web` está bien; revisa `slgweb-staging`**
 
-**Lo que hay puesto hoy en `slg-web` es `noreply@mail.softlandingglobal.com`, y ese dominio no
-existe.** Comprobado contra un resolutor público el 2026-09-12:
+> **Corrección de una corrección.** Este apartado decía que `slg-web` tenía puesto
+> `noreply@mail.softlandingglobal.com` y había que cambiarlo. **Era falso**: en `slg-web` el valor
+> es y era `noreply@mailweb.softlandingglobal.com`, que es el correcto. El que estaba mal era el de
+> **`slgweb-staging`**. Lo doy por comprobado por Ricardo contra el propio panel, que es la fuente,
+> y no por lo que yo había supuesto.
+
+El dominio verificado en Resend es **`mailweb.`**, con `web`. Comprobado contra un resolutor público:
 
 | Nombre consultado | Respuesta |
 |---|---|
@@ -266,21 +473,22 @@ existe.** Comprobado contra un resolutor público el 2026-09-12:
 | `resend._domainkey.mail.softlandingglobal.com` | **no existe** ❌ |
 | `send.mail.softlandingglobal.com` | **no existe** ❌ |
 
-El dominio verificado es **`mailweb.`**, con `web`. Enviar desde `mail.` significa **salir sin firma
-DKIM**: no rebota con un error claro, se entrega directo a la carpeta de spam, y desde fuera parece
-que todo funciona.
+Enviar desde `mail.` —sin `web`— significa **salir sin firma DKIM**: no rebota con un error claro, se
+entrega directo a la carpeta de spam, y desde fuera parece que todo funciona. Por eso importa que
+esté idéntico en los dos servicios.
 
-**Qué hacer, paso a paso:**
+**Qué queda por hacer:**
 
-1. Entra en **Easypanel** → proyecto **`slg`** → servicio **`slg-web`**.
-2. Pestaña **Environment**.
-3. Busca la línea `MAIL_FROM_ADDRESS=noreply@mail.softlandingglobal.com`.
-4. Cámbiala por: `MAIL_FROM_ADDRESS=noreply@mailweb.softlandingglobal.com`
-5. Botón **Save**, y luego **Deploy** para que el servicio recoja el cambio.
-6. Repite lo mismo en el servicio **`slgweb-staging`**.
+1. Easypanel → servicio **`slgweb-staging`** → pestaña **Environment**.
+2. Busca `MAIL_FROM_ADDRESS=` y comprueba que pone exactamente
+   `noreply@mailweb.softlandingglobal.com`. Si pone `mail.` sin `web`, cámbialo.
+3. **Save** → **Deploy**.
+4. En **`slg-web`** no toques nada: ya está bien.
 
-La tabla de §4bis.2 ya lleva el valor correcto. Lo demás que tienes puesto —host, puerto, usuario
-`resend`, la clave `re_…`, el `Reply-To` y `MAIL_ALERTS_TO`— **está bien**.
+**Y no tienes que fiarte de mí ni de la vista.** Abre `/api/ops?token=…` y mira el bloque de correo:
+comprueba el DKIM y el SPF **del dominio que esté realmente configurado**, sea cual sea, y te dice si
+ese dominio está verificado. Si sale ✅, el remitente es el bueno. Si sale ❌, la propia página dice
+qué nombre de DNS no encontró.
 
 ### 4bis.2 La credencial SMTP — de dónde sale, exactamente
 
@@ -349,52 +557,36 @@ subdominio; el de la raíz no se toca.
 
 ---
 
-## 4ter. Los dos buckets de archivos (FU-09)
+## 4ter. Los dos buckets de archivos (FU-09) — **ya no hace falta entrar a MinIO**
 
-Servicio **`minio`** del proyecto `slg_website`. Es lo único que le falta a FU-09.
+> **Esto cambió.** Antes te mandaba a la consola de MinIO a crear dos buckets y marcarlos privados.
+> **Ya no.** Lo hace el botón **«Crear los dos buckets y cerrarlos»** de `/api/ops`. El paso a paso
+> está en el **§2.1, paso 3**, y se resume en: copiar `MINIO_ROOT_USER` y `MINIO_ROOT_PASSWORD` del
+> servicio `minio` a las variables `S3_*` de `slg-web`, desplegar, y pulsar el botón.
 
-**Cómo se abre la consola de MinIO si solo tienes Easypanel.** El servicio `minio` trae dos puertos:
-el **9000** es la API (por ahí habla el sitio) y el **9001** es la **consola web** (por ahí entras
-tú). Para poder abrirla desde el navegador:
+**Si llegaste a la pantalla de login de MinIO**, la de fondo blanco que pone *MINIO OBJECT STORE*:
+el usuario y la contraseña son exactamente los valores de `MINIO_ROOT_USER` y `MINIO_ROOT_PASSWORD`
+que hay en **Easypanel → servicio `minio` → pestaña Environment**. Pero **no necesitas entrar**: esos
+mismos dos valores, pegados en `S3_ACCESS_KEY_ID` y `S3_SECRET_ACCESS_KEY` de `slg-web`, son lo único
+que hace falta.
 
-1. **Easypanel** → proyecto **`slg_website`** → servicio **`minio`** → pestaña **Domains**.
-2. Si ya hay un dominio apuntando al puerto **9001**, ábrelo y pasa al paso 5.
-3. Si no lo hay: botón **Add Domain**. *Host*: `minio.softlandingglobal.com`. *Port*: **9001**.
-   Marca **HTTPS**. **Create**.
-4. Añade en Hostinger un registro `A` con nombre `minio` y valor `167.88.42.76`. (Este nombre **no**
-   está en la lista de protegidos: se puede crear sin riesgo.)
-5. Abre `https://minio.softlandingglobal.com`. El usuario y la contraseña son los que el servicio
-   tiene en **Easypanel → `minio` → Environment**, en `MINIO_ROOT_USER` y `MINIO_ROOT_PASSWORD`.
+### 4ter.1 La comprobación que de verdad importa
 
-Con la consola abierta:
+Un botón que dice «hecho» no es un bucket privado. Lo que lo demuestra está en la misma página
+`/api/ops`, en el bloque **«Almacenamiento de archivos»**, y son tres líneas seguidas:
 
-1. Ya dentro de la consola de MinIO.
-2. **Buckets → Create Bucket**. Crea **`downloads`** y **`deliverables`** (si ya existen, sáltatelo).
-3. En cada uno: **Access Policy → Private**. Ninguno es público, y ninguno lleva *Anonymous access*.
-   - `downloads` guarda los documentos D-01…D-11, que se entregan **a cambio de un correo**: si el
-     bucket fuera público, el formulario de captura no serviría para nada.
-   - `deliverables` guarda entregables **de clientes**. Ahí no hay matiz.
-4. **Access Keys → Create access key**. Anótala; es la que va en las variables.
-5. En Easypanel, en `slg-web` y en `slgweb-staging`:
-
-| Variable | Valor |
+| Línea | Qué significa que salga ✅ |
 |---|---|
-| `S3_ENDPOINT` | la URL interna del servicio `minio` (p. ej. `http://minio:9000`) |
-| `S3_REGION` | `us-east-1` — MinIO lo ignora, pero la firma lo exige |
-| `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` | las del paso 4 |
-| `S3_BUCKET_DOWNLOADS` | `downloads` |
-| `S3_BUCKET_DELIVERABLES` | `deliverables` |
-| `SIGNED_URL_TTL_*_MINUTES` | **déjalas vacías**: los defectos (15/10/30) son los del contrato |
+| Subida firmada al bucket «downloads» | El sitio puede escribir |
+| Lectura CON firma | El sitio puede leer lo que escribió |
+| **Lectura SIN firma (tiene que FALLAR)** | **Nadie puede leerlo desde fuera** |
 
-6. **Comprobación, desde el navegador y sin tocar nada más.** Es la misma página de §4bis.3: con
-   `OPS_TOKEN` puesta, abre `https://softlandingglobal.com/api/ops?token=TESTIGO` y mira el bloque
-   **Almacenamiento**. Hace por ti las tres cosas que hay que comprobar:
-   - sube un archivo de prueba con URL firmada,
-   - lo lee con la firma —tiene que funcionar—,
-   - **lo intenta leer SIN la firma, y eso tiene que FALLAR**. Si esa línea sale ✅ en verde diciendo
-     que lo leyó, **el bucket es público**: vuelve al paso 3 y ponlo en *Private* antes de subir nada
-     real.
-   Luego borra solo el objeto de prueba, que se llama `ops/comprobacion-…`.
+**La tercera es la que cuenta.** Si esa línea sale en rojo diciendo que consiguió leer el archivo, el
+bucket es público: vuelve a pulsar el botón, y si sigue igual entra a la consola de MinIO y pon los
+dos buckets en *Access Policy → Private* a mano.
+
+La página deja un archivo de prueba llamado `ops/comprobacion-…`; puedes borrarlo desde la consola de
+MinIO cuando quieras, o dejarlo: pesa unos bytes.
 
 > **Nunca** subas un documento de descarga ni un entregable al repositorio: es público, y
 > `npm run check:archivos` pone el CI en rojo si aparece uno.

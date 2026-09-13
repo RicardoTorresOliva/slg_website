@@ -235,6 +235,24 @@ archivos nuevos sin versionar, y al hacer commit dos frenos se pusieron rojos: e
 el primer push de una unidad dada por terminada. Los cinco frenos que barren el repositorio usan ahora
 `--cached --others --exclude-standard` (**D-74**). **Si añades un freno nuevo, cópialo de ahí.**
 
+## Lo que se puede hacer con código no se le pide a una persona
+`docs/deployment.md` mandaba a la consola de PostgreSQL y a la de MinIO a hacer tres cosas que la API
+hace sola. Ahora las hace `/api/ops` con dos botones (**D-123**), y el documento solo pide **pegar
+valores en Easypanel**. **Antes de escribir un paso a paso, pregúntate si el paso puede darlo el
+código.** Y si el paso a paso menciona una herramienta, di **dónde está**: «en la consola de X» no es
+una instrucción para quien no sabe que X tiene consola.
+
+## Una página de diagnóstico NO puede devolver 500
+`/api/ops` existe para arreglar una infraestructura a medias: es normal que falten variables, y ahí
+es cuando más falta hace saber **cuál**. Cualquier cosa que se escape se pinta como fila roja con el
+motivo (**D-125**). Lo mismo vale para `asegurarBuckets()`: `clienteS3()` lanza si faltan variables,
+y esa función existe justo para cuando faltan.
+
+## `MINIO_ROOT_USER` y `MINIO_ROOT_PASSWORD` YA son credenciales S3 válidas
+No hace falta entrar a la consola de MinIO a crear una clave de acceso para arrancar: esos dos
+valores, copiados del servicio `minio` a `S3_ACCESS_KEY_ID` y `S3_SECRET_ACCESS_KEY` de `slg-web`,
+funcionan. Crear una clave aparte es más limpio y se puede hacer después.
+
 ## `withSystemScope` NO abre las tablas con `organization_id`
 Fija `app.actor_role = 'system'`, y la política de fila solo deja pasar a `slg_admin` y
 `slg_operator`. Así que una consulta de sistema sobre `announcement`, `deliverable`, `project` y

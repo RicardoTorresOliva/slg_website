@@ -162,8 +162,39 @@ async function opsConTestigo(base: string) {
   const html = await bueno.text();
   check(
     "ops · la página dice qué comprueba",
-    html.includes("Comprobación de infraestructura"),
-    "no devolvió la página de comprobación",
+    html.includes("Puesta en marcha"),
+    "no devolvió la página de puesta en marcha",
+  );
+
+  /**
+   * LAS ACCIONES SON DE POST Y NADA MÁS.
+   *
+   * Esta página crea buckets y cambia la contraseña de un rol de la base. Una
+   * acción alcanzable por GET la dispara el prefetch del navegador, el
+   * historial, un `<img src>` en cualquier página y el primer rastreador que
+   * encuentre el enlace. Se comprueba **contra el servidor**, no leyendo el
+   * código: lo que importa es lo que el socket acepta.
+   */
+  check(
+    "ops · las acciones se ofrecen como formularios de POST",
+    /<form method="post"/i.test(html),
+    "la página no ofrece las acciones como POST",
+  );
+  const porGet = await fetch(`${base}/api/ops?token=${TESTIGO_OPS}&accion=clave-de-app`);
+  const htmlGet = await porGet.text();
+  check(
+    "ops · una acción pedida por GET NO se ejecuta",
+    porGet.status === 200 && !htmlGet.includes("ALTER ROLE"),
+    "un GET con `accion` ejecutó algo",
+  );
+  const postSinTestigo = await fetch(`${base}/api/ops`, {
+    method: "POST",
+    body: new URLSearchParams({ accion: "clave-de-app" }),
+  });
+  check(
+    "ops · un POST sin testigo devuelve 404",
+    postSinTestigo.status === 404,
+    `status ${postSinTestigo.status}`,
   );
 }
 

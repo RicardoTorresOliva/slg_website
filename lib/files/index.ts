@@ -10,6 +10,11 @@
  */
 
 export { adaptadorS3, clienteS3 } from "./s3.ts";
+/**
+ * Puesta en marcha, **no operación**: solo lo usa `/api/ops`, que no existe sin
+ * `OPS_TOKEN`. Ninguna página del sitio crea buckets.
+ */
+export { asegurarBuckets, cerrarAccesoPublico, type ResultadoDeBucket } from "./aprovisionar.ts";
 export {
   ErrorDeAlmacenamiento,
   type PuertoDeArchivos,

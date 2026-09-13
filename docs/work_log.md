@@ -1839,3 +1839,82 @@ Queda registrado en `check:brakes`, que sube a **veintidós frenos**.
 
 **Verificación global.** `lint` · `check:fronteras` (188) · `check:secrets` (439) ·
 `check:brakes`: **veintidós** · `test:db`: **519** comprobaciones.
+
+---
+
+## 2026-09-13 · Puesta en marcha — **la página deja de mandar a consolas y hace el trabajo**
+
+**Qué lo motiva.** Ricardo se atascó en el §2.1 de `docs/deployment.md`, y tenía razón en las cinco
+preguntas: *«¿qué consola? ¿dónde está? ¿tengo que entrar a una web?»*, *«¿dónde pongo la
+contraseña?»*, *«las variables S3 dicen “de minio”, ¿eso qué significa?»*. El documento estaba
+escrito para alguien que ya sabe que Easypanel tiene pestaña de consola — o sea, para quien no lo
+necesita. Y el §4ter lo mandaba a la consola de MinIO a hacer a mano lo que la API hace en dos
+llamadas.
+
+**La respuesta no fue reescribir el documento y ya.** Fue **quitar el trabajo**:
+
+`/api/ops` ahora **actúa** (**D-123**). Dos botones:
+
+- **«Ponerle la contraseña al usuario de la base»** — hace el `ALTER ROLE slg_app` usando la conexión
+  del rol dueño, que la aplicación ya tiene. Sustituye entero al «hazlo en la consola de
+  `slgwebpostgres`». Es idempotente y, después, **comprueba que la aplicación conecta de verdad** —
+  con una conexión nueva, no con el pool, que puede llevar dentro una conexión abierta con la
+  contraseña vieja y diría que todo va bien mientras la siguiente petición falla.
+- **«Crear los dos buckets y cerrarlos»** — crea `downloads` y `deliverables` si no están y pide el
+  bloqueo de acceso anónimo. Sustituye a entrar a la consola de MinIO.
+
+Y una tercera cosa que no es un botón pero es la que más tiempo ahorra: **un inventario de
+variables**. Diecinueve filas con el nombre exacto que hay que escribir en Easypanel, para qué sirve
+cada una, y si está puesta o falta. De las secretas dice *«puesta (34 caracteres; no se muestra)»*:
+nunca el valor.
+
+**Las acciones son de POST y no aceptan valores de la petición** (**D-124**). Un `ALTER ROLE`
+alcanzable por GET lo dispara el prefetch del navegador y cualquier `<img src>`; y una ruta que
+aceptara la contraseña por parámetro sería una ruta para cambiar la clave de la base desde fuera. La
+contraseña sale de `APP_DB_PASSWORD`, o sea del mismo panel donde vive la cadena de conexión.
+`check:runtime` lo comprueba **contra el servidor**: un GET con `accion` no ejecuta nada, y un POST
+sin testigo es 404.
+
+**Ninguna acción puede acabar en 500** (**D-125**), y eso lo encontró la prueba: la primera versión
+devolvía «Internal Server Error» al pulsar el botón de los buckets sin `S3_ENDPOINT` — una pantalla
+en blanco justo en el momento para el que la página existe. Ahora dice *«Falta la variable de entorno
+S3_ENDPOINT»*.
+
+**Lo que el código NO puede hacer, y sigue siendo suyo.** Pegar valores en Easypanel. Eso es todo. Y
+dos de esos valores **ya existen y solo hay que copiarlos de un servicio a otro**: `MINIO_ROOT_USER`
+y `MINIO_ROOT_PASSWORD` del servicio `minio` son credenciales S3 válidas, así que **no hace falta
+entrar a la consola de MinIO ni crear una clave de acceso**. Crear una clave aparte es más limpio y
+se puede hacer después; para arrancar, no.
+
+### Verificación
+
+`test:aprovisionar`, **12 comprobaciones contra un servidor S3 que responde de verdad**: sin
+variables **cuenta cuál falta** en vez de lanzar; crea los dos buckets; **la segunda vez dice «ya
+existía» y no falla** —un botón que falla la segunda vez es un botón que la gente teme pulsar—; y si
+el servidor se rompe, sale fila roja y no excepción. Su propio doble tuvo un fallo: el bloqueo de
+acceso anónimo viaja como `PUT /bucket?publicAccessBlock` y la marca está en la **consulta**, no en
+la ruta, así que caía en la rama de «crear bucket».
+
+Y la página completa, probada con el servidor `standalone` real: 404 sin testigo, 404 con testigo
+incorrecto, el botón de la contraseña deja la base con *«Conecta como slg_app»*, el de los buckets
+degrada con el nombre de la variable que falta, y una acción inventada no rompe nada.
+
+`check:runtime` sube a **33** comprobaciones y `test:db` a **531**.
+
+### El documento, reescrito
+
+- **§0bis (nuevo)** — la ruta corta: cinco pasos, y dice desde el principio que **no hay consolas**.
+- **§2.1** — seis pasos numerados. La cadena de conexión explicada **trozo a trozo**, con una tabla
+  que dice de dónde sale cada uno y cuál te inventas tú. Dónde está la contraseña del dueño:
+  Easypanel → `slgwebpostgres` → Environment → `POSTGRES_PASSWORD`. Qué significa «de minio»: copiar
+  dos valores de un servicio a otro.
+- **§2.2** — staging como «lo mismo con tres diferencias», con tabla.
+- **§2.3 (nuevo)** — qué variable va en cada servicio, de un vistazo.
+- **§4bis.0** — **corregido**: `slg-web` tenía bien el remitente; el que estaba mal era
+  `slgweb-staging`. Queda anotado que la corrección anterior era falsa y que la fuente es el panel,
+  no lo que yo supuse.
+- **§4ter** — ya no manda a la consola de MinIO. Explica qué era esa pantalla de login que le salió y
+  cuáles son sus credenciales, y deja claro que **no hace falta entrar**.
+
+**Las cadenas de conexión de ejemplo van partidas en trozos a propósito**: escritas enteras, el
+análisis de secretos pone el CI en rojo, y tiene razón aunque sea un ejemplo.
