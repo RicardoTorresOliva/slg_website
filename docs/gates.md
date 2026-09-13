@@ -37,8 +37,12 @@ quede en prosa.
 
 **Comprueba.** `npm run check:lighthouse` · `npm run check:js-budget`
 
-**Prueba negativa.** `npm run check:brakes` → «presupuesto de JS inicial» con el umbral bajado a 1 KB:
-cualquier página real lo supera y el freno tiene que frenar.
+**Prueba negativa.** `npm run check:brakes` → dos entradas: «presupuesto de JS inicial» con el umbral
+bajado a 1 KB —cualquier página real lo supera—, y **«Lighthouse contra una página mala de verdad»**:
+sin `lang`, sin `title`, sin viewport, con texto gris sobre blanco y un script que bloquea el hilo
+600 ms antes de pintar. Saca **44 de accesibilidad y 58 de SEO**, y el freno lee esos números en vez
+de conformarse con el fallo — un rojo podría venir de que la medición no llegó a correr, y eso no
+probaría que el freno sabe medir. `check:lighthouse` no tuvo prueba negativa hasta la revisión final.
 
 **Estado.** ✅ verde en local sobre la salida `standalone`. Las mismas dos órdenes corren en CI.
 
@@ -230,11 +234,30 @@ límites de `data_model` §2.6) · `npm run check:archivos` (ninguna orden de li
 cero entregables versionados) · `npm run test:visor` (45 comprobaciones: el entregable
 **hostil** que hace las siete cosas que el visor tiene que impedir) · `npm run test:descargas`.
 
-**Prueba negativa.** `check:brakes` → «listado de un bucket en el código» y «entregable versionado en
-un repositorio público».
+**Prueba negativa.** `check:brakes` → «listado de un bucket en el código», «entregable versionado en
+un repositorio público» y «entregable versionado DENTRO de `public/`», que además se sirve sin
+autenticación.
 
-**Estado.** ✅ verde. El criterio de DU-19 que pide la prueba **contra el origen separado desplegado**
-sigue abierto: hoy está verificada la capa 1 **declarada** y las capas 2 y 3 en funcionamiento.
+**Checklist manual — el visor desde su origen separado DEFINITIVO**, que es la capa 1 en
+funcionamiento y ningún script puede dar mientras el subdominio no exista:
+
+1. Abrir `https://visor.softlandingglobal.com/` a secas → **404**, no la portada del sitio. (Si sale
+   la portada, el dominio apunta mal y el aislamiento **no existe**.) → sí / no.
+2. Desde el portal, abrir un entregable HTML publicado: se ve dentro del `iframe` → sí / no.
+3. Copiar la URL del `iframe`, quitarle los parámetros `c` y `f`, y abrirla en otra pestaña → **404**.
+   Es el vale de D-151: sin él, el identificador volvería a ser la única credencial. → sí / no.
+4. Esperar a que pase el TTL (`SIGNED_URL_TTL_DELIVERABLE_MINUTES`, 15 min por defecto) y recargar la
+   URL completa → **404**: el vale caduca. → sí / no.
+5. En las herramientas del navegador, pestaña **Application → Cookies**, con el visor abierto: **no
+   hay ninguna cookie del dominio de la aplicación**. Si la hay, está puesta a nivel de dominio padre
+   y el aislamiento se ha evaporado. → sí / no.
+6. **Anotar el resultado de los cinco pasos en `docs/work_log.md`**, con la fecha. Un gate manual sin
+   resultado escrito es un gate que nadie sabe si se pasó.
+
+**Estado.** ✅ la parte mecanizable, y es casi toda. ⏳ la checklist manual: la capa 1 está verificada
+**declarada** —el código se niega a servir si el origen no está separado— y las capas 2 y 3 en
+funcionamiento, pero el criterio 3 de DU-19 pide la prueba **contra el origen desplegado**, y eso
+espera al subdominio.
 
 ---
 
@@ -244,7 +267,7 @@ sigue abierto: hoy está verificada la capa 1 **declarada** y las capas 2 y 3 en
 probada**; variables de entorno documentadas sin valores; monitor de caída.
 
 **Comprueba.** `npm run test:respaldos` (32 comprobaciones: copia, cifrado, subida, purga, centinela y
-**restauración desde una copia antigua** en otra base de datos) · `npm run check:env` (77 variables
+**restauración desde una copia antigua** en otra base de datos) · `npm run check:env` (79 variables
 declaradas, todas documentadas y **sin un solo valor**) · `npm run check:literacy` (todas aparecen en
 el manual) · `npm run check:runtime` (cabeceras y compuerta de staging sobre el servidor real).
 
@@ -256,6 +279,17 @@ el manual) · `npm run check:runtime` (cabeceras y compuerta de staging sobre el
 4. **Restaurar en staging desde una copia de hace más de un día** y comprobar los datos → sí / no.
 5. Apagar **el VPS entero** y comprobar que el aviso del monitor llega por un canal que **no depende
    del VPS** → sí / no.
+
+**Prueba negativa.** `check:brakes` → **«el entorno de ejecución contra un despliegue mal hecho»**: un
+servidor sin cabeceras de seguridad, con `x-powered-by`, con `noindex` en producción, con `/api/ops`
+abierto y ejecutando por GET, y con una CSP que promete un nonce que el HTML no lleva. **25 de las 33
+comprobaciones salen en rojo**; las 8 que no son las que solo dicen «responde 200». `check:runtime`
+no tuvo prueba negativa hasta la revisión final, y es de los que más prometen: mide lo que sale por
+el socket, no lo que dice `next.config.ts`.
+
+El centinela de D-155 tiene la suya **dentro de `test:respaldos`** y no en `check:brakes`: borra a
+mano una copia que debería seguir ahí —saltándose el producto, que es lo que haría un atacante— y
+comprueba que la purga siguiente lo detecta, lo dice por su clave y **no borra nada más**.
 
 **Estado.** ⏳ el mecanismo está verificado en laboratorio; los cinco pasos necesitan el despliegue.
 
@@ -297,10 +331,16 @@ del manual que desaparece, y una variable sin explicar o **con su valor escrito 
 | D7 Conversión | `test:crm` · `test:descargas` · `test:correo` | CRM real | ⏳ |
 | D8 Identidad | `test:acceso` · `test:invitaciones` · `test:permisos` | Google y Microsoft | ⏳ |
 | D9 Aislamiento | `test:aislamiento` · `test:permisos` · `test:api` · `test:shell` | — | ✅ |
-| D10 Archivos | `test:archivos` · `check:archivos` · `test:visor` · `test:descargas` | visor desplegado | ✅ |
+| D10 Archivos | `test:archivos` · `check:archivos` · `test:visor` · `test:descargas` | visor desplegado | ⏳ |
 | D11 Operación | `test:respaldos` · `check:env` · `check:literacy` · `check:runtime` | despliegue y monitor | ⏳ |
 | D12 Literacy | `check:literacy` | la prueba con Ricardo | ⏳ |
 
-**Seis en verde, siete esperando algo que no es código.** Ninguno de los siete espera a que alguien
+**Cinco en verde, ocho esperando algo que no es código.** Ninguno de los ocho espera a que alguien
 escriba más: esperan un despliegue, dos registros de OAuth, el CRM real, o a una persona haciendo
 algo y anotando el resultado.
+
+> D10 estaba en esta tabla como ✅ **con una línea pendiente en su propia casilla** —«visor
+> desplegado»— y su sección lo decía en prosa: «sigue abierto». Un gate no puede estar verde y
+> abierto a la vez; lo que faltaba era la checklist que convierte ese «sigue abierto» en cinco pasos
+> que alguien pueda hacer. Lo encontró la revisión final, al hacer que `check:anexo-d` comprobara que
+> **todo gate con parte manual trae su checklist**.

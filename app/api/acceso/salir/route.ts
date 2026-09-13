@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { cerrarSesion, sesionActual } from "@/lib/auth";
+import { cerrarSesion, COOKIES_DE_SESION, sesionActual } from "@/lib/auth";
 
 /**
  * «Cerrar sesión» — la respuesta a «cómo salgo» (FU-12, RNF-43).
@@ -22,7 +22,8 @@ export async function POST(request: NextRequest) {
   if (sesion) await cerrarSesion(sesion.sessionId);
 
   const salida = NextResponse.redirect(new URL("/acceder", request.url), 303);
-  salida.cookies.delete("better-auth.session_token");
-  salida.cookies.delete("__Secure-better-auth.session_token");
+  // Los NOMBRES los sabe `lib/auth`, no esta ruta: el día que el proveedor
+  // renombre su cookie, aquí no hay nada que tocar (R-19).
+  for (const nombre of COOKIES_DE_SESION) salida.cookies.delete(nombre);
   return salida;
 }

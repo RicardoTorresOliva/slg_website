@@ -96,6 +96,104 @@ check(
   sinComprobacion.length === 0,
   sinComprobacion.join(", "),
 );
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * La cláusula que estaba escrita y no comprobaba nada
+ * ══════════════════════════════════════════════════════════════════════════
+ *
+ * La comprobación de arriba se llama «no “revisar que se ve bien”» y **nunca
+ * miraba una sola palabra de los pasos**: solo entraba cuando un gate no traía
+ * ningún `npm run …`, así que un gate con comando podía llevar al lado la
+ * cláusula humana más vaga del mundo y pasaba en verde. Peor: un gate con parte
+ * manual que **no traía checklist ninguna** también pasaba, porque su comando
+ * lo salvaba. D10 era justo ese caso —«visor desplegado» en la tabla, «sigue
+ * abierto» en prosa, ✅ en el estado— y llevaba así desde DU-25.
+ *
+ * Lo que sigue lo convierte en tres comprobaciones que sí miran:
+ *
+ *   1. Todo gate con parte manual **en la tabla resumen** trae su checklist.
+ *   2. Esa checklist tiene pasos con **resultado anotable**, no pasos sueltos.
+ *   3. Ningún gate contiene ninguna de las fórmulas vagas que el proyecto
+ *      decidió prohibir. La lista es explícita: un freno que dice «vago» sin
+ *      decir qué considera vago no se puede ni discutir ni arreglar.
+ */
+
+/** La tabla resumen: `| D10 Archivos | … | visor desplegado | ⏳ |`. */
+function partesManuales(): Map<string, string> {
+  const manual = new Map<string, string>();
+  for (const fila of texto.matchAll(/^\|\s*(D\d+b?)\s[^|]*\|[^|]*\|([^|]*)\|/gm)) {
+    const pendiente = fila[2]!.trim();
+    if (pendiente && pendiente !== "—" && pendiente !== "-") manual.set(fila[1]!, pendiente);
+  }
+  return manual;
+}
+
+const conParteManual = partesManuales();
+check(
+  "la tabla resumen declara qué gates tienen parte manual",
+  conParteManual.size > 0,
+  `${conParteManual.size}`,
+);
+
+const sinChecklist: string[] = [];
+const sinResultadoAnotable: string[] = [];
+for (const [gate, pendiente] of conParteManual) {
+  const parte = partes.get(gate);
+  if (!parte) continue;
+  if (!/checklist manual/i.test(parte)) {
+    sinChecklist.push(`${gate} (pendiente: ${pendiente})`);
+    continue;
+  }
+  /**
+   * **Resultado anotable**, que es lo que D-149 prometió y nadie comprobaba: un
+   * paso que termina en `→ sí / no`, una casilla `- [ ]`, o una instrucción de
+   * anotar. Sin eso, una checklist es una lista de buenas intenciones: se
+   * ejecuta, se olvida, y nadie puede decir después si se pasó.
+   */
+  const anotable =
+    /→\s*(?:sí|si|no)/i.test(parte) || /^- \[ \]/m.test(parte) || /\b(?:anot|apunt|registr)[ae]/i.test(parte);
+  if (!anotable) sinResultadoAnotable.push(gate);
+}
+check(
+  "todo gate con parte manual trae su **checklist manual**, no solo el comando",
+  sinChecklist.length === 0,
+  sinChecklist.join(", "),
+);
+check(
+  "y sus pasos dejan un resultado anotable (`→ sí / no`, casilla o «anota»)",
+  sinResultadoAnotable.length === 0,
+  sinResultadoAnotable.join(", "),
+);
+
+/**
+ * Las fórmulas prohibidas, **escritas una a una**. No es una heurística de
+ * vaguedad: es la lista concreta que este proyecto decidió que no cuenta como
+ * comprobación, y por eso se puede discutir, ampliar y arreglar. Todas
+ * comparten lo mismo: nombran un juicio sin decir contra qué se compara.
+ */
+const FORMULAS_VAGAS: readonly RegExp[] = [
+  /revisar que se ve bien/i,
+  /comprobar que (?:está|esta|todo está|todo esta) bien/i,
+  /que funcione bien/i,
+  /verificar visualmente/i,
+  /echar un vistazo/i,
+  /asegurarse de que (?:va|funciona|está) bien/i,
+  /dar el visto bueno/i,
+];
+const conFormulaVaga: string[] = [];
+for (const gate of GATES) {
+  const parte = partes.get(gate);
+  if (!parte) continue;
+  for (const formula of FORMULAS_VAGAS) {
+    const hallada = formula.exec(parte);
+    if (hallada) conFormulaVaga.push(`${gate} → «${hallada[0]}»`);
+  }
+}
+check(
+  "y ninguno se apoya en una fórmula vaga: un juicio sin nada contra lo que comparar",
+  conFormulaVaga.length === 0,
+  conFormulaVaga.join(", "),
+);
 check(
   "todo `npm run …` que se nombra EXISTE en package.json",
   inventados.length === 0,

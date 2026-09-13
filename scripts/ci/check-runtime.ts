@@ -303,7 +303,28 @@ async function staging(base: string) {
   );
 }
 
+/**
+ * **`RUNTIME_BASE` apunta el medidor a otro servidor**, y existe por una razón
+ * concreta: hasta la revisión final este freno **no tenía prueba negativa**.
+ * Nadie lo había visto ponerse rojo, así que su verde no significaba nada —que
+ * es literalmente lo que dice R-26—. Con un `fetch` mal escrito, una cabecera
+ * renombrada o un `check` que compara contra sí mismo, este archivo habría
+ * anunciado «sin fallos» sobre un servidor sin CSP y nadie lo habría notado.
+ *
+ * Apuntándolo al fixture de `negative/runtime/`, las tres fases miden un
+ * servidor que sirve **todo lo contrario**: sin cabeceras de seguridad, con
+ * `x-powered-by`, con `/api/ops` abierto de par en par y sin compuerta de
+ * staging. Si alguna comprobación sigue en verde ahí, esa comprobación no
+ * comprueba.
+ */
 async function main() {
+  const externo = process.env.RUNTIME_BASE;
+  if (externo) {
+    await produccion(externo);
+    await staging(externo);
+    await opsConTestigo(externo);
+    return terminar();
+  }
   await conServidor({ STAGING_BASIC_AUTH_USER: "", STAGING_BASIC_AUTH_PASSWORD: "" }, produccion);
   await conServidor(
     { STAGING_BASIC_AUTH_USER: USUARIO, STAGING_BASIC_AUTH_PASSWORD: CLAVE },
@@ -314,6 +335,10 @@ async function main() {
     opsConTestigo,
   );
 
+  terminar();
+}
+
+function terminar(): void {
   if (fallos.length > 0) {
     console.error(`✗ runtime: ${fallos.length} fallo(s) sobre ${comprobaciones} comprobaciones.\n`);
     for (const f of fallos) console.error(`  ${f.caso}\n    · ${f.detalle}`);

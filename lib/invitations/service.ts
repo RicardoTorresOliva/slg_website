@@ -13,7 +13,7 @@
 import { and, eq, sql } from "drizzle-orm";
 
 import { exigir, ErrorDeAutorizacion } from "../auth/index.ts";
-import type { AuthContext } from "../db/context.ts";
+import { type AuthContext, esActorDeSLG } from "../db/context.ts";
 import { invitation, ORG_TYPES, USER_ROLES, type UserRole } from "../db/schema.ts";
 import { withScope, withSystemScope } from "../db/scope.ts";
 import { enviarCorreo } from "../mail/index.ts";
@@ -63,7 +63,11 @@ function exigirAlcanceDeLaInvitacion(
 ): void {
   exigir(ctx, "member.invite");
 
-  const esDeSlg = ctx.actorRole === "slg_admin" || ctx.actorRole === "slg_operator";
+  // `esActorDeSLG` y no la comparación a mano: la lista de roles que operan por
+  // encima de una empresa vive en `lib/db/context.ts` y **ya estaba exportada**.
+  // Escrita otra vez aquí, el día que esa lista cambie quedan dos verdades y una
+  // de las dos calla. Lo encontró la revisión final.
+  const esDeSlg = esActorDeSLG(ctx);
 
   // Conceder un rol de SLG es dar de alta a un usuario de SLG, que en B.3 es
   // una fila distinta y solo de `slg_admin`.

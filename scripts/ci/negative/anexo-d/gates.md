@@ -22,3 +22,35 @@ script que «seguro que existe»; y el estado se deja para después.
 
 **Exige.** Se revisa que el movimiento se vea bien y que no moleste. Hay que mirarlo con atención
 antes de publicar, y si algo chirría, se corrige.
+
+## D4 · i18n
+
+**Exige.** Paridad ES/EN.
+
+**Comprueba.** `npm run check:pairs`
+
+**Estado.** ✅ verde.
+
+La checklist de este gate es el ejemplo de lo que D-149 prohibió y `check:anexo-d` no comprobaba:
+
+**Checklist manual:**
+
+1. Abrir las dos versiones y revisar que se ve bien.
+2. Dar el visto bueno.
+
+## D5 · Contenido
+
+**Exige.** Nada sin fuente.
+
+**Comprueba.** `npm run check:copy`
+
+**Estado.** ✅ verde. Este gate tiene parte manual declarada en la tabla y **ninguna checklist**: el
+comando lo salvaba y pasaba en verde.
+
+## Resumen
+
+| Gate | Automático | Manual pendiente | Estado |
+|---|---|---|---|
+| D1 Rendimiento | `check:lighthouse` | — | ✅ |
+| D4 i18n | `check:pairs` | una pasada por pantalla | ✅ |
+| D5 Contenido | `check:copy` | leer los textos con alguien | ✅ |

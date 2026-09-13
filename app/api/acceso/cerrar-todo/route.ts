@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { cerrarTodasLasSesiones, sesionActual } from "@/lib/auth";
+import { cerrarTodasLasSesiones, COOKIES_DE_SESION, sesionActual } from "@/lib/auth";
 
 /**
  * «Cerrar sesión en todos los dispositivos» (RF-66, criterio 7 de DU-01).
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
   const salida = NextResponse.redirect(new URL("/acceder", request.url), 303);
   // La cookie del navegador que pidió el cierre se borra aquí; las de los demás
   // dispositivos ya no valen porque su fila no existe.
-  salida.cookies.delete("better-auth.session_token");
-  salida.cookies.delete("__Secure-better-auth.session_token");
+  // Los NOMBRES los sabe `lib/auth`, no esta ruta (R-19).
+  for (const nombre of COOKIES_DE_SESION) salida.cookies.delete(nombre);
   return salida;
 }

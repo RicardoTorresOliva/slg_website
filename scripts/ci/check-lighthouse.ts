@@ -22,8 +22,20 @@ import { chromium, type Browser } from "playwright";
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 const SERVER = path.join(REPO_ROOT, ".next", "standalone", "server.js");
 
-/** Las tres páginas que el gate D1/D6 exige: portada, servicio y artículo. */
-const PAGINAS = ["/", "/ai/enterprise/readiness", "/blog/mes-cuatro"];
+/**
+ * Las tres páginas que el gate D1/D6 exige: portada, servicio y artículo.
+ *
+ * `LH_PAGINAS` las sustituye, y `LH_BASE` apunta el medidor a otro servidor.
+ * Existen por una razón concreta: hasta la revisión final **este freno no tenía
+ * prueba negativa**. Nadie lo había visto en rojo, y un freno cuyo rojo nadie ha
+ * visto no significa nada en verde (R-26) — aquí especialmente, porque entre el
+ * medidor y el veredicto hay una librería entera: bastaba leer una categoría con
+ * otro nombre para que todo saliera `undefined`, cayera a 0… o a `?? 100`.
+ */
+const PAGINAS = (process.env.LH_PAGINAS ?? "/,/ai/enterprise/readiness,/blog/mes-cuatro")
+  .split(",")
+  .map((r) => r.trim())
+  .filter(Boolean);
 
 const MINIMOS = {
   performance: Number(process.env.LH_MIN_PERFORMANCE ?? 90),
@@ -111,7 +123,8 @@ function fueUnFalloDeMedicion(r: Medicion): boolean {
 
 async function main() {
   const { default: lighthouse } = await import("lighthouse");
-  const { base, parar } = await arrancar();
+  const externo = process.env.LH_BASE;
+  const { base, parar } = externo ? { base: externo, parar: () => {} } : await arrancar();
   let navegador: Browser | null = null;
 
   try {

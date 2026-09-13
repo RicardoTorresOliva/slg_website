@@ -134,6 +134,27 @@ export async function cerrarTodasLasSesiones(userId: string): Promise<number> {
 }
 
 /**
+ * **LOS NOMBRES DE LA COOKIE DE SESIÓN VIVEN AQUÍ, no en las rutas.**
+ *
+ * Estaban escritos a mano en `/api/acceso/salir` y en `/api/acceso/cerrar-todo`,
+ * y eso es exactamente lo que el criterio 1 de FU-06 prohíbe: lógica de sesión
+ * dentro de un endpoint. Importa porque el fallo sería **silencioso**: el día
+ * que Better Auth renombre su cookie —o que se sustituya el proveedor, que es la
+ * mitigación de R-19— `cerrarSesion()` seguiría borrando la fila de la base y las
+ * dos rutas seguirían borrando una cookie que ya no existe. El usuario vería
+ * «sesión cerrada», el navegador conservaría la cookie, y la única señal sería
+ * que nadie consigue salir del todo. Lo encontró la revisión final, al hacer que
+ * `check:fronteras` comprobara de verdad el criterio que citaba.
+ *
+ * Son dos porque en HTTPS la cookie lleva el prefijo `__Secure-` y en local no.
+ * Borrar una sola deja la otra viva en el entorno equivocado.
+ */
+export const COOKIES_DE_SESION: readonly string[] = [
+  "better-auth.session_token",
+  "__Secure-better-auth.session_token",
+];
+
+/**
  * Cierra **solo esta** sesión (FU-12: la respuesta a «cómo salgo»).
  *
  * Es lo contrario de `cerrarTodasLasSesiones`, y las dos tienen que existir por

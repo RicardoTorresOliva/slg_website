@@ -15,6 +15,26 @@
  * vez de declarativos. Es la mitigación de R-19 y de R-05: el día que haya que
  * sustituir el proveedor de identidad o el de correo, la garantía de que solo
  * hay un sitio que tocar es este archivo, no la memoria de nadie.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * LO QUE ESTE FRENO COMPROBABA, Y LO QUE DECÍA COMPROBAR
+ *
+ * Hasta la revisión final este archivo miraba **solo importaciones**, y citaba
+ * un criterio que habla de otra cosa: «cero lógica de sesión, rol o
+ * `organization_id` **escrita dentro** de una página o de un endpoint». Un
+ * endpoint que no importe nada prohibido y aun así decida por su cuenta si el
+ * actor es de SLG, o que sepa cómo se llama la cookie del proveedor, incumple el
+ * criterio entero y pasaba en verde. El freno prometía más de lo que comprobaba.
+ *
+ * Las tres reglas del bloque «la lógica, no solo la importación» cierran esa
+ * distancia, y las tres encontraron algo real al escribirse: los nombres de la
+ * cookie de sesión estaban a mano en dos rutas de `/api/acceso`, y
+ * `lib/invitations/service.ts` reimplementaba `esActorDeSLG` en vez de llamarlo.
+ *
+ * LO QUE SIGUE SIN COMPROBARSE, dicho para que nadie lo dé por cubierto: una
+ * regla de texto ve la forma, no la intención. Un endpoint que llame a `puede()`
+ * con la acción equivocada pasa este freno y lo caza `test:permisos`, que recorre
+ * la matriz B.3 entera. Los dos hacen falta.
  */
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -76,6 +96,13 @@ type Regla = {
   readonly porQue: string;
   /** Rutas donde la regla no aplica, además del propio módulo. */
   readonly salvo?: readonly string[];
+  /**
+   * Prefijo al que la regla se limita. Las que hablan de «una página o un
+   * endpoint» son literalmente eso: `app/`. Sin esto habría que elegir entre no
+   * comprobarlas o marcar en rojo a los servicios de `lib/`, cuyo trabajo **es**
+   * razonar sobre la empresa del actor.
+   */
+  readonly soloEn?: string;
 };
 
 const REGLAS: readonly Regla[] = [
@@ -142,6 +169,79 @@ const REGLAS: readonly Regla[] = [
     porQue:
       "sesión y claves se leen por el módulo, que aplica caducidad, revocación " +
       "y límite. Una consulta directa se salta las tres.",
+  },
+
+  /* ── La LÓGICA, no solo la importación ──────────────────────────────────
+   * Las tres que hacen que este freno compruebe el criterio que cita.
+   */
+
+  {
+    nombre: "decide por el rol del actor a mano",
+    /**
+     * `ctx.actorRole === "slg_admin"` escrito fuera del módulo. La lista de
+     * roles que operan por encima de una empresa vive en **un** sitio
+     * (`esActorDeSLG`, `cruzaEmpresas`) y el veredicto de quién puede qué vive
+     * en la matriz B.3 (`puede`, `exigir`, `exigirSeccion`).
+     *
+     * Escrita otra vez a mano hay **dos verdades**, y el día que una cambie la
+     * otra calla — que es la peor forma de fallo de autorización, porque no hay
+     * error: simplemente alguien ve algo que no debía. Ya había una copia, en
+     * `lib/invitations/service.ts`, y llevaba desde FU-07.
+     */
+    re: /\bactorRole\s*(?:===|!==|==|!=)|(?:===|!==|==|!=)\s*\w+\.actorRole\b|\.includes\(\s*\w+\.actorRole\b/,
+    porQue:
+      "quién es de SLG lo dice `esActorDeSLG`/`cruzaEmpresas`, y quién puede qué " +
+      "lo dice la matriz B.3 por `puede`/`exigir`. Comparar el rol a mano crea una " +
+      "segunda verdad que nadie actualiza (B.3, FU-06 criterio 1).",
+    salvo: [DEFINE_EL_CONTEXTO],
+  },
+  {
+    nombre: "nombra la cookie de sesión del proveedor",
+    /**
+     * El nombre de la cookie es un detalle **del proveedor**, no del producto.
+     * Escrito en una ruta, el día que Better Auth lo cambie —o que se sustituya,
+     * que es R-19— esa ruta borra una cookie que ya no existe **sin fallar**:
+     * la fila de la base sí se borra, así que parece que funciona.
+     */
+    /**
+     * El literal con **un punto detrás del nombre del proveedor**:
+     * `"better-auth.session_token"` y `"__Secure-better-auth.session_token"`. No
+     * basta con buscar `session_token`, que además es el nombre de un índice de
+     * la base (`uq_session_token`) y marcaba `lib/db/schema.ts` en rojo; ni vale
+     * buscar `better-auth` a secas, que es el especificador del módulo y ya lo
+     * caza la regla de importación — dos reglas señalando la misma línea enseñan
+     * a no leer los hallazgos.
+     */
+    re: /["'][^"']*better-auth\.[^"']*["']/,
+    porQue:
+      "cómo se llama la cookie lo sabe `lib/auth` (`COOKIES_DE_SESION`). Escrito " +
+      "fuera, cambiar de proveedor rompe el cierre de sesión en silencio (R-19).",
+  },
+  {
+    nombre: "compara la empresa del actor a mano en una página o un endpoint",
+    /**
+     * `assertMismaEmpresa` existe para esto, y devuelve **404 y no 403** a
+     * propósito: un 403 confirma que esa empresa existe. Una comparación escrita
+     * a mano en una pantalla acierta con el filtrado y falla con el código, y ese
+     * detalle es el que filtra el mapa de clientes de SLG.
+     *
+     * Solo en `app/`: los servicios de `lib/` sí razonan sobre la empresa del
+     * actor —es su trabajo— y ahí la comparación está en su sitio.
+     */
+    /**
+     * **`ctx.` delante, y no cualquier objeto.** La primera versión decía
+     * `\w+.organizationId` y marcaba en rojo una pantalla que compara el
+     * `organizationId` de un **aviso** con el de una lista de empresas para
+     * pintar su nombre. Eso no es lógica de autorización: es pintar. Lo que el
+     * criterio prohíbe es razonar sobre **la empresa del actor**, y el actor
+     * siempre viaja en un `ctx` (`ctx.organizationId`, `sesion.ctx.organizationId`).
+     */
+    re: /\bctx\.organizationId\s*(?:===|!==|==|!=)|(?:===|!==|==|!=)\s*[\w.]*\bctx\.organizationId\b/,
+    porQue:
+      "comparar la empresa del actor contra un id de la ruta es `assertMismaEmpresa`, " +
+      "que responde 404 y no 403 (FU-04). A mano se acierta el filtro y se falla el " +
+      "código, y el código es el que dice si esa empresa existe.",
+    soloEn: "app/",
   },
 ];
 
@@ -243,6 +343,16 @@ for (const abs of archivos()) {
   const lineas = fs.readFileSync(abs, "utf8").split("\n");
   for (const regla of REGLAS) {
     if (regla.salvo?.includes(rel)) continue;
+    /**
+     * `soloEn` se compara contra la ruta **relativa al barrido**, no al
+     * repositorio: con `FRONTERAS_ROOT` apuntando a los fixtures, `app/` es la
+     * carpeta `app/` de dentro del fixture. Sin esto, la regla acotada no se
+     * podría probar en rojo y sería una regla que nadie ha visto frenar (R-26).
+     */
+    if (regla.soloEn) {
+      const relAlBarrido = path.relative(SCAN_ROOT, abs).split(path.sep).join("/");
+      if (!relAlBarrido.startsWith(regla.soloEn)) continue;
+    }
     lineas.forEach((linea, i) => {
       if (linea.trimStart().startsWith("*") || linea.trimStart().startsWith("//")) return;
       if (regla.re.test(linea)) hallazgos.push({ archivo: rel, linea: i + 1, regla });

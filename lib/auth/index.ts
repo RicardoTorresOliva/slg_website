@@ -40,6 +40,7 @@ export {
 } from "./permissions.ts";
 
 export {
+  COOKIES_DE_SESION,
   MENSAJE_NEUTRO,
   proveedoresDisponibles,
   esperaPendienteEnSegundos,

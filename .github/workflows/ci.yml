@@ -94,6 +94,11 @@ jobs:
 
       # Criterio 1 de FU-06 y de FU-08: cero lógica de identidad fuera de
       # lib/auth/, cero transporte de correo fuera de lib/mail/.
+      #
+      # Miraba SOLO importaciones y citaba un criterio que habla de la lógica
+      # escrita dentro de una página o un endpoint. Desde la revisión final
+      # comprueba también las tres formas de escribirla a mano: el rol del actor
+      # comparado, el nombre de la cookie del proveedor, y la empresa del actor.
       - name: Fronteras de los módulos encapsulados
         run: npm run check:fronteras
 

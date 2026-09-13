@@ -115,6 +115,17 @@ const CASOS: Caso[] = [
       "ninguno se queda en prosa",
       "todo `npm run …` que se nombra EXISTE",
       "cada gate declara su estado",
+      /**
+       * Las tres de la revisión final. La cláusula «no “revisar que se ve
+       * bien”» llevaba escrita desde DU-25 **sin mirar una sola palabra**: solo
+       * entraba cuando un gate no traía ningún `npm run …`, así que un comando
+       * salvaba cualquier cláusula humana por vaga que fuera — y salvaba
+       * también a un gate con parte manual y **sin checklist ninguna**, que es
+       * lo que le pasaba a D10.
+       */
+      "todo gate con parte manual trae su",
+      "resultado anotable",
+      "fórmula vaga",
     ],
     env: { ANEXO_D_PATH: path.join(HERE, "negative/anexo-d/gates.md") },
   },
@@ -172,6 +183,25 @@ const CASOS: Caso[] = [
     freno: "frontera de módulo cruzada",
     script: "check-fronteras.ts",
     espera: "importa el framework de identidad",
+    env: { FRONTERAS_ROOT: path.join(HERE, "negative/fronteras") },
+  },
+  {
+    /**
+     * **El freno citaba un criterio que no comprobaba.** El criterio 1 de FU-06
+     * dice «cero lógica de sesión, rol o `organization_id` escrita dentro de una
+     * página o de un endpoint», y el freno miraba solo importaciones: un endpoint
+     * que no importe nada prohibido y aun así decida por su cuenta si el actor es
+     * de SLG pasaba en verde. El fixture es justo ese endpoint —importaciones
+     * impecables, criterio incumplido tres veces— y las tres reglas nuevas tienen
+     * que verlo, cada una por su motivo.
+     */
+    freno: "la LÓGICA de sesión, rol y empresa escrita dentro de un endpoint",
+    script: "check-fronteras.ts",
+    espera: [
+      "decide por el rol del actor a mano",
+      "nombra la cookie de sesión del proveedor",
+      "compara la empresa del actor a mano",
+    ],
     env: { FRONTERAS_ROOT: path.join(HERE, "negative/fronteras") },
   },
   {
@@ -480,6 +510,117 @@ console.log("\nFreno del blog — contra un blog que publica sus borradores:\n")
     fallos++;
     console.error(`  ✗ blog: NO falló como debía (exit ${res.status}).`);
     if (faltan.length) console.error(`      no mencionó: ${faltan.join(" · ")}`);
+  }
+}
+
+frenosConServidor++;
+console.log("\nFreno del entorno de ejecución — contra un despliegue mal hecho:\n");
+{
+  /**
+   * **ESTE FRENO NO TENÍA PRUEBA NEGATIVA**, y es de los que más prometen: mide
+   * las cabeceras de seguridad, la compuerta de staging y la puerta de
+   * `/api/ops` sobre el servidor de verdad. Nadie lo había visto en rojo, así
+   * que su verde no significaba nada (R-26). Lo encontró la revisión final.
+   *
+   * El fixture es el despliegue mal hecho: sin cabeceras, con `x-powered-by`,
+   * con `noindex` en producción, con `/api/ops` abierto y ejecutando por GET, y
+   * con una CSP que promete un nonce que el HTML no lleva — el fallo silencioso
+   * que dio origen a `politicaPorSuperficie`, donde el sitio se ve y no funciona.
+   */
+  const fixture = spawn(process.execPath, [path.join(HERE, "negative/runtime/servidor.ts")], {
+    cwd: REPO_ROOT,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  const base = await new Promise<string>((resolve, reject) => {
+    const limite = setTimeout(() => reject(new Error("el fixture de runtime no arrancó")), 15_000);
+    fixture.stdout.on("data", (c: Buffer) => {
+      const m = /http:\/\/127\.0\.0\.1:\d+/.exec(c.toString());
+      if (m) {
+        clearTimeout(limite);
+        resolve(m[0]);
+      }
+    });
+  });
+  const res = spawnSync(process.execPath, [path.join(HERE, "check-runtime.ts")], {
+    encoding: "utf8",
+    cwd: REPO_ROOT,
+    env: { ...process.env, RUNTIME_BASE: base },
+  });
+  fixture.kill("SIGTERM");
+  const salida = `${res.stdout ?? ""}${res.stderr ?? ""}`;
+  const esperados = [
+    "strict-transport-security",
+    "no revela el framework",
+    "NO lleva noindex",
+    "/api/ops NO existe sin OPS_TOKEN",
+    "staging · sin credenciales devuelve 401",
+    "una acción pedida por GET NO se ejecuta",
+    "el nonce cambia en cada petición",
+  ];
+  const faltan = esperados.filter((e) => !salida.includes(e));
+  if (res.status === 1 && faltan.length === 0) {
+    console.log(
+      "  ✓ runtime: falló como debía (cabeceras, ops abierto, staging sin compuerta y nonce fijo)",
+    );
+  } else {
+    fallos++;
+    console.error(`  ✗ runtime: NO falló como debía (exit ${res.status}).`);
+    if (faltan.length) console.error(`      no mencionó: ${faltan.join(" · ")}`);
+  }
+}
+
+frenosConServidor++;
+console.log("\nFreno de Lighthouse — contra una página mala de verdad:\n");
+{
+  /**
+   * **TAMPOCO TENÍA PRUEBA NEGATIVA.** Y aquí importa más que en otros: entre la
+   * página y el veredicto hay una librería entera. Si `lhr.categories` cambiara
+   * de forma, si una categoría se leyera con otro nombre, o si alguien tapara un
+   * `undefined` con un `?? 100`, este freno anunciaría cuatro cien sobre un sitio
+   * inservible. Medir bien no es lo mismo que **leer bien lo medido**.
+   *
+   * Se comprueba contra **accesibilidad y SEO**, no contra rendimiento: la
+   * página mala saca 44 y 58, que están lejos de cualquier umbral, mientras que
+   * el rendimiento queda rozando el 90 y variaría de una corrida a otra. Un
+   * freno que a veces pasa y a veces no es peor que no tenerlo.
+   */
+  const fixture = spawn(process.execPath, [path.join(HERE, "negative/lighthouse/servidor.ts")], {
+    cwd: REPO_ROOT,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  const base = await new Promise<string>((resolve, reject) => {
+    const limite = setTimeout(() => reject(new Error("el fixture de lighthouse no arrancó")), 15_000);
+    fixture.stdout.on("data", (c: Buffer) => {
+      const m = /http:\/\/127\.0\.0\.1:\d+/.exec(c.toString());
+      if (m) {
+        clearTimeout(limite);
+        resolve(m[0]);
+      }
+    });
+  });
+  const res = spawnSync(process.execPath, [path.join(HERE, "check-lighthouse.ts")], {
+    encoding: "utf8",
+    cwd: REPO_ROOT,
+    env: { ...process.env, LH_BASE: base, LH_PAGINAS: "/" },
+  });
+  fixture.kill("SIGTERM");
+  const salida = `${res.stdout ?? ""}${res.stderr ?? ""}`;
+  /**
+   * Se leen los NÚMEROS, no solo el exit 1: que salga rojo podría deberse a que
+   * la medición no llegó a correr, y eso no prueba que el freno sepa medir.
+   * Accesibilidad y SEO por debajo de 70 solo pueden venir de una auditoría de
+   * verdad sobre una página sin `lang`, sin `title` y sin contraste.
+   */
+  const acce = Number(/acce\s+(\d+)/.exec(salida)?.[1] ?? "100");
+  const seo = Number(/seo\s+(\d+)/.exec(salida)?.[1] ?? "100");
+  const midioDeVerdad = acce < 70 && seo < 70;
+  const sePudoMedir = !salida.includes("NO SE PUDO MEDIR");
+  if (res.status === 1 && midioDeVerdad && sePudoMedir) {
+    console.log(`  ✓ lighthouse: falló como debía (accesibilidad ${acce}, SEO ${seo}, medidos de verdad)`);
+  } else {
+    fallos++;
+    console.error(`  ✗ lighthouse: NO falló como debía (exit ${res.status}, acce ${acce}, seo ${seo}).`);
+    if (!sePudoMedir) console.error("      la medición no llegó a correr: eso no prueba el freno.");
   }
 }
 

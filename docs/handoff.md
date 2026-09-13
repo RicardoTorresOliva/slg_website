@@ -59,8 +59,8 @@ Lighthouse móvil medido — **100 de accesibilidad** en portada, servicio y art
 a que alguien escriba una función. Lo que falta es: dos compuertas de aprobación de Ricardo, y acceso
 a paneles externos.
 
-**Verificación en verde el 2026-09-13** (tras la revisión final): `check:brakes` con **37** frenos,
-cada uno visto en rojo por su motivo · `test:db` con **826** comprobaciones contra PostgreSQL, SMTP y
+**Verificación en verde el 2026-09-13** (tras la revisión final): `check:brakes` con **40** frenos,
+cada uno visto en rojo por su motivo · `test:db` con **832** comprobaciones contra PostgreSQL, SMTP y
 servidores HTTP reales · `test:gesto` con **10** comprobaciones cuadro a cuadro sobre un Chromium
 real.
 
@@ -212,9 +212,9 @@ actualiza `docs/project_memory.md`.
 |---|---|
 | Base de datos efímera para las pruebas | `bash scripts/db/local-pg.sh up` |
 | Pipeline entero | `npm run check:ci` |
-| Que los **37** frenos siguen frenando (el número lo imprime el script) | `npm run check:brakes` |
+| Que los **40** frenos siguen frenando (el número lo imprime el script) | `npm run check:brakes` |
 | El visor contra un entregable hostil | `npm run test:visor` |
-| Las **826** comprobaciones contra base, correo, archivos, CRM, webhooks, HQ, portal y API | `npm run test:db` |
+| Las **832** comprobaciones contra base, correo, archivos, CRM, webhooks, HQ, portal y API | `npm run test:db` |
 | Cero terceros en la capa pública, medido con un navegador | `npm run check:terceros` |
 | Las cuatro cláusulas del sheet, cuadro a cuadro | `npm run test:gesto` |
 

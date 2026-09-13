@@ -2570,18 +2570,70 @@ la trazabilidad de las capturas anteriores.
 
 | Qué | Antes | Después |
 |---|---|---|
-| `test:db` | 774 comprobaciones | **826** |
+| `test:db` | 774 comprobaciones | **832** |
 | `test:visor` | 25, ninguna contra la base | **45**, nueve contra PostgreSQL real |
 | `test:api` | 124 | **130** |
 | `test:respaldos` | 27 | **32** |
-| `check:brakes` | 31 anunciados, 35 reales, el job sin base | **37 contados solos**, en el job que tiene base |
+| `check:brakes` | 31 anunciados, 35 reales, el job sin base | **40 contados solos**, en el job que tiene base |
 | Chequeos del playbook | pasaban sobre cero unidades | corren en CI, sobre las 25 |
 
-### Lo que queda abierto, y no es poco
+### Los cuatro frenos que prometían más de lo que comprobaban — **cerrados**
 
-Los revisores dejaron hallazgos que **no** se han cerrado, y quedan aquí por nombre para que no se
-pierdan: `check:fronteras` no verifica el criterio que cita; la cláusula «revisar que se ve bien» de
-`check:anexo-d` es inerte; `check:runtime` y `check:lighthouse` no tienen prueba negativa; y hay
-números desfasados en `project_memory.md` y `handoff.md`. Ninguno es un defecto del producto: son
-frenos que prometen más de lo que comprueban, que es el mismo tipo de problema que esta revisión
-encontró en los tres del playbook. Merecen una unidad propia, no un arreglo al vuelo.
+Quedaron abiertos al cerrar los ocho críticos y se han cerrado después, a petición de Ricardo. Son el
+mismo tipo de problema que C-0: **un freno cuyo nombre describe una intención que nadie implementó**.
+Los cuatro encontraron algo real al arreglarse, que es la señal de que el hueco no era teórico.
+
+**1 · `check:fronteras` citaba un criterio y comprobaba otro.** Su cabecera cita, palabra por palabra,
+«cero lógica de sesión, rol o `organization_id` **escrita dentro** de una página o de un endpoint», y
+el archivo miraba **solo importaciones**. Un endpoint que no importara nada prohibido y aun así
+decidiera por su cuenta si el actor es de SLG pasaba en verde.
+
+Tres reglas nuevas —rol del actor comparado a mano, nombre de la cookie del proveedor escrito fuera
+del módulo, empresa del actor comparada a mano en `app/`— y las tres encontraron código real:
+
+- Los nombres de la cookie de sesión estaban **a mano en dos rutas** de `/api/acceso`. El fallo habría
+  sido silencioso: el día que el proveedor la renombre, `cerrarSesion()` seguiría borrando la fila y
+  las rutas seguirían borrando una cookie que ya no existe. El usuario ve «sesión cerrada» y el
+  navegador conserva la cookie. Ahora los nombres viven en `COOKIES_DE_SESION`, dentro de `lib/auth`.
+- `lib/invitations/service.ts` **reimplementaba `esActorDeSLG`** en vez de llamarlo, desde FU-07. Dos
+  verdades sobre qué roles cruzan empresas, y el día que una cambiara la otra callaría.
+
+Dos regexes hubo que estrechar durante el trabajo, y merece decirse: la primera versión marcaba en
+rojo el índice `uq_session_token` de la base y una pantalla que compara el `organizationId` de un
+**aviso** para pintar su nombre. Ninguna de las dos es lógica de autorización. Un freno que marca lo
+legítimo se acaba desactivando, así que la regla mira ahora `ctx.` delante y `better-auth.` con punto.
+
+**2 · La cláusula «no “revisar que se ve bien”» de `check:anexo-d` no miraba una sola palabra.** Solo
+entraba cuando un gate no traía ningún `npm run …`, así que un comando salvaba cualquier cláusula
+humana por vaga que fuera — **y salvaba también a un gate con parte manual y sin checklist ninguna**.
+Eso le pasaba a **D10**: «visor desplegado» en la casilla de pendientes, «sigue abierto» en prosa, y
+✅ en el estado. Un gate no puede estar verde y abierto a la vez.
+
+Tres comprobaciones nuevas: todo gate con parte manual **en la tabla resumen** trae su checklist; sus
+pasos dejan un **resultado anotable** (`→ sí / no`, casilla o «anota»); y ninguno usa una de las siete
+fórmulas vagas, que están **escritas una a una** en el script en vez de dejarlo a una heurística. D10
+estrena sus cinco pasos —incluida la comprobación de que el vale de D-151 caduca de verdad— y baja a
+⏳ mientras el subdominio no exista.
+
+**3 y 4 · `check:runtime` y `check:lighthouse` no tenían prueba negativa**, y son de los que más
+prometen. Ahora cada uno mide un fixture hecho para suspender:
+
+- `negative/runtime/servidor.ts` es **el despliegue mal hecho**: sin cabeceras de seguridad, con
+  `x-powered-by`, con `noindex` en producción, con `/api/ops` abierto y ejecutando por GET, y con una
+  CSP que promete un nonce que el HTML no lleva —el fallo silencioso donde el sitio **se ve y no
+  funciona**—. **25 de las 33 comprobaciones salen en rojo**; las 8 que no son las que dicen «responde
+  200», y eso es correcto: el servidor responde.
+- `negative/lighthouse/servidor.ts` es una página mala **de verdad**: sin `lang`, sin `title`, sin
+  viewport, con texto gris sobre blanco y un script que bloquea el hilo principal 600 ms antes de
+  pintar. Saca **44 de accesibilidad y 58 de SEO**. Aquí el freno no se conforma con el `exit 1`: lee
+  los números, porque un rojo podría venir de que la medición no llegó a correr, y eso no probaría
+  nada. Se comprueba contra accesibilidad y SEO y no contra rendimiento, que queda rozando el 90 y
+  variaría entre corridas — un freno que a veces pasa y a veces no es peor que no tenerlo.
+
+**`check:brakes` pasa de 37 a 40.**
+
+### Lo que sigue abierto
+
+Nada de los revisores, salvo lo que espera al despliegue. Queda la deuda de fondo que esto deja
+dicha: **un freno se escribe con su prueba negativa o no se escribe**. Cuatro de ellos vivieron
+meses en verde sin que nadie los hubiera visto en rojo, y los cuatro tenían algo que decir.
