@@ -860,6 +860,64 @@ invisible. El día que el CRM publique el endpoint de admisión, se cambia `CRM_
 
 ---
 
+## 4octies. El subdominio del visor de entregables (DU-19) — **dos clics y un registro DNS**
+
+Hace falta **antes de enseñar un entregable HTML a un cliente**, no antes. Mientras no exista, el
+portal muestra un cartel que dice que el visor no está disponible; no se rompe nada y no se sirve
+nada desde el dominio equivocado.
+
+**Por qué un subdominio y no el mismo dominio.** Parte de los entregables HTML los generan agentes.
+Servido desde `softlandingglobal.com`, un script dentro de uno de esos HTML **comparte origen con la
+sesión del cliente**: podría leer su cookie y llamar a la API en su nombre. Desde
+`visor.softlandingglobal.com` no puede, y no porque nosotros lo impidamos: **porque el navegador lo
+aísla**. Es la norma que fija D-45 y no hay repliegue: si el subdominio no está, el visor no sirve.
+
+### 4octies.1 El registro DNS
+
+**Hostinger** → DNS de `softlandingglobal.com` → **Add record**:
+
+| Campo | Valor |
+|---|---|
+| *Type* | `A` |
+| *Name* | `visor` |
+| *Points to* | `167.88.42.76` |
+| *TTL* | el que venga por defecto |
+
+Este nombre **no** está en la lista de protegidos del §4.2: se puede crear sin riesgo.
+
+### 4octies.2 El dominio en Easypanel
+
+**Easypanel** → proyecto `slg_website` → servicio **`slg-web`** → pestaña **Domains** → **Add
+Domain**:
+
+| Campo | Valor |
+|---|---|
+| *Host* | `visor.softlandingglobal.com` |
+| *Port* | **3000** (el mismo de la aplicación) |
+| *HTTPS* | marcado |
+
+**Es el mismo servicio, no uno nuevo.** El sitio sabe distinguir por el nombre con el que se le
+llama: en `visor.` solo responde `/visor/...` y todo lo demás es 404; en el dominio normal,
+`/visor/...` es 404. Eso está comprobado en `check:runtime`.
+
+### 4octies.3 La variable
+
+**Easypanel** → `slg-web` → **Environment**, y lo mismo en `slgweb-staging` con su propio subdominio
+si lo quieres ahí:
+
+```
+DELIVERABLE_VIEWER_ORIGIN=https://visor.softlandingglobal.com
+```
+
+> **No la pongas apuntando a `https://softlandingglobal.com`.** Todo seguiría compilando, la pantalla
+> funcionaría y el aislamiento **no existiría**. El código se niega a servir en ese caso —compara los
+> dos orígenes— pero no lo pongas igualmente.
+
+**Save** → **Deploy**. Para comprobarlo, abre `https://visor.softlandingglobal.com/` a secas: tiene
+que dar **404**. Si te sale la portada del sitio, el dominio está apuntando mal.
+
+---
+
 ## 5. Monitor de caída externo (criterios 8 y 9)
 
 **Producto: UptimeRobot** (D-49), dentro de la categoría que cerró D-43: servicio de

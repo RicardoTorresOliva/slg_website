@@ -153,6 +153,7 @@ actualiza `docs/project_memory.md`.
 | Base de datos efímera para las pruebas | `bash scripts/db/local-pg.sh up` |
 | Pipeline entero | `npm run check:ci` |
 | Que los **veintidós** frenos siguen frenando | `npm run check:brakes` |
+| El visor contra un entregable hostil | `npm run test:visor` |
 | Las **519** comprobaciones contra base, correo, archivos, CRM, webhooks y HQ | `npm run test:db` |
 | Cero terceros en la capa pública, medido con un navegador | `npm run check:terceros` |
 | Las cuatro cláusulas del sheet, cuadro a cuadro | `npm run test:gesto` |
@@ -183,6 +184,7 @@ criterio abierto, igual que el criterio 7 de DU-07 espera al despliegue.
 | 3 | Los **dos buckets privados** de `minio` y las `S3_*` (FU-09) | `docs/deployment.md` §4ter | La entrega real de documentos (DU-08) y los entregables (DU-15) |
 | 4 | Las **dos claves del CRM** (F.2-5) | `docs/deployment.md` §4septies | Que los leads lleguen al CRM y que el tablero enseñe métricas |
 | 5 | **Google y Microsoft** (F.2-2, F.2-3) | `docs/deployment.md` §4quater | El gate **D8** y con él el cierre de DU-01 y DU-14 |
+| 5bis | **El subdominio del visor** `visor.softlandingglobal.com` | `docs/deployment.md` §4octies | El criterio 3 de DU-19: un registro DNS y un dominio en Easypanel |
 | 6 | La **firma del copy** (FU-01) y las cuatro enumeraciones literales | `implementation/task_tracker.md` | Pasar de `copy: temporal` a `copy: aprobado` |
 | 7 | **S-01** | Canal privado, nunca aquí | El DoD de go-live |
 

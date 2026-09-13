@@ -230,7 +230,70 @@ function respuestaBase(request: NextRequest): NextResponse {
   return respuesta;
 }
 
+/**
+ * El host del visor de entregables (DU-19, D-45). Se lee de la misma variable
+ * que usa el visor: escribirlo aquí a mano sería el sitio donde, el día que
+ * cambie el subdominio, la puerta se queda abierta en el host viejo.
+ */
+function hostDelVisor(): string | null {
+  const v = process.env.DELIVERABLE_VIEWER_ORIGIN?.trim();
+  if (!v) return null;
+  try {
+    return new URL(v).host;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * **En el host del visor no vive la aplicación: vive un documento.**
+ *
+ * Sin esto, `visor.softlandingglobal.com/portal` serviría el portal entero desde
+ * el subdominio del visor. No habría sesión —las cookies no viajan ahí, que es
+ * el mecanismo— pero sí una copia del sitio en otro dominio: contenido
+ * duplicado para los buscadores, una superficie más que auditar, y sobre todo
+ * un sitio donde alguien podría acabar poniendo la cookie «para que funcione».
+ *
+ * Y al revés: `/visor/...` pedido en el dominio de la aplicación **también**
+ * devuelve 404. La ruta ya lo comprueba por su cuenta; esto lo corta antes,
+ * porque una defensa que depende de que el manejador se acuerde es una defensa
+ * que se pierde en el primer refactor.
+ */
+function puertaDelVisor(request: NextRequest): NextResponse | null {
+  const visor = hostDelVisor();
+  const host = request.headers.get("host") ?? request.nextUrl.host;
+  const esRutaDeVisor = request.nextUrl.pathname.startsWith("/visor/");
+
+  if (visor && host === visor) {
+    if (!esRutaDeVisor) {
+      return new NextResponse(null, {
+        status: 404,
+        headers: { "X-Robots-Tag": "noindex, nofollow", "Cache-Control": "no-store" },
+      });
+    }
+    /**
+     * Se deja pasar **sin tocar las cabeceras**: el documento trae su propia
+     * CSP —`default-src 'none'`— y la política pública de este archivo, con
+     * `script-src 'unsafe-inline'`, no tiene nada que hacer ahí.
+     */
+    return NextResponse.next();
+  }
+
+  if (esRutaDeVisor) {
+    return new NextResponse(null, {
+      status: 404,
+      headers: { "X-Robots-Tag": "noindex, nofollow", "Cache-Control": "no-store" },
+    });
+  }
+  return null;
+}
+
 export function middleware(request: NextRequest) {
+  // LO PRIMERO DE TODO, incluso antes de la compuerta de staging: el host del
+  // visor no es la aplicación y no debe recorrer ninguna otra regla.
+  const visor = puertaDelVisor(request);
+  if (visor) return visor;
+
   const usuario = process.env.STAGING_BASIC_AUTH_USER;
   const clave = process.env.STAGING_BASIC_AUTH_PASSWORD;
 

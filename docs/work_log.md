@@ -1962,3 +1962,56 @@ fuga, es la matriz haciendo su trabajo. `test:entregables` sube a **43** con el 
 **Lo que queda abierto.** Como el resto de M3 y M4: el portal **sigue devolviendo 404** mientras M4
 esté abierto (RF-87), así que la revisión visual espera. Y DU-19 necesita el **subdominio del visor**
 (D-45), que sigue sin fijarse.
+
+---
+
+## 2026-09-13 · DU-19 — Proyectos, entregables y visor aislado
+
+**Qué se construyó.** `/portal/proyectos`, `/portal/proyectos/[id]` y
+`/portal/entregables/[id]` con el **despacho por tipo desde el mapa**, más el visor en su propio
+origen: `lib/visor/` y la ruta `/visor/[id]`.
+
+**El `[PENDIENTE]` de D-45 queda cerrado**: el subdominio es **`visor.softlandingglobal.com`**
+(**D-128**). Se llama «visor» y no «entregables» porque **nombra el mecanismo, no el contenido**: el
+día que por ahí se sirva algo que no es un entregable, un nombre que describe el contenido obligaría
+a elegir entre mentir y migrar URLs.
+
+**Sin origen separado no se sirve nada** (**D-129**), y el caso que importa no es la variable vacía:
+es la variable **apuntando al mismo dominio de la aplicación**. Todo compilaría, los `sandbox`
+seguirían puestos, la pantalla funcionaría — y el documento compartiría origen con la sesión del
+cliente. `visorEstaSeparado()` compara los dos orígenes, y `test:visor` prueba **ese caso aparte**,
+porque es el que nadie prueba. Cuando no hay origen, el portal enseña un estado que lo dice en vez de
+replegarse.
+
+**Tres capas y ninguna sustituye a las otras** (**D-130**). La prueba lo enseña mejor que cualquier
+explicación: el `<img>` externo del entregable hostil **sobrevive al saneado** —una imagen es
+contenido legítimo de un informe— y lo corta la **política**; el `onmouseover` lo corta el
+**saneado**; y si las dos fallaran, el **origen separado** impide que el script toque la sesión,
+porque eso no lo decide nuestra configuración sino el navegador.
+
+**El middleware corta el host antes que nada.** En `visor.softlandingglobal.com` solo vive
+`/visor/...`: cualquier otra ruta es 404. Sin eso, el portal entero se serviría desde el subdominio
+del visor — sin sesión, pero como una copia del sitio en otro dominio, que es una superficie más que
+auditar y un sitio donde alguien acabaría poniendo la cookie «para que funcione». Y al revés:
+`/visor/...` pedido en el dominio de la aplicación también es 404.
+
+**El tipo decide con el mapa** (RF-142, criterio 4). La pantalla lee `especificacionDe(tipo).modo` y
+pinta el modo. Añadir un tipo con un modo que ya existe **no toca ese archivo**.
+
+**Verificación — `test:visor`, 25 comprobaciones contra un entregable hostil de verdad.** El
+laboratorio (`scripts/ci/negative/visor/entregable-hostil.html`) parece un informe trimestral y hace
+las siete cosas que el visor tiene que impedir: robar la cookie, llamar a la API con las credenciales
+del navegador, cargar un píxel externo, ejecutar por atributo de evento, un enlace `javascript:`, un
+formulario a otro dominio y un iframe anidado. Después del saneado no queda ni un `<script>`, ni un
+`<iframe>`, ni un `<meta>` de redirección, ni un `<link>` externo, ni un `<form>`, ni un solo
+atributo `on…` — **y el texto legítimo del informe sigue ahí**, porque sanear no es vaciar.
+
+**Lo que queda abierto, y es honesto decirlo.** El criterio 3 pide que la prueba corra «contra el
+visor servido desde su **origen separado definitivo**». Eso exige el subdominio desplegado, así que
+lo que está verificado hoy son **las capas 2 y 3 en funcionamiento** y la **capa 1 declarada** —que
+el visor se niega a servir si el origen no está separado—. La capa 1 *en funcionamiento* se verifica
+cuando `visor.softlandingglobal.com` exista: un registro `A` en Hostinger y un dominio en Easypanel
+apuntando al mismo servicio `slg-web`.
+
+**Verificación global.** Todos los frenos en verde · `check:brakes`: **veintidós** · `test:db`:
+**563** comprobaciones · las **cinco** rutas nuevas compilan.

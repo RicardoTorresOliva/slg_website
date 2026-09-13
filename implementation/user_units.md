@@ -1444,7 +1444,7 @@ redactado cuando no hay ninguno.
 |---|---|
 | **Tipo** | **DU** |
 | **Milestone** | M4 |
-| **Depende de** | DU-18 · **origen separado del visor disponible (D-45)**: `[PENDIENTE: nombre del subdominio del visor, se fija en M4]` |
+| **Depende de** | DU-18 · **origen separado del visor disponible (D-45)**: ✅ **fijado en DU-19: `visor.softlandingglobal.com`** (D-128). Falta el registro DNS y el dominio en Easypanel |
 
 **Qué produce.** `/portal/proyectos` y `/portal/proyectos/[id]` con los entregables de visibilidad
 `client`, y `/portal/entregables/[id]`: el visor que abre cada entregable **según su tipo** —PDF
@@ -1454,7 +1454,7 @@ código.
 
 Produce además el **origen separado del visor** que **D-45** fija como **norma**: el HTML autocontenido
 se sirve desde un **subdominio propio**, distinto del de la aplicación, con su propia CSP.
-`[PENDIENTE: nombre del subdominio del visor, se fija en M4]`. El `iframe sandbox` **sin**
+El subdominio es **`visor.softlandingglobal.com`** (D-128). El `iframe sandbox` **sin**
 `allow-same-origin` y la CSP estricta **no se sustituyen**: se mantienen como **defensa en
 profundidad**, no como alternativa al origen separado. La razón es que parte de los entregables HTML
 los generan **agentes Hermes**: con origen separado, un script hostil dentro del entregable no puede
@@ -2046,7 +2046,7 @@ conserva como fila informativa.
 | 12 | **`risks.md` declara 38 riesgos, no 36** | Las referencias `R-NN` de este documento apuntan al archivo vigente, que llega hasta R-38. | `planning/risks.md` |
 | 13 | **El remitente `support@softlandingglobal.com` que fija el brief §5.1 y RF-117 entra en conflicto con el subdominio de envío dedicado de D-24** | Condición de entrada de **FU-08**: la dirección remitente definitiva es la sub-decisión **P-3** y el nombre del subdominio la **P-4**; ambas siguen abiertas, se fijan en **M0** y se registran en `decision_log` **antes** de construir la unidad. El `Reply-To` sí es `support@softlandingglobal.com`, y `support@` sigue siendo el **destinatario** de los avisos (RF-53). | §5.1, RF-117, D-24, R-38, P-3, P-4 |
 | 14 | **CF-3 — anillo de foco: RESUELTO por D-44.** El Anexo C.1 lista `--cyan` entre los usos de anillo de foco, pero medido da 2,4:1 sobre `--paper` y no cumple RNF-05 ni el gate D2. | **Deja de ser conflicto.** El anillo es de **dos capas**: exterior `--cyan` (#50B4DC), interior `--blue-primary` (#2878B4) o `--ink`. Es una **precisión** del kit, no una contradicción: conserva su intención cromática y añade el contraste que faltaba. **Token en FU-02, verificación en FU-10** contra el gate D2. Ningún componente define un anillo de una sola capa en `--cyan`. | D-44, `design_summary` §2 CF-3, C.1, RNF-05, D2 |
-| 15 | **CF-4 — origen del visor de entregables HTML: RESUELTO por D-45.** `data_model` §3.10 y `ui_wireframes` §7.3 prometían origen separado; `architecture` §11.3 especificaba solo `iframe sandbox` + CSP. | **Deja de ser conflicto, a favor del origen separado como NORMA**: el HTML se sirve desde un **subdominio propio**. El `iframe sandbox` sin `allow-same-origin` y la CSP estricta **se mantienen** como defensa en profundidad, no como alternativa. Razón: parte de los entregables los generan agentes Hermes, y con origen separado un script hostil no puede leer cookies de sesión ni datos de la aplicación. **Se construye en DU-19.** Queda `[PENDIENTE: nombre del subdominio del visor, se fija en M4]`. | D-45, `design_summary` §2 CF-4, RF-90, RNF-21, R-11, D10 |
+| 15 | **CF-4 — origen del visor de entregables HTML: RESUELTO por D-45.** `data_model` §3.10 y `ui_wireframes` §7.3 prometían origen separado; `architecture` §11.3 especificaba solo `iframe sandbox` + CSP. | **Deja de ser conflicto, a favor del origen separado como NORMA**: el HTML se sirve desde un **subdominio propio**. El `iframe sandbox` sin `allow-same-origin` y la CSP estricta **se mantienen** como defensa en profundidad, no como alternativa. Razón: parte de los entregables los generan agentes Hermes, y con origen separado un script hostil no puede leer cookies de sesión ni datos de la aplicación. **Construido en DU-19**, con el subdominio fijado en **`visor.softlandingglobal.com`** (D-128). | D-45, `design_summary` §2 CF-4, RF-90, RNF-21, R-11, D10 |
 | 16 | **Monitorización externa: categoría CERRADA por D-43, producto abierto** | La categoría —servicio de uptime dedicado con tramo gratuito, ejecutado **fuera del VPS**— cierra P-5, RF-130 y el gate D11, y resuelve R-29. **Ya no bloquea la aprobación del plan.** Lo único abierto es el **producto concreto**, que se elige con 2–3 candidatos **antes de FU-05** y no bloquea el arranque; afecta a **FU-05** y **DU-25**, ambas fuera de M0-A. n8n queda como monitor **secundario** por correr en el mismo VPS que debería vigilar. | D-43, P-5, R-29, RF-130, D11 |
 
 ---
@@ -2082,7 +2082,7 @@ conserva como fila informativa.
   verifica contra el gate D2** midiendo el contraste y registrándolo en `work_log`; el criterio 3 de
   FU-10 aclara que ahí `--cyan` es capa de anillo, no color de texto, de modo que no colisiona con
   RNF-04. **D-45 (visor desde origen separado):** **DU-19** suma a «qué produce» el **origen separado
-  (subdominio propio)** como norma, con `[PENDIENTE: nombre del subdominio del visor, se fija en M4]`
+  (subdominio propio)** como norma, ya fijado en **`visor.softlandingglobal.com`** (D-128)
   como condición de entrada, y sus criterios exigen verificarlo —servir el HTML desde el mismo origen
   rechaza la unidad— manteniendo `iframe sandbox` sin `allow-same-origin` y CSP estricta como **defensa
   en profundidad**; la prueba con HTML malicioso se ejecuta contra el origen separado definitivo.

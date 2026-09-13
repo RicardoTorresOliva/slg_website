@@ -67,7 +67,7 @@ export const SECCIONES: readonly Seccion[] = [
   { clave: "audit", href: "/hq/auditoria", superficie: "hq", accion: "audit.read" },
   // ── Portal ──────────────────────────────────────────────────────────────
   { clave: "announcements", href: "/portal", superficie: "portal", accion: "announcement.read" },
-  { clave: "deliverables", href: "/portal/entregables", superficie: "portal", accion: "deliverable.read" },
+  { clave: "deliverables", href: "/portal/proyectos", superficie: "portal", accion: "deliverable.read" },
   { clave: "members", href: "/portal/miembros", superficie: "portal", accion: "member.invite" },
 ];
 

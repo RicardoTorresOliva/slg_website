@@ -57,6 +57,9 @@ const VIGILADOS = [
   "app/(hq)/hq/entregables/page.tsx",
   "app/(hq)/hq/avisos/page.tsx",
   "app/(portal)/portal/page.tsx",
+  "app/(portal)/portal/proyectos/page.tsx",
+  "app/(portal)/portal/proyectos/[id]/page.tsx",
+  "app/(portal)/portal/entregables/[id]/page.tsx",
 ];
 
 const ATRIBUTOS_QUE_SE_LEEN = ["aria-label", "title", "alt", "placeholder"];

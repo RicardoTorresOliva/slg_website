@@ -38,7 +38,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 8 `pending` · **14 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01, DU-07, DU-08, DU-09, DU-13, DU-14, DU-15, DU-16, DU-17, DU-18) · **17 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12, FU-12, FU-13) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
+**Estado global:** 7 `pending` · **15 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01, DU-07, DU-08, DU-09, DU-13, DU-14, DU-15, DU-16, DU-17, DU-18, DU-19) · **17 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12, FU-12, FU-13) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -88,7 +88,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | ━━━ | ━━━ | **▼ M4 · PORTAL DE CLIENTES** | ━━━ | ━━━ | ━━━ |
 | FU-13 | FU | Batería de pruebas de aislamiento entre empresas | M4 | FU-04, FU-06, DU-15 | `done` — quince comprobaciones sobre las **funciones de la aplicación** (**D-121**), en `test:db` y en `check:ci`; prueba negativa registrada (**D-122**) |
 | DU-18 | DU | Inicio del portal con avisos | M4 | FU-12, FU-13, DU-15 | `in_progress` — construido y verificado; la pantalla **no recibe ningún `organization_id`** (**D-127**). Migración 0012: el aviso guarda **en qué idioma se escribió** (**D-126**). Falta la revisión visual, que espera a que el portal se abra |
-| DU-19 | DU | Proyectos, entregables y visor aislado | M4 | DU-18 · nombre del subdominio del visor (origen separado, D-45) | `pending` |
+| DU-19 | DU | Proyectos, entregables y visor aislado | M4 | DU-18 · ✅ **subdominio fijado: `visor.softlandingglobal.com`** (**D-128**) | `in_progress` — las tres pantallas y el visor construidos; 25 comprobaciones contra un entregable hostil. El **criterio 3** espera al subdominio desplegado: pide la prueba contra el origen separado **definitivo** |
 | DU-20 | DU | Materiales de programa | M4 | DU-19 | `pending` |
 | DU-21 | DU | Miembros, perfil y paso «Agenda tu Sesión Cero» | M4 | FU-07, DU-18 · F.2-6 | `pending` |
 | ━━━ | ━━━ | **▼ M5 · API PARA AGENTES Y GO-LIVE** | ━━━ | ━━━ | ━━━ |
@@ -351,3 +351,12 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   podía mentir — migración **0012** y lo elige quien publica (**D-126**). Y un fallo que solo sale
   encadenando la suite: `test:webhooks` borraba capturas sin borrar antes su traza de `crm_delivery`.
   `test:db` sube a **538**.
+- `2026-09-13` — **DU-19 casi, y el `[PENDIENTE]` de D-45 cerrado.** El subdominio del visor es
+  **`visor.softlandingglobal.com`** (**D-128**): nombra el mecanismo, no el contenido. **Sin origen
+  separado el visor no sirve nada** (**D-129**), y el caso que importa no es la variable vacía sino
+  apuntarla **al mismo dominio** — todo compilaría y el aislamiento no existiría. **Tres capas y
+  ninguna sustituye a las otras** (**D-130**): la prueba lo enseña porque el `<img>` externo
+  sobrevive al saneado y lo corta la política, mientras que el `onmouseover` lo corta el saneado.
+  `test:visor`: **25** comprobaciones contra un entregable hostil que hace las siete cosas que hay
+  que impedir. `test:db` sube a **563**. Queda el **criterio 3**, que pide la prueba contra el
+  origen separado **desplegado**.

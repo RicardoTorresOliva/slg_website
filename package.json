@@ -50,7 +50,7 @@
     "test:acceso": "node scripts/auth/test-acceso.ts",
     "test:descargas": "node scripts/descargas/test-descargas.ts",
     "test:crm": "node scripts/crm/test-crm.ts",
-    "test:db": "npm run test:isolation && npm run test:aislamiento && npm run test:contracts && npm run test:nocompile && npm run test:autorizacion && npm run test:correo && npm run test:invitaciones && npm run test:archivos && npm run test:aprovisionar && npm run test:acceso && npm run test:descargas && npm run test:crm && npm run test:webhooks && npm run test:shell && npm run test:hq && npm run test:gestion && npm run test:capturas && npm run test:claves && npm run test:entregables",
+    "test:db": "npm run test:isolation && npm run test:aislamiento && npm run test:contracts && npm run test:nocompile && npm run test:autorizacion && npm run test:correo && npm run test:invitaciones && npm run test:archivos && npm run test:aprovisionar && npm run test:acceso && npm run test:descargas && npm run test:crm && npm run test:webhooks && npm run test:shell && npm run test:hq && npm run test:gestion && npm run test:capturas && npm run test:claves && npm run test:entregables && npm run test:visor",
     "test:webhooks": "node scripts/webhooks/test-webhooks.ts",
     "check:terceros": "node scripts/ci/check-terceros.ts",
     "check:shell": "node scripts/ci/check-shell.ts",
@@ -62,7 +62,8 @@
     "test:claves": "node scripts/hq/test-claves.ts",
     "test:entregables": "node scripts/hq/test-entregables.ts",
     "test:aislamiento": "node scripts/auth/test-aislamiento.ts",
-    "test:aprovisionar": "node scripts/files/test-aprovisionar.ts"
+    "test:aprovisionar": "node scripts/files/test-aprovisionar.ts",
+    "test:visor": "node scripts/portal/test-visor.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1131.0",
