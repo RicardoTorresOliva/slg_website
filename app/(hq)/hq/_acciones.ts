@@ -7,6 +7,7 @@ import { ErrorDeAutorizacion, exigirSuperficie } from "@/lib/auth";
 import { exigirSeccion } from "@/lib/app/navegacion";
 import { crearEmpresa, DatoInvalido, editarEmpresa } from "@/lib/hq/empresas";
 import { crearProyecto, editarProyecto } from "@/lib/hq/proyectos";
+import { reintentarCaptura } from "@/lib/hq/reintento";
 import { invitarACliente, invitarASlg, reenviar, revocar } from "@/lib/hq/usuarios";
 
 /**
@@ -182,4 +183,29 @@ export async function accionRevocarInvitacion(datos: FormData) {
   }
   revalidatePath("/hq/usuarios");
   redirect("/hq/usuarios");
+}
+
+/* ── Capturas ─────────────────────────────────────────────────────────────── */
+
+/**
+ * El reintento manual (DU-16 · RF-52).
+ *
+ * **El resultado vuelve en la URL**, no en un estado de cliente: así la
+ * pantalla puede decir «reintento abierto», «ya estaba entregada» o «sigue en
+ * cola» sin hidratar nada, y el mensaje sobrevive a recargar la página. Los
+ * tres son resultados legítimos, no errores: reintentar algo ya entregado
+ * crearía un contacto duplicado, y callarlo sería peor que decirlo.
+ */
+export async function accionReintentarCaptura(datos: FormData) {
+  const sesion = await sesionDeHq("captures");
+  const id = texto(datos, "id");
+  let resultado;
+  try {
+    resultado = await reintentarCaptura(sesion.ctx, id);
+  } catch (e) {
+    salida("/hq/capturas", e);
+  }
+  revalidatePath("/hq/capturas");
+  const aviso = resultado.ok ? "reintentada" : resultado.motivo;
+  redirect(`/hq/capturas?aviso=${encodeURIComponent(aviso)}#${encodeURIComponent(id)}`);
 }

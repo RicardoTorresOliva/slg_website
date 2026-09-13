@@ -1638,3 +1638,58 @@ y verificado.
 `=> void | Promise<void>` como si cerrara una etiqueta JSX y señalaba « void | Promise » como texto
 visible escrito a mano. Un freno que da falsos rojos enseña a ignorarlo, que es peor que no tenerlo.
 Su prueba negativa se volvió a ejecutar después del arreglo y sigue poniéndose roja por lo que debe.
+
+---
+
+## 2026-09-13 · DU-16 — Capturas web: lista, detalle de intentos y reintento manual
+
+**Qué se construyó.** `/hq/capturas`: la lista **de todos los días** —no solo de hoy—, filtrable por
+estado, documento y página; el **detalle de cada intento** leído de `crm_delivery` dentro de un
+`<details>` por fila; y el **reintento manual**, que abre un ciclo nuevo y queda auditado. Detrás,
+`lib/hq/reintento.ts`.
+
+**No filtra por día y el tablero sí, a propósito.** El tablero pregunta «qué ha pasado hoy»; esta
+pantalla pregunta «qué hay pendiente». Una captura fallida de hace tres días es justo la que hay que
+ver, y con el día puesto no saldría nunca: así se pierde un lead sin que nadie haga nada mal.
+
+**CF-1, resuelto y demostrado** (**D-111**). El reintento **abre un ciclo**: el contador vuelve a
+cero dentro de un ciclo 2 y la escalera de espera vuelve a empezar. La prueba demuestra las tres
+cosas que hacían falta para que la salida valga: la traza vieja **sigue entera** (cinco filas del
+ciclo 1, ninguna pisada), el barrido siguiente escribe **en el ciclo 2** sin que el índice único
+rechace nada, y el ciclo nuevo empieza otra vez por el intento 1 — los cinco de RF-50 son **por
+episodio**.
+
+**Es idempotente, y eso no es un detalle**: reintentar algo ya entregado crearía un contacto
+duplicado en el CRM, en silencio. Se contesta «ya estaba entregada» y no se toca nada. Una captura
+que sigue en cola tampoco se reintenta: la está intentando el barrendero.
+
+**El detalle no enseña el cuerpo enviado** (**D-112**): lleva el correo, el nombre y el mensaje de la
+persona, y esta pantalla se comparte en capturas cuando algo falla. Para diagnosticar basta con qué
+se llamó, qué código contestó y qué devolvió.
+
+**Verificación — `test:capturas`, 23 comprobaciones contra PostgreSQL real y un doble del CRM:**
+cinco intentos hasta `failed` · lista con estado, intentos y último error · el detalle refleja
+exactamente las filas · el reintento abre ciclo, limpia el último error y **queda auditado** · la
+traza vieja intacta · el ciclo 2 entrega al volver el CRM · reintento sobre entregada: idempotente ·
+sobre una en cola: no procede · **CRM caído durante el reintento**: se acepta igual y el intento
+nuevo se apunta sin perder la captura · trabajo manual señalado por fila · enlace desde la plantilla.
+
+### Dos cosas que enseñó la verificación
+
+1. **La señal de «falta abrir el hueco a mano» no es un campo que falte: es el modo.** La prueba
+   intentaba apagarla poniéndole `crm_opportunity_id` a una captura entregada en `contact_note`, y
+   **la restricción `lead_capture_contact_note_shape` lo rechazó**: en ese modo el CRM no permite
+   crear la oportunidad por clave de API (B.6), así que esa columna tiene que estar vacía. O sea que
+   **todas** las de ese modo exigen trabajo manual, que es exactamente lo que dice R-04. La señal se
+   apaga cambiando de modo, no rellenando un hueco.
+2. **`check:shell` cazó la pantalla nueva** escribiendo su propio `role="status"` para la
+   confirmación del reintento. La salida no fue relajar el freno sino ver que a los seis estados
+   canónicos les faltaba vecino: una **confirmación** no es una situación de la pantalla, pero
+   merece componente por la misma razón que ellos —el papel ARIA escrito a mano se olvida en la
+   mitad de los sitios y no se nota mirando— (**D-113**).
+
+**Verificación global.** Todos los frenos en verde · `check:brakes`: **veintiún frenos** ·
+`test:db`: **433** comprobaciones · las **cinco** rutas de HQ compilan.
+
+**Lo que queda abierto.** La revisión visual, como en DU-13 y DU-14: HQ sigue devolviendo 404
+mientras M3 esté abierto (RF-87).

@@ -50,6 +50,8 @@ const VIGILADOS = [
   "app/(hq)/hq/proyectos/page.tsx",
   "app/(hq)/hq/usuarios/page.tsx",
   "components/app/Campos.tsx",
+  "app/(hq)/hq/capturas/page.tsx",
+  "components/app/Aviso.tsx",
 ];
 
 const ATRIBUTOS_QUE_SE_LEEN = ["aria-label", "title", "alt", "placeholder"];

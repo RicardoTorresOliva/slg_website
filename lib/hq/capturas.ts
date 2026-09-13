@@ -23,8 +23,19 @@ export type Filtro = {
   readonly documento?: string | null;
   /** Ruta exacta de la página de origen, o `null`. */
   readonly pagina?: string | null;
-  /** Día concreto en `YYYY-MM-DD`. Sin él, el día de hoy (criterio 1). */
+  /** Día concreto en `YYYY-MM-DD`. Sin él, el día de hoy (DU-13, criterio 1). */
   readonly dia?: string | null;
+  /**
+   * `pending` · `delivered` · `failed`, o `null` para todos (DU-16, criterio 1).
+   */
+  readonly estado?: string | null;
+  /**
+   * **Quita el filtro de día.** El tablero pregunta «qué ha pasado hoy» y
+   * `/hq/capturas` pregunta «qué hay pendiente», que no es lo mismo: una
+   * captura fallida de hace tres días es exactamente la que hay que ver, y con
+   * el día puesto no saldría nunca.
+   */
+  readonly todosLosDias?: boolean;
   readonly limite?: number;
 };
 
@@ -50,6 +61,12 @@ export type CapturaDeHq = {
    * culpa del CRM.
    */
   readonly enlaceAlCrm: string | null;
+  /**
+   * `true` cuando la captura llegó al CRM en modo `contact_note` y **no tiene
+   * oportunidad**: alguien tiene que abrirla a mano (DU-16 criterio 4, R-04).
+   * Va por fila y no como un total, porque el trabajo es por captura.
+   */
+  readonly pideTrabajoManual: boolean;
 };
 
 const LIMITE_POR_DEFECTO = 50;
@@ -76,10 +93,10 @@ export async function capturasDeHq(ctx: AuthContext, filtro: Filtro = {}): Promi
    */
   const filas = await withScope(ctx, async (db) => {
     const condiciones = [
-      gte(leadCapture.createdAt, desde),
-      lt(leadCapture.createdAt, hasta),
+      ...(filtro.todosLosDias ? [] : [gte(leadCapture.createdAt, desde), lt(leadCapture.createdAt, hasta)]),
       ...(filtro.documento ? [eq(leadCapture.downloadSlug, filtro.documento)] : []),
       ...(filtro.pagina ? [eq(leadCapture.pagePath, filtro.pagina)] : []),
+      ...(filtro.estado ? [eq(leadCapture.crmSyncStatus, filtro.estado)] : []),
     ];
     return db
       .select()
@@ -104,6 +121,8 @@ export async function capturasDeHq(ctx: AuthContext, filtro: Filtro = {}): Promi
     ultimoError: f.crmLastError,
     modoDeEntrega: f.crmMode,
     enlaceAlCrm: enlaceAlContacto(f.crmContactId),
+    pideTrabajoManual:
+      f.crmSyncStatus === "delivered" && f.crmMode === "contact_note" && !f.crmOpportunityId,
   }));
 }
 
