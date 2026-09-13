@@ -28,15 +28,61 @@
  * motivo de verdad va al registro de auditoría, que es donde sirve; lo que
  * viaja por HTTP es una frase y un identificador.
  */
-import { ErrorDeAutorizacion, exigir, verificarClave, type Accion, type EstadoDelLimite } from "../auth/index.ts";
+import { ErrorDeAutorizacion, exigir, verificarClave, type EstadoDelLimite } from "../auth/index.ts";
 import { auditarLlamadaDeApi } from "../auditoria/index.ts";
 import type { AuthContext } from "../db/context.ts";
 
+import type { RutaDeApi } from "./catalogo.ts";
+
 import { ErrorDeApi, sobreDeError, type DetalleDeValidacion, type EstadoDeError } from "./errores.ts";
+import { validarCuerpo } from "./validador.ts";
+
+/**
+ * El tope duro del cuerpo (`data_model` §2.6). Por encima, **413 sin leerlo
+ * entero**: leer 200 MB para después rechazarlos es exactamente cómo se tumba
+ * un servidor con una petición legítima de tamaño absurdo.
+ */
+const MAXIMO_CUERPO_BYTES = 50 * 1024 * 1024;
+
+/**
+ * Lee y valida el cuerpo de un `POST` contra el catálogo.
+ *
+ * Los tres rechazos que ocurren **antes** de mirar ningún campo, en orden:
+ * `Content-Type` que no es JSON → **415**; cuerpo por encima del tope → **413**;
+ * JSON ilegible → **400**. Solo después se valida contra el esquema → **422**.
+ * El orden importa: un cuerpo de 200 MB no se analiza para descubrir que además
+ * le falta un campo.
+ */
+async function cuerpoValidado(request: Request, ruta: RutaDeApi): Promise<Record<string, unknown>> {
+  const tipo = request.headers.get("content-type") ?? "";
+  if (!tipo.toLowerCase().includes("application/json")) {
+    throw new ErrorDeApi(415, `content-type no admitido: ${tipo.slice(0, 60)}`);
+  }
+  const declarado = Number(request.headers.get("content-length") ?? "0");
+  if (Number.isFinite(declarado) && declarado > MAXIMO_CUERPO_BYTES) {
+    throw new ErrorDeApi(413, `cuerpo declarado de ${declarado} bytes`);
+  }
+
+  const texto = await request.text();
+  if (texto.length > MAXIMO_CUERPO_BYTES) throw new ErrorDeApi(413, "cuerpo por encima del tope");
+
+  /**
+   * Un cuerpo vacío es `{}`. Lo pide `POST /deliverables/{id}/publish`, cuya
+   * petición es «cuerpo vacío o `{}`» (§3.5): exigir `{}` literal convertiría un
+   * detalle de cliente HTTP en un error del agente.
+   */
+  let objeto: unknown;
+  try {
+    objeto = texto.trim() === "" ? {} : JSON.parse(texto);
+  } catch {
+    throw new ErrorDeApi(400, "JSON ilegible");
+  }
+  return validarCuerpo(objeto, ruta);
+}
 
 export type Contrato = {
-  /** La acción de B.3 que gobierna la ruta. De ahí sale el alcance exigido. */
-  readonly accion: Accion;
+  /** La ruta del catálogo. De ella salen la acción, el alcance y el esquema. */
+  readonly ruta: RutaDeApi;
   /** Para `audit_log.action`: `capture.list`, `deliverable.create`… */
   readonly apunte: string;
   /** Para `audit_log.entity`. */
@@ -87,7 +133,7 @@ export type Resultado = {
 export async function manejar(
   request: Request,
   contrato: Contrato,
-  fn: (ctx: AuthContext) => Promise<Resultado>,
+  fn: (ctx: AuthContext, cuerpo: Record<string, unknown>) => Promise<Resultado>,
 ): Promise<Response> {
   const ruta = new URL(request.url).pathname;
   const ip = ipDe(request);
@@ -109,7 +155,7 @@ export async function manejar(
         // El alcance EXIGIDO, no el que la clave tiene: saber qué pedía la ruta
         // es lo que hace útil el registro; enumerar los de la clave sería
         // copiar una credencial al registro.
-        required_action: contrato.accion,
+        required_action: contrato.ruta.accion,
         // El motivo interno vive AQUÍ y no en la respuesta (RNF-32).
         reason: motivoInterno.slice(0, 300),
       },
@@ -147,18 +193,28 @@ export async function manejar(
     actorLabel: verificada.nombre,
   };
 
-  // ── 3 · alcance ──────────────────────────────────────────────────────────
-  try {
-    exigir(verificada.ctx, contrato.accion);
-  } catch (e) {
-    if (!(e instanceof ErrorDeAutorizacion)) throw e;
-    return responder(403, quien, e.motivoInterno, { limite: verificada.limite });
+  /**
+   * ── 3 · alcance ────────────────────────────────────────────────────────────
+   *
+   * `accion: null` es **`GET /openapi.json`**, y es el único caso: responde a
+   * **cualquier** clave válida, sea cual sea su alcance (RF-106). No es una
+   * puerta abierta —sin clave sigue siendo 401— sino que la especificación no
+   * pertenece a ningún alcance concreto.
+   */
+  if (contrato.ruta.accion !== null) {
+    try {
+      exigir(verificada.ctx, contrato.ruta.accion);
+    } catch (e) {
+      if (!(e instanceof ErrorDeAutorizacion)) throw e;
+      return responder(403, quien, e.motivoInterno, { limite: verificada.limite });
+    }
   }
 
   // ── 4 · el cuerpo de la ruta ─────────────────────────────────────────────
   let salida: Resultado;
   try {
-    salida = await fn(verificada.ctx);
+    const entrada = contrato.ruta.metodo === "POST" ? await cuerpoValidado(request, contrato.ruta) : {};
+    salida = await fn(verificada.ctx, entrada);
   } catch (e) {
     if (e instanceof ErrorDeApi) {
       return responder(e.estado, quien, e.motivoInterno, {
@@ -167,11 +223,13 @@ export async function manejar(
       });
     }
     if (e instanceof ErrorDeAutorizacion) {
-      // Un recurso que la política de fila no devuelve es un 404, no un 403:
-      // un 403 confirmaría que esa empresa existe (§2.5, RF-71).
-      return responder(e.status === 403 ? 404 : 404, quien, e.motivoInterno, {
-        limite: verificada.limite,
-      });
+      /**
+       * **Siempre 404, nunca 403**, aunque el veredicto interno diga 403: aquí
+       * el 403 está reservado al alcance de la clave (§2.5). Un recurso que la
+       * política de fila no devuelve responde como si no existiera, porque un
+       * 403 confirmaría que esa empresa existe (RF-71).
+       */
+      return responder(404, quien, e.motivoInterno, { limite: verificada.limite });
     }
     return responder(500, quien, (e as Error).message, { limite: verificada.limite });
   }
@@ -186,7 +244,7 @@ export async function manejar(
       status: salida.estado ?? 200,
       path: ruta,
       method: request.method,
-      required_action: contrato.accion,
+      required_action: contrato.ruta.accion,
     },
   });
 

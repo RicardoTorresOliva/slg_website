@@ -10,7 +10,13 @@
  * y aquí no se envuelve, porque envolverlo es ofrecerlo. Ver `port.ts`.
  */
 
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 import { ErrorDeAlmacenamiento, type PuertoDeArchivos, type UrlFirmada } from "./port.ts";
@@ -112,6 +118,27 @@ export function adaptadorS3(cliente: S3Client = clienteS3()): PuertoDeArchivos {
       await cliente.send(
         new DeleteObjectCommand({ Bucket: nombreDeBucket(bucket), Key: clave }),
       );
+    },
+
+    /**
+     * `HeadObject`, no `ListObjects`: se pregunta por **una** clave conocida y
+     * la respuesta es sí o no. Un 404 del almacenamiento es «no está», no un
+     * fallo: por eso se traduce a `false` en vez de propagarse. Cualquier otro
+     * error sí sube — no saber si está no es lo mismo que saber que no está, y
+     * confundirlos publicaría un entregable sin archivo.
+     */
+    async existe({ bucket, clave }) {
+      try {
+        await cliente.send(new HeadObjectCommand({ Bucket: nombreDeBucket(bucket), Key: clave }));
+        return true;
+      } catch (e) {
+        const estado = (e as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode;
+        if (estado === 404 || estado === 403) return false;
+        throw new ErrorDeAlmacenamiento(
+          "No se ha podido comprobar el archivo.",
+          `HeadObject falló para ${clave}: ${(e as Error).message}`,
+        );
+      }
     },
   };
 }

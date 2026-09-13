@@ -128,6 +128,20 @@ entrada y su consulta; lo demás no puede olvidarlo porque no lo escribe.
 El `request_id` de toda respuesta **es** el `audit_log.id` de esa llamada: por eso la auditoría se
 escribe antes de responder.
 
+## La API se declara una vez, en `lib/api/catalogo.ts` (DU-22 · DU-23)
+Las nueve rutas, con sus parámetros, sus campos de cuerpo y sus códigos. **El validador lo aplica y
+`GET /openapi.json` lo describe**: no hay dos textos que puedan discrepar, que es la razón por la que
+el contrato pedía generarla y no escribirla. Añadir una ruta es añadir una entrada y su archivo en
+`app/api/v1/`; `buscarRuta()` lanza si la ruta no está declarada, así que el fallo sale al arrancar.
+El alcance de cada ruta **se lee de B.3** (`alcanceDe`), no de una lista aparte.
+
+## Paginar por cursor con `timestamptz` exige truncar los dos lados (D-141)
+PostgreSQL guarda microsegundos; JavaScript llega a milisegundos. Un cursor construido desde un `Date`
+ya viene truncado, y comparado contra la columna sin truncar **se salta las filas creadas dentro del
+mismo milisegundo**. El orden y la comparación usan `date_trunc('milliseconds', created_at)` los dos.
+Si alguna colección nueva pagina por fecha, usa `ordenDeColeccion()` y `despuesDelCursor()` de
+`lib/api/cursor.ts` en vez de escribir el `ORDER BY` a mano.
+
 ## El mapa de rutas vive en `lib/content/rutas.ts`, y es EXPLÍCITO
 Cada página y cada servicio declara su ruta ES y su par EN (**D-79**). No se deriva del nombre del
 archivo: el Anexo A.2 anida la oferta (`/ai/academy/phoenix-peex`) y `/holdings` lo sirve un registro

@@ -20,6 +20,8 @@
  * devuelve ya lo acota la política de fila con el contexto de la clave. Firmarlo
  * protegería contra un ataque que no existe.
  */
+import { and, lt, or, sql, type Column, type SQL } from "drizzle-orm";
+
 import { ErrorDeApi } from "./errores.ts";
 
 export type Posicion = { readonly createdAt: Date; readonly id: string };
@@ -43,6 +45,44 @@ export function decodificarCursor(coleccion: string, valor: string): Posicion {
   const fecha = new Date(c);
   if (Number.isNaN(fecha.getTime())) throw malo();
   return { createdAt: fecha, id: i };
+}
+
+/**
+ * **LA PRECISIÓN, QUE ES DONDE ESTO SE ROMPE.** PostgreSQL guarda
+ * `timestamptz` con **microsegundos**; JavaScript solo llega a milisegundos, así
+ * que el `Date` que vuelve —y por tanto el cursor— ya viene truncado. Comparando
+ * el cursor truncado contra la columna sin truncar, **dos filas creadas dentro
+ * del mismo milisegundo se saltan**: la condición «anterior a 12:00:00.123»
+ * excluye también a la de 12:00:00.123400, que todavía no se había devuelto.
+ *
+ * Lo encontró la prueba de paginación, no una lectura: las cuatro filas del
+ * fixture se insertan seguidas y a veces caen en el mismo milisegundo. Y es
+ * exactamente el fallo que el cursor existía para evitar.
+ *
+ * La solución es que **el orden y la comparación usen la MISMA expresión**: se
+ * trunca a milisegundos en los dos sitios. Cualquier otra combinación vuelve a
+ * dejar una rendija por la que se cuela una fila.
+ */
+export function fechaTruncada(columna: Column): SQL {
+  return sql`date_trunc('milliseconds', ${columna})`;
+}
+
+/** El orden de las cuatro colecciones: `created_at DESC, id DESC`, truncado. */
+export function ordenDeColeccion(columnaFecha: Column, columnaId: Column): SQL[] {
+  return [sql`${fechaTruncada(columnaFecha)} DESC`, sql`${columnaId} DESC`];
+}
+
+/** «Lo estrictamente posterior a esta posición», en el mismo orden. */
+export function despuesDelCursor(
+  columnaFecha: Column,
+  columnaId: Column,
+  posicion: Posicion,
+): SQL | undefined {
+  const marca = sql`${posicion.createdAt.toISOString()}::timestamptz`;
+  return or(
+    sql`${fechaTruncada(columnaFecha)} < ${marca}`,
+    and(sql`${fechaTruncada(columnaFecha)} = ${marca}`, lt(columnaId, posicion.id)),
+  );
 }
 
 export const LIMITE_POR_DEFECTO = 50;

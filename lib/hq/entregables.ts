@@ -65,8 +65,14 @@ export type DatosDeEntregable = {
   readonly familyId?: string | null;
 };
 
-/** El destino de subida que le corresponde a cada tipo. `link` no tiene. */
-function destinoDe(tipo: string): Destino | null {
+/**
+ * El destino de subida que le corresponde a cada tipo. `link` no tiene.
+ *
+ * Se exporta para que la API de DU-23 use **este** mapa y no escriba el suyo:
+ * dos mapas de tipo a bucket es el sitio exacto donde un `html` acaba subido al
+ * bucket de los PDF y nadie se entera hasta que el visor no lo encuentra.
+ */
+export function destinoDe(tipo: string): Destino | null {
   if (tipo === "pdf") return "deliverables:pdf";
   if (tipo === "html") return "deliverables:html";
   if (tipo === "md") return "deliverables:md";

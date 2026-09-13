@@ -38,7 +38,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 4 `pending` · **17 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01, DU-07, DU-08, DU-09, DU-13, DU-14, DU-15, DU-16, DU-17, DU-18, DU-19, DU-20, DU-21) · **18 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12, FU-12, FU-13, DU-22) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
+**Estado global:** 3 `pending` · **18 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01, DU-07, DU-08, DU-09, DU-13, DU-14, DU-15, DU-16, DU-17, DU-18, DU-19, DU-20, DU-21, DU-23) · **18 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12, FU-12, FU-13, DU-22) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -93,7 +93,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | DU-21 | DU | Miembros, perfil y paso «Agenda tu Sesión Cero» | M4 | FU-07, DU-18 · F.2-6 | `in_progress` — las tres pantallas construidas y **42 comprobaciones** contra PostgreSQL real. Criterios **1, 2, 3, 5 y 7 cerrados**; el **4** cumplido en su mitad degradada («próximamente») a la espera de la URL de **F.2-6**. El **criterio 6 es el DoD #5** y necesita **F.2-3** (ingreso con Microsoft 365): no es código. Cambió de signo dos pruebas (**D-134**) y la empresa dejó de ser un parámetro al invitar (**D-135**) |
 | ━━━ | ━━━ | **▼ M5 · API PARA AGENTES Y GO-LIVE** | ━━━ | ━━━ | ━━━ |
 | DU-22 | DU | API v1 de lectura: clave, alcances, límites y auditoría | M5 | FU-06, DU-17, DU-19 · `api_contracts` | `done` — **los diez criterios verificados** con `test:api`: **74** comprobaciones por HTTP contra el servidor real, con las **doce celdas** de alcance × ruta recorridas. Migraciones **0014** (`audit_log.metadata`, **D-138**) y **0015** (la política nombra a `agent_slg`, **D-137**) |
-| DU-23 | DU | API v1 de escritura y especificación OpenAPI | M5 | DU-22 | `pending` |
+| DU-23 | DU | API v1 de escritura y especificación OpenAPI | M5 | DU-22 | `in_progress` — **las nueve rutas del contrato existen**; criterios 1…6 y 8 verificados con `test:api` (**124** comprobaciones, ejecutada tres veces). La especificación **se genera del catálogo** que valida las peticiones. El **criterio 7 es el DoD #6** y se comprueba en producción: aquí está probado todo lo que no exige el despliegue |
 | FU-14 | FU | Copias de seguridad cifradas a destino externo y restauración probada | M5 | FU-05 | `pending` |
 | DU-24 | DU | README operativo y prueba de Literacy | M5 | DU-11, DU-14, DU-17, FU-14 | `pending` |
 | DU-25 | DU | Go-live: contenido, DNS raíz, monitor y auditoría final | M5 | todas las anteriores | `pending` |
@@ -351,6 +351,15 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   podía mentir — migración **0012** y lo elige quien publica (**D-126**). Y un fallo que solo sale
   encadenando la suite: `test:webhooks` borraba capturas sin borrar antes su traza de `crm_delivery`.
   `test:db` sube a **538**.
+- `2026-09-13` — **DU-23: la API de escritura y la especificación generada.** El catálogo declara cada
+  parámetro **una vez**: el validador lo aplica y `openapi.json` lo describe, así que la
+  especificación no puede mentir — la prueba lee el máximo que anuncia y pide uno más. El ciclo es
+  crear → subir → publicar porque **la subida puede fallar**: publicar sin archivo es 409 y no un
+  hueco en el portal de un cliente. Tres hallazgos de la ejecución: el registro **duplicaba** cada
+  acto (**D-140**); el **cursor se saltaba filas** creadas dentro del mismo milisegundo —el fallo que
+  el cursor existía para evitar— (**D-141**); y una prueba propia era intermitente porque miraba un
+  UUID. `test:api`: **124** comprobaciones, corridas tres veces. `test:db` sube a **733**. Y una
+  corrección: el cierre de DU-22 dijo «frenos en verde» con `lint` en rojo.
 - `2026-09-13` — **DU-22: la API v1 de lectura, y dos cosas que solo se ven ejecutando.** Una clave de
   SLG **leía cero filas**: `api_key.organization_id` nulo significa «ve todas las empresas», pero la
   política de fila solo deja cruzar a los dos roles de SLG y el contexto de una clave lleva `agent`.

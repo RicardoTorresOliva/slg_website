@@ -1,8 +1,8 @@
-import { identificadorDeRuta, Lector } from "@/lib/api/entrada";
+import { buscarRuta } from "@/lib/api/catalogo";
 import { ErrorDeApi } from "@/lib/api/errores";
 import { empresaVisible, proyectosDeEmpresa } from "@/lib/api/lecturas";
 import { manejar } from "@/lib/api/manejador";
-import { PROJECT_STATUS } from "@/lib/db/schema";
+import { identificadorDeRuta, validarQuery } from "@/lib/api/validador";
 
 /**
  * `GET /api/v1/organizations/{id}/projects` (DU-22 · RF-101 · alcance
@@ -15,32 +15,24 @@ import { PROJECT_STATUS } from "@/lib/db/schema";
  */
 export const dynamic = "force-dynamic";
 
+const RUTA = buscarRuta("GET", "/api/v1/organizations/{id}/projects");
+
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  return manejar(
-    request,
-    { accion: "org.read", apunte: "project.list", entidad: "project" },
-    async (ctx) => {
-      const { id } = await params;
-      const organizationId = identificadorDeRuta(id);
+  return manejar(request, { ruta: RUTA, apunte: "project.list", entidad: "project" }, async (ctx) => {
+    const { id } = await params;
+    const organizationId = identificadorDeRuta(id);
+    const q = validarQuery(new URL(request.url), RUTA);
 
-      const lector = new Lector(new URL(request.url));
-      const estado = lector.enumerado("status", PROJECT_STATUS);
-      const servicio = lector.texto("service", 60);
-      const limit = lector.limite();
-      const cursor = lector.cursor();
-      lector.exigirValido();
+    if (!(await empresaVisible(ctx, organizationId))) {
+      throw new ErrorDeApi(404, `empresa ${organizationId} fuera del universo de la clave`);
+    }
 
-      if (!(await empresaVisible(ctx, organizationId))) {
-        throw new ErrorDeApi(404, `empresa ${organizationId} fuera del universo de la clave`);
-      }
-
-      const cuerpo = await proyectosDeEmpresa(ctx, organizationId, {
-        estado,
-        servicio,
-        limit,
-        cursor,
-      });
-      return { cuerpo, organizationId };
-    },
-  );
+    const cuerpo = await proyectosDeEmpresa(ctx, organizationId, {
+      estado: (q.status as string | undefined) ?? null,
+      servicio: (q.service as string | undefined) ?? null,
+      limit: q.limit as number,
+      cursor: (q.cursor as string | undefined) ?? null,
+    });
+    return { cuerpo, organizationId };
+  });
 }

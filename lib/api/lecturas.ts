@@ -29,7 +29,7 @@
  * para que el contrato se corrija o el esquema crezca, pero con una decisión
  * tomada y no con un campo mentiroso.
  */
-import { and, desc, eq, gte, lt, or, sql } from "drizzle-orm";
+import { and, eq, gte, lt, sql } from "drizzle-orm";
 
 import { enlaceAlContacto } from "../crm/index.ts";
 import type { AuthContext } from "../db/context.ts";
@@ -44,7 +44,7 @@ import {
 } from "../db/schema.ts";
 import { withScope, withSystemScope } from "../db/scope.ts";
 
-import { decodificarCursor, paginar, type Pagina } from "./cursor.ts";
+import { decodificarCursor, despuesDelCursor, ordenDeColeccion, paginar, type Pagina } from "./cursor.ts";
 
 /**
  * El orden de las cuatro colecciones es `created_at DESC, id DESC`, y el cursor
@@ -101,15 +101,10 @@ export async function capturas(
             filtros.source ? eq(leadCapture.source, filtros.source) : undefined,
             filtros.crmSyncStatus ? eq(leadCapture.crmSyncStatus, filtros.crmSyncStatus) : undefined,
             filtros.docCode ? eq(leadCapture.downloadSlug, filtros.docCode.toLowerCase()) : undefined,
-            posicion
-              ? or(
-                  lt(leadCapture.createdAt, posicion.createdAt),
-                  and(eq(leadCapture.createdAt, posicion.createdAt), lt(leadCapture.id, posicion.id)),
-                )
-              : undefined,
+            posicion ? despuesDelCursor(leadCapture.createdAt, leadCapture.id, posicion) : undefined,
           ),
         )
-        .orderBy(desc(leadCapture.createdAt), desc(leadCapture.id))
+        .orderBy(...ordenDeColeccion(leadCapture.createdAt, leadCapture.id))
         .limit(filtros.limit + 1),
   );
 
@@ -220,15 +215,10 @@ export async function organizaciones(
           eq(organization.status, filtros.status),
           eq(organization.type, filtros.tipo),
           suya ? eq(organization.id, suya) : undefined,
-          posicion
-            ? or(
-                lt(organization.createdAt, posicion.createdAt),
-                and(eq(organization.createdAt, posicion.createdAt), lt(organization.id, posicion.id)),
-              )
-            : undefined,
+          posicion ? despuesDelCursor(organization.createdAt, organization.id, posicion) : undefined,
         ),
       )
-      .orderBy(desc(organization.createdAt), desc(organization.id))
+      .orderBy(...ordenDeColeccion(organization.createdAt, organization.id))
       .limit(filtros.limit + 1),
   );
 
@@ -282,15 +272,10 @@ export async function proyectosDeEmpresa(
           eq(project.organizationId, organizationId),
           filtros.estado ? eq(project.status, filtros.estado) : undefined,
           filtros.servicio ? eq(project.service, filtros.servicio) : undefined,
-          posicion
-            ? or(
-                lt(project.createdAt, posicion.createdAt),
-                and(eq(project.createdAt, posicion.createdAt), lt(project.id, posicion.id)),
-              )
-            : undefined,
+          posicion ? despuesDelCursor(project.createdAt, project.id, posicion) : undefined,
         ),
       )
-      .orderBy(desc(project.createdAt), desc(project.id))
+      .orderBy(...ordenDeColeccion(project.createdAt, project.id))
       .limit(filtros.limit + 1),
   );
 
@@ -376,15 +361,10 @@ export async function entregablesDeProyecto(
           filtros.tipo ? eq(deliverable.type, filtros.tipo) : undefined,
           filtros.publicado === true ? sql`${deliverable.publishedAt} is not null` : undefined,
           filtros.publicado === false ? sql`${deliverable.publishedAt} is null` : undefined,
-          posicion
-            ? or(
-                lt(deliverable.createdAt, posicion.createdAt),
-                and(eq(deliverable.createdAt, posicion.createdAt), lt(deliverable.id, posicion.id)),
-              )
-            : undefined,
+          posicion ? despuesDelCursor(deliverable.createdAt, deliverable.id, posicion) : undefined,
         ),
       )
-      .orderBy(desc(deliverable.createdAt), desc(deliverable.id))
+      .orderBy(...ordenDeColeccion(deliverable.createdAt, deliverable.id))
       .limit(filtros.limit + 1),
   );
 

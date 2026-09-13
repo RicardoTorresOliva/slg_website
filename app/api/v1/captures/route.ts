@@ -1,7 +1,7 @@
-import { Lector } from "@/lib/api/entrada";
+import { buscarRuta } from "@/lib/api/catalogo";
 import { capturas } from "@/lib/api/lecturas";
 import { manejar } from "@/lib/api/manejador";
-import { LEAD_SOURCES, QUEUE_STATUS } from "@/lib/db/schema";
+import { rechazar, validarQuery } from "@/lib/api/validador";
 import { loadCollection } from "@/lib/content/loader";
 
 /**
@@ -35,27 +35,29 @@ function documentos() {
   return mapa;
 }
 
-export async function GET(request: Request) {
-  return manejar(
-    request,
-    { accion: "capture.read", apunte: "capture.list", entidad: "lead_capture" },
-    async () => {
-      const lector = new Lector(new URL(request.url));
-      const since = lector.fechaHora("since");
-      const until = lector.fechaHora("until");
-      const source = lector.enumerado("source", LEAD_SOURCES);
-      const crmSyncStatus = lector.enumerado("crm_sync_status", QUEUE_STATUS);
-      const docCode = lector.texto("doc_code", 20, /^[Dd]-\d{2}$/);
-      const limit = lector.limite();
-      const cursor = lector.cursor();
-      if (since && until && since > until) lector.invalido("since", "after_until");
-      lector.exigirValido();
+const RUTA = buscarRuta("GET", "/api/v1/captures");
 
-      const cuerpo = await capturas(
-        { since, until, source, crmSyncStatus, docCode, limit, cursor },
-        documentos(),
-      );
-      return { cuerpo };
-    },
-  );
+export async function GET(request: Request) {
+  return manejar(request, { ruta: RUTA, apunte: "capture.list", entidad: "lead_capture" }, async () => {
+    const q = validarQuery(new URL(request.url), RUTA);
+    const since = (q.since as Date | undefined) ?? null;
+    const until = (q.until as Date | undefined) ?? null;
+    // Una regla que no cabe en la declaración de un campo suelto porque habla
+    // de DOS: el catálogo declara la forma; esto, la coherencia entre ellos.
+    if (since && until && since > until) rechazar("since", "after_until");
+
+    const cuerpo = await capturas(
+      {
+        since,
+        until,
+        source: (q.source as string | undefined) ?? null,
+        crmSyncStatus: (q.crm_sync_status as string | undefined) ?? null,
+        docCode: (q.doc_code as string | undefined) ?? null,
+        limit: q.limit as number,
+        cursor: (q.cursor as string | undefined) ?? null,
+      },
+      documentos(),
+    );
+    return { cuerpo };
+  });
 }

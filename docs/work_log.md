@@ -2216,3 +2216,72 @@ en verde · las cuatro rutas compilan como dinámicas.
 **Lo que queda de DU-22.** Nada de código: los diez criterios están cubiertos y verificados. Queda el
 `[PENDIENTE]` de la ruta real del CRM en la plantilla del enlace (F.2-5), que es de Ricardo, y no
 bloquea la API.
+
+---
+
+## 2026-09-13 · DU-23 — API v1 de escritura y especificación OpenAPI
+
+**Qué se construyó.** Las cinco rutas que faltaban —`POST /deliverables`,
+`POST /deliverables/{id}/publish`, `POST /announcements`, `POST /events` y `GET /openapi.json`—, el
+**catálogo** del que sale todo (`lib/api/catalogo.ts`), el validador que lo aplica y el generador de
+la especificación. Las nueve rutas del contrato existen y compilan.
+
+**El catálogo existe para que la especificación no pueda mentir** (criterio 5). El contrato lo pedía
+con todas las letras y no hay que mejorarlo: *una especificación mantenida aparte se desincroniza en
+la segunda semana, y una especificación que miente es peor que no tenerla*. Así que cada parámetro y
+cada campo se declaran **una vez**: el validador los aplica y el generador los describe. Añadir un
+parámetro sin que aparezca en `openapi.json` es imposible porque son el mismo objeto — y la prueba lo
+comprueba **contra el comportamiento**: lee el máximo de `limit` que anuncia la especificación y pide
+uno más, esperando el 422 que la especificación declara.
+
+**Crear y publicar son dos actos, y esa es la unidad.** El ciclo es crear → subir → publicar, no un
+`POST` que hace las tres cosas, porque **la subida puede fallar**. Con un solo paso, un archivo que se
+corta a la mitad deja un entregable publicado que el cliente abre y no encuentra. Con tres, el estado
+intermedio —creado, no publicado— es seguro y tiene nombre, y publicar sin archivo responde **409**.
+La prueba recorre el ciclo entero contra un almacenamiento que **recuerda qué se subió**: sin eso, el
+409 del criterio 8 habría que creérselo.
+
+**Tres cosas que encontró la ejecución, no la lectura.**
+
+La primera: **el registro duplicaba** (**D-140**). Las escrituras iban envueltas en `conAuditoria`
+*además* del apunte del manejador, así que cada acto dejaba dos filas con la misma acción y el mismo
+actor, y el `request_id` de la respuesta apuntaba solo a una. Lo destapó la comprobación de que
+**todo** apunte lleva su ruta.
+
+La segunda, y es la importante: **el cursor se saltaba filas** (**D-141**). PostgreSQL guarda
+`timestamptz` con microsegundos y JavaScript solo llega a milisegundos, así que el cursor nacía
+truncado; comparándolo contra la columna sin truncar, dos filas creadas dentro del mismo milisegundo
+**se perdían**. Es exactamente el fallo que el cursor existía para evitar, y apareció como una prueba
+que fallaba *una vez de cada varias* — la clase de fallo que en producción se archiva como «cosas
+raras». Ahora el orden y la comparación usan la misma expresión truncada.
+
+La tercera: **una prueba flaky propia**. «El 422 no repite el valor recibido» miraba el sobre entero,
+y el `request_id` es un UUID que a veces contiene `999`. Se mira `details`, que es lo que la regla
+protege. Una prueba que falla a veces enseña a ignorarla, que es peor que no tenerla.
+
+**El puerto de archivos tiene cuatro operaciones, y sigue sin poder listar** (**D-142**). `existe` es
+un `HeadObject` sobre **una** clave que quien pregunta ya conoce: no enumera nada, que es lo que
+RF-123 prohíbe. `test:archivos` lo comprueba con el motivo escrito al lado, en vez de contar tres.
+
+**Y un intento que no salió, dicho tal cual.** El 413 quería probarse declarando 60 MB en
+`content-length` y enviando poco, para demostrar que el rechazo ocurre **por la cabecera y sin leer el
+cuerpo**. No se puede: el servidor no entrega la petición al manejador hasta que el cuerpo declarado
+llega, y la prueba se colgaba. La comprobación de la cabecera **existe** y ahorra analizar el JSON,
+pero lo que la prueba demuestra es el resultado —413 con un cuerpo grande de verdad— y no el ahorro.
+Queda escrito en la prueba para que nadie lo vuelva a intentar creyendo que es fácil.
+
+**Verificación — `test:api`, 124 comprobaciones contra el servidor real**, ejecutada tres veces
+seguidas para descartar intermitencias. Cubre el ciclo de tres pasos de punta a punta, las siete
+formas de rechazar una creación mal formada, `publish` obligatorio sin defecto, el `kind` abierto con
+forma exigida y `schema_known` honesto, el sobre de un `POST` (415, 413, 400 y campo no declarado), y
+la especificación: las nueve rutas, sus alcances leídos de B.3 y todos los códigos de §2.5.
+
+**Verificación global.** `test:db` completo en verde: **733** comprobaciones sumando el recuento que
+publica cada suite. `check:brakes` **26** · `check:runtime` 33 · `check:js-budget` 142.3 KB ·
+`test:permisos` 236 · los catorce gates estáticos en verde.
+
+**Una corrección al registro de DU-22.** Aquella entrada decía «los frenos en verde»; `npm run lint`
+estaba **en rojo** —once `any` en el archivo de prueba nuevo— y no se ejecutó antes de cerrar. Está
+arreglado en este commit y dicho aquí en vez de corregido en silencio: la lección es que la tanda de
+gates que se ejecuta al cerrar una unidad tiene que ser la **misma** siempre, y `lint` es el primero
+de `check:ci`.

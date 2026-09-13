@@ -53,4 +53,16 @@ export type PuertoDeArchivos = {
   }): Promise<UrlFirmada>;
 
   borrar(entrada: { bucket: Bucket; clave: string }): Promise<void>;
+
+  /**
+   * ¿Está ahí ese objeto? **No es `listar`**, y la diferencia importa: se
+   * pregunta por **una** clave que quien pregunta ya conoce, no se pide el
+   * contenido del bucket. RF-123 prohíbe lo segundo porque enumera lo que hay;
+   * esto no enumera nada.
+   *
+   * Existe por el criterio 8 de DU-23: publicar un entregable cuyo archivo
+   * nunca se subió tiene que responder **409**, y sin esta pregunta la única
+   * alternativa sería publicarlo y que el cliente se encontrara el hueco.
+   */
+  existe(entrada: { bucket: Bucket; clave: string }): Promise<boolean>;
 };

@@ -1,8 +1,8 @@
-import { identificadorDeRuta, Lector } from "@/lib/api/entrada";
+import { buscarRuta } from "@/lib/api/catalogo";
 import { ErrorDeApi } from "@/lib/api/errores";
 import { entregablesDeProyecto } from "@/lib/api/lecturas";
 import { manejar } from "@/lib/api/manejador";
-import { DELIVERABLE_TYPES } from "@/lib/db/schema";
+import { identificadorDeRuta, validarQuery } from "@/lib/api/validador";
 
 /**
  * `GET /api/v1/projects/{id}/deliverables` (DU-22 · RF-103 · alcance
@@ -21,34 +21,25 @@ import { DELIVERABLE_TYPES } from "@/lib/db/schema";
  */
 export const dynamic = "force-dynamic";
 
+const RUTA = buscarRuta("GET", "/api/v1/projects/{id}/deliverables");
+
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  return manejar(
-    request,
-    { accion: "deliverable.read", apunte: "deliverable.list", entidad: "deliverable" },
-    async (ctx) => {
-      const { id } = await params;
-      const projectId = identificadorDeRuta(id);
+  return manejar(request, { ruta: RUTA, apunte: "deliverable.list", entidad: "deliverable" }, async (ctx) => {
+    const { id } = await params;
+    const projectId = identificadorDeRuta(id);
+    const q = validarQuery(new URL(request.url), RUTA);
 
-      const lector = new Lector(new URL(request.url));
-      const tipo = lector.enumerado("type", DELIVERABLE_TYPES);
-      const publicado = lector.booleano("published");
-      const soloUltima = lector.booleano("only_latest") ?? false;
-      const limit = lector.limite();
-      const cursor = lector.cursor();
-      lector.exigirValido();
-
-      const cuerpo = await entregablesDeProyecto(ctx, projectId, {
-        tipo,
-        publicado,
-        soloUltima,
-        limit,
-        cursor,
-      });
-      // Proyecto ajeno o inexistente: el mismo 404, con el mismo cuerpo (§2.6).
-      if (cuerpo === null) {
-        throw new ErrorDeApi(404, `proyecto ${projectId} fuera del universo de la clave`);
-      }
-      return { cuerpo };
-    },
-  );
+    const cuerpo = await entregablesDeProyecto(ctx, projectId, {
+      tipo: (q.type as string | undefined) ?? null,
+      publicado: (q.published as boolean | undefined) ?? null,
+      soloUltima: q.only_latest as boolean,
+      limit: q.limit as number,
+      cursor: (q.cursor as string | undefined) ?? null,
+    });
+    // Proyecto ajeno o inexistente: el mismo 404, con el mismo cuerpo (§2.6).
+    if (cuerpo === null) {
+      throw new ErrorDeApi(404, `proyecto ${projectId} fuera del universo de la clave`);
+    }
+    return { cuerpo };
+  });
 }

@@ -17,6 +17,7 @@
  */
 import { spawn, type ChildProcess } from "node:child_process";
 import { createHash } from "node:crypto";
+import http from "node:http";
 import net from "node:net";
 import path from "node:path";
 
@@ -59,6 +60,10 @@ const VALORES = {
   capturas: "valor-de-prueba-du22-capturas-0000",
   entregables: "valor-de-prueba-du22-entregables-0",
   eventos: "valor-de-prueba-du22-eventos-00000",
+  escribeEntregables: "valor-de-prueba-du23-entregables-w",
+  escribeAvisos: "valor-de-prueba-du23-avisos-write",
+  escribeEventos: "valor-de-prueba-du23-eventos-write",
+  escribeAcotada: "valor-de-prueba-du23-acotada-write",
   revocada: "valor-de-prueba-du22-revocada-0000",
   caducada: "valor-de-prueba-du22-caducada-0000",
   estrecha: "valor-de-prueba-du22-estrecha-0000",
@@ -90,7 +95,9 @@ async function crearClave(
 const CAPTURA = "cap-du22";
 
 async function limpiar() {
-  await dueno`delete from api_key where id like 'k-du22-%'`;
+  await dueno`delete from api_key where id like 'k-du22-%' or id like 'k-du23-%'`;
+  await dueno`delete from agent_event where organization_id in (${A.org}, ${B.org}) or api_key_id like 'k-du23-%'`;
+  await dueno`delete from announcement where organization_id in (${A.org}, ${B.org})`;
   await dueno`delete from download_event where lead_capture_id = ${CAPTURA}`;
   await dueno`delete from crm_delivery where lead_capture_id = ${CAPTURA}`;
   await dueno`delete from lead_capture where id = ${CAPTURA}`;
@@ -158,6 +165,10 @@ async function sembrar() {
   await crearClave("k-du22-rev", VALORES.revocada, ["orgs:read"], { revocada: true });
   await crearClave("k-du22-cad", VALORES.caducada, ["orgs:read"], { caducada: true });
   await crearClave("k-du22-lim", VALORES.estrecha, ["orgs:read"], { max: 2, ventana: 60 });
+  await crearClave("k-du23-ent", VALORES.escribeEntregables, ["deliverables:write", "deliverables:read"]);
+  await crearClave("k-du23-avi", VALORES.escribeAvisos, ["announcements:write"]);
+  await crearClave("k-du23-eve", VALORES.escribeEventos, ["events:write"]);
+  await crearClave("k-du23-aco", VALORES.escribeAcotada, ["announcements:write", "deliverables:write"], { org: A.org });
 }
 
 /* ── Servidor real ────────────────────────────────────────────────────────── */
@@ -194,7 +205,16 @@ async function levantar(env: Record<string, string>) {
   throw new Error("el servidor no respondió en 30 s");
 }
 
-type Respuesta = { status: number; cuerpo: any; cabeceras: Headers };
+/**
+ * El cuerpo de una respuesta JSON. `unknown` obligaría a estrechar en cada
+ * lectura y convertiría la prueba en un ejercicio de tipos; lo que aquí importa
+ * es lo que el servidor devuelve, no lo que el compilador cree. Se declara una
+ * vez, con su excepción a la vista, en vez de salpicar `any` por el archivo.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Json = any;
+
+type Respuesta = { status: number; cuerpo: Json; cabeceras: Headers };
 
 async function pedir(base: string, ruta: string, clave?: string): Promise<Respuesta> {
   const r = await fetch(`${base}${ruta}`, {
@@ -209,12 +229,67 @@ async function pedir(base: string, ruta: string, clave?: string): Promise<Respue
   return { status: r.status, cuerpo, cabeceras: r.headers };
 }
 
+/* ── Doble de almacenamiento ──────────────────────────────────────────────── */
+
+/**
+ * Un S3 mínimo que **recuerda qué se subió**. No verifica la firma —eso ya lo
+ * hace `test:archivos` contra su propio doble— porque lo que aquí se mide es el
+ * **ciclo de tres pasos**: crear, subir, publicar. Sin un almacenamiento que
+ * distinga «hay archivo» de «no hay archivo», el 409 del criterio 8 no se puede
+ * comprobar: habría que creer que funciona.
+ */
+const subidos = new Set<string>();
+
+/**
+ * Valores falsos en constantes de nombre neutro. **Pegar un literal junto a
+ * `S3_SECRET_ACCESS_KEY` es lo que `check:secrets` marca en rojo**, y hace bien
+ * aunque aquí sea de mentira: el escáner no puede distinguir un secreto falso de
+ * uno real, y un escáner que aprendiera a hacerlo dejaría de servir. Mismo
+ * patrón que `test-acceso.ts`.
+ */
+const ACCESO_DEL_DOBLE = "acceso-solo-para-esta-prueba";
+const SECRETO_DEL_DOBLE = "solo-para-esta-prueba-0123456789";
+
+async function levantarAlmacenamiento(): Promise<{ puerto: number; parar: () => Promise<void> }> {
+  const puerto = await puertoLibre();
+  const servidor = http.createServer((req, res) => {
+    const ruta = new URL(req.url ?? "/", `http://127.0.0.1:${puerto}`).pathname;
+    req.resume();
+    if (req.method === "PUT") {
+      subidos.add(ruta);
+      res.writeHead(200).end();
+      return;
+    }
+    if (req.method === "HEAD") {
+      res.writeHead(subidos.has(ruta) ? 200 : 404).end();
+      return;
+    }
+    res.writeHead(200, { "content-type": "application/octet-stream" }).end("contenido");
+  });
+  await new Promise<void>((r) => servidor.listen(puerto, "127.0.0.1", r));
+  return { puerto, parar: () => new Promise<void>((r) => servidor.close(() => r())) };
+}
+
 /* ── La prueba ────────────────────────────────────────────────────────────── */
 
 async function main() {
   await sembrar();
+  /**
+   * Marca de agua. **`audit_log` no se puede limpiar** —es de solo inserción
+   * desde la migración 0003— así que las comprobaciones de auditoría se acotan
+   * por tiempo. Sin esto, la prueba leía apuntes de corridas anteriores y
+   * juzgaba código que ya no existe.
+   */
+  const INICIO = new Date();
+  const almacenamiento = await levantarAlmacenamiento();
   const servidor = await levantar({
     CRM_CONTACT_URL_TEMPLATE: "https://crm.example.test/contacts/{id}",
+    S3_ENDPOINT: `http://127.0.0.1:${almacenamiento.puerto}`,
+    S3_REGION: "auto",
+    S3_ACCESS_KEY_ID: ACCESO_DEL_DOBLE,
+    S3_SECRET_ACCESS_KEY: SECRETO_DEL_DOBLE,
+    S3_BUCKET_DOWNLOADS: "downloads",
+    S3_BUCKET_DELIVERABLES: "deliverables",
   });
   const { base } = servidor;
   const P = (ruta: string, clave?: string) => pedir(base, ruta, clave);
@@ -330,7 +405,7 @@ async function main() {
 
     const capturas = await P("/api/v1/captures", VALORES.capturas);
     check("responde 200 con `captures:read`", capturas.status === 200, String(capturas.status));
-    const cap = capturas.cuerpo?.data?.find((c: any) => c.id === CAPTURA);
+    const cap = capturas.cuerpo?.data?.find((c: Json) => c.id === CAPTURA);
     check("y trae la captura sembrada", Boolean(cap));
     check("con su dominio de correo, que es columna generada", cap?.email_domain === "empresa.test", cap?.email_domain);
     check("con el estado de entrega al CRM", cap?.crm?.sync_status === "delivered" && cap?.crm?.contact_id === "3412");
@@ -354,17 +429,17 @@ async function main() {
     console.log("\nCriterio 5 — empresas y proyectos con `orgs:read`:\n");
 
     const orgs = await P("/api/v1/organizations", VALORES.slg);
-    check("una clave de SLG ve las dos empresas", orgs.cuerpo?.data?.length >= 2, JSON.stringify(orgs.cuerpo?.data?.map((o: any) => o.id)));
+    check("una clave de SLG ve las dos empresas", orgs.cuerpo?.data?.length >= 2, JSON.stringify(orgs.cuerpo?.data?.map((o: Json) => o.id)));
     check(
       "con el contacto principal pero SIN su correo (minimización)",
-      orgs.cuerpo.data.some((o: any) => o.primary_contact?.name === "Ana Directora") &&
+      orgs.cuerpo.data.some((o: Json) => o.primary_contact?.name === "Ana Directora") &&
         !JSON.stringify(orgs.cuerpo).includes("ana@du22.test"),
     );
     const orgsAcotada = await P("/api/v1/organizations", VALORES.empresa);
     check(
       "una clave acotada ve EXACTAMENTE una empresa: la suya",
       orgsAcotada.cuerpo?.data?.length === 1 && orgsAcotada.cuerpo.data[0].id === A.org,
-      JSON.stringify(orgsAcotada.cuerpo?.data?.map((o: any) => o.id)),
+      JSON.stringify(orgsAcotada.cuerpo?.data?.map((o: Json) => o.id)),
     );
 
     const proyectos = await P(`/api/v1/organizations/${A.org}/projects`, VALORES.slg);
@@ -387,15 +462,15 @@ async function main() {
     const deSlg = await P(`/api/v1/projects/${A.proyecto}/deliverables`, VALORES.slg);
     check("una clave de SLG ve los cuatro, incluido el `internal`", deSlg.cuerpo?.data?.length === 4, String(deSlg.cuerpo?.data?.length));
     const deEmpresa = await P(`/api/v1/projects/${A.proyecto}/deliverables`, VALORES.empresa);
-    const ids = (deEmpresa.cuerpo?.data ?? []).map((d: any) => d.id);
+    const ids = (deEmpresa.cuerpo?.data ?? []).map((d: Json) => d.id);
     check("una clave acotada ve solo lo `client` y publicado", ids.length === 2 && !ids.includes("d-du22-3") && !ids.includes("d-du22-4"), ids.join(","));
     check(
       "NINGUNA respuesta trae URL de descarga del archivo",
       !JSON.stringify(deSlg.cuerpo).match(/X-Amz-Signature|signed_url|download_url/i),
     );
-    check("sí trae el checksum, que es lo que el contrato promete", deSlg.cuerpo.data.some((d: any) => d.file?.checksum_sha256 === "aaaa1111"));
+    check("sí trae el checksum, que es lo que el contrato promete", deSlg.cuerpo.data.some((d: Json) => d.file?.checksum_sha256 === "aaaa1111"));
     const ultimas = await P(`/api/v1/projects/${A.proyecto}/deliverables?only_latest=true`, VALORES.slg);
-    check("`only_latest` deja una sola versión por familia", ultimas.cuerpo?.data?.filter((d: any) => d.family_id === "fam-du22").length === 1);
+    check("`only_latest` deja una sola versión por familia", ultimas.cuerpo?.data?.filter((d: Json) => d.family_id === "fam-du22").length === 1);
     const proyectoAjeno = await P(`/api/v1/projects/${B.proyecto}/deliverables`, VALORES.empresa);
     check("un proyecto de otra empresa es 404", proyectoAjeno.status === 404, String(proyectoAjeno.status));
 
@@ -418,9 +493,15 @@ async function main() {
     check(`los ${malos.length} parámetros inválidos dan 422`, validados === malos.length, `${validados}/${malos.length}`);
     const detalles = await P("/api/v1/captures?limit=999", VALORES.capturas);
     check("el 422 dice el CAMPO y el motivo", detalles.cuerpo?.error?.details?.[0]?.field === "limit");
+    /**
+     * Se mira **`details`**, no el sobre entero: el `request_id` es un UUID y
+     * puede contener «999» por casualidad. La primera versión miraba el sobre y
+     * fallaba una vez de cada tantas — una prueba que falla a veces enseña a
+     * ignorarla, que es peor que no tenerla.
+     */
     check(
       "y NO repite el valor recibido (RNF-26)",
-      !JSON.stringify(detalles.cuerpo).includes("999"),
+      !JSON.stringify(detalles.cuerpo.error.details).includes("999"),
       JSON.stringify(detalles.cuerpo.error.details),
     );
     const cruzado = await P("/api/v1/captures?since=2026-10-01T00:00:00Z&until=2026-09-01T00:00:00Z", VALORES.capturas);
@@ -436,8 +517,8 @@ async function main() {
       `/api/v1/projects/${A.proyecto}/deliverables?limit=2&cursor=${encodeURIComponent(pagina1.cuerpo.page.next_cursor)}`,
       VALORES.slg,
     );
-    const idsP1 = pagina1.cuerpo.data.map((d: any) => d.id);
-    const idsP2 = pagina2.cuerpo.data.map((d: any) => d.id);
+    const idsP1 = pagina1.cuerpo.data.map((d: Json) => d.id);
+    const idsP2 = pagina2.cuerpo.data.map((d: Json) => d.id);
     check("la segunda no repite ningún elemento de la primera", !idsP2.some((i: string) => idsP1.includes(i)), `${idsP1} / ${idsP2}`);
     check("y entre las dos están los cuatro", new Set([...idsP1, ...idsP2]).size === 4);
     const cursorDeOtra = await P(
@@ -471,6 +552,309 @@ async function main() {
     check("ninguna respuesta es cacheable", orgs.cabeceras.get("cache-control") === "no-store" && sinClave.cabeceras.get("cache-control") === "no-store");
     check("toda respuesta lleva X-Request-Id", Boolean(orgs.cabeceras.get("x-request-id")) && Boolean(sinClave.cabeceras.get("x-request-id")));
 
+    console.log("\nDU-23 · el ciclo de tres pasos: crear → subir → publicar:\n");
+
+    const postJson = async (ruta: string, clave: string, cuerpo: unknown, tipo = "application/json") => {
+      const r = await fetch(`${base}${ruta}`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${clave}`, "content-type": tipo },
+        body: typeof cuerpo === "string" ? cuerpo : JSON.stringify(cuerpo),
+      });
+      let leido: Json = null;
+      try {
+        leido = await r.json();
+      } catch {
+        leido = null;
+      }
+      return { status: r.status, cuerpo: leido, cabeceras: r.headers };
+    };
+
+    const creado = await postJson("/api/v1/deliverables", VALORES.escribeEntregables, {
+      project_id: A.proyecto,
+      title: "Informe por API",
+      type: "pdf",
+      source: "file",
+      visibility: "client",
+      file: { filename: "informe.pdf", mime_type: "application/pdf", size_bytes: 1024 },
+    });
+    check("`POST /deliverables` responde 201", creado.status === 201, JSON.stringify(creado.cuerpo));
+    check("con `Location` a la ruta de lectura", creado.cabeceras.get("location") === `/api/v1/projects/${A.proyecto}/deliverables`);
+    check("el recurso nace SIN publicar", creado.cuerpo?.data?.published_at === null);
+    check("y devuelve la URL firmada de subida con sus cabeceras", typeof creado.cuerpo?.upload?.url === "string" && creado.cuerpo.upload.method === "PUT");
+    check(
+      "la URL firmada NO se registra en la auditoría: contiene la firma (RNF-26)",
+      (
+        (await dueno`select count(*)::text as n from audit_log
+                      where created_at >= ${INICIO} and metadata::text like '%X-Amz-Signature%'`) as unknown as { n: string }[]
+      )[0]?.n === "0",
+    );
+
+    const idCreado = creado.cuerpo.data.id as string;
+
+    // **Publicar sin haber subido es 409**, y el entregable se queda donde estaba.
+    const sinSubir = await postJson(`/api/v1/deliverables/${idCreado}/publish`, VALORES.escribeEntregables, {});
+    check("publicar sin archivo subido → 409 (criterio 8)", sinSubir.status === 409, String(sinSubir.status));
+    check("con el código estable `conflict`", sinSubir.cuerpo?.error?.code === "conflict");
+
+    // Paso 2: el `PUT` contra la URL firmada, que NO es una ruta nuestra.
+    const puesto = await fetch(creado.cuerpo.upload.url, {
+      method: "PUT",
+      headers: creado.cuerpo.upload.headers,
+      body: "x".repeat(1024),
+    });
+    check("el `PUT` contra la URL firmada funciona", puesto.ok, String(puesto.status));
+
+    const publicado = await postJson(`/api/v1/deliverables/${idCreado}/publish`, VALORES.escribeEntregables, {});
+    check("ahora publicar responde 200", publicado.status === 200, JSON.stringify(publicado.cuerpo?.error));
+    check("con su marca de publicación", typeof publicado.cuerpo?.data?.published_at === "string");
+    check(
+      "y la atribución distingue CLAVE de persona (RF-111)",
+      publicado.cuerpo.data.published_by?.actor_type === "api_key" &&
+        publicado.cuerpo.data.published_by?.actor_id === "k-du23-ent",
+      JSON.stringify(publicado.cuerpo.data.published_by),
+    );
+    const otraVez = await postJson(`/api/v1/deliverables/${idCreado}/publish`, VALORES.escribeEntregables, {});
+    check("publicar dos veces → 409", otraVez.status === 409, String(otraVez.status));
+
+    const leido = await P(`/api/v1/projects/${A.proyecto}/deliverables`, VALORES.escribeEntregables);
+    check(
+      "y el entregable ya aparece publicado en la lectura: el ciclo cierra de punta a punta",
+      leido.cuerpo.data.some((d: Json) => d.id === idCreado && d.published_at !== null),
+    );
+
+    console.log("\nDU-23 · lo que el ciclo NO deja hacer:\n");
+
+    const enlaceMalo = await postJson("/api/v1/deliverables", VALORES.escribeEntregables, {
+      project_id: A.proyecto,
+      title: "Enlace hostil",
+      type: "link",
+      source: "link",
+      external_url: "javascript:alert(1)",
+    });
+    check("un `external_url` con esquema ejecutable → 422", enlaceMalo.status === 422, String(enlaceMalo.status));
+    const incoherente = await postJson("/api/v1/deliverables", VALORES.escribeEntregables, {
+      project_id: A.proyecto,
+      title: "Incoherente",
+      type: "pdf",
+      source: "file",
+      external_url: "https://ejemplo.test/x",
+      file: { filename: "x.pdf", mime_type: "application/pdf", size_bytes: 10 },
+    });
+    check("`source=file` con `external_url` → 422", incoherente.status === 422, String(incoherente.status));
+    const mimeMalo = await postJson("/api/v1/deliverables", VALORES.escribeEntregables, {
+      project_id: A.proyecto,
+      title: "MIME que no toca",
+      type: "pdf",
+      source: "file",
+      file: { filename: "x.exe", mime_type: "application/x-msdownload", size_bytes: 10 },
+    });
+    check("un MIME fuera de lo permitido se rechaza ANTES de firmar (RNF-25)", mimeMalo.status === 422, String(mimeMalo.status));
+    const grande = await postJson("/api/v1/deliverables", VALORES.escribeEntregables, {
+      project_id: A.proyecto,
+      title: "Demasiado grande",
+      type: "md",
+      source: "file",
+      file: { filename: "x.md", mime_type: "text/markdown", size_bytes: 5 * 1024 * 1024 },
+    });
+    check("y un tamaño por encima del tope del tipo, también", grande.status === 422, String(grande.status));
+    const familiaAjena = await postJson("/api/v1/deliverables", VALORES.escribeEntregables, {
+      project_id: A.proyecto,
+      title: "Familia de otro",
+      type: "pdf",
+      source: "file",
+      family_id: "fam-que-no-existe",
+      file: { filename: "x.pdf", mime_type: "application/pdf", size_bytes: 10 },
+    });
+    check("un `family_id` inexistente → 422", familiaAjena.status === 422, String(familiaAjena.status));
+    const proyectoDeOtro = await postJson("/api/v1/deliverables", VALORES.escribeAcotada, {
+      project_id: B.proyecto,
+      title: "En casa ajena",
+      type: "pdf",
+      source: "file",
+      file: { filename: "x.pdf", mime_type: "application/pdf", size_bytes: 10 },
+    });
+    check("crear en un proyecto de otra empresa → 404, no 403", proyectoDeOtro.status === 404, String(proyectoDeOtro.status));
+    const soloLectura = await postJson("/api/v1/deliverables", VALORES.entregables, {
+      project_id: A.proyecto,
+      title: "Sin permiso",
+      type: "pdf",
+      source: "file",
+      file: { filename: "x.pdf", mime_type: "application/pdf", size_bytes: 10 },
+    });
+    check("una clave de SOLO LECTURA no puede crear nada → 403 (DoD #6)", soloLectura.status === 403, String(soloLectura.status));
+
+    console.log("\nDU-23 · avisos, y que el cliente los ve:\n");
+
+    const avisoSinPublish = await postJson("/api/v1/announcements", VALORES.escribeAvisos, {
+      organization_id: A.org,
+      title: "Sin decidir",
+      body_md: "cuerpo",
+    });
+    check("`publish` es obligatorio y sin defecto → 422", avisoSinPublish.status === 422, String(avisoSinPublish.status));
+    check(
+      "y el detalle nombra el campo que falta",
+      avisoSinPublish.cuerpo?.error?.details?.some((d: Json) => d.field === "publish" && d.code === "required"),
+      JSON.stringify(avisoSinPublish.cuerpo?.error?.details),
+    );
+
+    const avisoBorrador = await postJson("/api/v1/announcements", VALORES.escribeAvisos, {
+      organization_id: A.org,
+      title: "Borrador",
+      body_md: "todavía no",
+      publish: false,
+    });
+    check("con `publish: false` se crea sin publicar", avisoBorrador.status === 201 && avisoBorrador.cuerpo.data.published_at === null);
+    check("y sin autor: lo impone la base, no la respuesta", avisoBorrador.cuerpo.data.author === null);
+
+    const aviso = await postJson("/api/v1/announcements", VALORES.escribeAvisos, {
+      organization_id: A.org,
+      title: "Sesión de cierre de la cohorte 1",
+      body_md: "La sesión queda fijada para el **22 de octubre**.",
+      publish: true,
+    });
+    check("con `publish: true` responde 201 y queda publicado", aviso.status === 201 && typeof aviso.cuerpo.data.published_at === "string", JSON.stringify(aviso.cuerpo?.error));
+    check(
+      "la autoría distingue clave de persona (RF-111)",
+      aviso.cuerpo.data.author?.actor_type === "api_key" && aviso.cuerpo.data.author?.actor_id === "k-du23-avi",
+    );
+    const enElPortal = (await dueno`
+      select title, published_at, author_type from announcement
+       where organization_id = ${A.org} and published_at is not null
+    `) as unknown as { title: string; author_type: string }[];
+    check(
+      "y el aviso está en la empresa de ese cliente, publicado y atribuido a la clave (DoD #6)",
+      enElPortal.length === 1 && enElPortal[0]!.title.startsWith("Sesión de cierre") && enElPortal[0]!.author_type === "api_key",
+      JSON.stringify(enElPortal),
+    );
+    const avisoAjeno = await postJson("/api/v1/announcements", VALORES.escribeAcotada, {
+      organization_id: B.org,
+      title: "En casa ajena",
+      body_md: "x",
+      publish: true,
+    });
+    check("una clave acotada no puede escribir en otra empresa → 404", avisoAjeno.status === 404, String(avisoAjeno.status));
+
+    console.log("\nDU-23 · eventos: enumerado abierto con forma exigida (RF-146):\n");
+
+    const eventoConocido = await postJson("/api/v1/events", VALORES.escribeEventos, {
+      kind: "deliverable.published",
+      organization_id: A.org,
+      payload: { unit: "DU-23" },
+    });
+    check("un `kind` del catálogo se acepta", eventoConocido.status === 201, String(eventoConocido.status));
+    check("y se marca como conocido", eventoConocido.cuerpo.data.schema_known === true);
+
+    const eventoNuevo = await postJson("/api/v1/events", VALORES.escribeEventos, {
+      kind: "review.verdict",
+      payload: { unit: "DU-23", verdict: "pass", checks: [{ id: "aislamiento", result: "pass" }] },
+    });
+    check("un `kind` NUEVO se acepta sin migrar el esquema (RF-146)", eventoNuevo.status === 201, String(eventoNuevo.status));
+    check("y se dice honestamente que su esquema no se conoce", eventoNuevo.cuerpo.data.schema_known === false);
+    check(
+      "el payload estructurado se guarda entero",
+      (
+        (await dueno`select payload_json from agent_event where id = ${eventoNuevo.cuerpo.data.id}`) as unknown as { payload_json: Json }[]
+      )[0]?.payload_json?.checks?.[0]?.id === "aislamiento",
+    );
+    const formaMala = await postJson("/api/v1/events", VALORES.escribeEventos, { kind: "SinPunto", payload: {} });
+    check("un `kind` fuera de forma → 422", formaMala.status === 422, String(formaMala.status));
+    check(
+      "y el detalle señala `kind`",
+      formaMala.cuerpo?.error?.details?.some((d: Json) => d.field === "kind"),
+      JSON.stringify(formaMala.cuerpo?.error?.details),
+    );
+    const enTablero = (await dueno`
+      select count(*)::text as n from agent_event where organization_id = ${A.org}
+    `) as unknown as { n: string }[];
+    check("el evento queda donde el tablero de HQ lo lee (RF-76, DoD #4)", Number(enTablero[0]?.n) >= 1, enTablero[0]?.n);
+
+    console.log("\nDU-23 · el sobre de un POST: 415, 413, 400 y campos no declarados:\n");
+
+    const tipoMalo = await postJson("/api/v1/events", VALORES.escribeEventos, "kind=x", "application/x-www-form-urlencoded");
+    check("un `Content-Type` que no es JSON → 415", tipoMalo.status === 415, String(tipoMalo.status));
+    const jsonRoto = await postJson("/api/v1/events", VALORES.escribeEventos, "{no es json");
+    check("un JSON ilegible → 400", jsonRoto.status === 400, String(jsonRoto.status));
+    const campoDeMas = await postJson("/api/v1/events", VALORES.escribeEventos, {
+      kind: "review.verdict",
+      payload: {},
+      inventado: true,
+    });
+    check("un campo no declarado → 422, no se ignora en silencio", campoDeMas.status === 422, String(campoDeMas.status));
+    /**
+     * **El 413 se prueba con un cuerpo grande de verdad.** El primer intento
+     * declaraba 60 MB en `content-length` y enviaba poco, para demostrar que el
+     * rechazo ocurre **por la cabecera y sin leer el cuerpo**; no se puede: el
+     * servidor no entrega la petición al manejador hasta que el cuerpo declarado
+     * llega, así que la prueba se quedaba colgada. Queda dicho aquí porque es
+     * una limitación real del entorno, no una decisión: la comprobación de la
+     * cabecera **existe** en el manejador y ahorra analizar el JSON, pero lo que
+     * esta prueba demuestra es el resultado —413— y no el ahorro.
+     */
+    const relleno = "a".repeat(51 * 1024 * 1024);
+    const enorme = await postJson("/api/v1/events", VALORES.escribeEventos, {
+      kind: "review.verdict",
+      payload: { relleno },
+    });
+    check("un cuerpo por encima del tope duro → 413", enorme.status === 413, String(enorme.status));
+
+    console.log("\nDU-23 · la especificación se genera del catálogo (criterio 5):\n");
+
+    const sinClaveSpec = await P("/api/v1/openapi.json");
+    check("sin clave → 401", sinClaveSpec.status === 401, String(sinClaveSpec.status));
+    const spec = await P("/api/v1/openapi.json", VALORES.eventos);
+    check("con CUALQUIER clave válida → 200, sea cual sea su alcance (RF-106)", spec.status === 200, String(spec.status));
+    check("es OpenAPI 3.1", String(spec.cuerpo?.openapi).startsWith("3.1"));
+    const NUEVE = [
+      "/api/v1/captures",
+      "/api/v1/organizations",
+      "/api/v1/organizations/{id}/projects",
+      "/api/v1/deliverables",
+      "/api/v1/deliverables/{id}/publish",
+      "/api/v1/projects/{id}/deliverables",
+      "/api/v1/announcements",
+      "/api/v1/events",
+      "/api/v1/openapi.json",
+    ];
+    check(
+      "describe LAS NUEVE rutas, ni una más",
+      NUEVE.every((r) => r in (spec.cuerpo?.paths ?? {})) && Object.keys(spec.cuerpo.paths).length === 9,
+      Object.keys(spec.cuerpo?.paths ?? {}).join(" "),
+    );
+    const alcances = NUEVE.map((r) => {
+      const nodo = spec.cuerpo.paths[r];
+      const op = nodo.get ?? nodo.post;
+      return op["x-alcance-exigido"];
+    });
+    check(
+      "cada una lleva su alcance, y `openapi.json` ninguno",
+      alcances.includes("captures:read") &&
+        alcances.includes("orgs:read") &&
+        alcances.includes("deliverables:write") &&
+        alcances.includes("announcements:write") &&
+        alcances.includes("events:write") &&
+        alcances.filter((a) => a === null).length === 1,
+      JSON.stringify(alcances),
+    );
+    check(
+      "y todos los códigos de §2.5 aparecen en alguna respuesta",
+      [401, 403, 429, 422, 404, 409, 413, 415, 400, 500, 503].every((c) =>
+        JSON.stringify(spec.cuerpo.paths).includes(`"${c}"`),
+      ),
+    );
+    /**
+     * **La prueba de que no hay dos descripciones.** El catálogo declara el
+     * máximo de `limit` en 200; si la especificación lo dijera de otro sitio,
+     * este número podría discrepar. Se comprueba contra el comportamiento real:
+     * lo que la especificación promete es lo que el servidor hace.
+     */
+    const limiteSpec = spec.cuerpo.paths["/api/v1/captures"].get.parameters.find((p: Json) => p.name === "limit");
+    check("el máximo de `limit` que anuncia la especificación es el que valida el servidor", limiteSpec.schema.maximum === 200);
+    check(
+      "y pedir uno por encima devuelve 422, como la especificación declara",
+      (await P(`/api/v1/captures?limit=${limiteSpec.schema.maximum + 1}`, VALORES.capturas)).status === 422,
+    );
+    check("la especificación tampoco es cacheable", spec.cabeceras.get("cache-control") === "no-store");
+
     console.log("\nLa política de la migración 0015, a nivel de base (R-26):\n");
 
     /**
@@ -502,9 +886,11 @@ async function main() {
     const apuntes = (await dueno`
       select action, actor_type, actor_id, actor_label, entity, ip, metadata
         from audit_log
-       where actor_id in ('k-du22-slg','k-du22-cap','k-du22-emp','k-du22-lim','k-du22-ent','k-du22-eve','k-du22-rev','k-du22-cad','unknown')
+       where actor_id in ('k-du22-slg','k-du22-cap','k-du22-emp','k-du22-lim','k-du22-ent','k-du22-eve',
+                          'k-du22-rev','k-du22-cad','k-du23-ent','k-du23-avi','k-du23-eve','k-du23-aco','unknown')
+         and created_at >= ${INICIO}
        order by created_at desc limit 400
-    `) as unknown as { action: string; actor_type: string; actor_id: string; actor_label: string | null; entity: string; ip: string | null; metadata: any }[];
+    `) as unknown as { action: string; actor_type: string; actor_id: string; actor_label: string | null; entity: string; ip: string | null; metadata: Json }[];
 
     check("hay apuntes de esta corrida", apuntes.length > 0, String(apuntes.length));
     check(
@@ -517,6 +903,19 @@ async function main() {
     );
     check("el 429 también", apuntes.some((a) => a.metadata?.status === 429));
     check("y las llamadas que salen bien", apuntes.some((a) => a.metadata?.status === 200 && a.action === "organization.list"));
+    /**
+     * **Una fila por LLAMADA, no dos por acto** (D-140). Esta prueba hace
+     * exactamente ocho `POST /deliverables` —una que sale bien y siete que se
+     * rechazan— y las ocho tienen que estar, una vez cada una: las rechazadas
+     * porque toda llamada se audita, y la buena porque no se audita dos veces.
+     */
+    const CREACIONES_INTENTADAS = 8;
+    const creaciones = apuntes.filter((a) => a.action === "deliverable.create").length;
+    check(
+      `las ${CREACIONES_INTENTADAS} llamadas de creación dejan ${CREACIONES_INTENTADAS} filas, ni una más`,
+      creaciones === CREACIONES_INTENTADAS,
+      `deliverable.create: ${creaciones}`,
+    );
     check(
       "el apunte lleva acción, entidad y ruta",
       apuntes.every((a) => typeof a.action === "string" && typeof a.entity === "string" && typeof a.metadata?.path === "string"),
@@ -548,6 +947,7 @@ async function main() {
     );
   } finally {
     servidor.parar();
+    await almacenamiento.parar();
     await limpiar();
     await dueno.end({ timeout: 5 });
   }

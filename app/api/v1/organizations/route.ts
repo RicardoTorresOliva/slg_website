@@ -1,7 +1,7 @@
-import { Lector } from "@/lib/api/entrada";
+import { buscarRuta } from "@/lib/api/catalogo";
 import { organizaciones } from "@/lib/api/lecturas";
 import { manejar } from "@/lib/api/manejador";
-import { ORG_STATUS, ORG_TYPES } from "@/lib/db/schema";
+import { validarQuery } from "@/lib/api/validador";
 
 /**
  * `GET /api/v1/organizations` — las empresas (DU-22 · RF-101 · alcance
@@ -17,20 +17,17 @@ import { ORG_STATUS, ORG_TYPES } from "@/lib/db/schema";
  */
 export const dynamic = "force-dynamic";
 
-export async function GET(request: Request) {
-  return manejar(
-    request,
-    { accion: "org.read", apunte: "organization.list", entidad: "organization" },
-    async (ctx) => {
-      const lector = new Lector(new URL(request.url));
-      const status = lector.enumerado("status", ORG_STATUS) ?? "active";
-      const tipo = lector.enumerado("type", ORG_TYPES) ?? "client";
-      const limit = lector.limite();
-      const cursor = lector.cursor();
-      lector.exigirValido();
+const RUTA = buscarRuta("GET", "/api/v1/organizations");
 
-      const cuerpo = await organizaciones(ctx, { status, tipo, limit, cursor });
-      return { cuerpo, organizationId: ctx.organizationId };
-    },
-  );
+export async function GET(request: Request) {
+  return manejar(request, { ruta: RUTA, apunte: "organization.list", entidad: "organization" }, async (ctx) => {
+    const q = validarQuery(new URL(request.url), RUTA);
+    const cuerpo = await organizaciones(ctx, {
+      status: q.status as string,
+      tipo: q.type as string,
+      limit: q.limit as number,
+      cursor: (q.cursor as string | undefined) ?? null,
+    });
+    return { cuerpo, organizationId: ctx.organizationId };
+  });
 }

@@ -363,10 +363,23 @@ async function main() {
     /* ── Criterio 2 · el puerto no ofrece listar ─────────────────────────── */
     console.log("\nCriterio 2 — no hay forma de listar un bucket:\n");
     const operaciones = Object.keys(puerto).sort();
+    /**
+     * **Cuatro desde DU-23, y el número no es el punto.** `existe` se añadió
+     * para que publicar un entregable cuyo archivo nunca se subió responda 409
+     * en vez de dejarle el hueco al cliente. **No es `listar`**: pregunta por
+     * UNA clave que quien pregunta ya conoce, y no enumera nada — que es lo que
+     * RF-123 prohíbe. La comprobación que de verdad guarda la frontera es la de
+     * abajo, y esa no ha cambiado.
+     */
     check(
-      "el puerto expone exactamente tres operaciones",
-      operaciones.join(",") === "borrar,firmarDescarga,firmarSubida",
+      "el puerto expone exactamente las cuatro operaciones declaradas",
+      operaciones.join(",") === "borrar,existe,firmarDescarga,firmarSubida",
       operaciones.join(", "),
+    );
+    check(
+      "y `existe` responde sí o no sobre una clave concreta, sin enumerar",
+      puerto.existe.length === 1,
+      "recibe un objeto con bucket y clave: no hay prefijo ni patrón que pasarle",
     );
     check(
       "ninguna se llama listar, ni nada parecido",
