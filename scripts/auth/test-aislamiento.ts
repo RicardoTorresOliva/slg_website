@@ -162,9 +162,15 @@ async function main() {
       } catch {
         pasa = false;
       }
-      // `members` es de `client_admin`: un `client_member` no la tiene, y eso
-      // no es una fuga — es la matriz haciendo su trabajo.
-      const esperado = seccion.clave !== "members";
+      /**
+       * **TODAS las secciones del portal son alcanzables por `client_member`**
+       * desde DU-21. «Miembros» lo era antes con una excepción, porque la
+       * gobernaba `member.invite`; ahora la gobierna `member.read` y el criterio
+       * 2 de DU-21 dice justamente que ese rol **ve la lista y no puede
+       * invitar**. La restricción no desapareció: se movió al formulario de
+       * dentro y al servicio, donde `test:miembros` la comprueba llamándolo.
+       */
+      const esperado = true;
       check(`\`client_member\` ${esperado ? "SÍ" : "NO"} alcanza «${seccion.clave}»`, pasa === esperado);
     }
 

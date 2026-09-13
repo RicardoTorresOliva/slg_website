@@ -92,6 +92,27 @@ ninguno de esos pasos parece el paso. La otra mitad la sostiene la base: el índ
 `uq_membership_una_empresa_cliente` (migración 0013) impide que una persona cuelgue de dos empresas
 cliente, que es por donde `membership` se convierte en matrícula.
 
+## La matriz tiene dos filas que B.3 no tiene, y están marcadas (DU-21)
+`member.read` y `profile.self`. B.3 es una matriz de **privilegio sobre lo ajeno**; ver quién más está
+en tu propia empresa y editar tu propio nombre no lo son, y aun así necesitan acción porque FU-12
+exige que **toda sección declare la suya**. Las dos llevan `filaB3` empezando por «(derivada…)»: si
+alguna vez hay que cotejar la tabla con el brief, se ve de un vistazo cuáles salen de él y cuáles no.
+La consecuencia práctica: **la sección «Miembros» la ve `client_member`**, y lo que no ve es el
+formulario de invitar. Ver y poder son dos cosas — y cambiar eso obligó a reescribir dos pruebas que
+afirmaban lo contrario.
+
+## Al invitar desde el portal, la empresa NO es un parámetro (DU-21)
+`lib/portal/miembros.ts::invitarMiembro()` no acepta `organization_id`; `lib/hq/usuarios.ts::invitarACliente()`
+sí, porque un operador de SLG invita a empresas que no son la suya. Son dos puertas a propósito. Si
+algún día hace falta que el portal invite «a otra empresa», la respuesta no es añadir el parámetro.
+
+## La Sesión Cero no se puede nombrar fuera del portal (DU-21)
+`check:alcance` frena cualquier mención de la Sesión Cero fuera de `app/(portal)/` y `lib/portal/`, y
+por eso su componente vive **colocado con la pantalla** en vez de en `components/` — un componente
+compartido sería el primer sitio desde el que colarla a una página pública (RF-96). La URL es la clave
+`portal.sesion0.url` de `content/ui`, **vacía a propósito**: la cadena vacía es el estado declarado de
+«todavía no» y el paso degrada a «Próximamente». Solo se acepta `https:`.
+
 ## El mapa de rutas vive en `lib/content/rutas.ts`, y es EXPLÍCITO
 Cada página y cada servicio declara su ruta ES y su par EN (**D-79**). No se deriva del nombre del
 archivo: el Anexo A.2 anida la oferta (`/ai/academy/phoenix-peex`) y `/holdings` lo sirve un registro

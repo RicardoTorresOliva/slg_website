@@ -75,7 +75,15 @@ export const SECCIONES: readonly Seccion[] = [
    * no entregables, que no existe en B.3.
    */
   { clave: "materials", href: "/portal/materiales", superficie: "portal", accion: "deliverable.read" },
-  { clave: "members", href: "/portal/miembros", superficie: "portal", accion: "member.invite" },
+  /**
+   * `member.read` y **no** `member.invite` (DU-21, criterio 2). El criterio dice
+   * que `client_member` **ve la lista y no puede invitar**: con la acción de
+   * invitar, la sección se le escondería entera a quien el criterio manda
+   * enseñársela. El formulario de invitar se pinta dentro, y solo a quien puede
+   * — y la Server Action lo vuelve a exigir, porque esconder no es proteger.
+   */
+  { clave: "members", href: "/portal/miembros", superficie: "portal", accion: "member.read" },
+  { clave: "profile", href: "/portal/perfil", superficie: "portal", accion: "profile.self" },
 ];
 
 /**

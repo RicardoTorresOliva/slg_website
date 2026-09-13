@@ -178,3 +178,66 @@ export async function sesionesVivas(userId: string): Promise<number> {
   `;
   return Number(fila?.n ?? 0);
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * El perfil: qué método de acceso usa esta cuenta, y cambiar la contraseña
+ * (DU-21, criterio 3 · RF-93)
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * ¿Esta cuenta entra con contraseña?
+ *
+ * El criterio 3 dice que cada usuario cambia su contraseña **solo si usa ese
+ * método**, y la razón no es de interfaz: a quien entra con Microsoft 365 no le
+ * existe ninguna contraseña que cambiar. Enseñarle el formulario sería ofrecerle
+ * una operación que no puede terminar, y peor: haría creer que **aquí** se
+ * cambia la contraseña de su organización, que es de su departamento de
+ * sistemas y no nuestra.
+ *
+ * Vive en este módulo y no en `lib/portal/` porque mira `account`, que es una
+ * tabla de identidad: `check:fronteras` frena a cualquiera que la consulte desde
+ * fuera, y con razón — quien lee `account` está a un `select` de leer tokens.
+ */
+export async function usaMetodoDeContrasena(userId: string): Promise<boolean> {
+  const filas = await conexionDeAuth<{ n: string }[]>`
+    select count(*)::text as n
+      from "account"
+     where user_id = ${userId} and provider_id = 'credential' and password is not null
+  `;
+  return Number(filas[0]?.n ?? 0) > 0;
+}
+
+/**
+ * Cambia la contraseña de la sesión en curso. **Exige la actual** (RF-93).
+ *
+ * Exigirla no es burocracia: sin ella, una sesión robada o una pestaña abierta
+ * en un portátil prestado se convierten en el secuestro de la cuenta —quien la
+ * tenga delante se pone la contraseña que quiera y ya no hace falta la sesión—.
+ *
+ * **Y cierra las demás sesiones**, por lo mismo que el restablecimiento
+ * (`/api/acceso/restablecer`): quien cambia su contraseña suele hacerlo porque
+ * sospecha; dejar vivas las sesiones anteriores deja dentro a quien motivó el
+ * cambio. La de quien la cambia sobrevive, que es lo que hace usable la
+ * operación.
+ *
+ * Devuelve `false` sin distinguir causas: la actual no coincide, la nueva es
+ * corta, la cuenta no usa contraseña. Quien llama enseña un texto único.
+ */
+export async function cambiarContrasenaDeLaSesion(
+  cabeceras: Headers,
+  actual: string,
+  nueva: string,
+): Promise<boolean> {
+  if (nueva.length < 12 || actual.length === 0) return false;
+  try {
+    const { auth } = await import("./better-auth.ts");
+    const r = await auth.api.changePassword({
+      body: { currentPassword: actual, newPassword: nueva, revokeOtherSessions: true },
+      headers: cabeceras,
+      asResponse: true,
+    });
+    return r.ok;
+  } catch {
+    return false;
+  }
+}

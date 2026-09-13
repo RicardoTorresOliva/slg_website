@@ -7,6 +7,8 @@ import { exigirSuperficie } from "@/lib/auth";
 import { loadUiStrings } from "@/lib/content/loader";
 import { avisos, type Aviso } from "@/lib/hq/avisos";
 
+import { PasoDeSesionCero } from "./PasoDeSesionCero";
+
 /**
  * `/portal` — los avisos de **la empresa del usuario** (DU-18 · RF-88).
  *
@@ -21,6 +23,10 @@ import { avisos, type Aviso } from "@/lib/hq/avisos";
  * interfaz esté en español, con su `lang` propio para que un lector de pantalla
  * no lo lea con la fonética equivocada y con `translate="no"` para que el
  * traductor del navegador no lo cambie a espaldas de todos.
+ *
+ * **EL PASO «AGENDA TU SESIÓN CERO» VIVE AQUÍ Y EN NINGÚN OTRO SITIO** (DU-21 ·
+ * RF-94 · RF-96): tras ingreso, nunca en la capa pública. Sin URL de calendario
+ * se muestra «próximamente» y la pantalla sigue entera.
  *
  * **EL ESTADO VACÍO ESTÁ REDACTADO** (criterio 2). No es un hueco ni un «0
  * resultados»: dice qué va a pasar y **que no hace falta volver a mirar**,
@@ -63,6 +69,8 @@ export default async function Portal() {
 
   return (
     <div style={{ display: "grid", gap: "1.5rem" }}>
+      <PasoDeSesionCero textos={t} />
+
       <h1 style={{ margin: 0, fontSize: "1.5rem", color: "var(--slg-blue-deep)" }}>
         {t["portal.ann.title"]}
       </h1>

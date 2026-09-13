@@ -53,6 +53,10 @@ type Regla = {
   readonly re: RegExp;
   readonly porQue: string;
   readonly salvo?: readonly string[];
+  /** Cuando está, la regla SOLO se aplica donde esto devuelve `false`. */
+  readonly permitidoEn?: (rel: string) => boolean;
+  /** La regla necesita ver los literales (el dato va entrecomillado). */
+  readonly conTexto?: boolean;
 };
 
 const REGLAS: readonly Regla[] = [
@@ -70,11 +74,23 @@ const REGLAS: readonly Regla[] = [
     // filtrando en memoria. No se prohíbe *nombrar* el tipo —`destinoDe()` lo
     // necesita para saber a qué bucket sube— sino SELECCIONAR por él.
     re: /eq\(\s*deliverable\.type\s*,\s*["']material["']|\btype\s*=\s*'material'|\.filter\([^\n]*["']material["']/,
+    conTexto: true,
     porQue:
       "criterio 2 de DU-20: no existe ruta ni entidad que liste materiales fuera " +
       `del proyecto que los contiene. La única puerta es ${PUERTA_DE_MATERIALES}, ` +
       "que devuelve grupos con su proyecto y no una lista plana.",
     salvo: [PUERTA_DE_MATERIALES],
+  },
+  {
+    nombre: "la Sesión Cero asomando fuera del portal",
+    re: /sesi[oó]n\s*cero|sesionCero|sesion-cero|sesion0|zero\s+session/i,
+    porQue:
+      "RF-96 y §10-8: la Sesión Cero NO se ofrece en ninguna superficie pública — " +
+      "ni como llamada a la acción, ni como agenda embebida, ni nombrada. Solo " +
+      "existe dentro del portal, tras ingreso. `check:copy` cubre el texto " +
+      "editorial; esta regla cubre el código.",
+    conTexto: true,
+    permitidoEn: (rel) => rel.includes("app/(portal)/") || rel.includes("lib/portal/"),
   },
   {
     nombre: "membership usada como matrícula",
@@ -153,7 +169,8 @@ for (const abs of archivos()) {
 
   for (const regla of REGLAS) {
     if (regla.salvo?.some((s) => rel.endsWith(s))) continue;
-    const lineas = regla.nombre === "selecciona materiales fuera de su módulo" ? conTexto : sinTexto;
+    if (regla.permitidoEn?.(rel)) continue;
+    const lineas = regla.conTexto ? conTexto : sinTexto;
     lineas.forEach((linea, i) => {
       if (regla.re.test(linea)) hallazgos.push({ archivo: rel, linea: i + 1, regla });
     });

@@ -94,6 +94,12 @@ const CASOS: Caso[] = [
     env: { ALCANCE_ROOT: path.join(HERE, "negative/alcance") },
   },
   {
+    freno: "la Sesión Cero ofrecida fuera del portal",
+    script: "check-alcance.ts",
+    espera: "la Sesión Cero NO se ofrece en ninguna superficie pública",
+    env: { ALCANCE_ROOT: path.join(HERE, "negative/alcance") },
+  },
+  {
     freno: "membership usada como matrícula",
     script: "check-alcance.ts",
     espera: "no en qué programas está apuntada",

@@ -2081,3 +2081,69 @@ exactamente las cinco columnas de una pertenencia.
 
 **Lo que queda abierto.** Lo mismo que el resto de M4: el portal **sigue devolviendo 404** mientras
 M4 esté abierto (RF-87), así que la revisión visual espera a que se abra la superficie.
+
+---
+
+## 2026-09-13 · DU-21 — Miembros, perfil y el paso «Agenda tu Sesión Cero»
+
+**Qué se construyó.** `/portal/miembros`, `/portal/perfil`, el paso «Agenda tu Sesión Cero» en
+`/portal`, los módulos `lib/portal/miembros.ts`, `perfil.ts` y `sesion-cero.ts`, las acciones de
+escritura del portal, dos filas nuevas en la matriz y una regla más en `check:alcance`.
+
+**Ver y poder son dos cosas, y la sección lo notaba** (**D-134**). «Miembros» se gobernaba con
+`member.invite`, así que a `client_member` **se le escondía la pantalla entera** — justo lo contrario
+de lo que pide el criterio 2, que dice que ese rol **ve la lista y no puede invitar**. La sección pasó
+a `member.read` y el formulario de dentro se quedó con `member.invite`; el servidor lo vuelve a
+exigir, porque una Server Action es un endpoint HTTP y esconder el botón no protege nada.
+
+**Dos pruebas cambiaron de signo, y está escrito al lado.** `test:shell` afirmaba «`client_member` NO
+ve Miembros» y `test:aislamiento` tenía una excepción para esa sección: las dos daban por bueno el
+comportamiento que el criterio 2 corrige. No se borraron —se reescribieron con el motivo en el
+comentario—, porque una prueba que cambia sin explicación es una prueba que la próxima vez se cambia
+sin pensar.
+
+**La empresa no es un parámetro** (**D-135**). `invitarMiembro()` no acepta `organization_id`: sale
+del contexto de la sesión. Es D-127 aplicado a una escritura — **lo que no existe no se puede
+manipular**—, así que «un `client_admin` no puede invitar a otra empresa» deja de depender de que
+nadie olvide comprobarlo. La comprobación de FU-07 sigue debajo, rechaza con 404 y **audita**;
+`test:miembros` prueba **las dos capas por separado**, porque una sola probada es una sola que existe.
+
+**El formulario de contraseña solo existe si hay contraseña** (criterio 3). A quien entra con la
+cuenta de su organización no le existe ninguna que cambiar: enseñarle el formulario sería ofrecerle
+una operación que no puede terminar y, peor, hacerle creer que **aquí** se cambia la contraseña de su
+empresa —que es de su departamento de sistemas—. La decisión sale de `account`, y por eso vive en
+`lib/auth`: `check:fronteras` frena a cualquiera que consulte esa tabla desde fuera, y con razón —
+quien lee `account` está a un `select` de leer tokens.
+
+**La Sesión Cero solo puede nombrarse dentro del portal** (**D-136**). RF-96 dice que no se ofrece en
+público, y lo que hace que eso siga siendo cierto dentro de un año no es la intención: es que el
+código que la nombra **no se pueda importar desde fuera**. Su componente vive colocado con la
+pantalla, no en `components/`, y `check:alcance` frena cualquier mención fuera de `app/(portal)/` y
+`lib/portal/`. El fixture negativo es lo que pasaría de verdad: nadie escribe «voy a romper el
+posicionamiento»; alguien añade un botón de agenda a una página de servicio porque «convierte mejor».
+
+**Sin URL, «próximamente», y la pantalla entera** (criterio 4). La clave vive en `content/ui` vacía en
+los dos idiomas: **la cadena vacía es el estado declarado de «todavía no»**, no un descuido, y ponerla
+será rellenar un hueco. Solo se acepta `https:` — un `javascript:` ahí sería un enlace ejecutable en
+la pantalla de un cliente autenticado, y un `http:` mandaría a una agenda por texto claro; en los dos
+casos el paso degrada en vez de pintar un enlace roto.
+
+**Verificación — `test:miembros`, 42 comprobaciones contra PostgreSQL real.** Dos empresas, tres
+personas, dos métodos de acceso distintos (contraseña y cuenta de organización) y el SMTP
+deliberadamente sin configurar, para comprobar de paso RF-119: **la invitación existe aunque el correo
+no salga**, y la pantalla lo dice en vez de dar por hecho que llegó.
+
+**Algo que enseñó la prueba y no el diseño.** La limpieza del fixture intentaba borrar sus apuntes de
+auditoría y PostgreSQL se negó: `audit_log` es de solo inserción desde la migración 0003. La prueba se
+adaptó a la regla —acota sus comprobaciones por tiempo— en vez de pedirle a la regla que se aparte.
+
+**Verificación global.** `test:db` completo en verde: **608** comprobaciones sumando el recuento que
+publica cada suite (dos más no publican el suyo). `check:brakes`: **26** (21 + 5 de contenido) ·
+`test:permisos` **236** · `check:runtime` 33 · `check:js-budget` 142.3 KB · `check:content` 1338 ·
+las tres rutas nuevas compilan como dinámicas.
+
+**Lo que NO cierra, y hay que decirlo.** El **criterio 6 es el DoD #5** y pide que el usuario acepte la
+invitación **con Microsoft 365**: necesita los registros de **F.2-3**, que son de Ricardo. El criterio
+4 queda cumplido en su mitad degradada —«próximamente»— hasta que llegue la URL de **F.2-6**. Y el
+portal sigue devolviendo 404 mientras M4 esté abierto (RF-87), así que la revisión visual espera. **M4
+no se puede dar por cerrado todavía**, y no por código.

@@ -25,7 +25,7 @@ import {
   seccionDeLaRuta,
   seccionesVisibles,
 } from "../../lib/app/navegacion.ts";
-import { ErrorDeAutorizacion, ROLES_DE_PERSONA } from "../../lib/auth/matriz.ts";
+import { ErrorDeAutorizacion, ROLES_DE_PERSONA, puede } from "../../lib/auth/matriz.ts";
 import type { UserRole } from "../../lib/db/schema.ts";
 
 let fallos = 0;
@@ -76,9 +76,27 @@ check(
     clavesVisibles("slg_admin", "hq").includes("audit"),
   clavesVisibles("slg_admin", "hq").join(" · "),
 );
+/**
+ * **ESTA COMPROBACIÓN CAMBIÓ DE SIGNO EN DU-21, Y ES LA CORRECTA AHORA.**
+ *
+ * Cuando se escribió, «Miembros» se gobernaba con `member.invite` y la prueba
+ * decía que `client_member` no la veía. El criterio 2 de DU-21 pide lo
+ * contrario: **ve la lista y no puede invitar**. Ver quién más está en tu propia
+ * empresa no es un privilegio; invitar sí. Por eso la sección pasó a
+ * `member.read` y el formulario de dentro se quedó con `member.invite`.
+ *
+ * Lo que NO cambió es la mitad que protege: escribir la URL a mano sigue sin
+ * dar permiso para invitar, y eso se comprueba en `test:miembros` llamando al
+ * servicio, que es donde vive la decisión.
+ */
 check(
-  "`client_member` NO ve «Miembros»: invitar es de `client_admin`",
-  !clavesVisibles("client_member", "portal").includes("members"),
+  "`client_member` SÍ ve «Miembros»: ver quién está no es invitar (DU-21, criterio 2)",
+  clavesVisibles("client_member", "portal").includes("members"),
+  clavesVisibles("client_member", "portal").join(" · "),
+);
+check(
+  "y también «Perfil»: el suyo lo edita todo el mundo",
+  clavesVisibles("client_member", "portal").includes("profile"),
   clavesVisibles("client_member", "portal").join(" · "),
 );
 check(
@@ -123,8 +141,8 @@ check(
   !servidorDejaPasar("slg_operator", "apikeys"),
 );
 check(
-  "escribir a mano la URL de «Miembros» siendo `client_member` NO pasa",
-  !servidorDejaPasar("client_member", "members"),
+  "escribir a mano la URL de «Miembros» siendo `client_member` SÍ pasa —y no le da invitar—",
+  servidorDejaPasar("client_member", "members") && !puede(ctxDe("client_member"), "member.invite").permitido,
 );
 check(
   "una sección inexistente es 404, no un error distinto que confirme el mapa",

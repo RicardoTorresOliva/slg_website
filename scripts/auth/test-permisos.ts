@@ -8,9 +8,14 @@
  *     alcance, no con un ejemplo.
  *   · criterio 7 — los mensajes de error no revelan qué faltaba.
  *
- * La matriz se recorre COMPLETA —15 acciones × 4 roles, más los seis alcances
- * contra las 15 acciones— porque probar tres casos de una matriz de permisos es
- * no probarla: lo que se escapa siempre es la celda que nadie miró.
+ * La matriz se recorre COMPLETA —todas las acciones × 4 roles, más los seis
+ * alcances contra todas las acciones— porque probar tres casos de una matriz de
+ * permisos es no probarla: lo que se escapa siempre es la celda que nadie miró.
+ *
+ * El recuento **se calcula y no se escribe**: estuvo puesto a mano («15
+ * acciones») y DU-21 lo dejó desfasado sin que nada se pusiera rojo. Un número
+ * escrito a mano en el encabezado de una prueba es la clase de dato que envejece
+ * en silencio.
  */
 import { contextoDeClaveApi, contextoDeSesion } from "../../lib/db/context.ts";
 import { API_SCOPES, type ApiScope } from "../../lib/db/schema.ts";
@@ -41,8 +46,8 @@ const ctxDe = (rol: (typeof ROLES_DE_PERSONA)[number], organizationId: string | 
 const ctxClave = (scopes: readonly ApiScope[]) =>
   contextoDeClaveApi({ apiKeyId: "k-1", name: "Prueba", organizationId: "org-1", scopes });
 
-/* ── 1 · Las 15 acciones × los 4 roles, celda por celda ──────────────────── */
-console.log("Matriz B.3 — 15 acciones × 4 roles de persona:\n");
+/* ── 1 · Todas las acciones × los 4 roles, celda por celda ───────────────── */
+console.log(`Matriz B.3 — ${ACCIONES.length} acciones × ${ROLES_DE_PERSONA.length} roles de persona:\n`);
 
 for (const accion of ACCIONES) {
   const regla = MATRIZ_B3[accion];

@@ -56,6 +56,8 @@ export const ACCIONES = [
   "deliverable.read",
   "announcement.read",
   "member.invite",
+  "member.read",
+  "profile.self",
   "event.write",
   "audit.read",
 ] as const;
@@ -152,6 +154,35 @@ export const MATRIZ_B3: Readonly<Record<Accion, ReglaB3>> = {
   "member.invite": {
     filaB3: "Invitar miembros de su empresa",
     porRol: { slg_admin: "si", slg_operator: "si", client_admin: "si", client_member: "no" },
+    alcanceDeAgente: null,
+  },
+  /**
+   * **DOS FILAS QUE B.3 NO TIENE, y se declaran como derivadas** (DU-21).
+   *
+   * B.3 es una matriz de **privilegio sobre lo ajeno**: quién puede publicar,
+   * invitar, auditar. Dos cosas de DU-21 no caben ahí y aun así necesitan una
+   * acción, porque FU-12 exige que **toda sección declare la suya** y una
+   * pantalla sin acción es una pantalla que nadie sabe quién puede ver:
+   *
+   *   · `member.read` — ver **quién más está** en tu propia empresa. El criterio
+   *     2 de DU-21 dice que `client_member` **ve la lista y no puede invitar**,
+   *     así que gatear la sección con `member.invite` la escondería justo a
+   *     quien el criterio dice que debe verla. Ver y poder son dos cosas.
+   *   · `profile.self` — editar **tu propio** nombre e idioma. No es un
+   *     privilegio: no hay rol que no lo tenga, y por eso las cuatro celdas son
+   *     «sí». Está aquí para que la sección pueda declararla, no para decidir.
+   *
+   * Ninguna de las dos la puede ejercer una clave de API: un agente no tiene
+   * compañeros ni perfil.
+   */
+  "member.read": {
+    filaB3: "(derivada de «Invitar miembros de su empresa»): ver los miembros de la propia empresa",
+    porRol: { slg_admin: "si", slg_operator: "si", client_admin: "si", client_member: "si" },
+    alcanceDeAgente: null,
+  },
+  "profile.self": {
+    filaB3: "(derivada): editar el propio nombre, idioma y contraseña",
+    porRol: { slg_admin: "si", slg_operator: "si", client_admin: "si", client_member: "si" },
     alcanceDeAgente: null,
   },
   "event.write": {

@@ -116,6 +116,20 @@ la consola.
 Consentimiento de Google Cloud y registro de aplicación en Entra ID, con las URL de retorno exactas.
 Paso a paso: `docs/deployment.md` **§4quater**.
 
+### 6. El enlace del calendario de la Sesión Cero — cierra el criterio 4 de DU-21
+
+**Esto es lo más fácil de toda la lista: no tienes que entrar a ningún sitio.** Cuando tengas la
+página donde un cliente elige hora —la de la herramienta de agenda que uses—, **cópiala y mándamela
+por el chat**. Yo la pongo donde va; es un cambio de una línea.
+
+Tiene que empezar por `https://`. Mientras no llegue, el paso «Agenda tu Sesión Cero» aparece en el
+portal como **«Próximamente»** y no rompe nada: no hay enlace muerto, no hay hueco, y el cliente ve
+que el paso existe.
+
+**Y algo que no cambia con esto:** ese enlace **no sale en la web pública** — ni en la portada, ni en
+las páginas de servicio, ni en el blog. Solo dentro del portal, después de entrar. Es RF-96, y hay dos
+frenos de CI que ponen el pipeline en rojo si alguna vez se cuela.
+
 ---
 
 ## Cómo trabaja este proyecto (para quien abra la sesión)
@@ -183,8 +197,9 @@ criterio abierto, igual que el criterio 7 de DU-07 espera al despliegue.
 | 2 | El **subdominio de correo** y la prueba de bandeja de entrada (FU-08) | `docs/deployment.md` §4bis, y la comprobación en `/api/ops` | Invitaciones, recuperación de contraseña, avisos de fallo del CRM |
 | 3 | Los **dos buckets privados** de `minio` y las `S3_*` (FU-09) | `docs/deployment.md` §4ter | La entrega real de documentos (DU-08) y los entregables (DU-15) |
 | 4 | Las **dos claves del CRM** (F.2-5) | `docs/deployment.md` §4septies | Que los leads lleguen al CRM y que el tablero enseñe métricas |
-| 5 | **Google y Microsoft** (F.2-2, F.2-3) | `docs/deployment.md` §4quater | El gate **D8** y con él el cierre de DU-01 y DU-14 |
+| 5 | **Google y Microsoft** (F.2-2, F.2-3) | `docs/deployment.md` §4quater | El gate **D8**, el cierre de DU-01 y DU-14 y —desde DU-21— **el DoD #5**, que pide aceptar una invitación con Microsoft 365. Es lo único que impide cerrar **M4** |
 | 5bis | **El subdominio del visor** `visor.softlandingglobal.com` | `docs/deployment.md` §4octies | El criterio 3 de DU-19: un registro DNS y un dominio en Easypanel |
+| 5ter | El **enlace del calendario** de la Sesión Cero (F.2-6) | Nada que abrir: **mándame la URL por el chat** | El criterio 4 de DU-21. Sin él el paso dice «Próximamente» y el portal funciona igual |
 | 6 | La **firma del copy** (FU-01) y las cuatro enumeraciones literales | `implementation/task_tracker.md` | Pasar de `copy: temporal` a `copy: aprobado` |
 | 7 | **S-01** | Canal privado, nunca aquí | El DoD de go-live |
 

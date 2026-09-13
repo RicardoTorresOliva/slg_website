@@ -50,6 +50,8 @@ export {
   cerrarTodasLasSesiones,
   sesionesVivas,
   marcarCorreoVerificado,
+  usaMetodoDeContrasena,
+  cambiarContrasenaDeLaSesion,
   type Puerta,
 } from "./acceso.ts";
 
