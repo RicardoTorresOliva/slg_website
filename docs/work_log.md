@@ -2409,3 +2409,80 @@ siete tareas —cambiar un texto, añadir una descarga y crear un cliente— **s
 Cada punto en el que se atasque es un defecto que se corrige antes de cerrar la unidad. Hasta
 entonces el manual está escrito y verificado por su forma, pero **no probado con una persona**, que es
 lo único que RNF-39 acepta como prueba.
+
+---
+
+## 2026-09-13 · DU-25 — La parte de go-live que no necesita el despliegue
+
+**Qué se construyó.** `check:produccion` (DoD #10 medido sobre el texto servido), `docs/gates.md` con
+los trece gates del Anexo D convertidos en comprobaciones, `check:anexo-d` que los vigila, los gates
+que faltaban en el pipeline de CI, y `docs/run_metadata.md` puesto al día.
+
+**El DoD #10 se medía en el sitio equivocado** (**D-148**). `check:pending` y `check:copy` miran
+`content/`, que es de donde sale **casi** todo el texto — y «casi» es el problema. Un `[PENDIENTE]`
+que entra por `content/ui`, por una plantilla, por un valor por defecto de un componente o por un dato
+de la base **no está en `content/`**, y los dos gates lo daban por bueno. El DoD dice «en producción»,
+no «en el repositorio». `check:produccion` arranca el servidor real, recorre las **68 rutas públicas**
+y lee su **texto visible**: sin scripts, sin estilos, sin etiquetas, porque un `TODO` dentro de un
+comentario de HTML no lo lee nadie y un gate que salta con eso acaba desactivado.
+
+**Un fallo propio, en la primera versión de ese mismo gate.** Comprobaba que `/hq` y `/portal` no
+fueran públicos con un `fetch` normal, y `fetch` sigue las redirecciones: iba de `/hq` a `/acceder` y
+leía **200**. El gate daba en rojo diciendo que HQ era pública, que era exactamente lo contrario de la
+verdad. Lo que hay que mirar es **la respuesta de esa ruta**, no la del sitio al que te manda. Queda
+escrito en el código, porque un gate que miente en rojo es tan malo como uno que miente en verde.
+
+**Los trece gates dejan de ser prosa** (**D-149**). `docs/gates.md` da a cada uno tres cosas: qué
+exige, **cómo se comprueba** —un comando, o pasos numerados con un resultado anotable cuando la
+comprobación es humana— y su prueba negativa. `check:anexo-d` vigila que estén los trece, que ninguno
+se quede en párrafo, que todos declaren su estado, y que **cada `npm run …` que nombran exista**: un
+gate que apunta a un script inexistente es peor que un gate sin script, porque parece cubierto.
+
+**El recuento de gates del CI llevaba desfasado desde FU-05.** El paso se llamaba «Prueba negativa de
+los dieciocho frenos» cuando ya eran treinta y uno. Es la tercera vez en esta sesión que un número
+escrito a mano envejece en silencio —pasó con `check:brakes`, con `test:permisos` y ahora con el
+pipeline—; el nombre del paso ya no lleva número, y el script lo imprime.
+
+**Y cinco gates que existían y el pipeline no ejecutaba.** `check:alcance`, `check:literacy`,
+`check:shell`, `check:hq` y ahora `check:produccion` y `check:anexo-d` estaban en `check:ci` o en
+ninguna parte, pero no como pasos del workflow. Un freno que solo corre cuando alguien se acuerda de
+ejecutarlo en local no es un freno.
+
+**`run_metadata.md` dice «no medido», y es lo correcto** (**D-150**). Ese documento existe para
+rechazar gastos que no se justifican; una estimación que nadie puede comprobar lo invalida. Lo que sí
+queda son las **fechas exactas** de los siete milestones, que convierten el panel de facturación de
+Ricardo en una suma.
+
+**Verificación.** `check:produccion` **5** comprobaciones sobre 68 rutas servidas · `check:anexo-d`
+**6** · `check:brakes` **31** frenos (26 + 5 de contenido), los dos nuevos vistos en rojo contra sus
+fixtures · el resto de gates estáticos en verde.
+
+---
+
+### Evidencia de los gates, al cierre de esta sesión (criterio 5)
+
+| Gate | Estado | Evidencia |
+|---|---|---|
+| D1 Rendimiento | ✅ | `check:lighthouse` 96/97/90 en las tres páginas · `check:js-budget` 142,3 KB de 150 |
+| D2 Accesibilidad | ⏳ | `check:contraste` 21 mediciones verdes · falta la checklist de teclado y lector |
+| D2b Marca | ⏳ | `check:terceros` 12 verdes · falta la pasada por pantalla |
+| D3 Motion | ✅ | `check:motion` 273 archivos · `test:gesto` las cuatro cláusulas cuadro a cuadro |
+| D4 i18n | ✅ | `check:pairs` 46 · `check:seo` 220 · `check:armazon` 60 |
+| D5 Contenido | ✅ | `check:content` 1338 · **`check:produccion` sobre 68 rutas servidas** |
+| D6 SEO | ✅ | `check:seo` 220 comprobaciones sobre el servidor real |
+| D7 Conversión | ⏳ | `test:crm` 19 · `test:descargas` 18 · `test:correo` 109 · falta el CRM real |
+| D8 Identidad | ⏳ | `test:acceso` 39 · `test:invitaciones` 34 · bloqueado por F.2-2 y F.2-3 |
+| D9 Aislamiento | ✅ | `test:aislamiento` 21 · `test:permisos` 236 · `test:api` 124 · `test:shell` 20 |
+| D10 Archivos | ✅ | `test:archivos` 40 · `test:visor` 25 · `check:archivos` 290 archivos |
+| D11 Operación | ⏳ | `test:respaldos` 27 con restauración real · falta el despliegue y el monitor |
+| D12 Literacy | ⏳ | `check:literacy` 11 · falta la prueba con Ricardo |
+
+**Seis en verde y siete esperando, y ninguno de los siete espera a que alguien escriba más código**:
+esperan un despliegue, dos registros de OAuth, el CRM real, o a una persona haciendo algo y anotando
+el resultado. Los trece están en `docs/gates.md` con su comando y su estado.
+
+**Lo que DU-25 NO puede cerrar desde aquí, y es la mayor parte de la unidad.** Los criterios 2 (DNS
+raíz con los registros protegidos intactos), 3 (el monitor probado apagando el VPS entero), 6 (las
+diez pruebas del DoD en producción) y 7 (la prueba de tres minutos con una persona real) necesitan
+que el sitio esté desplegado. El criterio 9 —el `/review` final con contexto limpio— se ejecuta cuando
+los demás estén cerrados, no antes: un `/review` sobre un sistema a medias revisa otra cosa.

@@ -94,6 +94,23 @@ const CASOS: Caso[] = [
     env: { ALCANCE_ROOT: path.join(HERE, "negative/alcance") },
   },
   {
+    freno: "un gate del Anexo D que se queda en prosa, falta o apunta a un script inexistente",
+    script: "check-anexo-d.ts",
+    espera: [
+      "están los 13 gates",
+      "ninguno se queda en prosa",
+      "todo `npm run …` que se nombra EXISTE",
+      "cada gate declara su estado",
+    ],
+    env: { ANEXO_D_PATH: path.join(HERE, "negative/anexo-d/gates.md") },
+  },
+  {
+    freno: "un marcador o una cifra sin fuente en el texto SERVIDO (DoD #10)",
+    script: "check-produccion.ts",
+    espera: ["marcador [PENDIENTE]", "lorem ipsum", "porcentaje sin fuente", "superlativo sin fuente"],
+    env: { PRODUCCION_FIXTURE: path.join(HERE, "negative/produccion") },
+  },
+  {
     freno: "un documento de diseño que el índice no enlaza",
     script: "check-literacy.ts",
     espera: "los documentos de diseño están todos en",

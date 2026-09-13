@@ -102,6 +102,31 @@ jobs:
       - name: Archivos — sin listado de buckets ni entregables versionados
         run: npm run check:archivos
 
+      # Frontera (b) de scope.md (DU-20) y RF-96 (DU-21): esto no es un LMS, los
+      # materiales no se listan fuera de su proyecto, y la Sesión Cero no asoma
+      # fuera del portal. Se cruza con buena intención y de una línea en una.
+      - name: Alcance — la frontera (b) y la Sesión Cero
+        run: npm run check:alcance
+
+      # Gate D12 (DU-24): el manual cubre las siete tareas, el índice enlaza todo
+      # documento de diseño, y ninguna variable de entorno viaja con su valor.
+      - name: Literacy — el manual y el índice, completos
+        run: npm run check:literacy
+
+      # RF-148 (DU-25): los trece gates del Anexo D escritos como comprobación y
+      # no como prosa, cada uno con su estado y con scripts que existen.
+      - name: Los trece gates del Anexo D, verificables
+        run: npm run check:anexo-d
+
+      # Criterio 5 de FU-12: toda sección declara su acción de B.3, y esa acción
+      # existe. Una sección sin acción es una pantalla que nadie sabe quién ve.
+      - name: Armazón de aplicación — cada sección con su acción
+        run: npm run check:shell
+
+      # La frontera de alcance de HQ (DU-13): sin pipeline dentro de la web.
+      - name: Frontera de alcance de HQ
+        run: npm run check:hq
+
       # Gate D2, medido sobre los tokens reales: contraste AA en cada
       # combinación, y los pares prohibidos siguen sin llegar a AA.
       - name: Contraste
@@ -131,6 +156,13 @@ jobs:
 
       - name: Cabeceras de seguridad y compuerta de staging, sobre el servidor real
         run: npm run check:runtime
+
+      # DoD #10 y gate D5, medidos sobre lo que el sitio SIRVE y no sobre los
+      # archivos de los que sale: un `[PENDIENTE]` que entra por `content/ui`,
+      # por una plantilla o por un valor por defecto de un componente no está en
+      # `content/`, y los gates de contenido lo dan por bueno.
+      - name: Ningún marcador ni cifra sin fuente en el texto servido
+        run: npm run check:produccion
 
       # El gate D3 exige revisión CUADRO A CUADRO del sheet, no inspección del
       # código. Por eso aquí hay un navegador de verdad: mide la traslación
@@ -172,7 +204,10 @@ jobs:
         run: npm run check:lighthouse
 
       # Criterio 5: cada freno se ve en ROJO por el motivo esperado.
-      - name: Prueba negativa de los dieciocho frenos
+      # El recuento NO va en el nombre del paso: estuvo puesto —«los dieciocho
+      # frenos»— y llevaba desfasado desde que se añadió el siguiente. El número
+      # lo imprime el propio script, que es quien lo sabe.
+      - name: Prueba negativa de todos los frenos
         run: npm run check:brakes
 
   # ──────────────────────────────────────────────────────────────────────────

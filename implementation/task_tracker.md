@@ -38,7 +38,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 1 `pending` · **20 `in_progress`** (FU-05, FU-08, FU-09, FU-14, DU-01, FU-01, DU-07, DU-08, DU-09, DU-13, DU-14, DU-15, DU-16, DU-17, DU-18, DU-19, DU-20, DU-21, DU-23, DU-24) · **18 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12, FU-12, FU-13, DU-22) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
+**Estado global:** 0 `pending` · **21 `in_progress`** (FU-05, FU-08, FU-09, FU-14, DU-01, FU-01, DU-07, DU-08, DU-09, DU-13, DU-14, DU-15, DU-16, DU-17, DU-18, DU-19, DU-20, DU-21, DU-23, DU-24, DU-25) · **18 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12, FU-12, FU-13, DU-22) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -96,7 +96,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | DU-23 | DU | API v1 de escritura y especificación OpenAPI | M5 | DU-22 | `in_progress` — **las nueve rutas del contrato existen**; criterios 1…6 y 8 verificados con `test:api` (**124** comprobaciones, ejecutada tres veces). La especificación **se genera del catálogo** que valida las peticiones. El **criterio 7 es el DoD #6** y se comprueba en producción: aquí está probado todo lo que no exige el despliegue |
 | FU-14 | FU | Copias de seguridad cifradas a destino externo y restauración probada | M5 | FU-05 | `in_progress` — **criterios 1…5, 7 y 8 verificados** con `test:respaldos` (**27** comprobaciones con copia y restauración reales). Cifrado **asimétrico** (**D-143**), nada lista el bucket (**D-144**), el par de claves lo genera `/api/ops` (**D-145**). El **criterio 6** está demostrado en el laboratorio pero **no en staging**: necesita el bucket de R2, sus dos credenciales y la clave privada — `docs/deployment.md` **§4nonies** |
 | DU-24 | DU | README operativo y prueba de Literacy | M5 | DU-11, DU-14, DU-17, FU-14 | `in_progress` — **el manual está escrito y los criterios 1, 3, 4, 5, 6 y 7 verificados** por `check:literacy` (**11** comprobaciones, gate D12, con prueba negativa). Las siete tareas se hacen **solo desde el navegador** (**D-147**) y la raíz del repositorio se abre con el manual (**D-146**). Falta el **criterio 2**: que Ricardo ejecute tres de las siete **sin ayuda técnica** — cada atasco es un defecto del manual (RNF-39) |
-| DU-25 | DU | Go-live: contenido, DNS raíz, monitor y auditoría final | M5 | todas las anteriores | `pending` |
+| DU-25 | DU | Go-live: contenido de producción, DNS raíz, monitor y auditoría final | M5 | todas las anteriores | `in_progress` — **criterios 1, 4, 5 y 8 hechos**: el DoD #10 se mide sobre el **texto servido** de las 68 rutas (**D-148**, `check:produccion`), los **trece gates del Anexo D** están en `docs/gates.md` como comprobaciones con su estado (**D-149**, `check:anexo-d`), la evidencia de los trece está en `work_log`, y `run_metadata` dice «no medido» con el motivo (**D-150**). Los criterios **2, 3, 6 y 7 necesitan el despliegue**; el **9** (`/review` final) se ejecuta al final |
 
 ---
 
@@ -351,6 +351,16 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   podía mentir — migración **0012** y lo elige quien publica (**D-126**). Y un fallo que solo sale
   encadenando la suite: `test:webhooks` borraba capturas sin borrar antes su traza de `crm_delivery`.
   `test:db` sube a **538**.
+- `2026-09-13` — **DU-25: lo que se puede cerrar sin desplegar, y una medición que estaba en el sitio
+  equivocado.** El DoD #10 se comprobaba sobre `content/`, que es de donde sale **casi** todo el
+  texto: un `[PENDIENTE]` que entra por `content/ui`, por una plantilla o por un valor por defecto de
+  un componente no está ahí, y los gates lo daban por bueno. `check:produccion` lo mide sobre las **68
+  rutas servidas** (**D-148**) — y su primera versión tuvo un fallo propio que vale la pena recordar:
+  comprobaba que `/hq` no fuera pública siguiendo redirecciones, así que leía el 200 de `/acceder` y
+  **decía que HQ era pública**. Los trece gates del Anexo D dejan de ser prosa (**D-149**) y
+  `run_metadata` dice «no medido» con el motivo en vez de estimar (**D-150**). Tres hallazgos de
+  higiene: el CI no ejecutaba cinco frenos que ya existían, y el nombre de un paso decía «los
+  dieciocho frenos» cuando eran treinta y uno. `check:brakes` sube a **31**.
 - `2026-09-13` — **DU-24: el manual de operación, y un freno para el gate D12.** La raíz del
   repositorio se abre con el manual del proyecto y no con el del template (**D-146**), y las siete
   tareas se escriben **solo desde el navegador** porque Ricardo no tiene terminal (**D-147**) — lo que

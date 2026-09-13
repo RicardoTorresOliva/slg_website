@@ -166,6 +166,21 @@ Las tres operaciones —copiar, restaurar, purgar— **no listan el bucket**: la
 generación y fecha (`lib/backup/generaciones.ts`). Y hay **dos credenciales**: la del servidor no
 puede borrar, y esa es la mitigación de que R2 no ofrezca Object Lock (R-37).
 
+## Los trece gates del Anexo D viven en `docs/gates.md`, no en la cabeza de nadie (DU-25)
+Cada uno con qué exige, **cómo se comprueba** —un comando, o pasos numerados cuando depende de una
+persona— y su prueba negativa. `check:anexo-d` vigila que estén los trece, que ninguno se quede en
+prosa, que todos declaren su estado y que **cada `npm run …` que nombran exista**: un gate que apunta
+a un script inexistente parece cubierto y no lo está.
+Al cerrar M5: **seis en verde y siete esperando algo que no es código** — despliegue, los dos
+registros de OAuth, el CRM real, o una persona haciendo algo y anotando el resultado.
+
+## El DoD #10 se mide sobre lo que el sitio SIRVE, no sobre `content/` (D-148)
+`check:produccion` recorre las 68 rutas públicas del servidor real y lee su texto visible. Existe
+porque `content/` es de donde sale **casi** todo el texto: un marcador que entra por `content/ui`, por
+una plantilla o por un valor por defecto de un componente no está ahí. Si algún día se comprueba algo
+«en producción», compruébalo **contra la respuesta de esa ruta** y con `redirect: "manual"` — seguir
+la redirección fue el primer fallo de este mismo gate, y le hizo decir que HQ era pública.
+
 ## El mapa de rutas vive en `lib/content/rutas.ts`, y es EXPLÍCITO
 Cada página y cada servicio declara su ruta ES y su par EN (**D-79**). No se deriva del nombre del
 archivo: el Anexo A.2 anida la oferta (`/ai/academy/phoenix-peex`) y `/holdings` lo sirve un registro
@@ -258,6 +273,8 @@ se sirven. El par de idioma de cada ruta sale del campo `pair` del frontmatter, 
 | La API de agentes: 401, 403, 429, alcances y auditoría | `npm run test:api` (necesita el build) |
 | Que las copias se puedan **restaurar** | `npm run test:respaldos` (necesita PostgreSQL) |
 | Que el manual y el índice sigan completos | `npm run check:literacy` |
+| Que el sitio no SIRVA un marcador ni una cifra sin fuente | `npm run check:produccion` (necesita el build) |
+| Que los trece gates del Anexo D sigan siendo verificables | `npm run check:anexo-d` |
 | Las cuatro cláusulas del sheet, cuadro a cuadro | `npm run test:gesto` (necesita el build y Chromium) |
 | El armazón público sobre el servidor real | `npm run check:armazon` (necesita el build) |
 | Que la zona DNS no se ha movido | `npm run check:dns` (ya no necesita `dig`) |

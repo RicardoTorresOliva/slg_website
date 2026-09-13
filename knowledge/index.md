@@ -51,6 +51,7 @@ Los cinco están escritos, más un consolidado que los indexa. Se abren **por se
 | [../README.md](../README.md) | **Manual de operación** (DU-24): las siete tareas que Ricardo hace sin ser programador —cambiar un texto, publicar un artículo, añadir una descarga, crear un cliente e invitar, crear una clave, desplegar y restaurar—, más de dónde sale cada variable de entorno. Es lo primero que se abre al **operar**; no hace falta para construir |
 | [../AGENTS.md](../AGENTS.md) | **Gobernanza.** Las 8 reglas. Vive ahí y solo ahí |
 | [../START_PROJECT.md](../START_PROJECT.md) | El contrato (brief v1.1). Fuente de verdad de todo este bundle. Se abre por anexo, no entero |
+| [../docs/gates.md](../docs/gates.md) | **Los trece gates del Anexo D como comprobaciones** (DU-25): qué exige cada uno, con qué comando se verifica —o con qué checklist, cuando depende de una persona— y en qué estado está. Se abre antes de dar un milestone por cerrado |
 | [../docs/decision_log.md](../docs/decision_log.md) | Decisiones de planificación desde `D-14`, e incidencias de seguridad |
 | [../docs/deployment.md](../docs/deployment.md) | **Runbook de operación** (FU-05): los cinco servicios, el despliegue automático, los registros DNS con la lista de «no tocar» delante y el monitor externo. Se abre al desplegar o al tocar la zona DNS, no antes |
 | [../planning/requirements.md](../planning/requirements.md) | Los requisitos `RF-*` / `RNF-*`. Se abre por sección |

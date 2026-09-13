@@ -13,6 +13,7 @@ en `knowledge/` (convención OKF, [README](README.md)).
 
 | Fecha | Concepto | Acción | Motivo |
 |---|---|---|---|
+| 2026-09-13 | `index.md` | cambiado | DU-25: la tabla «Fuera de este bundle» enlaza `docs/gates.md`, los trece gates del Anexo D escritos como comprobaciones. Es el documento que hay que abrir **antes de dar un milestone por cerrado**, y sin el enlace era invisible para el índice que se carga en todas las sesiones |
 | 2026-09-13 | `index.md` | cambiado | DU-24: la tabla «Fuera de este bundle» enlaza el **manual de operación** (`README.md`), que hasta hoy era el README del template. Sin ese enlace, el documento que Ricardo abre primero era invisible para el índice que se carga en todas las sesiones — el mismo fallo que tuvo `design_summary.md` y que ahora vigila `check:literacy` |
 | 2026-09-08 | `log.md` | cambiado | Sustituida la fila de ejemplo del template por el registro real. `type` migrado de `log` a `Registro`, uno de los seis tipos permitidos para este proyecto (§8 del brief) |
 | 2026-09-08 | `index.md` | cambiado | Sustituido el stub del template por el índice real de divulgación progresiva: siete conceptos y cinco design docs, cada uno con para qué sirve y en qué momento de la producción se necesita. `type` migrado de `knowledge-index` a `Índice` (§8) |
