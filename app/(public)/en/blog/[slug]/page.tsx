@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Articulo } from "@/components/Articulo";
 import { ArmazonPublico } from "@/components/ArmazonPublico";
 import { articulo, articulos } from "@/lib/content/blog";
+import { metadatosDe } from "@/lib/content/seo";
 
 /**
  * Un artículo en inglés.
@@ -16,6 +17,13 @@ export async function generateStaticParams() {
 }
 
 export const dynamicParams = false;
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const a = articulo("en", slug);
+  if (!a) return {};
+  return metadatosDe({ ruta: `/en/blog/${slug}`, titulo: a.titulo, descripcion: a.descripcion });
+}
 
 export default async function ArticuloEn({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

@@ -27,6 +27,7 @@
     "check:armazon": "node scripts/ci/check-armazon.ts",
     "check:blog": "node scripts/ci/check-blog.ts",
     "check:paginas": "node scripts/ci/check-paginas.ts",
+    "check:seo": "node scripts/ci/check-seo.ts",
     "check:lighthouse": "node scripts/ci/check-lighthouse.ts",
     "check:motion": "node scripts/ci/check-motion.ts",
     "check:js-budget": "node scripts/ci/check-js-budget.ts",
@@ -35,7 +36,7 @@
     "check:brakes": "node scripts/ci/verify-brakes.ts",
     "check:dns": "node scripts/ci/check-dns.ts",
     "check:dns:baseline": "node scripts/ci/check-dns.ts --baseline",
-    "check:ci": "npm run lint && npm run check:content && npm run check:secrets && npm run check:env && npm run check:migrations && npm run check:fronteras && npm run check:archivos && npm run check:contraste && npm run check:motion && npm run check:cadenas && npm run test:permisos && npm run build:standalone && npm run check:js-budget && npm run check:runtime && npm run check:armazon && npm run check:blog && npm run check:paginas && npm run test:gesto && npm run check:lighthouse",
+    "check:ci": "npm run lint && npm run check:content && npm run check:secrets && npm run check:env && npm run check:migrations && npm run check:fronteras && npm run check:archivos && npm run check:contraste && npm run check:motion && npm run check:cadenas && npm run test:permisos && npm run build:standalone && npm run check:js-budget && npm run check:runtime && npm run check:armazon && npm run check:blog && npm run check:paginas && npm run check:seo && npm run test:gesto && npm run check:lighthouse",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "node scripts/db/seed.ts",
     "test:isolation": "node scripts/db/test-isolation.ts",
@@ -47,7 +48,8 @@
     "test:invitaciones": "node scripts/invitations/test-invitaciones.ts",
     "test:archivos": "node scripts/files/test-archivos.ts",
     "test:acceso": "node scripts/auth/test-acceso.ts",
-    "test:db": "npm run test:isolation && npm run test:contracts && npm run test:nocompile && npm run test:autorizacion && npm run test:correo && npm run test:invitaciones && npm run test:archivos && npm run test:acceso"
+    "test:descargas": "node scripts/descargas/test-descargas.ts",
+    "test:db": "npm run test:isolation && npm run test:contracts && npm run test:nocompile && npm run test:autorizacion && npm run test:correo && npm run test:invitaciones && npm run test:archivos && npm run test:acceso && npm run test:descargas"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1131.0",

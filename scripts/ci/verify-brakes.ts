@@ -252,6 +252,45 @@ console.log("\nFreno de las páginas — contra páginas con los bloques desorde
   }
 }
 
+console.log("\nFreno del SEO — contra canonical copiado y hreflang sin vuelta:\n");
+{
+  const fixture = spawn(process.execPath, [path.join(HERE, "negative/seo/servidor.ts")], {
+    cwd: REPO_ROOT,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  const base = await new Promise<string>((resolve, reject) => {
+    const limite = setTimeout(() => reject(new Error("el fixture de SEO no arrancó")), 15_000);
+    fixture.stdout.on("data", (c: Buffer) => {
+      const m = /http:\/\/127\.0\.0\.1:\d+/.exec(c.toString());
+      if (m) {
+        clearTimeout(limite);
+        resolve(m[0]);
+      }
+    });
+  });
+  const res = spawnSync(process.execPath, [path.join(HERE, "check-seo.ts")], {
+    encoding: "utf8",
+    cwd: REPO_ROOT,
+    env: { ...process.env, SEO_BASE: base },
+  });
+  fixture.kill("SIGTERM");
+  const salida = `${res.stdout ?? ""}${res.stderr ?? ""}`;
+  const esperados = [
+    "canonical propio",
+    "hreflang recíproco",
+    "título único",
+    "una ruta inexistente devuelve 404",
+  ];
+  const faltan = esperados.filter((e) => !salida.includes(e));
+  if (res.status === 1 && faltan.length === 0) {
+    console.log("  ✓ seo: falló como debía (canonical, hreflang, títulos y 404)");
+  } else {
+    fallos++;
+    console.error(`  ✗ seo: NO falló como debía (exit ${res.status}).`);
+    if (faltan.length) console.error(`      no mencionó: ${faltan.join(" · ")}`);
+  }
+}
+
 console.log("\nFreno del blog — contra un blog que publica sus borradores:\n");
 {
   const fixture = spawn(process.execPath, [path.join(HERE, "negative/blog/servidor.ts")], {
@@ -317,4 +356,4 @@ if (fallos) {
   console.error(`\n✗ ${fallos} freno(s) no se comportaron como deben.\n`);
   process.exit(1);
 }
-console.log("\n✓ Los diecisiete frenos fallan cuando deben y pasan cuando deben.\n");
+console.log("\n✓ Los dieciocho frenos fallan cuando deben y pasan cuando deben.\n");

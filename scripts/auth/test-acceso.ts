@@ -359,10 +359,23 @@ async function main() {
       new Set(destinos).size === 1,
       destinos.join(" | "),
     );
-    const cuerpoError = await (await fetch(`${base}${destinos[0]}`)).text();
+    /**
+     * Se mira lo que el visitante LEE, no el HTML entero.
+     *
+     * Next serializa en la página los datos de sus límites de error, y ahí va
+     * el texto de la 404 —«Esta página no existe»— en cada respuesta del sitio.
+     * Comparar contra el HTML completo daba un rojo por una frase que nadie ve
+     * en esta pantalla y que no dice nada de ningún correo. Lo que RNF-32
+     * protege es el mensaje visible.
+     */
+    const htmlError = await (await fetch(`${base}${destinos[0]}`)).text();
+    const visible = htmlError
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<[^>]+>/g, " ");
     check(
       "y el texto no dice si el correo existe",
-      !/no existe|no encontrado|incorrecta|not found/i.test(cuerpoError),
+      !/no existe|no encontrado|incorrecta|not found/i.test(visible),
+      visible.slice(0, 200),
     );
 
     /* ── Criterio 5 · bloqueo progresivo ─────────────────────────────────── */

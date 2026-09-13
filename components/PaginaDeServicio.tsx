@@ -1,9 +1,11 @@
 import Link from "next/link";
 
 import { loadCollection, loadUiStrings } from "@/lib/content/loader";
+import { servicioJsonLd } from "@/lib/content/seo";
 import { secciones } from "@/lib/content/secciones";
 
-import { Markdown } from "./Markdown";
+import { Markdown, MarkdownEnLinea } from "./Markdown";
+import { DatosEstructurados } from "./DatosEstructurados";
 import { BloqueQueIncluye, HeroTipografico } from "./piezas";
 
 /**
@@ -25,7 +27,16 @@ import { BloqueQueIncluye, HeroTipografico } from "./piezas";
  * entrega firmada y captura al CRM— es DU-08. Aquí se anuncia el documento y se
  * enlaza a su página, que es lo que el contrato pide en esta unidad.
  */
-export function PaginaDeServicio({ slug, lang }: { slug: string; lang: "es" | "en" }) {
+export function PaginaDeServicio({
+  slug,
+  lang,
+  ruta,
+}: {
+  slug: string;
+  lang: "es" | "en";
+  /** La ruta de esta página: la necesitan los datos estructurados. */
+  ruta: string;
+}) {
   const t = loadUiStrings()[lang];
   const registro = loadCollection<{ name: string; download: string }>("service", lang).find(
     (s) => s.slug === slug,
@@ -43,14 +54,26 @@ export function PaginaDeServicio({ slug, lang }: { slug: string; lang: "es" | "e
 
   return (
     <div style={{ maxWidth: "44rem", margin: "0 auto", padding: "0 1.25rem" }}>
+      <DatosEstructurados
+        datos={servicioJsonLd({
+          nombre: registro?.data.name ?? "",
+          descripcion: primeraLinea(paraQuien?.cuerpo ?? ""),
+          ruta,
+        })}
+      />
+
       <HeroTipografico
         titular={registro?.data.name ?? ""}
         apoyo={primeraLinea(paraQuien?.cuerpo ?? "")}
       />
 
-      {/* 1 · Para quién y qué problema */}
+      {/* 1 · Para quién y qué problema.
+          El hero ya muestra la PRIMERA frase de este bloque —es la que hace que
+          el comprador se reconozca—, así que aquí se empieza por la segunda.
+          Repetirla entera hacía que la página arrancara diciendo dos veces lo
+          mismo, y se vio en una captura. */}
       <Seccion titulo={paraQuien?.titulo}>
-        <Markdown texto={paraQuien?.cuerpo ?? ""} />
+        <Markdown texto={restoDeLineas(paraQuien?.cuerpo ?? "")} />
       </Seccion>
 
       {/* 2 · Qué es */}
@@ -114,6 +137,7 @@ function Seccion({ titulo, children }: { titulo?: string; children: React.ReactN
 }
 
 const primeraLinea = (texto: string) => texto.split("\n").filter(Boolean)[0] ?? "";
+const restoDeLineas = (texto: string) => texto.split("\n").filter(Boolean).slice(1).join("\n");
 /** Cada línea no vacía es un elemento. Así lo escribe el contrato A.3. */
 const lineas = (texto: string) =>
   texto

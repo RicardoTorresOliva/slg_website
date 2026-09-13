@@ -71,6 +71,13 @@
       "when": 1788918109312,
       "tag": "0009_caducidad_invitaciones",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788918110312,
+      "tag": "0010_antiabuso",
+      "breakpoints": true
     }
   ]
 }

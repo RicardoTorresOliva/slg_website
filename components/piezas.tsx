@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
 
+import { MarkdownEnLinea } from "./Markdown";
+
 /**
  * Componentes 3 a 7 de C.5 — los que no necesitan JavaScript de cliente.
  *
@@ -68,7 +70,9 @@ export function TarjetaDeServicio({
           {nombre}
         </Link>
       </h3>
-      <p style={tarjetaTexto}>{resumen}</p>
+      <p style={tarjetaTexto}>
+        <MarkdownEnLinea texto={resumen} />
+      </p>
     </article>
   );
 }
@@ -97,7 +101,7 @@ export function BloqueQueIncluye({
     <ul style={listaIncluye}>
       {elementos.map((e) => (
         <li key={e} style={itemIncluye}>
-          {e}
+          <MarkdownEnLinea texto={e} />
         </li>
       ))}
     </ul>
@@ -139,7 +143,9 @@ export function TarjetaDeArticulo({
           {titulo}
         </Link>
       </h3>
-      <p style={tarjetaTexto}>{resumen}</p>
+      <p style={tarjetaTexto}>
+        <MarkdownEnLinea texto={resumen} />
+      </p>
       {etiquetas.length > 0 ? (
         <ul style={listaEtiquetas}>
           {etiquetas.map((t) => (

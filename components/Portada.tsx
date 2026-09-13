@@ -5,7 +5,7 @@ import { loadCollection, loadUiStrings } from "@/lib/content/loader";
 import { DESTINOS, RAMAS, SERVICIOS } from "@/lib/content/rutas";
 import { secciones } from "@/lib/content/secciones";
 
-import { Markdown } from "./Markdown";
+import { Markdown, MarkdownEnLinea } from "./Markdown";
 import { Reveal } from "./Reveal";
 import { HeroTipografico, TarjetaDeArticulo, TarjetaDeServicio } from "./piezas";
 
@@ -60,7 +60,9 @@ export function Portada({ lang }: { lang: "es" | "en" }) {
           <h2 id="puertas" style={tituloDeSeccion}>
             {puertas?.titulo}
           </h2>
-          <p style={apoyoDeSeccion}>{puertas?.cuerpo.split("\n")[0]}</p>
+          <p style={apoyoDeSeccion}>
+            <MarkdownEnLinea texto={puertas?.cuerpo.split("\n")[0] ?? ""} />
+          </p>
           <div style={rejillaDos}>
             {puertasSub.map((s, i) => (
               <TarjetaDeServicio
@@ -80,7 +82,9 @@ export function Portada({ lang }: { lang: "es" | "en" }) {
           <h2 id="lineas" style={tituloDeSeccion}>
             {lineas?.titulo}
           </h2>
-          <p style={apoyoDeSeccion}>{lineas?.cuerpo.split("\n")[0]}</p>
+          <p style={apoyoDeSeccion}>
+            <MarkdownEnLinea texto={lineas?.cuerpo.split("\n")[0] ?? ""} />
+          </p>
           <div style={rejillaTres}>
             {lineasSub.map((s, i) => (
               <TarjetaDeServicio
@@ -103,7 +107,7 @@ export function Portada({ lang }: { lang: "es" | "en" }) {
           </h2>
           <blockquote style={cita}>{sinMarca(primeraLinea(doctrina?.cuerpo ?? ""))}</blockquote>
           <p style={{ ...apoyoDeSeccion, color: "var(--slg-paper)", opacity: 0.9 }}>
-            {restoDeLineas(doctrina?.cuerpo ?? "")}
+            <MarkdownEnLinea texto={restoDeLineas(doctrina?.cuerpo ?? "")} />
           </p>
           <Link href={DESTINOS[2][idx]} style={enlaceClaro}>
             {t["home.readDoctrine"]}
@@ -121,7 +125,9 @@ export function Portada({ lang }: { lang: "es" | "en" }) {
             <Markdown texto={articulosBloque?.cuerpo ?? ""} />
           ) : (
             <>
-              <p style={apoyoDeSeccion}>{articulosBloque?.cuerpo.split("\n")[0]}</p>
+              <p style={apoyoDeSeccion}>
+                <MarkdownEnLinea texto={articulosBloque?.cuerpo.split("\n")[0] ?? ""} />
+              </p>
               <ul style={rejillaTres}>
                 {ultimos.map((a) => (
                   <li key={a.slug} style={{ listStyle: "none" }}>

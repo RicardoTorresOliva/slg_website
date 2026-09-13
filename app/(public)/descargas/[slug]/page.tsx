@@ -1,0 +1,41 @@
+import { notFound } from "next/navigation";
+
+import { ArmazonPublico } from "@/components/ArmazonPublico";
+import { PaginaDeDocumento } from "@/components/PaginaDeDocumento";
+import { loadCollection } from "@/lib/content/loader";
+import { metadatosDe } from "@/lib/content/seo";
+
+/**
+ * La página de un documento, con su formulario (DU-08).
+ *
+ * Los `draft` NO tienen ruta: `generateStaticParams` no los incluye y
+ * `dynamicParams = false` cierra la puerta (RF-29). Es la misma regla del blog.
+ */
+export async function generateStaticParams() {
+  return loadCollection<{ status: string }>("download", "es")
+    .filter((d) => d.data.status !== "draft")
+    .map((d) => ({ slug: d.slug }));
+}
+
+export const dynamicParams = false;
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const d = loadCollection<{ title: string; audience: string }>("download", "es").find(
+    (x) => x.slug === slug,
+  );
+  if (!d) return {};
+  return metadatosDe({ ruta: `/descargas/${slug}`, titulo: d.data.title, descripcion: d.data.audience });
+}
+
+export default async function Documento({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const d = loadCollection<{ status: string }>("download", "es").find((x) => x.slug === slug);
+  if (!d || d.data.status === "draft") notFound();
+
+  return (
+    <ArmazonPublico ruta={`/descargas/${slug}`}>
+      <PaginaDeDocumento slug={slug} lang="es" />
+    </ArmazonPublico>
+  );
+}

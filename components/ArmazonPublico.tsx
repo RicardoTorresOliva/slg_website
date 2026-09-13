@@ -2,8 +2,10 @@ import Link from "next/link";
 
 import { loadUiStrings } from "@/lib/content/loader";
 import { ACCESO, DESTINOS, idiomaDeLaRuta, rutaEnElOtroIdioma } from "@/lib/content/rutas";
+import { organizacionJsonLd } from "@/lib/content/seo";
 
 import { BarraDeNavegacion } from "./BarraDeNavegacion";
+import { DatosEstructurados } from "./DatosEstructurados";
 
 /**
  * El marco por el que se navega todo lo demás (DU-02).
@@ -38,6 +40,8 @@ export function ArmazonPublico({
 
   return (
     <>
+      <DatosEstructurados datos={organizacionJsonLd()} />
+
       {/* Primera parada del tabulador: saltar la navegación. Para quien navega
           con teclado, recorrer cinco destinos en cada página es el equivalente
           a que la barra midiera media pantalla. */}
@@ -80,15 +84,15 @@ function PiePublico({ idioma, t }: { idioma: "es" | "en"; t: Record<string, stri
           { href: "/en/doctrine", etiqueta: t["footer.doctrine"] },
           { href: "/en/downloads", etiqueta: t["footer.downloads"] },
           { href: "/en/contact", etiqueta: t["footer.contact"] },
-          { href: "/en/legal-terms", etiqueta: t["footer.legalTerms"] },
-          { href: "/en/legal-privacy", etiqueta: t["footer.legalPrivacy"] },
+          { href: "/en/legal/terms", etiqueta: t["footer.legalTerms"] },
+          { href: "/en/legal/privacy", etiqueta: t["footer.legalPrivacy"] },
         ]
       : [
           { href: "/doctrina", etiqueta: t["footer.doctrine"] },
           { href: "/descargas", etiqueta: t["footer.downloads"] },
           { href: "/contacto", etiqueta: t["footer.contact"] },
-          { href: "/legal-terminos", etiqueta: t["footer.legalTerms"] },
-          { href: "/legal-privacidad", etiqueta: t["footer.legalPrivacy"] },
+          { href: "/legal/terminos", etiqueta: t["footer.legalTerms"] },
+          { href: "/legal/privacidad", etiqueta: t["footer.legalPrivacy"] },
         ];
 
   return (

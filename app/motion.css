@@ -49,16 +49,33 @@
  * Opacidad y 8 px. UNA SOLA VEZ por elemento: el observador se desconecta al
  * primer cruce. Sin parallax, sin fondos en movimiento, sin bucles lentos.
  */
+/**
+ * EL ESTADO POR DEFECTO ES VISIBLE, y eso es la regla.
+ *
+ * Escrito al revés —`opacity: 0` por defecto y visible al cruzar— el contenido
+ * desaparece PARA SIEMPRE en cuanto el observador no dispara: sin JavaScript,
+ * con el script bloqueado, si la hidratación falla, o al imprimir. Se vio en
+ * una captura de pantalla: la portada entera, en blanco por debajo del hero.
+ *
+ * Así que esconder es lo que hace falta declarar, y lo declara el componente
+ * **solo para lo que está fuera de pantalla**, donde esconder no se nota.
+ */
 .slg-reveal {
-  opacity: 0;
-  transform: translateY(var(--slg-reveal-offset));
   transition:
     opacity var(--slg-spring-duration) var(--slg-spring),
     transform var(--slg-spring-duration) var(--slg-spring);
 }
-.slg-reveal[data-revealed="true"] {
-  opacity: 1;
-  transform: translateY(0);
+.slg-reveal[data-revealed="false"] {
+  opacity: 0;
+  transform: translateY(var(--slg-reveal-offset));
+}
+
+/* Al imprimir no hay scroll que dispare nada: todo visible. */
+@media print {
+  .slg-reveal[data-revealed="false"] {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* ── Superficie translúcida (C.3) ──────────────────────────────────────────── */
@@ -109,10 +126,10 @@ textarea:focus-visible,
     scroll-behavior: auto !important;
   }
 
-  .slg-reveal {
-    transform: none;
-  }
-  .slg-reveal[data-revealed="true"] {
+  /* El reveal degrada a fundido puro: sin desplazamiento (RNF-46). El
+     selector es el del estado ESCONDIDO, que es el único que desplaza. */
+  .slg-reveal,
+  .slg-reveal[data-revealed="false"] {
     transform: none;
   }
   .slg-pressable[data-pressed="true"] {

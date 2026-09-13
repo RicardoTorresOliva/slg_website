@@ -33,6 +33,18 @@ function enLinea(texto: string): Trozo[] {
   return trozos;
 }
 
+/**
+ * Una línea suelta con sus marcas en línea resueltas.
+ *
+ * Existe porque hay sitios que muestran **una sola línea** de un registro —la
+ * bajada de un bloque de la portada, el resumen de una tarjeta— y ahí el
+ * párrafo completo sobra. Sin esto, un `SLG_AI` entre acentos graves se
+ * publicaba con los acentos a la vista.
+ */
+export function MarkdownEnLinea({ texto }: { texto: string }) {
+  return <Linea texto={texto} />;
+}
+
 function Linea({ texto }: { texto: string }) {
   return (
     <>

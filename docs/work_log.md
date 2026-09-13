@@ -1145,3 +1145,94 @@ negativa —bloques desordenados, dos CTA, un formulario y un servicio de otra l
 **Lo que falta para que estas páginas estén terminadas.** La **máquina** de la sección 5 —formulario
 de descarga, entrega por enlace firmado y captura al CRM— es **DU-08**: hoy la sección anuncia el
 documento y enlaza a su página. Y el copy sigue siendo temporal en los 74 registros.
+
+---
+
+## 2026-09-13 · DU-06, DU-07, FU-11 y DU-08 — Autoridad, SEO, anti-abuso y la máquina de descargas
+
+**78 rutas públicas.** Con esto la capa pública queda completa de punta a punta: desde que alguien
+llega por un buscador hasta que recibe su documento.
+
+### DU-06 — Doctrina, Nosotros y legales
+
+`/doctrina` publica las secciones de la colección `doctrine` **ordenadas por su campo `order`**:
+añadir una sección es añadir un `.md`. El bloque «documento completo a solicitud» está, **sin
+formulario y diciéndolo** — su máquina es DU-10, y un botón que no hace nada es peor que una frase
+que explica por qué todavía no está.
+
+Los legales pasan a **`/legal/privacidad` y `/legal/terminos`**, con sus pares ingleses, que son las
+rutas del Anexo A.2. Responden **200 sin sesión**, y eso no es una preferencia: las pantallas de
+consentimiento de Google y de Entra ID exigen una URL de privacidad que responda sin sesión (F.2-1,
+R-13). Si dejan de hacerlo, el inicio de sesión social deja de poder configurarse. Los dos textos
+**dicen en su primera línea que son provisionales**: necesitan revisión profesional antes del
+lanzamiento, y decirlo dentro del texto es más honesto que dejarlo en una nota interna.
+
+`/nosotros` no lleva ni una cifra, ni un premio, ni un caso: `check:copy` lo veta sin fuente, y la
+propia página lo dice por escrito.
+
+### DU-07 — SEO técnico, 404 y 500
+
+| Qué | Dónde |
+|---|---|
+| Metadatos únicos por página e idioma | `lib/content/seo.ts`, una función, no repartido por 78 rutas |
+| `canonical` propio + `hreflang` **recíproco** | ídem, con `x-default` al español |
+| Open Graph con imagen de marca | ídem |
+| `sitemap.xml` con los dos idiomas | `app/sitemap.ts` — sin borradores, que no tienen ruta |
+| `robots.txt` | `app/robots.ts` — `/hq`, `/portal`, `/api` y `/prototipo` fuera del índice |
+| `schema.org` `Organization` y `Service` | `components/DatosEstructurados.tsx` |
+| 404 y 500 propias y bilingües | con **tres salidas de vuelta**: Home, `/ai` y `/blog` |
+
+El freno `check:seo` hace **220 comprobaciones** sobre el HTML servido. La que más vale es el
+**`hreflang` recíproco**: si una mitad del par no declara la vuelta, los buscadores **ignoran las
+dos** — y la página se ve perfecta. Encontró dos cosas: `/holdings` sin metadatos, y **las once
+páginas de documento sin par de idioma**, que dejaban el conmutador desactivado.
+
+**Lighthouse móvil** (gate D6, criterio 4): `/` **98**, `/ai/enterprise/readiness` **97**,
+`/blog/mes-cuatro` **92** de rendimiento, y **100 de accesibilidad, buenas prácticas y SEO en las
+tres**. Umbral: 90.
+
+### FU-11 — anti-abuso propio, sin un solo script de terceros
+
+Tres capas, en el orden en que salen más baratas: **trampa → límite → dominio**.
+
+1. **Campo trampa** — relleno ⇒ se descarta **en silencio** y **no crea captura**. Responde como un
+   éxito: decirle a un bot que ha fallado es entrenarlo.
+2. **Límite** por IP **y** por correo, con el contador **en la base de datos** y la clave **hasheada**
+   (**D-83**). En memoria del proceso, dos instancias permiten el doble de peticiones.
+3. **Dominios de correo gratuito** en una **tabla** (**D-82**), no en un archivo: RF-32 dice
+   «editable **sin desplegar**», y un archivo obliga a recompilar. Se comprueba insertando un dominio
+   y verificando el rechazo **sin reconstruir nada**.
+
+### DU-08 — la máquina que paga el proyecto
+
+**El orden de las operaciones ES el requisito**: verificar → **persistir el lead** → emitir la firma.
+Si se emitiera la URL primero y la escritura fallara después, se habría entregado el documento sin
+registrar el lead, que es exactamente lo contrario de por qué existe esto. La prueba lo comprueba
+mirando la base después de cada envío.
+
+El formulario es **HTML nativo con POST**: funciona sin JavaScript, funciona mientras la página
+hidrata, y no cuesta un byte del presupuesto.
+
+**12 comprobaciones contra PostgreSQL y el servidor reales**, entre ellas las que más se rompen:
+documento **sin archivo** ⇒ captura igual, no emite firma y no crea `download_event` (RF-40); la
+trampa ⇒ cero filas; el límite ⇒ corta y **no revela el umbral**.
+
+### Lo que encontró el navegador, y ningún test
+
+Se sacaron capturas de las páginas reales, y la portada salía **en blanco por debajo del hero**. El
+reveal al scroll estaba escrito como se escribe siempre —`opacity: 0` por defecto— y eso **apuesta la
+página entera** a que el observador dispare: sin JavaScript, con el script bloqueado, si la
+hidratación falla o al imprimir, el contenido no aparece **nunca**. Corregido (**D-84**): nace
+visible, se esconde solo lo que está fuera de pantalla, y hay un rescate a los 3 s.
+
+De la misma tanda: los acentos graves del Markdown salían a la vista en las bajadas de una línea, y
+el hero de cada servicio repetía entera la primera frase de su sección 1.
+
+**Verificación.** `check:ci` en verde con **78 rutas** bajo presupuesto · `check:seo` 220 ·
+`check:paginas` 142 · `check:armazon` 56 · `check:blog` 33 · `test:gesto` 20 · Lighthouse sobre el
+umbral en las tres páginas · `test:db` **276** comprobaciones · **dieciocho frenos**, cada uno visto
+en rojo por su motivo.
+
+**Lo que falta de estas unidades.** El criterio 7 de DU-07 —declarar D1…D6 en verde **en staging**—
+necesita el despliegue. Y DU-08 entrega «disponible próximamente» en los once documentos porque
+**no hay PDFs**: el camino con archivo está construido y se probará en cuanto exista el primero.

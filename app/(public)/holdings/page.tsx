@@ -1,5 +1,18 @@
 import { ArmazonPublico } from "@/components/ArmazonPublico";
 import { PaginaDeServicio } from "@/components/PaginaDeServicio";
+import { loadCollection } from "@/lib/content/loader";
+import { metadatosDe } from "@/lib/content/seo";
+import { secciones } from "@/lib/content/secciones";
+
+const registro = loadCollection<{ name: string }>("service", "es").find(
+  (r) => r.slug === "slg-holdings",
+);
+
+export const metadata = metadatosDe({
+  ruta: "/holdings",
+  titulo: registro?.data.name ?? "SLG Agency",
+  descripcion: secciones(registro?.body ?? "")[0]?.cuerpo.split("\n")[0] ?? "",
+});
 
 /**
  * `SLG_Holdings` — destino de menú Y página de servicio.
@@ -11,7 +24,7 @@ import { PaginaDeServicio } from "@/components/PaginaDeServicio";
 export default function Holdings() {
   return (
     <ArmazonPublico ruta="/holdings">
-      <PaginaDeServicio slug="slg-holdings" lang="es" />
+      <PaginaDeServicio slug="slg-holdings" lang="es" ruta="/holdings" />
     </ArmazonPublico>
   );
 }

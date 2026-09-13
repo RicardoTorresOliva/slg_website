@@ -67,6 +67,19 @@ export const rutaEnDeServicio = (s: Servicio) => `/en${s.es}`;
 export const slugEnDeServicio = (s: Servicio) => `${s.slug}-en`;
 
 /**
+ * Las dos páginas legales, con la ruta ANIDADA del Anexo A.2.
+ *
+ * Son públicas y sin autenticación **por obligación externa**: las pantallas de
+ * consentimiento de Google y de Entra ID exigen una URL de privacidad que
+ * responda sin sesión (F.2-1, R-13). Si dejan de responder 200, el inicio de
+ * sesión social deja de poder configurarse.
+ */
+export const LEGALES = [
+  { slug: "legal-privacidad", slugEn: "legal-privacy", es: "/legal/privacidad", en: "/en/legal/privacy" },
+  { slug: "legal-terminos", slugEn: "legal-terms", es: "/legal/terminos", en: "/en/legal/terms" },
+] as const;
+
+/**
  * Páginas que NO se sirven desde `/[slug]` porque tienen ruta propia. Si una
  * página aparece en las dos partes, el mismo contenido queda en dos URL: los
  * enlaces se dividen y los buscadores ven contenido duplicado.
@@ -76,6 +89,16 @@ export const PAGINAS_CON_RUTA_PROPIA = new Set([
   "ai",
   ...RAMAS.map((r) => r.slug),
   ...RAMAS.map((r) => r.slugEn),
+  ...LEGALES.map((l) => l.slug),
+  ...LEGALES.map((l) => l.slugEn),
+  "doctrina",
+  "doctrine",
+  "nosotros",
+  "about",
+  "descargas",
+  "downloads",
+  "gracias",
+  "thank-you",
 ]);
 
 /** Pares declarados a mano: los que no salen de una colección. */
@@ -83,6 +106,10 @@ const PARES_FIJOS: ReadonlyArray<readonly [string, string]> = [
   ["/", "/en"],
   ["/ai", "/en/ai"],
   ["/blog", "/en/blog"],
+  ["/doctrina", "/en/doctrine"],
+  ["/nosotros", "/en/about"],
+  ["/descargas", "/en/downloads"],
+  ["/gracias", "/en/thank-you"],
   ["/acceder", "/en/sign-in"],
   ["/recuperar", "/en/recover"],
 ];
@@ -104,10 +131,25 @@ function mapa(): Map<string, string> {
 
   for (const [a, b] of PARES_FIJOS) añadir(a, b);
   for (const r of RAMAS) añadir(r.es, r.en);
+  for (const l of LEGALES) añadir(l.es, l.en);
   for (const s of SERVICIOS) añadir(s.es, rutaEnDeServicio(s));
 
-  // Las páginas sueltas —contacto, gracias, legales, descargas— siguen saliendo
-  // del campo `pair` del frontmatter, que es el que `check:pairs` verifica.
+  /**
+   * Las páginas de documento. Su par sale del campo `pair` del registro de
+   * descarga, igual que el de las páginas: sin esto el conmutador salía
+   * DESACTIVADO en las once páginas de documento —se vio en una captura— y el
+   * visitante inglés se quedaba sin su versión de un documento que existe.
+   */
+  const descargasEs = loadCollection<{ pair?: string }>("download", "es");
+  const slugsDescargaEn = new Set(loadCollection("download", "en").map((r) => r.slug));
+  for (const registro of descargasEs) {
+    const pareja = registro.data.pair;
+    if (!pareja || !slugsDescargaEn.has(pareja)) continue;
+    añadir(`/descargas/${registro.slug}`, `/en/downloads/${pareja}`);
+  }
+
+  // Las páginas sueltas —contacto, gracias, legales— siguen saliendo del campo
+  // `pair` del frontmatter, que es el que `check:pairs` verifica.
   const es = loadCollection<{ pair?: string }>("page", "es");
   const en = loadCollection<{ pair?: string }>("page", "en");
   const slugsEn = new Set(en.map((r) => r.slug));

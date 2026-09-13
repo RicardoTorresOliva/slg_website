@@ -159,6 +159,11 @@ jobs:
       - name: Portada, overviews y páginas de servicio
         run: npm run check:paginas
 
+      # RF-05 y gate D4: hreflang RECÍPROCO. Si una mitad del par no declara la
+      # vuelta, los buscadores ignoran las dos y la página se ve perfecta.
+      - name: SEO técnico, sitemap, robots y 404
+        run: npm run check:seo
+
       - name: Las cuatro cláusulas del sheet, cuadro a cuadro (gate D3)
         run: npm run test:gesto
 
@@ -167,7 +172,7 @@ jobs:
         run: npm run check:lighthouse
 
       # Criterio 5: cada freno se ve en ROJO por el motivo esperado.
-      - name: Prueba negativa de los diecisiete frenos
+      - name: Prueba negativa de los dieciocho frenos
         run: npm run check:brakes
 
   # ──────────────────────────────────────────────────────────────────────────
@@ -242,5 +247,5 @@ jobs:
       - name: Datos de ejemplo
         run: npm run db:seed
 
-      - name: Aislamiento, contratos, autorización, correo, invitaciones y acceso
+      - name: Aislamiento, contratos, autorización, correo, invitaciones, acceso y descargas
         run: npm run test:db
