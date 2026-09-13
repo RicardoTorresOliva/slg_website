@@ -30,6 +30,8 @@
  */
 
 /** El host del visor, o `null` si no está configurado. */
+import { createHmac, timingSafeEqual } from "node:crypto";
+
 export function origenDelVisor(): string | null {
   const v = process.env.DELIVERABLE_VIEWER_ORIGIN?.trim();
   if (!v) return null;
@@ -65,11 +67,70 @@ export function visorEstaSeparado(): boolean {
   return Boolean(visor && app && visor !== app);
 }
 
-/** La URL del documento dentro del visor. Lleva el id y nada más. */
+/* ══════════════════════════════════════════════════════════════════════════
+ * El vale del visor — corrige el hallazgo C-3 de la revisión independiente
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * **EL PROBLEMA QUE ESTO RESUELVE, DICHO SIN ADORNOS.** El visor vive en un
+ * origen **sin sesión**: el navegador no le manda las cookies de la aplicación,
+ * y esa es exactamente su razón de ser. Pero la primera versión construía la URL
+ * con el identificador **y nada más**, así que cualquiera que conociera ese
+ * identificador leía el entregable **de cualquier empresa**, sin entrar. El
+ * identificador es un UUID —no adivinable— pero era un **secreto permanente**
+ * que viajaba en el `src` de un `iframe` y acababa en historiales, capturas de
+ * pantalla y registros de proxy. Sin caducidad y sin forma de revocarlo.
+ *
+ * La respuesta no puede ser «comprobar la empresa en el visor», porque ahí no
+ * hay quién. La respuesta es que **quien sí tiene sesión firme un vale**: la
+ * pantalla del portal ya comprobó la empresa, la visibilidad y el rol, y emite
+ * un permiso **con caducidad** para ese entregable concreto. El visor no
+ * autoriza: **verifica**.
+ *
+ * Firma HMAC-SHA256 sobre `<id>.<caducidad>`, comparada en tiempo constante. La
+ * caducidad va **dentro de lo firmado**: sin ella, un vale capturado vale para
+ * siempre.
+ */
+const SECRETO = () => process.env.DELIVERABLE_VIEWER_SECRET ?? "";
+
+/** Cuánto vale un vale. El mismo TTL que la URL firmada del objeto (RNF-20). */
+function minutosDeVida(): number {
+  const crudo = Number(process.env.SIGNED_URL_TTL_DELIVERABLE_MINUTES ?? "15");
+  return Number.isFinite(crudo) && crudo > 0 ? crudo : 15;
+}
+
+function firmar(deliverableId: string, caduca: number): string {
+  return createHmac("sha256", SECRETO()).update(`${deliverableId}.${caduca}`).digest("hex");
+}
+
+/**
+ * ¿Es válido este vale para este entregable? **Falla cerrado**: sin secreto
+ * configurado no hay vale que valga, y el visor no sirve nada. Es preferible un
+ * visor que no funciona a un visor que sirve entregables de cliente a quien
+ * conozca un identificador.
+ */
+export function valeValido(deliverableId: string, caduca: string | null, firma: string | null): boolean {
+  if (!SECRETO() || !caduca || !firma) return false;
+  const instante = Number(caduca);
+  if (!Number.isFinite(instante) || instante <= Date.now()) return false;
+  const esperada = Buffer.from(firmar(deliverableId, instante));
+  const dada = Buffer.from(firma);
+  if (esperada.length !== dada.length) return false;
+  return timingSafeEqual(esperada, dada);
+}
+
+/**
+ * La URL del documento dentro del visor, **con su vale**.
+ *
+ * Devuelve `null` si no hay origen separado o si falta el secreto: una URL sin
+ * vale sería la de antes, y esa es la que había que retirar.
+ */
 export function urlDelVisor(deliverableId: string): string | null {
   const base = origenDelVisor();
-  if (!base || !visorEstaSeparado()) return null;
-  return `${base}/visor/${encodeURIComponent(deliverableId)}`;
+  if (!base || !visorEstaSeparado() || !SECRETO()) return null;
+  const caduca = Date.now() + minutosDeVida() * 60_000;
+  const parametros = new URLSearchParams({ c: String(caduca), f: firmar(deliverableId, caduca) });
+  return `${base}/visor/${encodeURIComponent(deliverableId)}?${parametros.toString()}`;
 }
 
 /**

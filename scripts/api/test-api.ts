@@ -60,6 +60,7 @@ const VALORES = {
   capturas: "valor-de-prueba-du22-capturas-0000",
   entregables: "valor-de-prueba-du22-entregables-0",
   eventos: "valor-de-prueba-du22-eventos-00000",
+  capturasAcotada: "valor-de-prueba-rev-capturas-acot",
   escribeEntregables: "valor-de-prueba-du23-entregables-w",
   escribeAvisos: "valor-de-prueba-du23-avisos-write",
   escribeEventos: "valor-de-prueba-du23-eventos-write",
@@ -168,6 +169,7 @@ async function sembrar() {
   await crearClave("k-du23-ent", VALORES.escribeEntregables, ["deliverables:write", "deliverables:read"]);
   await crearClave("k-du23-avi", VALORES.escribeAvisos, ["announcements:write"]);
   await crearClave("k-du23-eve", VALORES.escribeEventos, ["events:write"]);
+  await crearClave("k-rev-cap", VALORES.capturasAcotada, ["captures:read"], { org: A.org });
   await crearClave("k-du23-aco", VALORES.escribeAcotada, ["announcements:write", "deliverables:write"], { org: A.org });
 }
 
@@ -426,6 +428,106 @@ async function main() {
     });
     check("y no admite ninguna mutación: POST no existe", post.status === 405, String(post.status));
 
+    console.log("\nRegresión de la revisión final — la fuga de capturas (C1):\n");
+
+    /**
+     * **El hueco que las «doce celdas» no cubrían.** La matriz de alcance × ruta
+     * se recorría con claves **de SLG**, así que la combinación peligrosa —clave
+     * ACOTADA a una empresa **con** `captures:read`— nunca se probaba. Y esa
+     * clave leía el correo, el nombre, la empresa y el cargo de **todos los
+     * visitantes del sitio**: `lead_capture` no tiene `organization_id`, así que
+     * la política de fila no la acota y nada comprobaba el «solo SLG» que el
+     * comentario del código daba por hecho.
+     */
+    const capturasAcotada = await P("/api/v1/captures", VALORES.capturasAcotada);
+    check(
+      "una clave ACOTADA a una empresa no puede leer capturas → 403",
+      capturasAcotada.status === 403,
+      String(capturasAcotada.status),
+    );
+    check(
+      "y la respuesta no trae ni un correo de visitante",
+      !JSON.stringify(capturasAcotada.cuerpo).includes("@"),
+      JSON.stringify(capturasAcotada.cuerpo).slice(0, 160),
+    );
+    check(
+      "la clave de SLG sigue pudiendo: el arreglo acota, no apaga",
+      (await P("/api/v1/captures", VALORES.capturas)).status === 200,
+    );
+    /** Y la segunda capa: la combinación ya no se puede ni crear. */
+    const { crearClave: crearPorLaPuerta } = await import("../../lib/hq/claves.ts");
+    const { contextoDeSesion } = await import("../../lib/db/context.ts");
+    const admin = contextoDeSesion({ userId: A.dueno, userName: "Resp", role: "slg_admin", organizationId: null });
+    let rechazada = false;
+    try {
+      await crearPorLaPuerta(admin, {
+        nombre: "Acotada con capturas",
+        organizationId: A.org,
+        alcances: ["captures:read"],
+        limite: 10,
+        ventanaSegundos: 60,
+        caducaEn: "2027-01-01",
+      });
+    } catch {
+      rechazada = true;
+    }
+    check("crear esa combinación se rechaza en el servicio (segunda capa)", rechazada);
+
+    console.log("\nRegresión de la revisión final — `only_latest` perdía entregables (I1):\n");
+
+    /**
+     * Seis versiones de una familia y cuatro familias más, con `limit=2`. Antes
+     * la deduplicación ocurría **en memoria sobre la ventana ya traída**, así que
+     * `has_more` se calculaba sobre la lista reducida y la paginación mentía.
+     */
+    /**
+     * En **su propio proyecto**. La primera versión los metió en el proyecto de
+     * A y rompió tres comprobaciones anteriores que contaban entregables: una
+     * prueba nueva no puede mover el suelo de las que ya existían.
+     */
+    const PROYECTO_REV = "p-rev-only-latest";
+    await dueno`insert into project (id, organization_id, name, service, status)
+                values (${PROYECTO_REV}, ${A.org}, 'Regresión only_latest', 'Phoenix PEEx', 'active')`;
+    const famGorda = "fam-rev-gorda";
+    for (let v = 1; v <= 6; v++) {
+      await dueno`insert into deliverable (id, project_id, organization_id, title, type, version,
+                                           family_id, visibility, published_at)
+                  values (${`d-rev-g${v}`}, ${PROYECTO_REV}, ${A.org}, ${`Gorda v${v}`}, 'pdf', ${v},
+                          ${famGorda}, 'client', now())`;
+    }
+    for (let f = 1; f <= 4; f++) {
+      await dueno`insert into deliverable (id, project_id, organization_id, title, type, version,
+                                           family_id, visibility, published_at)
+                  values (${`d-rev-f${f}`}, ${PROYECTO_REV}, ${A.org}, ${`Familia ${f}`}, 'pdf', 1,
+                          ${`fam-rev-${f}`}, 'client', now())`;
+    }
+
+    const familias = new Set<string>();
+    let cursorUltimas: string | null = null;
+    let paginas = 0;
+    do {
+      const consulta = `/api/v1/projects/${PROYECTO_REV}/deliverables?only_latest=true&limit=2${
+        cursorUltimas ? `&cursor=${encodeURIComponent(cursorUltimas)}` : ""
+      }`;
+      const pagina = await P(consulta, VALORES.slg);
+      for (const d of pagina.cuerpo.data as Json[]) familias.add(d.family_id as string);
+      cursorUltimas = pagina.cuerpo.page.next_cursor;
+      paginas++;
+    } while (cursorUltimas && paginas < 20);
+
+    check(
+      "paginando `only_latest` se recorren TODAS las familias, sin perder ninguna",
+      familias.size === 5,
+      `${familias.size} familias en ${paginas} páginas: ${[...familias].join(", ")}`,
+    );
+    check(
+      "y de la familia con seis versiones vuelve solo la última",
+      (
+        (await P(`/api/v1/projects/${PROYECTO_REV}/deliverables?only_latest=true&limit=50`, VALORES.slg))
+          .cuerpo.data as Json[]
+      ).filter((d: Json) => d.family_id === famGorda).map((d: Json) => d.version).join() === "6",
+    );
+
     console.log("\nCriterio 5 — empresas y proyectos con `orgs:read`:\n");
 
     const orgs = await P("/api/v1/organizations", VALORES.slg);
@@ -444,8 +546,17 @@ async function main() {
 
     const proyectos = await P(`/api/v1/organizations/${A.org}/projects`, VALORES.slg);
     check("los proyectos de una empresa responden 200", proyectos.status === 200);
-    check("con el servicio literal e intraducible (RF-14)", proyectos.cuerpo?.data?.[0]?.service === "Phoenix PEEx", proyectos.cuerpo?.data?.[0]?.service);
-    check("y las fechas de calendario sin hora", proyectos.cuerpo?.data?.[0]?.starts_at === "2026-09-15", proyectos.cuerpo?.data?.[0]?.starts_at);
+    /**
+     * Contra el proyecto **por su id**, no contra `data[0]`. Anclar a la primera
+     * fila hacía que cualquier proyecto nuevo en la misma empresa —el de la
+     * regresión de `only_latest`, por ejemplo— rompiera estas dos
+     * comprobaciones sin que nada del producto hubiera cambiado.
+     */
+    const proyectoSembrado = (proyectos.cuerpo?.data as Json[] | undefined)?.find(
+      (p: Json) => p.id === A.proyecto,
+    );
+    check("con el servicio literal e intraducible (RF-14)", proyectoSembrado?.service === "Phoenix PEEx", proyectoSembrado?.service as string);
+    check("y las fechas de calendario sin hora", proyectoSembrado?.starts_at === "2026-09-15", proyectoSembrado?.starts_at as string);
 
     const ajena = await P(`/api/v1/organizations/${B.org}/projects`, VALORES.empresa);
     check("una empresa ajena es 404, no 403", ajena.status === 404, String(ajena.status));
@@ -887,7 +998,7 @@ async function main() {
       select action, actor_type, actor_id, actor_label, entity, ip, metadata
         from audit_log
        where actor_id in ('k-du22-slg','k-du22-cap','k-du22-emp','k-du22-lim','k-du22-ent','k-du22-eve',
-                          'k-du22-rev','k-du22-cad','k-du23-ent','k-du23-avi','k-du23-eve','k-du23-aco','unknown')
+                          'k-du22-rev','k-du22-cad','k-du23-ent','k-du23-avi','k-du23-eve','k-du23-aco','k-rev-cap','unknown')
          and created_at >= ${INICIO}
        order by created_at desc limit 400
     `) as unknown as { action: string; actor_type: string; actor_id: string; actor_label: string | null; entity: string; ip: string | null; metadata: Json }[];

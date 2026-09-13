@@ -131,6 +131,42 @@ check(
 const conValor = [...manual.matchAll(/^\s*([A-Z][A-Z0-9_]{3,})=(\S+)/gm)].map((m) => m[1]!);
 check("y ninguna lleva su valor escrito al lado", conValor.length === 0, conValor.join(", "));
 
+/**
+ * **LA GUÍA DE DESPLIEGUE TAMBIÉN, y antes no.** Este barrido miraba solo el
+ * `README.md`, y la documentación donde de verdad se escriben valores es
+ * `docs/deployment.md`: es la que va paso a paso por Easypanel pegando líneas
+ * de entorno. Diecisiete de sus líneas tienen la forma `VARIABLE=valor`. Lo
+ * encontró la revisión final.
+ *
+ * AQUÍ NO VALE LA MISMA REGLA, y tratarlas igual sería peor que no mirar. Un
+ * manual de despliegue **tiene que** escribir `S3_BUCKET_DOWNLOADS=downloads`:
+ * ese valor es el producto de la decisión, no un secreto, y esconderlo deja la
+ * instrucción a medias. Lo que no puede llevar valor es lo que es **secreto por
+ * su nombre** —`SECRET`, `PASSWORD`, `TOKEN`, `KEY`—, y no solo porque pueda ser
+ * real: un marcador de posición en un manual **se pega tal cual**, así que un
+ * `APP_DB_PASSWORD=LoQueSea` escrito para ilustrar acaba siendo la contraseña
+ * de alguien. La instrucción correcta dice **qué poner**, nunca un ejemplo
+ * copiable.
+ */
+const NOMBRES_DE_SECRETO = /(SECRET|PASSWORD|TOKEN|_KEY|KEY_)/;
+/**
+ * `<entre ángulos>` SÍ pasa, y la diferencia no es cosmética: un marcador así,
+ * pegado tal cual, **falla en voz alta** —el servicio no arranca y quien lo hizo
+ * se entera en el acto—. Una cadena que parece una contraseña, pegada tal cual,
+ * **funciona**, y entonces la credencial de producción es la que salió escrita
+ * en un repositorio público. El freno separa las dos por eso.
+ */
+const ES_MARCADOR = /^<.*>$/;
+const guia = leer("docs/deployment.md");
+const secretosConValor = [...guia.matchAll(/^\s*([A-Z][A-Z0-9_]{3,})=(.+)$/gm)]
+  .filter((m) => NOMBRES_DE_SECRETO.test(m[1]!) && !ES_MARCADOR.test(m[2]!.trim()))
+  .map((m) => `${m[1]!} (línea con valor)`);
+check(
+  "y en `docs/deployment.md` ninguna variable de SECRETO lleva un valor pegable",
+  secretosConValor.length === 0,
+  secretosConValor.join(", "),
+);
+
 if (fallos > 0) {
   console.error(`\n✗ literacy: ${fallos} de ${comprobaciones} comprobaciones fallaron.\n`);
   process.exit(1);

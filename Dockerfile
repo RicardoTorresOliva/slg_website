@@ -35,6 +35,26 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
+# ─── Lo que el despliegue necesita y la imagen no tenía ─────────────────────
+#
+# ESTA IMAGEN NO PODÍA MIGRAR NI RESPALDAR, y las dos cosas están documentadas
+# como comandos de producción en `docs/deployment.md`:
+#
+#   · `npm run db:migrate`   — el *Deploy command* de Easypanel.
+#   · `npm run backup`       — la tarea programada de las 3:00.
+#   · `npm run backup:purge` — la de los domingos.
+#
+# Ninguno podía ejecutarse: la salida `standalone` no lleva `package.json` con
+# guiones, ni `scripts/`, ni `drizzle/`, ni `pg_dump`. El primer despliegue
+# habría fallado en el paso de migración y las copias no habrían existido nunca
+# —y una copia que no existe se descubre el día que hace falta—. Lo encontró la
+# revisión final, no una ejecución.
+#
+# `postgresql16-client` trae `pg_dump` y `pg_restore`. La versión es la misma
+# que la del servidor (PostgreSQL 16) a propósito: un `pg_dump` más viejo que la
+# base se niega a volcar.
+RUN apk add --no-cache postgresql16-client
+
 # Usuario sin privilegios: el proceso web no necesita ser root.
 RUN addgroup --system --gid 1001 nodejs \
  && adduser --system --uid 1001 nextjs
@@ -42,6 +62,34 @@ RUN addgroup --system --gid 1001 nodejs \
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone/public ./public
+
+# `package.json` COMPLETO, no el reducido que Next deja en `standalone`: es el
+# que tiene los guiones, y sin él `npm run db:migrate` responde que no existe.
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
+
+# El SQL versionado y su `meta/_journal.json`. El migrador lee de aquí.
+COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
+
+# `drizzle-orm` y `postgres` **NO están** en el `node_modules` de la salida
+# `standalone`, y esto no es un descuido de Next: el código de servidor de la
+# aplicación va empaquetado en sus propios chunks, así que Next no necesita
+# dejar los paquetes sueltos. Un GUION suelto sí los necesita —`node
+# scripts/db/migrar.ts` los resuelve por `node_modules` como cualquier proceso
+# de Node—, y sin ellos el migrador muere con «Cannot find module» en el primer
+# despliegue. Ninguno de los dos arrastra dependencias propias.
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/postgres ./node_modules/postgres
+
+# Solo los dos guiones que producción ejecuta y la biblioteca de la que tiran.
+# `scripts/` entero NO: ahí viven las pruebas, que arrastran `postgres`, dobles
+# de SMTP y fixtures que no pintan nada en un contenedor que sirve peticiones.
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/db/migrar.ts ./scripts/db/migrar.ts
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/backup ./scripts/backup
+COPY --from=builder --chown=nextjs:nodejs /app/lib/backup ./lib/backup
+
+# La prueba de las copias no viaja: necesita PostgreSQL y un almacenamiento de
+# mentira, y en producción sería una forma de escribir en el bucket real.
+RUN rm -f ./scripts/backup/test-respaldos.ts
 
 USER nextjs
 EXPOSE 3000

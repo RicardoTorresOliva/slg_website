@@ -7,6 +7,7 @@ import { VisorDeEntregables } from "@/components/VisorDeEntregables";
 import { idiomaDeInterfaz } from "@/lib/app/idioma";
 import { exigirSeccion } from "@/lib/app/navegacion";
 import { exigirSuperficie } from "@/lib/auth";
+import type { AuthContext } from "@/lib/db/context";
 import { loadUiStrings } from "@/lib/content/loader";
 import type { DeliverableType } from "@/lib/db/schema";
 import { especificacionDe } from "@/lib/deliverables/renderers";
@@ -68,7 +69,7 @@ export default async function Entregable({ params }: { params: Promise<{ id: str
         </p>
       ) : null}
 
-      {spec.modo === "render-en-portal" ? <EnPortal id={e.id} idioma={idioma} /> : null}
+      {spec.modo === "render-en-portal" ? <EnPortal ctx={sesion.ctx} id={e.id} idioma={idioma} /> : null}
 
       {spec.modo === "visor-aislado" ? <Aislado id={e.id} titulo={e.titulo} t={t} /> : null}
     </div>
@@ -103,8 +104,10 @@ async function Descarga({ id, t }: { id: string; t: Record<string, string> }) {
 }
 
 /** Markdown: se trae del bucket y se renderiza con el conversor saneado (RNF-31). */
-async function EnPortal({ id, idioma }: { id: string; idioma: string }) {
-  const texto = await textoDeMarkdown(id);
+async function EnPortal({ ctx, id, idioma }: { ctx: AuthContext; id: string; idioma: string }) {
+  // El contexto **se pasa**, no se resuelve aquí: la autorización la hizo la
+  // pantalla, y esta función solo lee lo que aquella ya decidió que se puede ver.
+  const texto = await textoDeMarkdown(ctx, id);
   if (texto === null) return null;
   return (
     <ContenidoEntregado idioma={idioma}>

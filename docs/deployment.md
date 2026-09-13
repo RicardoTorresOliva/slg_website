@@ -109,10 +109,16 @@ la base de datos es **`slgwebpostgres`**, no `slg-db`.
 3. Añade una línea nueva al final:
 
    ```
-   OPS_TOKEN=inventate-aqui-una-palabra-larga-y-rara
+   OPS_TOKEN=<aquí una palabra larga y rara que te inventes>
    ```
 
-   Cámbiala por lo que quieras, pero que sea larga (30 caracteres o más) y no la uses en otro sitio.
+   **Sustituye lo que va entre `<` y `>`, corchetes angulares incluidos**, por una cadena larga (30
+   caracteres o más) que no uses en ningún otro sitio. Si no se te ocurre: abre una pestaña nueva con
+   el generador de contraseñas de tu navegador o de tu gestor de contraseñas, pídele 40 caracteres y
+   pega eso.
+
+   **Aquí no hay ningún ejemplo copiable, y es a propósito**: un valor de muestra escrito en una guía
+   se pega tal cual, y entonces la llave de esta página está publicada en un repositorio público.
    **Es la llave de esa página**: quien la tenga, la abre.
 4. Botón **Save**, y después botón **Deploy**. Espera a que el servicio quede verde.
 5. Abre en el navegador:
@@ -142,8 +148,11 @@ Aquí hay **tres** variables, y las tres van en **Easypanel → `slg-web` → En
 números, **sin comillas ni espacios**) y ponla en dos sitios:
 
 ```
-APP_DB_PASSWORD=LaQueTeInventes123456
+APP_DB_PASSWORD=<la que te inventes, 20 caracteres o más>
 ```
+
+**Sustituye lo de entre `<` y `>` por la tuya, corchetes angulares incluidos.** No hay ejemplo
+escrito: una contraseña de muestra en una guía acaba siendo la contraseña de alguien.
 
 **2.b — La cadena de conexión del sitio.** Lleva esa misma contraseña dentro. **No está escrita
 entera aquí a propósito**: el análisis de secretos del CI pone el pipeline en rojo si aparece una
@@ -202,9 +211,11 @@ contraseña de MinIO, y **ya existen**: son las del propio servicio.
 1. Easypanel → servicio **`minio`** → pestaña **Environment**. Verás dos líneas parecidas a estas:
 
    ```
-   MINIO_ROOT_USER=algo
-   MINIO_ROOT_PASSWORD=otra-cosa
+   MINIO_ROOT_USER=<un usuario>
+   MINIO_ROOT_PASSWORD=<una contraseña>
    ```
+
+   Lo que veas ahí ya está puesto por Easypanel: **no lo cambies**, solo léelo.
 
 2. Copia esos **dos valores**.
 3. Easypanel → servicio **`slg-web`** → **Environment**, y añade estas cinco líneas:
@@ -240,13 +251,15 @@ Estas cuatro van también en **`slg-web` → Environment**:
 
 ```
 NEXT_PUBLIC_SITE_URL=https://softlandingglobal.com
-BETTER_AUTH_SECRET=otra-palabra-larga-distinta-de-la-de-OPS_TOKEN
+BETTER_AUTH_SECRET=<otra palabra larga, distinta de la de OPS_TOKEN>
 OPS_MAIL_TO=torresoliva.ricardo@gmail.com
 PRIVACY_POLICY_VERSION=2026-09-13
 ```
 
-`BETTER_AUTH_SECRET` firma las sesiones: invéntala larga y **no la cambies después**, porque
-cambiarla cierra la sesión de todo el mundo.
+Las tres que llevan valor escrito **se pegan tal cual**: son decisiones del proyecto, no secretos.
+La de `BETTER_AUTH_SECRET` **no**: sustituye lo de entre `<` y `>` por una cadena larga tuya, del
+mismo generador de antes. Firma las sesiones, así que tiene que ser larga y **no se cambia después**,
+porque cambiarla cierra la sesión de todo el mundo.
 
 ---
 
@@ -534,9 +547,12 @@ Se hace desde el navegador, con la página `/api/ops`. Paso a paso:
 2. **Easypanel** → proyecto **`slg`** → servicio **`slg-web`** → pestaña **Environment**. Añade estas
    dos líneas al final:
    ```
-   OPS_TOKEN=TESTIGO
+   OPS_TOKEN=<el testigo del paso 1>
    OPS_MAIL_TO=tu-correo@gmail.com,otro@outlook.com,torresoliva.ricardo@gmail.com
    ```
+
+   La primera línea lleva **tu** testigo en lugar de lo que va entre `<` y `>`; la segunda se pega
+   cambiando las dos primeras direcciones por las tuyas.
    Las tres direcciones tienen que ser de **proveedores distintos**: ahí está la gracia de la prueba.
 3. **Save** y luego **Deploy**.
 4. Cuando el despliegue termine, abre en el navegador:
@@ -916,6 +932,37 @@ DELIVERABLE_VIEWER_ORIGIN=https://visor.softlandingglobal.com
 **Save** → **Deploy**. Para comprobarlo, abre `https://visor.softlandingglobal.com/` a secas: tiene
 que dar **404**. Si te sale la portada del sitio, el dominio está apuntando mal.
 
+### 4octies.4 El vale del visor — **la segunda variable, y sin ella el visor no enseña nada**
+
+El visor vive en un origen **sin sesión**: el navegador no le manda las cookies de la aplicación, y
+eso es justo lo que se buscaba. Pero entonces, ¿con qué autoriza? La primera versión no autorizaba:
+bastaba conocer el identificador del entregable para leerlo, **fuera de la empresa que fuera**. Ese
+identificador no caduca, no se revoca, y viaja en el `src` de un `iframe` hasta el historial del
+navegador y los registros de cualquier proxy por el que pase.
+
+Ahora **firma la pantalla del portal**, que sí comprobó la empresa, la visibilidad y el rol, y emite
+un permiso **con caducidad** para ese entregable concreto. El visor no autoriza: **verifica**.
+
+En la misma pantalla de antes —**Easypanel** → `slg-web` → **Environment**, y también en
+`slgweb-staging`— añade:
+
+```
+DELIVERABLE_VIEWER_SECRET=
+```
+
+El valor es **una cadena larga al azar**, distinta de cualquier otra del archivo. Si no tienes de
+dónde sacarla: entra en `https://staging.softlandingglobal.com/api/ops?token=…` y usa el generador de
+cadenas; o teclea 40 caracteres seguidos sin mirar. No la escribas en un correo ni en un chat.
+
+> **Falla cerrado, a propósito.** Sin esta variable el visor **no sirve ningún entregable** —no cae a
+> servirlos sin vale «mientras tanto»—. Si después de desplegar el visor sale vacío, esta variable es
+> lo primero que hay que mirar.
+
+Cuánto dura el permiso lo decide `SIGNED_URL_TTL_DELIVERABLE_MINUTES` (15 minutos por defecto), el
+mismo reloj que el enlace firmado del archivo.
+
+**Save** → **Deploy**.
+
 ---
 
 ## 4nonies. Las copias de seguridad (FU-14) — **la parte que no se puede posponer**
@@ -955,10 +1002,20 @@ Son **cuatro cosas**, y tres de ellas se hacen una vez.
    - Segundo: nombre `slg-backup-purga`, permiso **Admin Read & Write** (el que incluye borrar),
      mismo bucket. Copia los dos valores otra vez.
 
-> **Por qué dos credenciales y no una.** R2 no ofrece el bloqueo de objetos por API estándar, así que
-> lo que impide que alguien borre el histórico es que **la credencial que vive en el servidor no
-> pueda borrar**. La de borrar se usa solo para la limpieza de copias viejas, y no vive en el
-> servidor de la web.
+> **Por qué dos credenciales y hasta dónde llegan.** Aquí ponía que «lo que impide que alguien borre
+> el histórico es que la credencial que vive en el servidor no pueda borrar», y **eso no es cierto**:
+> el permiso más acotado que R2 ofrece para un token de objeto, *Object Read & Write*, **incluye
+> borrar**. En R2 no existe un token que escriba y no borre. La revisión final lo encontró escrito
+> como si existiera.
+>
+> Lo que las dos credenciales **sí** consiguen: la limpieza de copias viejas corre en otra tarea, en
+> otro momento, con otro token, y sus variables no están en `slg-web`. Eso evita el borrado
+> accidental desde la web y acota quién borra a propósito. Lo que **no** consiguen es impedir que
+> quien se haga con la credencial del servidor destruya el histórico.
+>
+> **Como la prevención no existe, existe la detección**, y es el apartado (f): la tarea de purga
+> comprueba, antes de borrar nada, que las copias que deberían seguir ahí siguen ahí, y te avisa por
+> correo si falta alguna.
 
 ### c) Las variables, en Easypanel
 
@@ -975,6 +1032,7 @@ líneas al final, cada una con su valor a la derecha del `=`:
 | `BACKUP_PUBLIC_KEY` | **La clave PÚBLICA** del paso (a.3) |
 | `BACKUP_VOLUME_PATHS` | La ruta del volumen de MinIO dentro del servidor |
 | `BACKUP_ALERT_EMAIL` | Tu correo, para que un fallo te avise |
+| `BACKUP_FIRST_DATE` | **Solo en la tarea de purga**, no aquí. Ver el apartado (f) |
 
 **Lo que NO se pone aquí, y es importante:** `BACKUP_PRIVATE_KEY` (la privada) y las dos variables
 `BACKUP_PURGE_*`. Si aparecen en este panel, la protección del punto (b) deja de existir.
@@ -1002,6 +1060,31 @@ aquí ni por el repositorio, y la borro del entorno al terminar.
 
 Mientras tanto, el mecanismo entero —copiar, cifrar, subir, purgar y **restaurar desde una copia
 antigua**— está probado de punta a punta contra un almacenamiento real en `npm run test:respaldos`.
+
+### f) El centinela — **la variable que detecta que alguien borró el histórico**
+
+Es **una sola línea**, y va **en la tarea de purga**, no en `slg-web`.
+
+1. **Easypanel** → proyecto `slg_website` → la tarea **Cron** de purga que creaste en (d) →
+   **Environment**.
+2. Añade al final, poniendo **la fecha del día en que se hizo la primera copia**, en formato
+   `AAAA-MM-DD`:
+
+   ```
+   BACKUP_FIRST_DATE=<la fecha de tu primera copia>
+   ```
+
+   Sustituye lo de entre `<` y `>` por la fecha, corchetes angulares incluidos. Si no sabes cuál fue:
+   abre `/api/ops?token=…`, mira la sección de copias, y usa la fecha más antigua que aparezca.
+3. **Save**.
+
+**Qué hace.** Cada domingo, antes de borrar nada, la tarea comprueba una por una que las copias
+diarias que deberían seguir existiendo **siguen existiendo**. Si falta alguna: te manda un correo a
+`BACKUP_ALERT_EMAIL` diciendo **cuáles** faltan, **no purga nada** y sale con error para que el cron
+también lo note.
+
+**Sin esta variable el centinela no corre**, y lo dice en el registro de la tarea en vez de callarse.
+No pasa nada grave por dejarla sin poner unos días; lo que no puede pasar es creer que está puesta.
 
 ---
 

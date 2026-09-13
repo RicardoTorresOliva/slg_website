@@ -19,7 +19,8 @@
  * claves se calculan (`generaciones.ts`). Una credencial que no enumera es una
  * credencial que no le sirve a quien la roba para saber qué hay.
  */
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand,
+  HeadObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import type { Readable } from "node:stream";
 
 function exigir(nombre: string): string {
@@ -41,7 +42,25 @@ function cliente(claveId: string, secreto: string): S3Client {
   });
 }
 
-/** Solo escritura. **No borra**: la credencial que usa no tiene ese permiso. */
+/**
+ * La credencial del servidor.
+ *
+ * **AQUÍ PONÍA «no borra: la credencial que usa no tiene ese permiso», Y ERA
+ * FALSO.** El permiso más acotado que Cloudflare R2 ofrece para un token de
+ * objeto es *Object Read & Write*, y **ese permiso incluye `DeleteObject`**: no
+ * existe en R2 un token que escriba y no borre. La mitigación de R-37 estaba
+ * escrita como si existiera, en el comentario del código y en la guía de
+ * despliegue, y quien la leyera daría por protegido el histórico.
+ *
+ * LO QUE SÍ ES CIERTO, y es menos de lo que decía: la separación de
+ * credenciales acota **quién borra a propósito** —la purga corre en otro
+ * proceso, con otro token, y sus variables no viven en `slg-web`—, pero **no
+ * impide** que quien se haga con la credencial del servidor borre el histórico.
+ * Esa prevención R2 no la da.
+ *
+ * De ahí `faltanCopias()` y el centinela de `purgar.ts`: si la prevención no
+ * existe, la detección tiene que existir. Lo encontró la revisión final.
+ */
 export function clienteDeCopia(): S3Client {
   return cliente("BACKUP_S3_ACCESS_KEY_ID", "BACKUP_S3_SECRET_ACCESS_KEY");
 }
@@ -82,6 +101,25 @@ export async function descargar(clave: string): Promise<Buffer> {
 /** **Solo desde el proceso de purga.** Con la otra credencial esto falla, y debe. */
 export async function borrar(clave: string): Promise<void> {
   await clienteDePurga().send(new DeleteObjectCommand({ Bucket: bucketDeCopias(), Key: clave }));
+}
+
+/**
+ * ¿Existe este objeto? `HeadObject` es una lectura, no un listado: el criterio 4
+ * («no lista nada») sigue en pie, porque se pregunta por una clave **calculada**,
+ * nunca por el contenido del bucket.
+ */
+export async function existeCopia(clave: string): Promise<boolean> {
+  try {
+    await clienteDeCopia().send(new HeadObjectCommand({ Bucket: bucketDeCopias(), Key: clave }));
+    return true;
+  } catch (e) {
+    const codigo = (e as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode;
+    if (codigo === 404 || (e as Error).name === "NotFound") return false;
+    // Un 403 o un fallo de red NO son «no existe»: decir que falta una copia
+    // porque el token está mal daría una alarma falsa cada noche, y una alarma
+    // que se repite sin motivo se acaba ignorando.
+    throw e;
+  }
 }
 
 export function hayDestinoConfigurado(): boolean {

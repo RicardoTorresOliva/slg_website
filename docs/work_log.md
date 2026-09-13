@@ -2486,3 +2486,102 @@ raíz con los registros protegidos intactos), 3 (el monitor probado apagando el 
 diez pruebas del DoD en producción) y 7 (la prueba de tres minutos con una persona real) necesitan
 que el sitio esté desplegado. El criterio 9 —el `/review` final con contexto limpio— se ejecuta cuando
 los demás estén cerrados, no antes: un `/review` sobre un sistema a medias revisa otra cosa.
+
+---
+
+## Review — la revisión final del playbook (2026-09-13)
+
+Tres revisores independientes, con **contexto limpio**, siguiendo `commands/review.md`. No es una
+relectura: cada uno recibió el repositorio y ningún relato de cómo se construyó, que es la única
+forma de que no repitan mis suposiciones. Produjo los hallazgos de más valor de todo el proyecto, y
+conviene decir por qué: **los tres frenos mecánicos que el playbook obliga a correr llevaban pasando
+sobre cero unidades desde el primer día**.
+
+### Lo que la revisión encontró, por orden de gravedad
+
+**C-0 · Los chequeos del playbook nunca comprobaron nada.** `check_completeness.sh` y
+`check_worklog.sh` buscaban el vocabulario `completed`; el `task_tracker` de este proyecto usa
+`done`, que es el vocabulario de `AGENTS.md`. Resultado: «No completed DUs yet — nothing to check» y
+salida 0, desde DU-01. `check_doc_sync.sh` buscaba documentos de diseño en `design/`, que no existe
+aquí — están en `design_docs/` —, así que revisaba **cero** documentos y decía OK. Y ninguno de los
+tres corría en el pipeline. Arreglados los tres, y añadidos a CI como `check:playbook`.
+
+**C-1 · Una clave de API acotada a una empresa podía leer las capturas de TODOS los visitantes.**
+Correo, nombre, empresa y cargo de cualquiera que se hubiera descargado un documento. Una captura no
+tiene `organization_id` —es de un visitante, no de un cliente—, así que el acotamiento por empresa
+**no acotaba nada** en esa colección. La matriz de doce celdas de DU-23 nunca probó esa casilla.
+Cerrado por las dos puntas (D-153) y con regresión en `test:api`.
+
+**C-2 · El visor de DU-19 no podía devolver contenido. Nunca.** La consulta corría bajo
+`withSystemScope`, que fija `app.actor_role = 'system'` — un rol que la política de fila de
+`deliverable` no contempla y no debe contemplar. Cero filas siempre, 404 a todo. Y `test:visor`
+pasaba sus 25 comprobaciones **sin tocar la base ni la ruta**: medía el saneado, la política y las
+variables de entorno. Arreglado con una función `SECURITY DEFINER` (D-152, migración 0016) y
+`test:visor` pasa de 25 a 45 comprobaciones, nueve de ellas contra PostgreSQL real. **La prueba
+nueva se vio en rojo contra el defecto original antes de darla por buena** (R-26).
+
+**C-3 · El visor servía cualquier entregable a quien conociera su identificador.** Sin sesión —que es
+su razón de ser— el UUID era la única credencial: permanente, sin caducidad, sin revocación, y
+viajando en el `src` de un `iframe`. Ahora la pantalla del portal firma un vale con caducidad
+(D-151), y el visor verifica en vez de autorizar.
+
+**C-4 · `only_latest` deduplicaba en memoria sobre la ventana ya traída**, así que `has_more` mentía
+y paginar perdía familias enteras. Resuelto en SQL con una subconsulta correlacionada.
+
+**C-5 · El pipeline no podía pasar.** `check:brakes` corría en un job sin PostgreSQL y uno de sus
+casos necesita la base sembrada; y `build:standalone` en `gates` corría sin `DATABASE_URL`, que
+`lib/db/scope.ts` exige al evaluarse. Las dos cosas movidas o declaradas.
+
+**C-6 · La imagen de producción no podía migrar ni respaldar.** Ni `scripts/`, ni `drizzle/`, ni
+`pg_dump`, ni un `package.json` con guiones, y `drizzle-kit` es dependencia de desarrollo. Los tres
+comandos documentados —el de despliegue y las dos tareas nocturnas— habrían fallado en el servidor.
+Arreglado con un migrador de ejecución y las capas que faltaban (D-154), **verificado montando el
+layout de la imagen y corriendo el migrador contra una base vacía**: 17 migraciones, 21 tablas, 11
+con RLS forzada.
+
+**C-7 · La mitigación de R-37 estaba escrita y no existía.** «La credencial que copia no puede
+borrar» — R2 no ofrece ese token: *Object Read & Write* incluye `DeleteObject`. Y el doble de
+`test:respaldos` estaba construido a imagen de la creencia, así que rechazaba el borrado porque
+nosotros lo programamos para rechazarlo: veintisiete comprobaciones en verde sobre una mitigación
+inexistente. Corregido el texto en código y guía, y añadido un **centinela** que detecta el borrado
+del histórico (D-155).
+
+**C-8 · `check:archivos` eximía `public/`**, que es la única carpeta donde dejar un entregable lo
+publica dos veces: en el repositorio público y en el dominio, sin autenticación. La exención se
+escribió para las fuentes y el favicon, que no son documentos. Quitada, con su fixture negativo.
+
+**Importante · el recuento de frenos mentía.** Anunciaba 31 y ejecutaba 35: los cuatro que necesitan
+un servidor no estaban en `CASOS`. Ahora se cuentan solos. Con los dos nuevos frenos de esta
+revisión, **37**.
+
+**Importante · dependencia de producción sin usar** (`@better-auth/api-key`): retirada. Las claves de
+API son tabla propia, no de la librería.
+
+**Importante · `check:literacy` solo miraba el README**, y la documentación donde de verdad se
+escriben líneas de entorno es `docs/deployment.md`. Extendido — distinguiendo configuración legítima
+de secreto copiable — y arregladas las cinco líneas de la guía que llevaban una contraseña de muestra
+pegable. Un valor de ejemplo en un manual **se pega tal cual**.
+
+**Importante · la tabla `download` de `data_model` §5.10 no está construida**, y no había apunte.
+Ahora lo hay (D-156), con la consecuencia escrita: renombrar un archivo de `content/downloads/` rompe
+la trazabilidad de las capturas anteriores.
+
+### El estado después de la revisión
+
+| Qué | Antes | Después |
+|---|---|---|
+| `test:db` | 774 comprobaciones | **826** |
+| `test:visor` | 25, ninguna contra la base | **45**, nueve contra PostgreSQL real |
+| `test:api` | 124 | **130** |
+| `test:respaldos` | 27 | **32** |
+| `check:brakes` | 31 anunciados, 35 reales, el job sin base | **37 contados solos**, en el job que tiene base |
+| Chequeos del playbook | pasaban sobre cero unidades | corren en CI, sobre las 25 |
+
+### Lo que queda abierto, y no es poco
+
+Los revisores dejaron hallazgos que **no** se han cerrado, y quedan aquí por nombre para que no se
+pierdan: `check:fronteras` no verifica el criterio que cita; la cláusula «revisar que se ve bien» de
+`check:anexo-d` es inerte; `check:runtime` y `check:lighthouse` no tienen prueba negativa; y hay
+números desfasados en `project_memory.md` y `handoff.md`. Ninguno es un defecto del producto: son
+frenos que prometen más de lo que comprueban, que es el mismo tipo de problema que esta revisión
+encontró en los tres del playbook. Merecen una unidad propia, no un arreglo al vuelo.

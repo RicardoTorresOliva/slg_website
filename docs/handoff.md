@@ -59,10 +59,15 @@ Lighthouse móvil medido — **100 de accesibilidad** en portada, servicio y art
 a que alguien escriba una función. Lo que falta es: dos compuertas de aprobación de Ricardo, y acceso
 a paneles externos.
 
-**Verificación en verde el 2026-09-12:** `check:ci` completo · `check:brakes` con **trece** frenos,
-cada uno visto en rojo por su motivo · `test:db` con **264** comprobaciones contra PostgreSQL, SMTP y
+**Verificación en verde el 2026-09-13** (tras la revisión final): `check:brakes` con **37** frenos,
+cada uno visto en rojo por su motivo · `test:db` con **826** comprobaciones contra PostgreSQL, SMTP y
 servidores HTTP reales · `test:gesto` con **10** comprobaciones cuadro a cuadro sobre un Chromium
 real.
+
+> Los números de esta página **se desfasaron** entre DU-12 y DU-25 —decían trece frenos cuando eran
+> treinta y cinco, y 264 comprobaciones cuando eran 774— y lo encontró la revisión final. Se
+> actualizan aquí y en la tabla del final; si vuelven a no cuadrar, **manda lo que imprima el
+> comando**, que es quien lo sabe.
 
 ---
 
@@ -207,9 +212,9 @@ actualiza `docs/project_memory.md`.
 |---|---|
 | Base de datos efímera para las pruebas | `bash scripts/db/local-pg.sh up` |
 | Pipeline entero | `npm run check:ci` |
-| Que los **veintidós** frenos siguen frenando | `npm run check:brakes` |
+| Que los **37** frenos siguen frenando (el número lo imprime el script) | `npm run check:brakes` |
 | El visor contra un entregable hostil | `npm run test:visor` |
-| Las **519** comprobaciones contra base, correo, archivos, CRM, webhooks y HQ | `npm run test:db` |
+| Las **826** comprobaciones contra base, correo, archivos, CRM, webhooks, HQ, portal y API | `npm run test:db` |
 | Cero terceros en la capa pública, medido con un navegador | `npm run check:terceros` |
 | Las cuatro cláusulas del sheet, cuadro a cuadro | `npm run test:gesto` |
 

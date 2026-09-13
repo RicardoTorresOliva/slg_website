@@ -45,6 +45,7 @@ import {
 import { withScope, withSystemScope } from "../db/scope.ts";
 
 import { decodificarCursor, despuesDelCursor, ordenDeColeccion, paginar, type Pagina } from "./cursor.ts";
+import { ErrorDeApi } from "./errores.ts";
 
 /**
  * El orden de las cuatro colecciones es `created_at DESC, id DESC`, y el cursor
@@ -70,18 +71,35 @@ export type FiltrosDeCapturas = {
 };
 
 export async function capturas(
+  ctx: AuthContext,
   filtros: FiltrosDeCapturas,
   documentos: ReadonlyMap<string, { docCode: string; titulo: string; estado: string }>,
 ): Promise<Envoltorio<unknown>> {
+  /**
+   * **SOLO UNA CLAVE DE SLG, Y ANTES ESTO NO SE COMPROBABA EN NINGUNA PARTE.**
+   *
+   * Lo encontró la revisión independiente, y era una fuga de datos personales:
+   * `lead_capture` **no tiene `organization_id`** —una captura es de un visitante
+   * anónimo, no de una empresa cliente— así que la política de fila no la acota y
+   * esta consulta va por `withSystemScope`. El comentario que había aquí decía
+   * «solo SLG y una clave con ese alcance ven capturas»… y el «solo SLG» no
+   * estaba implementado en ninguna capa. Una clave acotada a una empresa con
+   * `captures:read` leía el correo, el nombre, la empresa y el cargo de **todos
+   * los visitantes del sitio**.
+   *
+   * Ahora son dos capas: esta, y la validación de `lib/hq/claves.ts`, que impide
+   * crear la combinación. La de aquí manda: una clave creada antes del arreglo
+   * sigue existiendo y tiene que rebotar.
+   */
+  if (ctx.organizationId !== null) {
+    throw new ErrorDeApi(
+      403,
+      "clave acotada a una empresa pidiendo capturas: el embudo público no pertenece a ninguna",
+    );
+  }
+
   const posicion = filtros.cursor ? decodificarCursor("captures", filtros.cursor) : null;
 
-  /**
-   * `lead_capture` **no tiene `organization_id`**: una captura es de un visitante
-   * anónimo, no de una empresa cliente. Por eso va por `withSystemScope` con su
-   * motivo, como el resto del sistema que la toca — y por eso el alcance
-   * `captures:read` es lo único que la protege. Es coherente con B.3: solo SLG
-   * y una clave con ese alcance ven capturas.
-   */
   const filas = await withSystemScope(
     "DU-22 · `GET /api/v1/captures` — las capturas no pertenecen a ninguna empresa " +
       "cliente: son evidencia del embudo público, y el alcance de la clave es quien " +
@@ -361,6 +379,24 @@ export async function entregablesDeProyecto(
           filtros.tipo ? eq(deliverable.type, filtros.tipo) : undefined,
           filtros.publicado === true ? sql`${deliverable.publishedAt} is not null` : undefined,
           filtros.publicado === false ? sql`${deliverable.publishedAt} is null` : undefined,
+          /**
+           * **`only_latest` se resuelve EN LA CONSULTA, y antes no.** Se
+           * deduplicaba en memoria sobre la ventana ya traída (`limit + 1`), así
+           * que `has_more` se calculaba sobre la lista **ya reducida**: un
+           * proyecto con seis versiones de una familia y cuatro familias más
+           * devolvía **un** elemento con `has_more: false`, y un agente que
+           * pagina bien concluía que el proyecto tenía un entregable.
+           *
+           * Es la misma clase de fallo que D-141 —una página que miente sobre lo
+           * que falta— en el mismo archivo, y lo encontró la revisión
+           * independiente. La subconsulta correlacionada se apoya en
+           * `uq_deliverable_family_version`, que ya existe.
+           */
+          filtros.soloUltima
+            ? sql`${deliverable.version} = (
+                select max(d2.version) from deliverable d2 where d2.family_id = ${deliverable.familyId}
+              )`
+            : undefined,
           posicion ? despuesDelCursor(deliverable.createdAt, deliverable.id, posicion) : undefined,
         ),
       )
@@ -368,19 +404,7 @@ export async function entregablesDeProyecto(
       .limit(filtros.limit + 1),
   );
 
-  /**
-   * `only_latest` se resuelve **después** de traer y antes de paginar, y es
-   * honesto decir por qué: con versiones, «la última de cada familia» no se
-   * expresa en la misma consulta paginada por cursor sin una subconsulta que
-   * hoy nadie necesita. El defecto es `false` (§3.6), así que el camino normal
-   * no paga nada por esto.
-   */
-  const vistas = new Set<string>();
-  const utiles = filtros.soloUltima
-    ? filas.filter((f) => (vistas.has(f.familyId) ? false : (vistas.add(f.familyId), true)))
-    : filas;
-
-  const { data, page } = paginar("deliverables", utiles, filtros.limit, (f) => ({
+  const { data, page } = paginar("deliverables", filas, filtros.limit, (f) => ({
     createdAt: f.createdAt,
     id: f.id,
   }));

@@ -63,6 +63,39 @@ function diasDeRetencion(generacion: Generacion, retencion: Record<Generacion, n
 }
 
 /**
+ * Las claves que **deberían seguir ahí**: las de la generación diaria que caen
+ * entre la primera copia y ayer, ambas dentro de la retención.
+ *
+ * **PARA QUÉ.** R2 no da un token que escriba y no borre —el más acotado,
+ * *Object Read & Write*, incluye `DeleteObject`—, así que la separación de
+ * credenciales acota quién borra a propósito pero **no impide** que quien se
+ * haga con la credencial del servidor vacíe el histórico. La prevención no
+ * existe; lo que puede existir es **darse cuenta**. Esto calcula el conjunto que
+ * el centinela comprueba, sin listar el bucket: las claves se calculan, igual
+ * que las de la purga.
+ *
+ * `primeraCopia` evita la alarma falsa obvia: antes de esa fecha no hay nada que
+ * echar en falta porque nunca hubo nada. **Ayer y no hoy**: la copia de hoy
+ * puede estar subiéndose mientras esto corre.
+ */
+export function clavesVigentes(
+  hoy: Date,
+  primeraCopia: Date,
+  retencion: Record<Generacion, number> = RETENCION,
+): string[] {
+  const claves: string[] = [];
+  for (let dias = 1; dias <= retencion.diaria; dias++) {
+    const dia = new Date(hoy.getTime() - dias * 86_400_000);
+    if (dia < primeraCopia) continue;
+    // Solo la pieza de base de datos: los volúmenes solo existen si
+    // `BACKUP_VOLUME_PATHS` estaba declarado ese día, y echarlos en falta cuando
+    // nunca se subieron sería la alarma falsa que hace que se ignoren todas.
+    claves.push(claveDe("diaria", fechaDe(dia), "base-de-datos"));
+  }
+  return claves;
+}
+
+/**
  * Las claves que **caducaron** en una generación, calculadas sin listar nada.
  *
  * Se mira una ventana generosa hacia atrás —el doble de la retención— y se

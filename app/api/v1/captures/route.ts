@@ -38,7 +38,7 @@ function documentos() {
 const RUTA = buscarRuta("GET", "/api/v1/captures");
 
 export async function GET(request: Request) {
-  return manejar(request, { ruta: RUTA, apunte: "capture.list", entidad: "lead_capture" }, async () => {
+  return manejar(request, { ruta: RUTA, apunte: "capture.list", entidad: "lead_capture" }, async (ctx) => {
     const q = validarQuery(new URL(request.url), RUTA);
     const since = (q.since as Date | undefined) ?? null;
     const until = (q.until as Date | undefined) ?? null;
@@ -47,6 +47,7 @@ export async function GET(request: Request) {
     if (since && until && since > until) rechazar("since", "after_until");
 
     const cuerpo = await capturas(
+      ctx,
       {
         since,
         until,

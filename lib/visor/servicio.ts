@@ -6,9 +6,8 @@
  * visibilidad, que es la única línea que separa un entregable interno de uno de
  * cliente en un origen **sin sesión**, quedara enterrada entre `Response`s.
  */
-import { and, eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
-import { deliverable } from "../db/schema.ts";
 import { withSystemScope } from "../db/scope.ts";
 import { adaptadorS3 } from "../files/index.ts";
 
@@ -19,39 +18,35 @@ export type DocumentoDelVisor = {
 };
 
 /**
- * Busca un entregable **HTML y de visibilidad `client`**, y nada más.
+ * Busca un entregable **HTML, de visibilidad `client` y publicado**.
  *
- * LA COMPROBACIÓN DE VISIBILIDAD ES EXPLÍCITA Y ESTÁ AQUÍ. En el resto del
- * sistema, lo que impide que un cliente vea un `internal` es la política de
- * fila más `entregablesDelCliente()` (D-118). En el visor **no hay sesión** —el
- * navegador no manda las cookies del dominio de la aplicación a este
- * subdominio, que es justo el mecanismo de aislamiento—, así que no hay
- * política que acote: **esta condición es lo único que separa los dos casos**.
+ * **LA AUTORIZACIÓN NO ESTÁ AQUÍ: ESTÁ EN LA BASE** (migración 0016), y ese
+ * cambio lo forzó un defecto real. La primera versión ponía las tres
+ * condiciones en el `WHERE` de una consulta hecha con `withSystemScope` —y
+ * `withSystemScope` **no puede leer `deliverable`**: fija `app.actor_role =
+ * 'system'`, que no está en la lista de la política de fila y no debe estarlo—.
+ * La consulta devolvía cero filas **siempre**, así que el visor respondía 404 a
+ * todo. No era un problema de configuración: la unidad no podía funcionar.
  *
- * Por eso va en el `WHERE` y no en un filtro posterior: un filtro después de la
- * consulta se puede olvidar al refactorizar; una condición en el `WHERE` hace
- * que olvidarla devuelva otra cosa, no de más.
+ * `app_entregable_para_el_visor` es `SECURITY DEFINER` y **no recibe filtros**:
+ * cliente, HTML y publicado están dentro. Desde aquí no se puede ampliar lo que
+ * devuelve, que es exactamente la propiedad que hacía falta en un origen **sin
+ * sesión** — donde no hay contexto que fijar y, por tanto, no hay política que
+ * acote.
  */
 export async function documentoParaElVisor(id: string): Promise<DocumentoDelVisor | null> {
   const fila = await withSystemScope(
-    "DU-19 · el visor sirve un documento en un origen sin sesión; la autorización se resolvió en el portal.",
+    "DU-19 · el visor sirve un documento en un origen sin sesión; la autorización vive dentro " +
+      "de `app_entregable_para_el_visor`, no en esta consulta.",
     async (db) => {
-      const filas = await db
-        .select({ id: deliverable.id, titulo: deliverable.title, clave: deliverable.fileKey })
-        .from(deliverable)
-        .where(
-          and(
-            eq(deliverable.id, id),
-            eq(deliverable.visibility, "client"),
-            eq(deliverable.type, "html"),
-          ),
-        )
-        .limit(1);
+      const filas = (await db.execute(
+        sql`select id, title, file_key from app_entregable_para_el_visor(${id})`,
+      )) as unknown as { id: string; title: string; file_key: string | null }[];
       return filas[0] ?? null;
     },
   );
-  if (!fila?.clave) return null;
-  return { id: fila.id, titulo: fila.titulo, claveDeArchivo: fila.clave };
+  if (!fila?.file_key) return null;
+  return { id: fila.id, titulo: fila.title, claveDeArchivo: fila.file_key };
 }
 
 /**

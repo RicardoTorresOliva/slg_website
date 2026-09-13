@@ -221,6 +221,16 @@ for (const abs of archivos()) {
        * tarda un minuto y prueba menos.
        */
       rel.startsWith("scripts/portal/") ||
+      /**
+       * `scripts/api/` por lo mismo, y por un caso concreto: la regresión del
+       * hallazgo C-1 tiene que comprobar **las dos capas** del arreglo. La
+       * primera —una clave de empresa con `captures:read` ya no lee capturas—
+       * se comprueba por HTTP. La segunda —esa combinación ya no se puede ni
+       * crear— vive en `crearClave`, que exige un contexto de administrador de
+       * SLG, y no hay ruta de API que cree claves: se crean desde HQ. Sin esta
+       * excepción, la mitad preventiva del arreglo se queda sin prueba.
+       */
+      rel.startsWith("scripts/api/") ||
       rel.startsWith("scripts/mail/") ||
       rel.startsWith("scripts/invitations/") ||
       rel.startsWith("scripts/files/")

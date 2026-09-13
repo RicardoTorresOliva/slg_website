@@ -123,6 +123,25 @@ function origenDeAnalitica(): string {
   }
 }
 
+/**
+ * El origen del visor, leído **aquí** y no importado de `lib/visor/origen.ts`.
+ *
+ * No es duplicación por gusto: el middleware corre en el runtime del borde, y
+ * ese módulo usa `node:crypto` para firmar los vales del visor. Importarlo
+ * arrastraría `crypto` al borde y rompería el despliegue. Misma disciplina que
+ * `origenDeAnalitica()`: una URL mal escrita no tumba el middleware — sin
+ * origen, sin permiso.
+ */
+function origenDelVisor(): string {
+  const url = process.env.DELIVERABLE_VIEWER_ORIGIN;
+  if (!url) return "";
+  try {
+    return new URL(url).origin;
+  } catch {
+    return "";
+  }
+}
+
 const ANALITICA = origenDeAnalitica();
 /** El sufijo que se añade a una directiva: `" https://…"` o nada. */
 const CON_ANALITICA = ANALITICA ? ` ${ANALITICA}` : "";
@@ -138,6 +157,18 @@ const BASE_CSP = [
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",
+  /**
+   * **`frame-src` existe por un fallo que encontró la revisión independiente**
+   * (hallazgo C-2). Sin esta directiva, `frame-src` recae en `default-src
+   * 'self'` y el navegador **bloquea el `iframe` del visor**, que apunta a otro
+   * origen por diseño (D-45). El entregable HTML no se vería, y el fallo sería
+   * silencioso: un marco en blanco y un error solo en la consola.
+   *
+   * Se nombra **el origen del visor y nada más**. Si no está configurado, la
+   * directiva queda en `'none'`: sin visor no hay marco que permitir, y una
+   * lista vacía es más estrecha que `'self'`.
+   */
+  `frame-src ${origenDelVisor() || "'none'"}`,
   "upgrade-insecure-requests",
 ];
 

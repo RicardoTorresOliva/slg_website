@@ -95,17 +95,23 @@ for (const abs of todos.filter((f) => /\.(ts|tsx|js|mjs)$/.test(f))) {
 /* ── Criterio 5 · nada gated en control de versiones ─────────────────────── */
 
 /**
- * Extensiones de contenido entregable. `public/` queda fuera: ahí viven las
- * fuentes y el favicon, que son del sitio y no de un cliente.
+ * Extensiones de contenido entregable.
+ *
+ * **`public/` NO ESTÁ EXENTA, y antes lo estaba.** La exención se escribió para
+ * las fuentes y el favicon —que son del sitio, no de un cliente— pero ninguno
+ * de esos archivos es `.pdf`, `.docx`, `.pptx` ni `.xlsx`: no hacía falta. Lo
+ * que sí hacía era abrir el peor sitio posible, porque `public/` **se sirve al
+ * mundo sin autenticación ninguna**: un entregable dejado ahí no solo estaría
+ * en un repositorio público, estaría además descargable desde el dominio. La
+ * carpeta que más vigilancia necesitaba era justo la que no la tenía. Lo
+ * encontró la revisión final.
  */
 const EXTENSIONES_GATED = [".pdf", ".docx", ".pptx", ".xlsx"];
-const CARPETAS_PERMITIDAS = ["public/"];
 
 for (const abs of todos) {
   const rel = path.relative(REPO_ROOT, abs).split(path.sep).join("/");
   const ext = path.extname(rel).toLowerCase();
   if (!EXTENSIONES_GATED.includes(ext)) continue;
-  if (CARPETAS_PERMITIDAS.some((c) => rel.startsWith(c))) continue;
 
   fallos.push({
     detalle:

@@ -977,6 +977,13 @@ despliegue; si contenido y tabla discrepan, manda el contenido.
 Sin esta tabla, la evidencia apuntaría a un `slug` en texto libre y renombrar un archivo rompería la
 trazabilidad de todas las capturas anteriores.
 
+> ⚠️ **ESTA TABLA NO ESTÁ CONSTRUIDA** (D-156, 2026-09-13). `lead_capture.download_slug` y
+> `download_event.download_slug` siguen siendo texto libre, así que la consecuencia descrita en el
+> párrafo anterior **está viva**: renombrar un archivo de `content/downloads/` rompe la trazabilidad
+> de las capturas anteriores. La desviación llevaba abierta sin estar escrita desde que se construyó
+> `lead_capture`; la encontró la revisión final. Se acepta a sabiendas y queda anotada aquí para que
+> nadie lea esta sección creyendo que describe lo que existe.
+
 | Columna | Tipo SQL | Nulo | Defecto | Propósito |
 |---|---|---|---|---|
 | `id` | `text` | NO | — | `PK` |

@@ -156,7 +156,17 @@ jobs:
       - name: Matriz B.3
         run: npm run test:permisos
 
+      # LAS DOS VARIABLES SON DE MENTIRA Y TIENEN QUE ESTAR. `lib/db/scope.ts`
+      # exige `DATABASE_URL` **al evaluarse el módulo**, y la recolección de
+      # datos de página de Next evalúa las rutas de API: sin ella la compilación
+      # muere en `/api/acceso/contrasena` y este job no puede pasar. Nada
+      # consulta la base durante la compilación —las páginas prerenderizadas son
+      # las públicas—, así que una cadena que no conecta sirve y además garantiza
+      # que no se está hablando con ninguna base de verdad desde el `gates`.
       - name: Compilación autocontenida
+        env:
+          DATABASE_URL: postgresql://nadie@127.0.0.1:1/no-se-usa
+          BETTER_AUTH_SECRET: solo-para-compilar-en-ci
         run: npm run build:standalone
 
       - name: Presupuesto de JS inicial (gate D1)
@@ -211,12 +221,11 @@ jobs:
       - name: Lighthouse móvil sobre las tres páginas (gate D6)
         run: npm run check:lighthouse
 
-      # Criterio 5: cada freno se ve en ROJO por el motivo esperado.
-      # El recuento NO va en el nombre del paso: estuvo puesto —«los dieciocho
-      # frenos»— y llevaba desfasado desde que se añadió el siguiente. El número
-      # lo imprime el propio script, que es quien lo sabe.
-      - name: Prueba negativa de todos los frenos
-        run: npm run check:brakes
+      # `check:brakes` NO está en este job: uno de sus casos —el aislamiento
+      # entre empresas tomando el `organization_id` del parámetro— necesita
+      # PostgreSQL con dos empresas sembradas, y aquí no hay base. Vive en el
+      # job `datos`, que sí la tiene. Estuvo aquí y el pipeline no podía pasar;
+      # lo encontró la revisión final, no una ejecución.
 
   # ──────────────────────────────────────────────────────────────────────────
   # Segunda capa de análisis de secretos. El repositorio es PÚBLICO.
@@ -292,3 +301,19 @@ jobs:
 
       - name: Aislamiento, autorización, correo, invitaciones, acceso, descargas y CRM
         run: npm run test:db
+
+      # El gesto se mide cuadro a cuadro en un navegador de verdad, y uno de los
+      # frenos negativos lo ejecuta: sin esto, `check:brakes` no puede correr.
+      - name: Navegador para la prueba negativa del gesto
+        run: npx playwright install --with-deps chromium
+
+      # Criterio 5 de FU-05 y R-26: cada freno se ve en ROJO por el motivo
+      # esperado. Está en ESTE job y no en `gates` porque uno de los casos —el
+      # aislamiento entre empresas— exige PostgreSQL sembrado, que aquí ya está
+      # levantado, migrado y con datos.
+      #
+      # El recuento NO va en el nombre del paso: estuvo puesto —«los dieciocho
+      # frenos»— y llevaba desfasado desde que se añadió el siguiente. El número
+      # lo imprime el propio script, que es quien lo sabe.
+      - name: Prueba negativa de todos los frenos
+        run: npm run check:brakes

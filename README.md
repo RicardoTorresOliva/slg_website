@@ -332,6 +332,7 @@ Los valores se ponen en **Easypanel → proyecto `slg_website` → el servicio �
 | `S3_ACCESS_KEY_ID` · `S3_SECRET_ACCESS_KEY` | Son `MINIO_ROOT_USER` y `MINIO_ROOT_PASSWORD` del servicio `minio` | Tú, en Easypanel → `minio` → `Environment` |
 | `SIGNED_URL_TTL_DOWNLOAD_MINUTES` · `SIGNED_URL_TTL_DELIVERABLE_MINUTES` · `SIGNED_URL_TTL_UPLOAD_MINUTES` | Cuánto dura un enlace de archivo. Tienen defecto: solo se ponen para cambiarlo | Tú |
 | `DELIVERABLE_VIEWER_ORIGIN` | El subdominio del visor de entregables | Tú, al crear ese dominio en Easypanel |
+| `DELIVERABLE_VIEWER_SECRET` | Una cadena larga al azar que generas una vez. Es lo que firma el permiso temporal para ver un entregable. **Sin ella el visor no enseña nada** | Tú |
 | `WEBHOOK_SIGNING_SECRET` | Una cadena larga al azar que generas una vez | Tú. Cambiarla obliga a reconfigurar a quien escuche |
 | `WEBHOOK_SUBSCRIBERS` · `N8N_WEBHOOK_URL` · `WEBHOOK_ANNOUNCE_POSTS` | Quién escucha los eventos salientes. **Opcional**: sin esto el sitio funciona igual | Tú |
 | `WEBHOOK_QUEUE_INTERVAL_MS` · `WEBHOOK_QUEUE_BATCH` · `WEBHOOK_TIMEOUT_MS` | Ritmo de la cola de webhooks. Tienen defecto | Tú |
@@ -354,6 +355,7 @@ Los valores se ponen en **Easypanel → proyecto `slg_website` → el servicio �
 | `BACKUP_VOLUME_PATHS` | La ruta del volumen de MinIO dentro del servidor | Tú |
 | `BACKUP_RETENTION_DAILY` · `BACKUP_RETENTION_WEEKLY` · `BACKUP_RETENTION_MONTHLY` | Cuántas copias se guardan. Tienen defecto y **nunca bajan de él** | Tú |
 | `BACKUP_ALERT_EMAIL` | A quién se avisa si una copia falla | Tú |
+| `BACKUP_FIRST_DATE` | La fecha de tu primera copia (`AAAA-MM-DD`). Va **en la tarea de purga**. Es lo que permite detectar que alguien ha borrado el histórico | Tú, el día que hagas la primera copia |
 | `BACKUP_DATE_OVERRIDE` | **Solo para el simulacro de restauración.** Producción no la define | — |
 | `PG_DUMP_BIN` · `PG_RESTORE_BIN` | Solo si esos programas no están donde el sistema los busca | — |
 

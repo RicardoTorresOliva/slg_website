@@ -81,6 +81,16 @@ function validar(datos: DatosDeClave): string | null {
   // parece acotada y no lo está.
   if (datos.alcances.length === 0) return "alcances";
   if (datos.alcances.some((a) => !(API_SCOPES as readonly string[]).includes(a))) return "alcances";
+  /**
+   * **Una clave acotada a una empresa NO puede leer capturas.** Las capturas son
+   * el embudo público —visitantes anónimos, no clientes— y no pertenecen a
+   * ninguna empresa: dárselas a una clave de cliente sería entregarle los datos
+   * personales de todos los visitantes del sitio. Lo encontró la revisión
+   * independiente: el formulario ofrecía las dos cosas juntas y nada lo impedía.
+   * La segunda capa está en `lib/api/lecturas.ts`, que rebota igual a una clave
+   * creada antes de este arreglo.
+   */
+  if (datos.organizationId && datos.alcances.includes("captures:read")) return "alcances";
   if (!Number.isInteger(datos.limite) || datos.limite < 1 || datos.limite > 10_000) return "limite";
   if (!Number.isInteger(datos.ventanaSegundos) || datos.ventanaSegundos < 1) return "ventana";
   if (!datos.caducaEn) return "caduca";

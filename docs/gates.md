@@ -208,7 +208,7 @@ crea claves; clave con alcance insuficiente → **403**; sin clave → **401**; 
 
 **Comprueba.** `npm run test:aislamiento` (21 comprobaciones contra la política de fila real) ·
 `npm run test:permisos` (la matriz B.3 entera: 17 acciones × 4 roles, más los seis alcances) ·
-`npm run test:api` (124 comprobaciones por HTTP: los cinco casos de 401, el 403 que no dice qué
+`npm run test:api` (130 comprobaciones por HTTP: los cinco casos de 401, el 403 que no dice qué
 alcance faltaba, el 429 con su cabecera, y las **doce celdas** de alcance × ruta) ·
 `npm run test:shell` · `npm run test:materiales` · `npm run test:miembros`.
 
@@ -227,7 +227,7 @@ listado público de buckets.
 
 **Comprueba.** `npm run test:archivos` (40 comprobaciones contra un servidor S3 real, con los cinco
 límites de `data_model` §2.6) · `npm run check:archivos` (ninguna orden de listado en el código, y
-cero entregables versionados) · `npm run test:visor` (25 comprobaciones contra un entregable
+cero entregables versionados) · `npm run test:visor` (45 comprobaciones: el entregable
 **hostil** que hace las siete cosas que el visor tiene que impedir) · `npm run test:descargas`.
 
 **Prueba negativa.** `check:brakes` → «listado de un bucket en el código» y «entregable versionado en
@@ -243,7 +243,7 @@ sigue abierto: hoy está verificada la capa 1 **declarada** y las capas 2 y 3 en
 **Exige.** Despliegue automático desde `main`; staging desde `develop`; **backup + restauración
 probada**; variables de entorno documentadas sin valores; monitor de caída.
 
-**Comprueba.** `npm run test:respaldos` (27 comprobaciones: copia, cifrado, subida, purga y
+**Comprueba.** `npm run test:respaldos` (32 comprobaciones: copia, cifrado, subida, purga, centinela y
 **restauración desde una copia antigua** en otra base de datos) · `npm run check:env` (77 variables
 declaradas, todas documentadas y **sin un solo valor**) · `npm run check:literacy` (todas aparecen en
 el manual) · `npm run check:runtime` (cabeceras y compuerta de staging sobre el servidor real).

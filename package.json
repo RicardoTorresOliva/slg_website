@@ -42,7 +42,7 @@
     "check:dns": "node scripts/ci/check-dns.ts",
     "check:dns:baseline": "node scripts/ci/check-dns.ts --baseline",
     "check:ci": "npm run lint && npm run check:content && npm run check:secrets && npm run check:env && npm run check:migrations && npm run check:fronteras && npm run check:alcance && npm run check:literacy && npm run check:anexo-d && npm run check:playbook && npm run check:archivos && npm run check:contraste && npm run check:motion && npm run check:cadenas && npm run check:shell && npm run check:hq && npm run test:permisos && npm run test:aislamiento && npm run build:standalone && npm run check:js-budget && npm run check:runtime && npm run check:produccion && npm run check:armazon && npm run check:blog && npm run check:paginas && npm run check:seo && npm run test:gesto && npm run check:terceros && npm run check:lighthouse",
-    "db:migrate": "node scripts/backup/respaldar.ts --antes-de-migrar && drizzle-kit migrate",
+    "db:migrate": "node scripts/backup/respaldar.ts --antes-de-migrar && node scripts/db/migrar.ts",
     "backup": "node scripts/backup/respaldar.ts",
     "backup:restore": "node scripts/backup/restaurar.ts",
     "backup:purge": "node scripts/backup/purgar.ts",
@@ -80,7 +80,6 @@
   "dependencies": {
     "@aws-sdk/client-s3": "3.1131.0",
     "@aws-sdk/s3-request-presigner": "3.1131.0",
-    "@better-auth/api-key": "1.7.4",
     "better-auth": "1.7.4",
     "drizzle-orm": "0.45.2",
     "gray-matter": "4.0.3",

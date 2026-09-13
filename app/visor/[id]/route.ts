@@ -1,6 +1,6 @@
 import { sesionActual } from "@/lib/auth";
 import { MAXIMO_BYTES, sanearHtml } from "@/lib/visor/documento";
-import { origenDelVisor, politicaDelVisor, visorEstaSeparado } from "@/lib/visor/origen";
+import { origenDelVisor, politicaDelVisor, valeValido, visorEstaSeparado } from "@/lib/visor/origen";
 import { documentoParaElVisor, urlFirmadaDelObjeto } from "@/lib/visor/servicio";
 
 /**
@@ -54,6 +54,20 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   }
 
   const { id } = await params;
+
+  /**
+   * **EL VALE, ANTES DE TOCAR LA BASE** (hallazgo C-3 de la revisión
+   * independiente). Aquí no hay sesión —ese es el mecanismo de aislamiento— así
+   * que la pertenencia a la empresa **no se puede comprobar en este origen**: la
+   * comprobó la pantalla del portal, que sí tenía sesión, y firmó un permiso con
+   * caducidad para este entregable.
+   *
+   * Sin vale válido, 404 **con el mismo cuerpo que un entregable inexistente**:
+   * un mensaje distinto diría que ese identificador existe.
+   */
+  const consulta = new URL(request.url).searchParams;
+  if (!valeValido(id, consulta.get("c"), consulta.get("f"))) return noEncontrado();
+
   const doc = await documentoParaElVisor(id);
   if (!doc) return noEncontrado();
 

@@ -70,6 +70,20 @@ const CASOS: Caso[] = [
     env: { ARCHIVOS_ROOT: path.join(HERE, "negative/archivos") },
   },
   {
+    /**
+     * **EL MISMO FRENO, PERO DENTRO DE `public/`.** Esa carpeta estaba exenta
+     * —la exención se escribió para las fuentes y el favicon, que no son
+     * documentos— y era el único sitio del repositorio donde dejar un
+     * entregable lo publica **dos veces**: en el repositorio, que es público, y
+     * en el dominio, servido sin autenticación ninguna. Sin este caso, quitar la
+     * exención sería una línea sin prueba (R-26).
+     */
+    freno: "entregable versionado DENTRO de `public/`, que además se sirve sin autenticación",
+    script: "check-archivos.ts",
+    espera: "public/entregable-en-public.pdf",
+    env: { ARCHIVOS_ROOT: path.join(HERE, "negative/archivos") },
+  },
+  {
     freno: "anima algo que provoca reflow",
     script: "check-motion.ts",
     espera: "solo se animan transform y opacity",
@@ -114,6 +128,20 @@ const CASOS: Caso[] = [
     freno: "un documento de diseño que el índice no enlaza",
     script: "check-literacy.ts",
     espera: "los documentos de diseño están todos en",
+    env: { LITERACY_ROOT: path.join(HERE, "negative/literacy") },
+  },
+  {
+    /**
+     * El barrido de valores miraba **solo el README**, y la documentación donde
+     * de verdad se escriben líneas de entorno es `docs/deployment.md`: es la que
+     * va paso a paso por Easypanel. El fixture trae las dos formas a propósito
+     * —un secreto entre `<ángulos>`, que al pegarse falla en voz alta, y uno
+     * copiable, que al pegarse **funciona**— para que el freno demuestre que
+     * distingue entre las dos y no marca en rojo la configuración legítima.
+     */
+    freno: "un secreto con valor COPIABLE en la guía de despliegue",
+    script: "check-literacy.ts",
+    espera: "APP_DB_PASSWORD",
     env: { LITERACY_ROOT: path.join(HERE, "negative/literacy") },
   },
   {
@@ -235,6 +263,14 @@ const CASOS: Caso[] = [
 ];
 
 let fallos = 0;
+/**
+ * **LOS FRENOS QUE NO ESTÁN EN `CASOS`.** Los cuatro que necesitan un servidor
+ * —armazón, páginas, SEO y blog— se ejecutan en bloques propios más abajo, y el
+ * resumen los ignoraba: anunciaba 31 cuando se ejecutaban 35. El recuento se
+ * lleva aquí y cada bloque se suma a sí mismo, que es la única forma de que no
+ * vuelva a desfasarse cuando se añada el quinto. Lo encontró la revisión final.
+ */
+let frenosConServidor = 0;
 
 console.log("Frenos de FU-05 — cada uno debe FALLAR contra su fixture:\n");
 
@@ -286,6 +322,7 @@ for (const script of [
   }
 }
 
+frenosConServidor++;
 console.log("\nFreno del armazón público — contra un armazón roto a propósito:\n");
 {
   const fixture = spawn(process.execPath, [path.join(HERE, "negative/armazon/servidor.ts")], {
@@ -325,6 +362,7 @@ console.log("\nFreno del armazón público — contra un armazón roto a propós
   }
 }
 
+frenosConServidor++;
 console.log("\nFreno de las páginas — contra páginas con los bloques desordenados:\n");
 {
   const fixture = spawn(process.execPath, [path.join(HERE, "negative/paginas/servidor.ts")], {
@@ -365,6 +403,7 @@ console.log("\nFreno de las páginas — contra páginas con los bloques desorde
   }
 }
 
+frenosConServidor++;
 console.log("\nFreno del SEO — contra canonical copiado y hreflang sin vuelta:\n");
 {
   const fixture = spawn(process.execPath, [path.join(HERE, "negative/seo/servidor.ts")], {
@@ -404,6 +443,7 @@ console.log("\nFreno del SEO — contra canonical copiado y hreflang sin vuelta:
   }
 }
 
+frenosConServidor++;
 console.log("\nFreno del blog — contra un blog que publica sus borradores:\n");
 {
   const fixture = spawn(process.execPath, [path.join(HERE, "negative/blog/servidor.ts")], {
@@ -476,8 +516,10 @@ if (fallos) {
  * único sitio donde alguien lo lee es peor que no tenerlo.
  */
 const GATES_DE_CONTENIDO = 5; // los de `verify-gates.ts`, que se ejecutan arriba.
+const TOTAL = CASOS.length + frenosConServidor + GATES_DE_CONTENIDO;
 console.log(
-  `\n✓ Los ${CASOS.length + GATES_DE_CONTENIDO} frenos ` +
-    `(${CASOS.length} aquí + ${GATES_DE_CONTENIDO} de contenido) ` +
+  `\n✓ Los ${TOTAL} frenos ` +
+    `(${CASOS.length} por script + ${frenosConServidor} contra un servidor + ` +
+    `${GATES_DE_CONTENIDO} de contenido) ` +
     `fallan cuando deben y pasan cuando deben.\n`,
 );

@@ -131,6 +131,21 @@ async function levantarAlmacen(): Promise<Almacen> {
       return;
     }
     req.resume();
+    /**
+     * `HEAD` — lo que usa el centinela. Sin esto el doble respondía 405 y
+     * `existeCopia` lo tomaba por un error de red, que es lo correcto (un 405 no
+     * es «no existe») pero dejaba la prueba sin poder distinguir. Un almacén S3
+     * de verdad responde 200 o 404 aquí.
+     */
+    if (req.method === "HEAD") {
+      const objeto = objetos.get(ruta);
+      if (!objeto) {
+        res.writeHead(404).end();
+        return;
+      }
+      res.writeHead(200, { "content-length": String(objeto.length) }).end();
+      return;
+    }
     if (req.method === "GET") {
       const objeto = objetos.get(ruta);
       if (process.env.DEPURAR_ALMACEN) console.log(`[doble] GET ${ruta} -> ${objeto ? objeto.length : "404"}`);
@@ -327,30 +342,83 @@ async function main() {
       JSON.stringify(almacen.intentosDeBorrado.slice(0, 2)),
     );
 
-    // Y la prueba negativa de la mitigación: con la credencial de copia, no.
-    const { S3Client, DeleteObjectCommand } = await import("@aws-sdk/client-s3");
-    const conCredencialDeCopia = new S3Client({
-      endpoint: entorno.BACKUP_S3_ENDPOINT,
-      region: "auto",
-      credentials: { accessKeyId: ACCESO_DE_COPIA, secretAccessKey: SECRETO_DE_COPIA },
-      forcePathStyle: true,
-    });
-    let rechazado = false;
-    try {
-      await conCredencialDeCopia.send(
-        new DeleteObjectCommand({ Bucket: BUCKET, Key: claveDe("mensual", "2026-08-01", "base-de-datos") }),
-      );
-    } catch {
-      rechazado = true;
-    }
+    /**
+     * **AQUÍ HABÍA UNA COMPROBACIÓN QUE NO PROBABA LO QUE DECÍA.** Decía «con la
+     * credencial del proceso de copia, BORRAR se rechaza (R-37)» y lo
+     * comprobaba contra **este doble**, que rechaza el borrado porque nosotros
+     * lo programamos para rechazarlo. **Cloudflare R2 no lo rechaza**: su
+     * permiso de objeto más acotado, *Object Read & Write*, incluye
+     * `DeleteObject`. El doble estaba construido a imagen de la creencia, no del
+     * producto, y por eso veintisiete comprobaciones en verde convivieron con
+     * una mitigación inexistente. Lo encontró la revisión final.
+     *
+     * Lo que sí se puede comprobar, y es lo que queda: que **el código nunca
+     * borra con la credencial de copia**. Eso es cierto, es nuestro, y es lo que
+     * evita el borrado accidental — que no es poco, pero tampoco es inmutabilidad.
+     */
     check(
-      "con la credencial del proceso de copia, BORRAR se rechaza (R-37)",
-      rechazado,
-      "es lo que sustituye al Object Lock que R2 no ofrece",
+      "NINGÚN borrado del producto usa la credencial de copia (lo nuestro, que sí controlamos)",
+      almacen.intentosDeBorrado.every((i) => i.credencial === ACCESO_DE_PURGA),
+      JSON.stringify(almacen.intentosDeBorrado.slice(0, 2)),
     );
     check(
-      "y el objeto sigue ahí después del intento",
-      almacen.objetos.has(claveDe("mensual", "2026-08-01", "base-de-datos")),
+      "y el doble deja constancia de que su rechazo es SUYO, no de R2",
+      almacen.intentosDeBorrado.every((i) => i.credencial !== ACCESO_DE_COPIA),
+      "R2 no ofrece un token que escriba y no borre: esa prevención no existe",
+    );
+
+    console.log("\nR-37 — si la prevención no existe, el CENTINELA tiene que detectarlo:\n");
+
+    /**
+     * El escenario real que R-37 teme: alguien con la credencial del servidor
+     * **borra el histórico**. Aquí se borra a mano, saltándose el producto —que
+     * es exactamente lo que pasaría— y se comprueba que la purga siguiente **se
+     * da cuenta y no sigue borrando**.
+     */
+    const AYER = new Date(Date.now() - 86_400_000);
+    const fechaAyer = AYER.toISOString().slice(0, 10);
+    const claveAyer = claveDe("diaria", fechaAyer, "base-de-datos");
+    almacen.objetos.set(claveAyer, Buffer.from("una copia que existió"));
+
+    const centinelaOk = await correr("purgar.ts", [], {
+      ...entorno,
+      BACKUP_FIRST_DATE: fechaAyer,
+      BACKUP_RETENTION_DAILY: "14",
+    });
+    check(
+      "con el histórico completo, el centinela deja pasar la purga",
+      centinelaOk.status === 0 && centinelaOk.stdout.includes("histórico diario está completo"),
+      centinelaOk.stdout.slice(-300) || centinelaOk.stderr.slice(-300),
+    );
+
+    almacen.objetos.delete(claveAyer);
+    const borradasAntes = almacen.intentosDeBorrado.length;
+    const centinelaRojo = await correr("purgar.ts", [], {
+      ...entorno,
+      BACKUP_FIRST_DATE: fechaAyer,
+      BACKUP_RETENTION_DAILY: "14",
+    });
+    check(
+      "BORRADA UNA COPIA QUE DEBERÍA ESTAR, la purga siguiente lo detecta y falla",
+      centinelaRojo.status !== 0,
+      centinelaRojo.stdout.slice(-300) || centinelaRojo.stderr.slice(-300),
+    );
+    check(
+      "y dice QUÉ falta, no solo que algo va mal",
+      centinelaRojo.stderr.includes(claveAyer),
+      centinelaRojo.stderr.slice(-300),
+    );
+    check(
+      "y NO purga nada mientras el histórico tiene huecos",
+      almacen.intentosDeBorrado.length === borradasAntes,
+      `${almacen.intentosDeBorrado.length} vs ${borradasAntes}`,
+    );
+
+    const sinFecha = await correr("purgar.ts", [], { ...entorno, BACKUP_RETENTION_DAILY: "14" });
+    check(
+      "sin BACKUP_FIRST_DATE el centinela lo DICE en vez de callarse",
+      sinFecha.stdout.includes("sin BACKUP_FIRST_DATE"),
+      sinFecha.stdout.slice(-200),
     );
 
     console.log("\nCriterio 8 — cero valores de credencial en el repositorio:\n");
@@ -378,7 +446,10 @@ async function main() {
     const paquete = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, "package.json"), "utf8"));
     check(
       "`db:migrate` ejecuta la copia ANTES de la migración",
-      /respaldar\.ts[^&]*--antes-de-migrar.*&&.*drizzle-kit migrate/.test(paquete.scripts["db:migrate"]),
+      // `migrar.ts` y ya no `drizzle-kit`: `drizzle-kit` es dependencia de
+      // desarrollo y no viaja en la imagen de producción, así que el comando de
+      // despliegue documentado no podía ejecutarse en el servidor.
+      /respaldar\.ts[^&]*--antes-de-migrar.*&&.*scripts\/db\/migrar\.ts/.test(paquete.scripts["db:migrate"]),
       paquete.scripts["db:migrate"],
     );
     const sinDestino = await correr("respaldar.ts", ["--antes-de-migrar"], {

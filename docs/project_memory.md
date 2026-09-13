@@ -68,7 +68,9 @@ calendario personal: quien abra una sesión dentro de un año tiene que poder ve
   - **Cerrado y verificado en el repositorio**: criterios **5, 6, 7 y 9**.
     - Pipeline `.github/workflows/ci.yml`: 4 jobs (gates, escáner de secretos dedicado, datos con
       PostgreSQL real, y la guarda que impide que `main` reciba nada que no haya pasado por `develop`).
-    - Los **seis frenos** del criterio 4 con **prueba negativa ejecutada**: `npm run check:brakes`.
+    - Los frenos del criterio 4 con **prueba negativa ejecutada**: `npm run check:brakes`. **El
+      número no se escribe aquí**: lo imprime el script, que es quien lo sabe. Esta línea decía
+      «seis» cuando ya eran treinta y cinco, y lo encontró la revisión final.
     - Cabeceras de seguridad y compuerta de staging comprobadas **sobre el servidor real**, no sobre
       `next.config.ts`: `npm run check:runtime`, 19 comprobaciones.
     - `middleware.ts`: compuerta de staging con comparación en tiempo constante; `/api/health` fuera
