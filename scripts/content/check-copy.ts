@@ -67,11 +67,22 @@ const EXIGEN_RESPALDO: ReadonlyArray<{ re: RegExp; que: string }> = [
  */
 const RESPALDADO = /\[(?:fuente|source)\s*:[^\]]+\]|\[PENDIENTE[^\]]*\]/i;
 
+/**
+ * Registros con copy TEMPORAL — redactado contra el brief y `knowledge/`, y
+ * **pendiente de que Ricardo lo sustituya o lo firme**.
+ *
+ * No es un fallo y no frena `main`: un hueco frena, un borrador no. Pero se
+ * lista **en cada ejecución**, porque la forma en que un texto provisional se
+ * convierte en definitivo no es una decisión: es un olvido.
+ */
+const temporales: string[] = [];
+
 const failures: Failure[] = [];
 let checked = 0;
 
 for (const doc of walkContent()) {
   if (!PUBLICAS.has(doc.collection)) continue;
+  if (doc.data.copy === "temporal") temporales.push(doc.rel);
 
   const lineas = `${JSON.stringify(doc.data)}\n${doc.body}`.split("\n");
 
@@ -106,6 +117,25 @@ for (const doc of walkContent()) {
       }
     }
   });
+}
+
+if (temporales.length > 0) {
+  console.log(
+    `\nCopy TEMPORAL — ${temporales.length} registros redactados contra el brief y pendientes de\n` +
+      `la firma de Ricardo. Publicables, y ninguno es definitivo:\n`,
+  );
+  const porColeccion = new Map<string, number>();
+  for (const rel of temporales) {
+    const coleccion = rel.split("/")[1] ?? rel;
+    porColeccion.set(coleccion, (porColeccion.get(coleccion) ?? 0) + 1);
+  }
+  for (const [coleccion, n] of [...porColeccion].sort()) {
+    console.log(`  · ${coleccion.padEnd(12)} ${String(n).padStart(3)} registros`);
+  }
+  console.log(
+    `\n  Para dar uno por bueno: cambia «copy: temporal» por «copy: aprobado» en su\n` +
+      `  frontmatter, y queda registrado con fecha en docs/work_log.md.\n`,
+  );
 }
 
 report("copy público (FU-01, criterios 3 y 4)", failures, checked);

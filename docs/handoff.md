@@ -49,8 +49,8 @@ Cuando una instrucción incumple esto, la instrucción está mal escrita. Se ree
 
 **Fase:** ejecución. Compuerta de Planificación abierta por Ricardo el 2026-09-08.
 
-**Doce unidades tocadas:** siete `done` (FU-02, FU-03, FU-04, FU-06, FU-07, **FU-10**, **DU-02**) y
-cinco `in_progress` (FU-05, FU-08, FU-09, DU-01, FU-01).
+**Trece unidades tocadas:** ocho `done` (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, DU-02,
+**DU-11**) y cinco `in_progress` (FU-05, FU-08, FU-09, DU-01, FU-01).
 
 **Todo lo que está `in_progress` lo está por algo que no es código.** No hay ninguna unidad esperando
 a que alguien escriba una función. Lo que falta es: dos compuertas de aprobación de Ricardo, y acceso
@@ -71,17 +71,22 @@ Van en orden de lo que más desbloquea. Cada una tiene su paso a paso en el docu
 
 Aprobada por Ricardo. FU-10 `done`, y con ella DU-02 construida.
 
-### 1. Cerrar la compuerta del copy (FU-01) — desbloquea M1-A entero
+### 1. Revisar el copy temporal, y darme cuatro datos — ya NO bloquea nada
 
-El esqueleto bilingüe está completo: **71 registros**, las once páginas de servicio con los seis
-bloques del contrato A.3, en los dos idiomas. **El copy no está escrito, y es deliberado**: son
-afirmaciones sobre una empresa real y el criterio 3 exige dato verificado; la fuente es
-`SLG_Overhauling`, que vive fuera de este repositorio.
+**El copy está escrito**: 74 registros, los dos idiomas, cero huecos. Está marcado `copy: temporal`
+y se puede publicar tal cual.
 
-Orden en que hay que rellenarlo, que es el orden comercial del contrato: Home → `SLG_AI` → las tres
-ramas → el resto. **Una sola ronda.**
+Lo que necesito de ti son **cuatro enumeraciones** que el contrato A.3 pide «tal cual la fuente» y que
+no están en este repositorio, más la revisión del resto cuando quieras:
 
-Paso a paso: `docs/work_log.md`, entrada de FU-01.
+1. Los nombres de las **once dimensiones** de `SLG_Readiness`.
+2. Las **tres promesas** de `CoO as a Service`.
+3. Las **tres líneas** de `SLG_Holdings`.
+4. Qué distingue a **`Phoenix PEEx`, `TEAx` y `RETx`** — el brief los nombra sin definirlos, y hoy los
+   diferencio por audiencia (individual · equipo · revisión de lo ya implementado), que es plausible
+   pero **no está confirmado**.
+
+Mándalas en un mensaje y las cambio en un commit.
 
 ### 2. Desplegar — cierra FU-05
 

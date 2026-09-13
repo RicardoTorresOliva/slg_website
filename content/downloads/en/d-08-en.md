@@ -1,13 +1,16 @@
 ---
 type: download
 service: "app-building-en"
-title: "[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la compuerta de aprobación de Ricardo]"
-audience: "[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la compuerta de aprobación de Ricardo]"
+title: "When to build an application and when to buy one"
+audience: "Companies that cannot find what they need in the catalogue, or find it at the price of rebuilding their operation."
 learns:
-  - "[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la compuerta de aprobación de Ricardo]"
+  - "The criteria that tip the decision towards building or towards buying"
+  - "What it takes for an application to reach production rather than demo"
+  - "What it takes to sustain it for two years, which is where it is decided whether it was worth it"
 status: coming-soon
 lang: en
 pair: "d-08"
+copy: temporal
 ---
 
-[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la compuerta de aprobación de Ricardo]
+Includes the cost of maintaining what gets built, which is the part proposals leave out.

@@ -124,6 +124,29 @@ const isSocial = (v: unknown): string | null => {
     : null;
 };
 
+/**
+ * Estado del copy de un registro. **Es la diferencia entre «esto no existe» y
+ * «esto existe y todavía no lo ha firmado nadie».**
+ *
+ *   · `temporal` — texto redactado contra el brief y las notas de `knowledge/`,
+ *     publicable, y **pendiente de que Ricardo lo sustituya o lo apruebe**.
+ *     No bloquea `main`: un hueco bloquea, un borrador no.
+ *   · `aprobado` — Ricardo lo aprobó, con fecha en `docs/work_log.md`.
+ *
+ * El campo es OBLIGATORIO en las colecciones con texto redactado, y por eso no
+ * tiene defecto: un registro sin declarar su estado se colaría como definitivo
+ * sin que nadie lo decidiera, que es exactamente lo que este campo evita.
+ * `check:copy` lista en cada ejecución todo lo que sigue en `temporal`.
+ */
+export const ESTADOS_DE_COPY = ["temporal", "aprobado"] as const;
+export type EstadoDeCopy = (typeof ESTADOS_DE_COPY)[number];
+
+const COPY: FieldSpec = {
+  name: "copy",
+  required: true,
+  check: oneOf(ESTADOS_DE_COPY as unknown as readonly string[]),
+};
+
 /** Frontmatter mínimo por colección. Fuente: B.4 del brief y A.5 para `post`. */
 export const SCHEMAS: Record<Exclude<CollectionName, "ui">, FieldSpec[]> = {
   page: [
@@ -150,6 +173,7 @@ export const SCHEMAS: Record<Exclude<CollectionName, "ui">, FieldSpec[]> = {
     { name: "download", required: true, check: isNonEmptyString },
     { name: "lang", required: true, check: isLang },
     { name: "pair", required: true, check: isPair },
+    COPY,
   ],
 
   download: [
@@ -163,6 +187,7 @@ export const SCHEMAS: Record<Exclude<CollectionName, "ui">, FieldSpec[]> = {
     { name: "status", required: true, check: oneOf(DOWNLOAD_STATUS) },
     { name: "lang", required: true, check: isLang },
     { name: "pair", required: true, check: isPair },
+    COPY,
   ],
 
   post: [
@@ -190,6 +215,7 @@ export const SCHEMAS: Record<Exclude<CollectionName, "ui">, FieldSpec[]> = {
       required: true,
       check: (v) => (typeof v === "number" ? null : "debe ser un número"),
     },
+    COPY,
   ],
 };
 

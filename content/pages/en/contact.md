@@ -1,11 +1,16 @@
 ---
 type: page
 title: "Contact"
-description: "Write to us. No embedded calendar and no sales call."
+description: "Write to us. No qualification form and no discovery call."
 lang: en
 pair: "contacto"
 nav_order: 10
 updated: "2026-09-12"
+copy: temporal
 ---
 
-[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la compuerta de aprobación de Ricardo]
+Write to **support@softlandingglobal.com** and tell us what you are working on.
+
+There is no qualification form and no discovery call: if you have a specific question, put it in the email and we will answer with what we know, even when the answer is that this is not for us.
+
+**SLG Agency Inc.** — Florida, United States.

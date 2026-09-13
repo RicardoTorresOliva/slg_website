@@ -1,13 +1,16 @@
 ---
 type: download
 service: "customize-programs-en"
-title: "[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la compuerta de aprobación de Ricardo]"
-audience: "[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la compuerta de aprobación de Ricardo]"
+title: "When a bespoke programme is the answer and when it is not"
+audience: "Companies whose sector, regulation or maturity places them outside the general case."
 learns:
-  - "[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la compuerta de aprobación de Ricardo]"
+  - "The three criteria that separate a bespoke case from a standard one"
+  - "Which parts of a programme can be adjusted without breaking it"
+  - "How scope is agreed before starting so that it does not grow afterwards"
 status: coming-soon
 lang: en
 pair: "d-04"
+copy: temporal
 ---
 
-[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la compuerta de aprobación de Ricardo]
+Includes the case in which the honest answer is that no bespoke programme is needed.

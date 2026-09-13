@@ -8,10 +8,11 @@ timestamp: 2026-09-12
 
 # Project memory — slg_website
 
-> **Punto de retomada en una línea:** **M0 construido, FU-10 aprobada y el armazón público en pie**.
-> Doce unidades tocadas — **siete `done`** y cinco `in_progress`. Lo único que bloquea construir más
-> páginas es **la compuerta del copy (FU-01)**; el resto espera paneles externos. La lista de lo que
-> falta, con quién hace cada cosa, está en `docs/handoff.md`.
+> **Punto de retomada en una línea:** **el copy existe y ya nada bloquea construir páginas.** Trece
+> unidades tocadas — **ocho `done`** y cinco `in_progress`. Los 74 registros públicos llevan copy
+> redactado y `copy: temporal` (**D-75**): cero `[PENDIENTE]` en todo el contenido. Lo siguiente son
+> **DU-03, DU-04 y DU-05** (portada, overviews y las once páginas de servicio), que ya son
+> construibles. Lo que falta de Ricardo está en `docs/handoff.md`.
 
 ## Lo que espera a Ricardo, y solo a él
 1. **Despliegue** — `docs/deployment.md` §3 a §5. Cierra FU-05 (criterios 1, 2, 3 y 8).
@@ -64,12 +65,19 @@ timestamp: 2026-09-12
     monitor. **Paso a paso completo en `docs/deployment.md`.**
 
 ## Próxima unidad
-- **DU-04** (overviews de rama) y **DU-05** (las once páginas de servicio) son las siguientes, y las
-  dos **necesitan el copy**: su contenido son los seis bloques del contrato A.3. **No empiezan hasta
-  que la compuerta de FU-01 se cierre.**
-- **DU-11** (blog completo: artículo, etiquetas, RSS, borradores) sí es construible sin copy nuevo:
-  DU-02 dejó hecho solo el índice, a propósito.
-- **DU-14** (analítica sin cookies) también, y no depende de nada abierto.
+- **DU-03** (portada), **DU-04** (overviews de rama con rutas anidadas `/ai/academy`…) y **DU-05**
+  (las once páginas de servicio con los seis bloques de A.3). Las tres ya tienen su copy.
+- **DU-14 NO es analítica** —es empresas, proyectos y usuarios en HQ, y depende de DU-13 (M3)—. La
+  analítica sin cookies está en **DU-12**, junto con los webhooks firmados, y depende de DU-09.
+
+## El copy: qué hay y qué falta
+**74 registros con `copy: temporal`** (D-75). `check:copy` los lista en cada ejecución. Pasar uno a
+`copy: aprobado` es lo que registra la firma de Ricardo.
+
+**Las cuatro cosas que NO se inventaron** y siguen esperándole: las once dimensiones de
+`SLG_Readiness`, las tres promesas de `CoO as a Service`, las tres líneas de `SLG_Holdings` y qué
+distingue a `Phoenix PEEx`, `TEAx` y `RETx`. En los cuatro sitios el texto describe la forma del
+servicio sin inventar su contenido. Detalle en `docs/work_log.md`.
 
 ## El mapa de rutas, que cambió en DU-02
 `/ai` · `/holdings` · `/doctrina` · `/blog` · `/nosotros`, y sus pares bajo `/en` (D-71). Antes eran
@@ -142,6 +150,7 @@ se sirven. El par de idioma de cada ruta sale del campo `pair` del frontmatter, 
 | Las cuatro cláusulas del sheet, cuadro a cuadro | `npm run test:gesto` (necesita el build y Chromium) |
 | El armazón público sobre el servidor real | `npm run check:armazon` (necesita el build) |
 | Que la zona DNS no se ha movido | `npm run check:dns` (ya no necesita `dig`) |
+| El blog: borradores, etiquetas y RSS | `npm run check:blog` (necesita el build) |
 
 ## Entorno local
 - `docker-compose.yml` levanta `slg-db` (PostgreSQL 16) en el **puerto 5434**. El 5432 lo ocupa la
@@ -195,6 +204,12 @@ así: **`"use client"` solo donde hay gesto o estado**, y el resto en `component
 las peticiones y no puede llevar un nonce. **Si alguien vuelve a declarar la CSP en `next.config.ts`,
 las dos políticas se intersecan y el sitio deja de hidratar**: se ve y no funciona. `check:runtime` lo
 comprueba sobre el servidor real.
+
+## Por qué hay un borrador permanente en el blog
+`content/blog/es/market-fracking.md` está en `status: draft` **a propósito** (D-78). El criterio 2 de
+DU-11 —«un borrador no se sirve en ninguna parte»— solo se comprueba si existe un borrador; al
+publicar el único que había, el freno pasó en verde sin ejecutar ninguna de sus tres comprobaciones.
+**No lo publiques por limpieza.**
 
 ## Por qué los frenos barren también lo NO versionado
 `git ls-files` **no ve un archivo sin `git add`**. FU-10 pasó `check:ci` en verde contra sus propios

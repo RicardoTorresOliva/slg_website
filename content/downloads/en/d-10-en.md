@@ -1,13 +1,16 @@
 ---
 type: download
 service: "coo-as-a-service-en"
-title: "[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la compuerta de aprobación de Ricardo]"
-audience: "[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la compuerta de aprobación de Ricardo]"
+title: "Operations leadership before you can hire it"
+audience: "Growing companies whose chief executive is running operations instead of steering the company."
 learns:
-  - "[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la compuerta de aprobación de Ricardo]"
+  - "The three promises an operations-leadership-as-a-service agreement must include"
+  - "How it differs from consulting that recommends and leaves"
+  - "How the exit is planned from the outset so the service stops being necessary"
 status: coming-soon
 lang: en
 pair: "d-10"
+copy: temporal
 ---
 
-[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la compuerta de aprobación de Ricardo]
+The document includes the agreement model we use, with its three promises written out.

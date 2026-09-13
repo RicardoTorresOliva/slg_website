@@ -38,7 +38,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 27 `pending` · **5 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01) · **7 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, DU-02) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
+**Estado global:** 26 `pending` · **5 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01) · **8 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, DU-02, DU-11) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -62,7 +62,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | FU-09 | FU | Almacenamiento de archivos y URLs firmadas | M0-B | FU-05 · `api_contracts` | `in_progress` — los cinco criterios cerrados en código; faltan los dos buckets privados en `minio` y las variables `S3_*` |
 | DU-01 | DU | Acceso, sesión y recuperación por los tres métodos | M0-B | FU-06, FU-07, FU-08 · F.2-2, F.2-3 | `in_progress` — criterios 2, 4, 5, 6, 7, 8 y 9 cerrados; 1 y 3 esperan F.2-2 y F.2-3 |
 | ━━━ | ━━━ | **▼ M1-A · CAPA PÚBLICA: COMPUERTAS, COMPONENTES Y ARMAZÓN** | ━━━ | ━━━ | ━━━ |
-| FU-01 | FU | Copy maestro bilingüe — compuerta única de aprobación | M1-A | FU-03 · SLG_Overhauling | `in_progress` — esqueleto bilingüe completo (71 registros) y frenos construidos; **la compuerta sigue ABIERTA** y bloquea M1-A |
+| FU-01 | FU | Copy maestro bilingüe — compuerta única de aprobación | M1-A | FU-03 · SLG_Overhauling | `in_progress` — **74 registros con copy redactado y cero `[PENDIENTE]`**, marcados `copy: temporal` (**D-75**). **Ya no bloquea M1-A.** Falta la firma de Ricardo y cuatro enumeraciones literales |
 | FU-10 | FU | Sistema de componentes C.5 con prototipo interactivo aprobado | M1-A | FU-02 | `done` — los trece criterios cerrados. **Compuerta aprobada por Ricardo el 2026-09-12** |
 | DU-02 | DU | Armazón público: navegación, sheet móvil, pie y conmutador de idioma | M1-A | FU-03, FU-10 | `done` — los siete criterios cerrados y verificados sobre el servidor real |
 | DU-03 | DU | Portada (Home) ES/EN | M1-A | FU-01, FU-10, DU-02 | `pending` |
@@ -76,7 +76,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | DU-08 | DU | Biblioteca de descargas, formulario de captura y entrega firmada | M2 | FU-09, FU-11, DU-05 | `pending` |
 | DU-09 | DU | Captura al CRM: adaptador de dos modos, cola y aviso | M2 | FU-08, DU-08 · F.2-5 · S-01 | `pending` |
 | DU-10 | DU | Contacto y solicitud del documento completo de Doctrina | M2 | DU-06, DU-09 | `pending` |
-| DU-11 | DU | Blog: índice, artículo, etiquetas, RSS y borradores | M2 | FU-03, DU-02 | `pending` |
+| DU-11 | DU | Blog: índice, artículo, etiquetas, RSS y borradores | M2 | FU-03, DU-02 | `done` — ocho rutas prerrenderizadas en los dos idiomas; 33 comprobaciones sobre el servidor real |
 | DU-12 | DU | Webhooks salientes firmados y analítica privacy-first | M2 | DU-09, DU-11 | `pending` |
 | ━━━ | ━━━ | **▼ M3 · HQ (INTRANET SLG)** | ━━━ | ━━━ | ━━━ |
 | FU-12 | FU | Shell de aplicación para HQ y portal | M3 | FU-06, FU-10 | `pending` |
@@ -251,3 +251,9 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   versionado**, así que FU-10 pasó en verde contra sus propios archivos sin `git add` y el CI habría
   fallado en el primer push (**D-74**). Corregido en los cinco frenos, más dos defectos que eso
   destapó en `check:motion`. Frenos nuevos: `check:cadenas` y `check:armazon` — van **quince**.
+- `2026-09-13` — **Copy maestro temporal (D-75)**: 74 registros redactados contra el brief y
+  `knowledge/`, **cero `[PENDIENTE]` en todo el contenido**, cada uno marcado `copy: temporal` y
+  listado por `check:copy`. **FU-01 deja de bloquear M1-A.** **DU-11 `done`**: blog completo —índice,
+  artículo, etiquetas y RSS en los dos idiomas— con un borrador permanente en el repositorio
+  (**D-78**) porque el criterio 2 pasó en verde sin tener ningún borrador que comprobar. Freno nuevo
+  `check:blog` con su prueba negativa: van **dieciséis**.

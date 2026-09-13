@@ -212,6 +212,45 @@ console.log("\nFreno del armazón público — contra un armazón roto a propós
   }
 }
 
+console.log("\nFreno del blog — contra un blog que publica sus borradores:\n");
+{
+  const fixture = spawn(process.execPath, [path.join(HERE, "negative/blog/servidor.ts")], {
+    cwd: REPO_ROOT,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  const base = await new Promise<string>((resolve, reject) => {
+    const limite = setTimeout(() => reject(new Error("el fixture del blog no arrancó")), 15_000);
+    fixture.stdout.on("data", (c: Buffer) => {
+      const m = /http:\/\/127\.0\.0\.1:\d+/.exec(c.toString());
+      if (m) {
+        clearTimeout(limite);
+        resolve(m[0]);
+      }
+    });
+  });
+  const res = spawnSync(process.execPath, [path.join(HERE, "check-blog.ts")], {
+    encoding: "utf8",
+    cwd: REPO_ROOT,
+    env: { ...process.env, BLOG_BASE: base },
+  });
+  fixture.kill("SIGTERM");
+  const salida = `${res.stdout ?? ""}${res.stderr ?? ""}`;
+  const esperados = [
+    "NO tiene URL",
+    "NO aparece en el índice",
+    "NO aparece en el RSS",
+    "artículo inexistente devuelve 404",
+  ];
+  const faltan = esperados.filter((e) => !salida.includes(`✗ ${e}`) && !salida.includes(e));
+  if (res.status === 1 && faltan.length === 0) {
+    console.log("  ✓ blog: falló como debía (el borrador servido en URL, índice y RSS)");
+  } else {
+    fallos++;
+    console.error(`  ✗ blog: NO falló como debía (exit ${res.status}).`);
+    if (faltan.length) console.error(`      no mencionó: ${faltan.join(" · ")}`);
+  }
+}
+
 console.log("\nFrenos de contenido de FU-03 — se delega en su propia prueba negativa:\n");
 {
   const res = spawnSync(process.execPath, [path.join(REPO_ROOT, "scripts/content/verify-gates.ts")], {
@@ -238,4 +277,4 @@ if (fallos) {
   console.error(`\n✗ ${fallos} freno(s) no se comportaron como deben.\n`);
   process.exit(1);
 }
-console.log("\n✓ Los quince frenos fallan cuando deben y pasan cuando deben.\n");
+console.log("\n✓ Los dieciséis frenos fallan cuando deben y pasan cuando deben.\n");

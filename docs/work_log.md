@@ -982,3 +982,94 @@ Nombres nuevos (deben resolver a la IP del VPS):
 verificado en Resend es **`mailweb.`**. Enviar desde `mail.` es enviar **sin firmar**: no rebota, se
 entrega a spam, y desde fuera parece que funciona. La corrección, con los clics exactos, en
 `docs/deployment.md` §4bis.0.
+
+---
+
+## 2026-09-13 · FU-01 — Copy maestro temporal · `in_progress` · **compuerta abierta, avance desbloqueado**
+
+**Decisión de Ricardo el 2026-09-13**: redactar el copy contra el material que ya está en el
+repositorio y marcarlo temporal, en vez de seguir esperando a `SLG_Overhauling`. Tiene razón: el
+material existe —`START_PROJECT.md` §0, §1 y Anexo A, más los nueve archivos de `knowledge/`— y la
+espera bloqueaba **cinco unidades** por un texto sustituible.
+
+**Lo que hay ahora.** **74 registros públicos con copy redactado y cero `[PENDIENTE]`** en todo el
+contenido: 22 servicios con los seis bloques del contrato A.3, 26 páginas, 22 documentos con título,
+audiencia y qué se aprende, y 4 secciones de doctrina. Todo en los dos idiomas.
+
+Cada registro lleva **`copy: temporal`** en su frontmatter (**D-75**), y `check:copy` lo lista en cada
+ejecución:
+
+```
+Copy TEMPORAL — 74 registros redactados contra el brief y pendientes de
+la firma de Ricardo. Publicables, y ninguno es definitivo.
+```
+
+**Lo que NO inventé, y sigue siendo tuyo.** Cuatro sitios donde el contrato A.3 pide la lista «tal
+cual la fuente» y la fuente no está en este repositorio. En los cuatro, el texto describe la **forma**
+del servicio sin inventar su contenido:
+
+| Dónde | Qué falta | Qué dice hoy |
+|---|---|---|
+| `SLG_Readiness` | Los nombres de las **once dimensiones** | Que son once, que se entregan las once y con qué evidencia |
+| `CoO as a Service` | Las **tres promesas** | Que son tres y que se escriben en el acuerdo antes de empezar |
+| `SLG_Holdings` | Las **tres líneas** | Que son tres, cada una con su alcance |
+| `Phoenix PEEx`, `TEAx`, `RETx` | Qué distingue a cada uno; el brief los nombra sin definirlos | Los diferencia por **audiencia y momento** —individual, equipo, y revisión de lo ya implementado—, que es defendible desde la estructura de la línea pero **no está confirmado** |
+
+Pásame esas cuatro cosas y las cambio en un commit. Todo lo demás ya es sustituible frase a frase.
+
+**La regla dura sigue intacta.** Cero cifras, premios, casos y nombres de cliente: `check:copy` los
+veta sin fuente declarada, y en 1.266 comprobaciones no hay ninguno. La página de Nosotros lo dice
+por escrito: «no publicamos una cifra, un caso ni un nombre de cliente sin autorización escrita, que
+es la razón por la que en estas páginas no vas a encontrar ninguno».
+
+**Dos textos legales marcados como provisionales en su propia primera línea** (privacidad y términos):
+son los que exige F.2-1 para las pantallas de consentimiento OAuth, y necesitan revisión profesional
+antes del lanzamiento. Decirlo dentro del texto es más honesto que dejarlo en una nota interna.
+
+---
+
+## 2026-09-13 · DU-11 — Blog: índice, artículo, etiquetas, RSS y borradores · `done`
+
+**Publicar es añadir un `.md` y hacer push.** Nada más: sin tocar código, sin build manual y sin
+ningún paso en HQ. Lo decide el campo `status`, **nunca la existencia del archivo**.
+
+| Ruta | ES | EN |
+|---|---|---|
+| Índice | `/blog` | `/en/blog` |
+| Artículo | `/blog/[slug]` | `/en/blog/[slug]` |
+| Etiqueta | `/blog/etiqueta/[tag]` | `/en/blog/tag/[tag]` |
+| Canal | `/blog/rss.xml` | `/en/blog/rss.xml` |
+
+Las ocho rutas se **prerrenderizan**: un artículo nuevo entra en la compilación, no en una petición.
+
+### El criterio que pasó en verde sin ejecutarse
+
+Al publicar el único artículo que había en borrador, el freno se puso verde **sin haber ejecutado ni
+una** de las tres comprobaciones del criterio 2 — no había borrador que comprobar. Es la misma
+familia que D-74: un barrido sin casos siempre pasa.
+
+Ahora el repositorio **conserva un borrador permanente** (**D-78**), y su propio texto explica por
+qué está ahí, para que nadie lo publique por limpieza.
+
+### Los ocho criterios
+
+| # | Criterio | Estado | Evidencia |
+|---|---|---|---|
+| 1 | Añadir un `.md` y hacer push publica, sin ningún otro paso | **cerrado** en repositorio | `check:blog` comprueba que cada publicado aparece en índice, URL propia, etiqueta y RSS. La mitad del «en minutos» la cierra el despliegue real |
+| 2 | Un `draft` **no se sirve** en ninguna ruta pública ni en RSS | **cerrado** | Tres comprobaciones contra un borrador **real**: sin URL (404), fuera del índice, fuera del canal |
+| 3 | El RSS publica solo los publicados **del idioma correspondiente** | **cerrado** | Y además: el canal español no lleva artículos ingleses, y al revés — el fallo silencioso de un blog bilingüe |
+| 4 | Índice y página por etiqueta en los dos idiomas | **cerrado** | Cuatro etiquetas en español, dos en inglés, todas navegables; el segmento se traduce (`etiqueta`/`tag`) porque es una palabra, no nomenclatura |
+| 5 | Un artículo **solo en español** no rompe la paridad | **cerrado** | «El mes cuatro» existe solo en español con `pair: null`. El freno comprueba que ese caso **existe**: sin él, el criterio estaría verde sin haberse probado |
+| 6 | Frontmatter A.5 completo desde el primer artículo | **cerrado** | Los cuatro artículos llevan `type`, `title`, `description`, `lang`, `pair`, `date`, `tags`, `status`, `cover`, `social{hook,linkedin,x}` y `author` |
+| 7 | Estados: blog sin artículos · etiqueta sin artículos · artículo inexistente | **cerrado** | Etiqueta y artículo inexistentes devuelven **404**, no una página vacía; el índice y la etiqueta vacía tienen su texto |
+| 8 | Lighthouse sobre un artículo (tercera página del gate D1) | **parcial** | El presupuesto de JS ya mide las **38 rutas**, artículos incluidos, y todas entran. Lighthouse completo se pasa sobre el despliegue |
+
+**Un conversor de Markdown propio, y por qué (D-77).** No se añadió librería. El presupuesto de JS
+está al 91 % del gate D1 y no cabe, pero la razón de fondo es otra: **una librería de Markdown acepta
+HTML embebido**, y el contenido del blog acabará pasando por manos que no son las nuestras. Este
+conversor construye elementos de React y no puede producir HTML arbitrario: un `<script>` escrito
+dentro de un `.md` sale como texto.
+
+**Verificación.** `check:blog`: **33** comprobaciones sobre el servidor real, con su prueba negativa
+—un blog que publica sus borradores— en `check:brakes`. Van **dieciséis** frenos. `check:ci` en verde
+con 38 rutas bajo presupuesto; `test:db`: 264.

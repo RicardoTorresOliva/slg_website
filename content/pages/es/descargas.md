@@ -1,11 +1,16 @@
 ---
 type: page
 title: "Descargas"
-description: "Los documentos de interés de SLG Agency, uno por servicio."
+description: "Los documentos de SLG Agency: para quién es cada uno y qué se aprende."
 lang: es
 pair: "downloads"
 nav_order: 8
 updated: "2026-09-12"
+copy: temporal
 ---
 
-[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la compuerta de aprobación de Ricardo]
+Cada servicio tiene un documento, y cada documento está escrito para una silla concreta.
+
+No son folletos. Son el material que usamos para trabajar, publicado tal cual, porque si el criterio solo se ve pagando entonces no es criterio: es un argumento de venta.
+
+Para recibir uno hace falta un correo corporativo. El enlace de descarga caduca, y no compartimos tu dirección con nadie.

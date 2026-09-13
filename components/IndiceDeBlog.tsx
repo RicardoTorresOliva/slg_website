@@ -1,45 +1,82 @@
-import { loadCollection, loadUiStrings } from "@/lib/content/loader";
+import Link from "next/link";
+
+import { articulos, etiquetas, prefijo, segmentoDeEtiqueta } from "@/lib/content/blog";
+import { loadUiStrings } from "@/lib/content/loader";
 
 import { HeroTipografico, TarjetaDeArticulo } from "./piezas";
 
 /**
- * Índice del blog — **solo el índice, y a propósito**.
+ * Índice del blog y página de etiqueta: **la misma plantilla**, como manda
+ * `ui_wireframes` §…; la de etiqueta solo añade de qué etiqueta se trata.
  *
- * `/blog` es uno de los cinco destinos de RF-01, así que el marco de DU-02 no
- * puede apuntar a un 404. Lo que DU-02 construye es la ruta y su listado; el
- * resto del blog —artículo, etiquetas, RSS y borradores— es **DU-11**, y no se
- * adelanta aquí.
- *
- * **Los borradores no se listan.** `status: draft` no aparece en producción, ni
- * en el índice ni en ningún sitio (A.5): un borrador publicado por accidente es
- * un texto sin revisar con la firma de SLG encima.
+ * Los borradores no aparecen aquí porque no aparecen en ninguna parte: lo
+ * decide `status`, en `lib/content/blog.ts`, y no esta pantalla.
  */
-export function IndiceDeBlog({ lang }: { lang: "es" | "en" }) {
+export function IndiceDeBlog({
+  lang,
+  etiqueta,
+}: {
+  lang: "es" | "en";
+  /** Cuando viene, esto es una página de etiqueta y no el índice. */
+  etiqueta?: { nombre: string; url: string };
+}) {
   const t = loadUiStrings()[lang];
-  const articulos = loadCollection<{
-    title: string;
-    description: string;
-    date: string;
-    status?: string;
-    tags?: readonly string[];
-  }>("post", lang).filter((p) => p.data.status !== "draft");
+  const todos = articulos(lang);
+  const lista = etiqueta
+    ? todos.filter((a) => a.etiquetas.some((e) => e.toLowerCase() === etiqueta.nombre.toLowerCase()))
+    : todos;
+  const nubes = etiquetas(lang);
+  const base = prefijo(lang);
 
   return (
     <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "0 1.25rem" }}>
-      <HeroTipografico titular={t["blog.title"]} apoyo="" />
+      <HeroTipografico
+        titular={etiqueta ? etiqueta.nombre : t["blog.title"]}
+        apoyo={etiqueta ? t["blog.taggedWith"] : ""}
+      />
 
-      {articulos.length === 0 ? (
-        <p style={{ color: "var(--slg-ink-2)", paddingBottom: "3rem" }}>{t["blog.empty"]}</p>
+      {nubes.length > 0 ? (
+        <nav aria-label={t["blog.tags"]} style={{ paddingBottom: "2rem" }}>
+          <ul style={listaEtiquetas}>
+            {etiqueta ? (
+              <li>
+                <Link href={`${base}/blog`} style={pastilla}>
+                  {t["blog.all"]}
+                </Link>
+              </li>
+            ) : null}
+            {nubes.map((e) => (
+              <li key={e.url}>
+                <Link
+                  href={`${base}/blog/${segmentoDeEtiqueta(lang)}/${e.url}`}
+                  aria-current={etiqueta?.url === e.url ? "page" : undefined}
+                  style={{
+                    ...pastilla,
+                    borderColor: etiqueta?.url === e.url ? "var(--slg-blue-primary)" : "var(--slg-line)",
+                  }}
+                >
+                  {e.etiqueta}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ) : null}
+
+      {lista.length === 0 ? (
+        <p style={{ color: "var(--slg-ink-2)", paddingBottom: "3rem" }}>
+          {etiqueta ? t["blog.emptyTag"] : t["blog.empty"]}
+        </p>
       ) : (
         <ul style={rejilla}>
-          {articulos.map((a) => (
+          {lista.map((a) => (
             <li key={a.slug}>
               <TarjetaDeArticulo
-                titulo={a.data.title}
-                resumen={a.data.description}
-                fecha={a.data.date}
-                href={`${lang === "en" ? "/en" : ""}/blog/${a.slug}`}
-                etiquetas={a.data.tags ?? []}
+                titulo={a.titulo}
+                resumen={a.descripcion}
+                fecha={a.fecha}
+                href={`${base}/blog/${a.slug}`}
+                etiquetas={a.etiquetas}
               />
             </li>
           ))}
@@ -56,4 +93,23 @@ const rejilla: React.CSSProperties = {
   listStyle: "none",
   margin: 0,
   padding: "0 0 3rem",
+};
+
+const listaEtiquetas: React.CSSProperties = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "0.5rem",
+  listStyle: "none",
+  margin: 0,
+  padding: 0,
+};
+
+const pastilla: React.CSSProperties = {
+  display: "inline-block",
+  padding: "0.3rem 0.7rem",
+  border: "1px solid var(--slg-line)",
+  borderRadius: "999px",
+  fontSize: "0.8125rem",
+  color: "var(--slg-ink-2)",
+  textDecoration: "none",
 };

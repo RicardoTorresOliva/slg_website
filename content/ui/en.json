@@ -49,5 +49,12 @@
   "footer.legalTerms": "Terms",
   "footer.legalPrivacy": "Privacy",
   "blog.title": "Blog",
-  "blog.empty": "No articles have been published in English yet."
+  "blog.empty": "No articles have been published in English yet.",
+  "blog.tags": "Tags",
+  "blog.all": "All",
+  "blog.taggedWith": "Articles with this tag",
+  "blog.emptyTag": "No articles carry this tag yet.",
+  "blog.backToIndex": "Back to the index",
+  "blog.by": "By",
+  "blog.feed": "RSS feed"
 }

@@ -147,11 +147,17 @@ jobs:
       - name: Armazón público sobre el servidor real
         run: npm run check:armazon
 
+      # Los ocho criterios de DU-11. El que manda: un borrador NO se sirve en
+      # ninguna parte — ni en su URL, ni en el índice, ni en una etiqueta, ni en
+      # el RSS. Se comprueba contra un borrador real del repositorio.
+      - name: Blog sobre el servidor real
+        run: npm run check:blog
+
       - name: Las cuatro cláusulas del sheet, cuadro a cuadro (gate D3)
         run: npm run test:gesto
 
       # Criterio 5: cada freno se ve en ROJO por el motivo esperado.
-      - name: Prueba negativa de los quince frenos
+      - name: Prueba negativa de los dieciséis frenos
         run: npm run check:brakes
 
   # ──────────────────────────────────────────────────────────────────────────

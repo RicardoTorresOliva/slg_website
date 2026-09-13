@@ -1,13 +1,16 @@
 ---
 type: download
 service: "slg-holdings-en"
-title: "[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la compuerta de aprobación de Ricardo]"
-audience: "[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la compuerta de aprobación de Ricardo]"
+title: "The discipline of leaving your home market"
+audience: "Founders and leadership teams that want to operate outside their home market."
 learns:
-  - "[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la compuerta de aprobación de Ricardo]"
+  - "Why the difficulty is not translation but structure, regulation and people"
+  - "What fails when each part is handled by a different adviser"
+  - "The three lines of SLG_Holdings and when each one comes in"
 status: coming-soon
 lang: en
 pair: "d-11"
+copy: temporal
 ---
 
-[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la compuerta de aprobación de Ricardo]
+The only document of the Softlanding Global branch.

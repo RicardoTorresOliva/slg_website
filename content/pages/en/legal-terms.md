@@ -1,11 +1,20 @@
 ---
 type: page
 title: "Terms"
-description: "Terms of use for the SLG Agency site."
+description: "Conditions of use for this site."
 lang: en
 pair: "legal-terminos"
 nav_order: 12
 updated: "2026-09-12"
+copy: temporal
 ---
 
-[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la compuerta de aprobación de Ricardo]
+**Notice: this text is provisional.** The final legal text is reviewed by a professional before launch.
+
+**The content of this site is informational.** The documents we publish are not professional advice for a specific case and do not create a service relationship.
+
+**Ownership.** The texts, documents and marks on this site belong to SLG Agency Inc. You may quote them with attribution; you may not redistribute them as your own.
+
+**Availability.** We make reasonable efforts to keep the site available and do not guarantee uninterrupted service.
+
+**Contact.** support@softlandingglobal.com — SLG Agency Inc., Florida, United States.

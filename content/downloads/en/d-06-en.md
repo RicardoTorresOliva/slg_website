@@ -1,13 +1,17 @@
 ---
 type: download
 service: "readiness-en"
-title: "[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la compuerta de aprobación de Ricardo]"
-audience: "[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la compuerta de aprobación de Ricardo]"
+title: "The eleven dimensions of readiness for the AI era"
+audience: "Leadership that needs a defensible starting point for a committee before investing."
 learns:
-  - "[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la compuerta de aprobación de Ricardo]"
+  - "Why readiness is not measured in technology but in the capacity to adopt it"
+  - "What is assessed in each of the eleven dimensions and on what evidence"
+  - "How priority is ordered when several dimensions come out low at once"
+  - "What has to be resolved before implementing anything"
 status: coming-soon
 lang: en
 pair: "d-06"
+copy: temporal
 ---
 
-[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la compuerta de aprobación de Ricardo]
+It explains the diagnosis we run, rather than summarising it commercially.

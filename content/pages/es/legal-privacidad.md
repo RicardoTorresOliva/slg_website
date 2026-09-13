@@ -1,11 +1,22 @@
 ---
 type: page
 title: "Privacidad"
-description: "Cómo trata SLG Agency los datos personales que recoge en este sitio."
+description: "Qué datos tratamos, para qué, y qué puedes pedirnos."
 lang: es
 pair: "legal-privacy"
 nav_order: 11
 updated: "2026-09-12"
+copy: temporal
 ---
 
-[PENDIENTE: copy maestro FU-01 — se redacta en SLG_Overhauling contra el contrato A.3 y pasa por la compuerta de aprobación de Ricardo]
+**Aviso: este texto es provisional.** El texto legal definitivo lo revisa un profesional antes del lanzamiento.
+
+**Qué recogemos.** Solo lo que nos das: tu dirección de correo corporativo cuando pides un documento, y lo que escribas si nos contactas. Nada más.
+
+**Para qué.** Para entregarte el documento que pediste y para responderte. No vendemos ni cedemos tu dirección a terceros.
+
+**Analítica.** Medimos el uso del sitio con una herramienta autoalojada y sin cookies: no te seguimos entre sitios y no construimos un perfil tuyo.
+
+**Tus derechos.** Puedes pedirnos acceso, corrección o borrado de tus datos escribiendo a support@softlandingglobal.com.
+
+**Responsable.** SLG Agency Inc., Florida, Estados Unidos.

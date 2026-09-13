@@ -49,5 +49,12 @@
   "footer.legalTerms": "Términos",
   "footer.legalPrivacy": "Privacidad",
   "blog.title": "Blog",
-  "blog.empty": "Todavía no hay artículos publicados en español."
+  "blog.empty": "Todavía no hay artículos publicados en español.",
+  "blog.tags": "Etiquetas",
+  "blog.all": "Todos",
+  "blog.taggedWith": "Artículos con esta etiqueta",
+  "blog.emptyTag": "Todavía no hay artículos con esta etiqueta.",
+  "blog.backToIndex": "Volver al índice",
+  "blog.by": "Por",
+  "blog.feed": "Canal RSS"
 }
