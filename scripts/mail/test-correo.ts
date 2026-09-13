@@ -118,6 +118,7 @@ const DATOS: Readonly<Record<TipoDeCorreo, Record<string, string>>> = {
   password_reset: { url: "https://softlandingglobal.com/recuperar/T0KEN" },
   capture_notice: { correo: "lead@empresa.com", origen: "/ai/academy/phoenix-peex", urlCrm: "https://crm.softlandingglobal.com/contacts/1", documento: "D-01" },
   capture_failed_alert: { correo: "lead@empresa.com", urlHq: "https://softlandingglobal.com/hq/capturas/1", ultimoError: "timeout" },
+  backup_failed_alert: { fecha: "2026-09-13", motivo: "pg_dump salió con 1" },
 };
 
 async function filaDe(id: string) {

@@ -161,6 +161,26 @@ const DEFINICIONES: Readonly<Record<TipoDeCorreo, Definicion>> = {
       };
     },
   },
+
+  backup_failed_alert: {
+    subjectKey: "mail.backup_failed_alert.subject",
+    asunto: {
+      es: "La copia de seguridad de hoy NO se ha completado",
+      en: "Today's backup did NOT complete",
+    },
+    componer: (datos) => {
+      const fecha = exigir(datos, "fecha");
+      const parrafos = [
+        `La copia de seguridad de ${fecha} no terminó.`,
+        datos.motivo ? `Motivo: ${datos.motivo}` : "",
+        // Lo que hay que saber para decidir, no para diagnosticar: el detalle
+        // completo está en el registro del cron, que no sale de la máquina.
+        "Las copias anteriores siguen donde estaban: esto no ha destruido nada. " +
+          "Lo que falta es la de hoy, así que revísalo antes de la próxima ventana.",
+      ].filter(Boolean);
+      return { texto: `${parrafos.join("\n")}\n`, parrafos };
+    },
+  },
 };
 
 /**

@@ -2285,3 +2285,69 @@ estaba **en rojo** —once `any` en el archivo de prueba nuevo— y no se ejecut
 arreglado en este commit y dicho aquí en vez de corregido en silencio: la lección es que la tanda de
 gates que se ejecuta al cerrar una unidad tiene que ser la **misma** siempre, y `lint` es el primero
 de `check:ci`.
+
+---
+
+## 2026-09-13 · FU-14 — Copias cifradas a destino externo y restauración probada
+
+**Qué se construyó.** `lib/backup/` (cifrado, destino y generaciones), los tres scripts —`backup`,
+`backup:restore`, `backup:purge`—, la copia previa a toda migración, el aviso por correo cuando falla,
+el par de claves generado desde `/api/ops`, y `test:respaldos`: **27 comprobaciones con copia y
+restauración reales**.
+
+**El cifrado es asimétrico porque el criterio pide dos cosas incompatibles** (**D-143**). «El VPS
+cifra» y «la clave no está en el VPS» no caben juntas con una contraseña compartida: quien entre en el
+servidor la lee de las variables y se lleva los backups descifrados, que es el escenario del que un
+backup debería salvar. Con X25519 la pública **solo cifra** y la privada vive con Ricardo. Y GCM y no
+CBC: un byte cambiado hace que el descifrado **falle**, en vez de devolver basura que parece un dump —
+la prueba lo comprueba volteando un byte.
+
+**Nada lista el bucket** (**D-144**). Las claves se calculan de generación y fecha, así que la
+credencial del servidor puede ser ciega: quien la robe no puede ni enumerar qué hay. Purgar es
+calcular qué fechas caducaron; restaurar, calcular la clave que se quiere.
+
+**La mitigación de R-37 está probada por las dos mitades.** R2 no ofrece Object Lock por API estándar,
+así que lo que protege el histórico es el reparto de poder: la prueba comprueba que la purga borra
+**con la credencial de purga** y que, con la de copia, el borrado **se rechaza**. El doble de
+almacenamiento lee la credencial de la cabecera y aplica la política que en producción aplica el
+proveedor — sin eso, el criterio 4 sería una intención escrita en un comentario.
+
+**Y lo que de verdad cierra el criterio 6: se restaura.** La prueba escribe una marca, hace una copia
+con fecha **antigua**, cambia los datos, hace otra copia, y restaura **la antigua** en una base de
+datos **distinta**: vuelve lo que había entonces y **no** vuelve lo de después. Un backup que no se ha
+restaurado no es un backup, es un archivo grande del que nadie sabe nada.
+
+**Tres cosas que costaron encontrar, y las tres estaban en la prueba, no en el producto.**
+
+La primera: el cliente de S3 **se niega a subir un flujo de longitud desconocida** sin negociar
+`multipart`, y un flujo cifrado no sabe su tamaño hasta terminar. Se cifra a un archivo temporal —ya
+cifrado— y se sube con el tamaño delante: un `PUT` en vez de varias operaciones de clase A, que es la
+partida que R2 factura.
+
+La segunda: la prueba se colgaba esperándose a sí misma. El doble de almacenamiento vive en el mismo
+proceso, y `spawnSync` **bloquea el bucle de eventos**: el servidor no podía contestar al `PUT` del
+script. Ahora los subprocesos se lanzan de forma asíncrona.
+
+La tercera, la más engañosa: la restauración decía «esto no es un sobre de backup» y parecía un fallo
+del cifrado. Era el doble: subiendo en flujo, el cliente de S3 envuelve el cuerpo en marcos
+`aws-chunked` que el proveedor real deshace, y el doble los guardaba dentro del objeto. **El código de
+producción estaba bien.** Queda escrito en el doble para que nadie vuelva a buscarlo en el cifrado.
+
+**El par de claves lo genera la web** (**D-145**). Ricardo no tiene terminal, y una clave que hay que
+generar con un comando es una clave que no se genera nunca. `/api/ops` la crea, enseña la privada
+**una sola vez** —el mismo trato que las claves de API— y dice con todas las letras qué pasa si se
+pierde.
+
+**Verificación.** `test:respaldos` **27** comprobaciones · `test:db` completo en verde con **774**
+sumando los recuentos publicados · `check:env` 84 variables declaradas sin un solo valor ·
+`check:secrets`, `check:fronteras`, `check:archivos` y `check:alcance` en verde. El acceso al cliente
+de S3 desde `lib/backup/destino.ts` es una **excepción con nombre** en `check:fronteras`, no un
+patrón: el destino de las copias es otro proveedor y otras credenciales, y no puede entrar por
+`@/lib/files`, que habla con MinIO — que es precisamente lo que hay que copiar.
+
+**Lo que falta, y es de Ricardo.** El bucket de R2 y sus **dos** credenciales, las variables en
+Easypanel, las dos tareas programadas y **la restauración real contra staging**, que necesita la clave
+privada por el canal privado. Paso a paso completo, con los clics, en **`docs/deployment.md` §4nonies**.
+Hasta que eso exista, el criterio 6 está demostrado **en el laboratorio** —copia, cifrado, subida,
+purga y restauración desde una copia antigua contra un almacenamiento real— pero **no en staging**, y
+el DoD #8 no se puede dar por cumplido.

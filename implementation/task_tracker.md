@@ -38,7 +38,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 3 `pending` · **18 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01, DU-07, DU-08, DU-09, DU-13, DU-14, DU-15, DU-16, DU-17, DU-18, DU-19, DU-20, DU-21, DU-23) · **18 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12, FU-12, FU-13, DU-22) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
+**Estado global:** 2 `pending` · **19 `in_progress`** (FU-05, FU-08, FU-09, FU-14, DU-01, FU-01, DU-07, DU-08, DU-09, DU-13, DU-14, DU-15, DU-16, DU-17, DU-18, DU-19, DU-20, DU-21, DU-23) · **18 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12, FU-12, FU-13, DU-22) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -94,7 +94,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | ━━━ | ━━━ | **▼ M5 · API PARA AGENTES Y GO-LIVE** | ━━━ | ━━━ | ━━━ |
 | DU-22 | DU | API v1 de lectura: clave, alcances, límites y auditoría | M5 | FU-06, DU-17, DU-19 · `api_contracts` | `done` — **los diez criterios verificados** con `test:api`: **74** comprobaciones por HTTP contra el servidor real, con las **doce celdas** de alcance × ruta recorridas. Migraciones **0014** (`audit_log.metadata`, **D-138**) y **0015** (la política nombra a `agent_slg`, **D-137**) |
 | DU-23 | DU | API v1 de escritura y especificación OpenAPI | M5 | DU-22 | `in_progress` — **las nueve rutas del contrato existen**; criterios 1…6 y 8 verificados con `test:api` (**124** comprobaciones, ejecutada tres veces). La especificación **se genera del catálogo** que valida las peticiones. El **criterio 7 es el DoD #6** y se comprueba en producción: aquí está probado todo lo que no exige el despliegue |
-| FU-14 | FU | Copias de seguridad cifradas a destino externo y restauración probada | M5 | FU-05 | `pending` |
+| FU-14 | FU | Copias de seguridad cifradas a destino externo y restauración probada | M5 | FU-05 | `in_progress` — **criterios 1…5, 7 y 8 verificados** con `test:respaldos` (**27** comprobaciones con copia y restauración reales). Cifrado **asimétrico** (**D-143**), nada lista el bucket (**D-144**), el par de claves lo genera `/api/ops` (**D-145**). El **criterio 6** está demostrado en el laboratorio pero **no en staging**: necesita el bucket de R2, sus dos credenciales y la clave privada — `docs/deployment.md` **§4nonies** |
 | DU-24 | DU | README operativo y prueba de Literacy | M5 | DU-11, DU-14, DU-17, FU-14 | `pending` |
 | DU-25 | DU | Go-live: contenido, DNS raíz, monitor y auditoría final | M5 | todas las anteriores | `pending` |
 
@@ -351,6 +351,16 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   podía mentir — migración **0012** y lo elige quien publica (**D-126**). Y un fallo que solo sale
   encadenando la suite: `test:webhooks` borraba capturas sin borrar antes su traza de `crm_delivery`.
   `test:db` sube a **538**.
+- `2026-09-13` — **FU-14: copias cifradas, y una restauración de verdad.** El cifrado es
+  **asimétrico** porque «el VPS cifra» y «la clave no está en el VPS» no caben juntas con una
+  contraseña compartida (**D-143**). Nada lista el bucket: las claves se calculan, así que la
+  credencial del servidor puede ser ciega (**D-144**). La mitigación de R-37 se prueba **por las dos
+  mitades**: la purga borra con su credencial y con la de copia el borrado **se rechaza**. Y el
+  criterio 6 se demuestra restaurando **una copia antigua** en otra base: vuelve lo que había
+  entonces y no vuelve lo de después. Tres fallos, los tres en la prueba y no en el producto —el
+  cliente de S3 exige la longitud, `spawnSync` bloqueaba el bucle de eventos del propio doble, y el
+  marcado `aws-chunked` que el doble no deshacía y parecía un fallo del cifrado—. El par de claves
+  lo genera `/api/ops` porque Ricardo no tiene terminal (**D-145**). `test:db` sube a **774**.
 - `2026-09-13` — **DU-23: la API de escritura y la especificación generada.** El catálogo declara cada
   parámetro **una vez**: el validador lo aplica y `openapi.json` lo describe, así que la
   especificación no puede mentir — la prueba lee el máximo que anuncia y pide uno más. El ciclo es

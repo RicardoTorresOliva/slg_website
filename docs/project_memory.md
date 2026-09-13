@@ -142,6 +142,15 @@ mismo milisegundo**. El orden y la comparación usan `date_trunc('milliseconds',
 Si alguna colección nueva pagina por fecha, usa `ordenDeColeccion()` y `despuesDelCursor()` de
 `lib/api/cursor.ts` en vez de escribir el `ORDER BY` a mano.
 
+## Las copias se cifran con clave pública, y la privada NO está en el servidor (FU-14)
+`lib/backup/cifrado.ts`: X25519 + AES-256-GCM. En el VPS vive `BACKUP_PUBLIC_KEY`, que **solo cifra**;
+`BACKUP_PRIVATE_KEY` se define únicamente en la sesión donde se restaura. Si alguna vez alguien
+propone «poner la privada en el servidor para automatizar la restauración», eso **anula la unidad
+entera**: quien entre en el servidor podría leer todas las copias.
+Las tres operaciones —copiar, restaurar, purgar— **no listan el bucket**: las claves se calculan de
+generación y fecha (`lib/backup/generaciones.ts`). Y hay **dos credenciales**: la del servidor no
+puede borrar, y esa es la mitigación de que R2 no ofrezca Object Lock (R-37).
+
 ## El mapa de rutas vive en `lib/content/rutas.ts`, y es EXPLÍCITO
 Cada página y cada servicio declara su ruta ES y su par EN (**D-79**). No se deriva del nombre del
 archivo: el Anexo A.2 anida la oferta (`/ai/academy/phoenix-peex`) y `/holdings` lo sirve un registro
@@ -232,6 +241,7 @@ se sirven. El par de idioma de cada ruta sale del campo `pair` del frontmatter, 
 | Aislamiento entre empresas | `npm run test:db` (necesita PostgreSQL) |
 | Que el portal no se esté volviendo un LMS | `npm run check:alcance` |
 | La API de agentes: 401, 403, 429, alcances y auditoría | `npm run test:api` (necesita el build) |
+| Que las copias se puedan **restaurar** | `npm run test:respaldos` (necesita PostgreSQL) |
 | Las cuatro cláusulas del sheet, cuadro a cuadro | `npm run test:gesto` (necesita el build y Chromium) |
 | El armazón público sobre el servidor real | `npm run check:armazon` (necesita el build) |
 | Que la zona DNS no se ha movido | `npm run check:dns` (ya no necesita `dig`) |

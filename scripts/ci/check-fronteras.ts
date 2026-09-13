@@ -37,6 +37,19 @@ const MODULOS = ["lib/auth/", "lib/mail/", "lib/files/"];
 const EXCEPCION = "app/api/auth/[...all]/route.ts";
 
 /**
+ * La segunda excepción con nombre: **el destino de las copias de seguridad**
+ * (FU-14). No es el adaptador de archivos de la aplicación —es **otro
+ * proveedor, otras credenciales y otro bucket**, fuera del que aloja el VPS
+ * (D-20)— así que no puede entrar por `@/lib/files`: esa puerta habla con
+ * MinIO, que es precisamente lo que hay que copiar.
+ *
+ * Se nombra el archivo y no la carpeta: `lib/backup/destino.ts` puede tocar el
+ * cliente de S3, y ningún otro archivo del módulo. Y sigue sin poder listar —
+ * eso lo vigila `check:archivos`, que no tiene excepciones.
+ */
+const EXCEPCION_DE_COPIAS = "lib/backup/destino.ts";
+
+/**
  * El módulo tiene DOS puertas públicas, no una: `@/lib/auth` para el servidor y
  * `@/lib/auth/edge` para el middleware, que corre en un runtime donde la
  * instancia de Better Auth y la conexión a PostgreSQL no existen. `edge` es
@@ -72,6 +85,7 @@ const REGLAS: readonly Regla[] = [
     porQue:
       "solo lib/files/s3.ts conoce el cliente de S3. Importarlo fuera pone al " +
       "alcance de esa ruta `ListObjects`, y ninguna ruta lista un bucket (RF-123, gate D10).",
+    salvo: [EXCEPCION_DE_COPIAS],
   },
   {
     nombre: "importa un archivo interno del módulo de archivos",

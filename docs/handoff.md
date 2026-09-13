@@ -130,6 +130,18 @@ que el paso existe.
 las páginas de servicio, ni en el blog. Solo dentro del portal, después de entrar. Es RF-96, y hay dos
 frenos de CI que ponen el pipeline en rojo si alguna vez se cuela.
 
+### 7. Las copias de seguridad — lo único que protege de lo que no se arregla después
+
+Un despliegue que sale mal se vuelve a desplegar; una base de datos perdida no se vuelve a escribir.
+Son cuatro pasos y tres se hacen una sola vez: **generar el par de claves** (lo hace la web por ti,
+un botón en `/api/ops`), **crear el bucket en Cloudflare R2 con dos credenciales**, **pegar las
+variables en Easypanel** y **dejar dos tareas programadas**. Paso a paso con los clics:
+`docs/deployment.md` **§4nonies**.
+
+**Lo que no se te puede olvidar:** la **clave privada** que te enseña la pantalla se ve **una sola
+vez**. Guárdala en tu gestor de contraseñas. Sin ella las copias son archivos ilegibles — y eso es a
+propósito: es lo que impide que quien entre en el servidor pueda leerlas.
+
 ---
 
 ## Cómo trabaja este proyecto (para quien abra la sesión)
@@ -200,6 +212,7 @@ criterio abierto, igual que el criterio 7 de DU-07 espera al despliegue.
 | 5 | **Google y Microsoft** (F.2-2, F.2-3) | `docs/deployment.md` §4quater | El gate **D8**, el cierre de DU-01 y DU-14 y —desde DU-21— **el DoD #5**, que pide aceptar una invitación con Microsoft 365. Es lo único que impide cerrar **M4** |
 | 5bis | **El subdominio del visor** `visor.softlandingglobal.com` | `docs/deployment.md` §4octies | El criterio 3 de DU-19: un registro DNS y un dominio en Easypanel |
 | 5ter | El **enlace del calendario** de la Sesión Cero (F.2-6) | Nada que abrir: **mándame la URL por el chat** | El criterio 4 de DU-21. Sin él el paso dice «Próximamente» y el portal funciona igual |
+| 5quater | El **bucket de copias** en R2, sus dos credenciales y las dos tareas programadas (FU-14) | `docs/deployment.md` §4nonies | El **DoD #8**. Es lo único de la lista que protege de lo que no se arregla después |
 | 6 | La **firma del copy** (FU-01) y las cuatro enumeraciones literales | `implementation/task_tracker.md` | Pasar de `copy: temporal` a `copy: aprobado` |
 | 7 | **S-01** | Canal privado, nunca aquí | El DoD de go-live |
 

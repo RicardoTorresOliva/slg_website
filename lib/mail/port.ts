@@ -17,12 +17,21 @@
  * D-22, cambiar cuatro variables de entorno— sin tocar un solo caso de uso.
  */
 
-/** Los cuatro tipos de la v1 (`data_model` §3.12). Cuatro, no tres: RF-50 pide uno más. */
+/**
+ * Los tipos de la v1 (`data_model` §3.12). Eran cuatro —RF-50 pidió el cuarto—
+ * y FU-14 añade el quinto: el aviso de copia de seguridad fallida.
+ */
 export const TIPOS_DE_CORREO = [
   "invitation",
   "password_reset",
   "capture_notice",
   "capture_failed_alert",
+  /**
+   * FU-14 · R-27. **Un cron que falla en silencio es un backup que nadie sabe
+   * que no existe.** El aviso no es cortesía: es la única señal de que la copia
+   * de anoche no está, y llega antes de que haga falta restaurarla.
+   */
+  "backup_failed_alert",
 ] as const;
 
 export type TipoDeCorreo = (typeof TIPOS_DE_CORREO)[number];

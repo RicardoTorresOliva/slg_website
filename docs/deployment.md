@@ -918,6 +918,93 @@ que dar **404**. Si te sale la portada del sitio, el dominio está apuntando mal
 
 ---
 
+## 4nonies. Las copias de seguridad (FU-14) — **la parte que no se puede posponer**
+
+Esto es lo único de la lista que protege de lo que no se puede arreglar después. Un despliegue que
+sale mal se vuelve a desplegar; una base de datos perdida no se vuelve a escribir.
+
+Son **cuatro cosas**, y tres de ellas se hacen una vez.
+
+### a) El par de claves — **lo genera la web por ti**
+
+1. Abre `https://staging.softlandingglobal.com/api/ops?token=…` (el mismo enlace de siempre; el token
+   está en la variable `OPS_TOKEN` del servicio).
+2. Pulsa **«Generar el par de claves de las copias de seguridad»**.
+3. Verás **dos bloques de texto**. Haz esto, en este orden, antes de cerrar la pestaña:
+   - **Copia el segundo** (la clave privada) y **guárdalo en tu gestor de contraseñas**, con el
+     nombre «SLG · clave privada de backups». **No se vuelve a enseñar.** Sin ella no se puede
+     restaurar ninguna copia: si la pierdes, los backups son archivos ilegibles.
+   - **Copia el primero** (la pública). Lo necesitas en el paso (c).
+
+> **Por qué son dos y no una.** La pública **solo cifra**; la privada **solo descifra**. Así el
+> servidor puede hacer copias sin tener a mano nada que las abra: quien entre en el servidor se
+> encuentra con que las copias no las puede leer. Por eso la privada **no va a ningún servidor**.
+
+### b) El bucket de destino, en Cloudflare R2
+
+**Fuera de Hostinger a propósito** (D-20): una copia en la misma casa que el original no es una copia.
+
+1. Entra en `https://dash.cloudflare.com` → menú lateral → **R2**.
+2. **Create bucket**. Nombre: `slg-backups`. Ubicación: la que te ofrezca por defecto. **Create**.
+3. Dentro del bucket, arriba a la derecha: **Settings** → apunta el **S3 API endpoint** (una
+   dirección que acaba en `.r2.cloudflarestorage.com`). Es el valor de `BACKUP_S3_ENDPOINT`.
+4. Vuelve a la pantalla de R2 → **Manage API tokens** (o **API** → **Manage API Tokens**).
+5. **Create API token**, y créalo **dos veces**, con permisos distintos:
+   - Primero: nombre `slg-backup-escritura`, permiso **Object Read & Write**, acotado al bucket
+     `slg-backups`. Copia el **Access Key ID** y el **Secret Access Key**.
+   - Segundo: nombre `slg-backup-purga`, permiso **Admin Read & Write** (el que incluye borrar),
+     mismo bucket. Copia los dos valores otra vez.
+
+> **Por qué dos credenciales y no una.** R2 no ofrece el bloqueo de objetos por API estándar, así que
+> lo que impide que alguien borre el histórico es que **la credencial que vive en el servidor no
+> pueda borrar**. La de borrar se usa solo para la limpieza de copias viejas, y no vive en el
+> servidor de la web.
+
+### c) Las variables, en Easypanel
+
+**Easypanel → proyecto `slg_website` → servicio `slg-web` → pestaña `Environment`.** Añade estas
+líneas al final, cada una con su valor a la derecha del `=`:
+
+| Variable | De dónde sale |
+|---|---|
+| `BACKUP_S3_ENDPOINT` | El endpoint del paso (b.3) |
+| `BACKUP_S3_REGION` | Escribe `auto` |
+| `BACKUP_S3_BUCKET` | `slg-backups` |
+| `BACKUP_S3_ACCESS_KEY_ID` | Del token `slg-backup-escritura` |
+| `BACKUP_S3_SECRET_ACCESS_KEY` | Del token `slg-backup-escritura` |
+| `BACKUP_PUBLIC_KEY` | **La clave PÚBLICA** del paso (a.3) |
+| `BACKUP_VOLUME_PATHS` | La ruta del volumen de MinIO dentro del servidor |
+| `BACKUP_ALERT_EMAIL` | Tu correo, para que un fallo te avise |
+
+**Lo que NO se pone aquí, y es importante:** `BACKUP_PRIVATE_KEY` (la privada) y las dos variables
+`BACKUP_PURGE_*`. Si aparecen en este panel, la protección del punto (b) deja de existir.
+
+Guarda y **Deploy**.
+
+### d) Las dos tareas programadas
+
+**Easypanel → proyecto `slg_website` → botón `+ Service` → `Cron`** (si tu versión no lo tiene, sirve
+una tarea del sistema en el VPS; el comando es el mismo).
+
+| Tarea | Cuándo | Comando |
+|---|---|---|
+| Copia | `0 3 * * *` (cada día a las 3:00) | `npm run backup` |
+| Purga | `0 4 * * 0` (domingos a las 4:00) | `npm run backup:purge` |
+
+La tarea de **purga** necesita las dos variables `BACKUP_PURGE_*`; las pones **en esa tarea**, no en
+`slg-web`.
+
+### e) Y lo que cierra el criterio: **restaurar una vez**
+
+Un backup que no se ha restaurado no es un backup. Cuando haya copias de más de un día, avísame y lo
+hago yo contra staging: necesito que me pases la clave **privada por el canal privado**, nunca por
+aquí ni por el repositorio, y la borro del entorno al terminar.
+
+Mientras tanto, el mecanismo entero —copiar, cifrar, subir, purgar y **restaurar desde una copia
+antigua**— está probado de punta a punta contra un almacenamiento real en `npm run test:respaldos`.
+
+---
+
 ## 5. Monitor de caída externo (criterios 8 y 9)
 
 **Producto: UptimeRobot** (D-49), dentro de la categoría que cerró D-43: servicio de

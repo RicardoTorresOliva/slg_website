@@ -265,6 +265,14 @@ const ACCIONES: readonly { id: string; boton: string; explica: string }[] = [
       "escribir a mano en una consola de PostgreSQL. Se puede pulsar las veces que haga falta.",
   },
   {
+    id: "claves-de-backup",
+    boton: "Generar el par de claves de las copias de seguridad",
+    explica:
+      "Crea una clave pública y una privada para cifrar los backups. La pública va a la variable " +
+      "BACKUP_PUBLIC_KEY del servidor; la privada la guardas TÚ en tu gestor de contraseñas y no " +
+      "la pones en ningún servidor. Se enseña una sola vez y no se guarda en ningún sitio.",
+  },
+  {
     id: "crear-buckets",
     boton: "Crear los dos buckets y cerrarlos",
     explica:
@@ -382,6 +390,28 @@ export async function POST(request: Request) {
       filas: [
         { que: "ALTER ROLE slg_app", ok: r.ok, detalle: r.detalle },
         ...(despues ? [{ que: "Conexión de la aplicación", ok: despues.ok, detalle: despues.detalle }] : []),
+      ],
+    };
+  } else if (accion === "claves-de-backup") {
+    /**
+     * **Se genera aquí porque Ricardo no tiene terminal**, y una clave que hay
+     * que generar con un comando es una clave que no se genera nunca (FU-14).
+     *
+     * La privada se enseña **una vez y no se guarda**: es el mismo trato que las
+     * claves de API en `/hq/claves`. La pública no es un secreto —solo cifra—,
+     * así que puede quedarse en la pantalla y en las variables del servidor.
+     */
+    const { generarParDeClaves } = await import("@/lib/backup/cifrado");
+    const par = generarParDeClaves();
+    hecho = {
+      titulo: "Claves de cifrado de las copias de seguridad",
+      nota:
+        "COPIA LA PRIVADA AHORA y guárdala en tu gestor de contraseñas. No se vuelve a enseñar, " +
+        "no se guarda en ninguna parte y sin ella NO se puede restaurar una copia. La pública va " +
+        "a la variable BACKUP_PUBLIC_KEY de slg-web; la privada NO va a ningún servidor.",
+      filas: [
+        { que: "BACKUP_PUBLIC_KEY (va al servidor)", ok: true, detalle: par.publica.trim() },
+        { que: "Clave privada (guárdala tú, fuera del servidor)", ok: true, detalle: par.privada.trim() },
       ],
     };
   } else if (accion === "crear-buckets") {
