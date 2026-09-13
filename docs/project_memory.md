@@ -235,6 +235,19 @@ archivos nuevos sin versionar, y al hacer commit dos frenos se pusieron rojos: e
 el primer push de una unidad dada por terminada. Los cinco frenos que barren el repositorio usan ahora
 `--cached --others --exclude-standard` (**D-74**). **Si añades un freno nuevo, cópialo de ahí.**
 
+## `withSystemScope` NO abre las tablas con `organization_id`
+Fija `app.actor_role = 'system'`, y la política de fila solo deja pasar a `slg_admin` y
+`slg_operator`. Así que una consulta de sistema sobre `announcement`, `deliverable`, `project` y
+compañía **devuelve cero**, no todo. Lo descubrió el primer fixture negativo de FU-13, que no
+filtraba nada (**D-122**). Úsalo para tablas sin empresa —colas, capturas anónimas, auditoría—; para
+leer datos de una empresa hace falta el contexto de alguien de SLG.
+
+## La fuga que la política NO para: el contexto construido desde la petición
+Si alguien fabrica el `AuthContext` con un `organization_id` que llega en la URL, la política de fila
+hace su trabajo **para la empresa equivocada** y no hay nada raro que ver desde dentro de la base. Es
+lo que RF-71 prohíbe y lo que `test:aislamiento` atrapa **arriba**. **El `organization_id` sale
+siempre de la sesión.**
+
 ## `error.tsx` importa JSON, y todo lo que importe pesa en CADA página pública
 Un límite de error **tiene que ser** componente de cliente (D-85), así que importa las cadenas del
 JSON directamente. Con un solo `content/ui/<lang>.json`, **cada cadena nueva de HQ o del portal

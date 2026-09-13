@@ -132,7 +132,7 @@ Paso a paso: `docs/deployment.md` **§4quater**.
    SigV4 de verdad, el servidor `standalone` de verdad, y un Chromium de verdad. Un doble siempre sale
    verde.
 3. **Todo criterio mecanizable se convierte en freno de CI, y todo freno tiene prueba negativa**
-   (R-26): *un script que nunca se ha visto en rojo no se acepta como gate verde*. Van trece.
+   (R-26): *un script que nunca se ha visto en rojo no se acepta como gate verde*. Van **veintidós**.
 4. **Este repositorio es PÚBLICO** (§10-6). Cero credenciales, cero entregables de cliente, cero
    nombres de cliente sin autorización. Lo vigilan `check:secrets`, gitleaks y `check:archivos`.
 5. **Sin lock-in de producto.** Correo por SMTP estándar, almacenamiento por API S3 genérica. Cambiar
@@ -152,9 +152,39 @@ actualiza `docs/project_memory.md`.
 |---|---|
 | Base de datos efímera para las pruebas | `bash scripts/db/local-pg.sh up` |
 | Pipeline entero | `npm run check:ci` |
-| Que los trece frenos siguen frenando | `npm run check:brakes` |
-| Aislamiento, correo, invitaciones, archivos y acceso | `npm run test:db` |
+| Que los **veintidós** frenos siguen frenando | `npm run check:brakes` |
+| Las **519** comprobaciones contra base, correo, archivos, CRM, webhooks y HQ | `npm run test:db` |
+| Cero terceros en la capa pública, medido con un navegador | `npm run check:terceros` |
 | Las cuatro cláusulas del sheet, cuadro a cuadro | `npm run test:gesto` |
 
 `npm run check:ci` y `test:db` necesitan `DATABASE_URL` y `DATABASE_URL_MIGRATIONS`; los imprime
 `bash scripts/db/local-pg.sh env`. **Esos comandos los ejecuta el asistente, no Ricardo.**
+
+---
+
+## Estado al 2026-09-13 (fin de la sesión larga)
+
+**M2 cerrado en código y M3 construido entero.** Ocho unidades esta sesión: **DU-12** (webhooks
+firmados + analítica sin terceros), **FU-12** (armazón de HQ y portal), **DU-13** (tablero),
+**DU-14** (empresas, proyectos, usuarios), **DU-16** (capturas y reintento), **DU-17** (claves y
+auditoría), **DU-15** (entregables y avisos) y **FU-13** (batería de aislamiento).
+
+**HQ tiene sus nueve rutas construidas y verificadas**, y **sigue devolviendo 404 a todo el mundo**:
+`SUPERFICIES_ABIERTAS.hq` está en `false` porque M3 sigue abierto (RF-87). No es un olvido — se
+cambia al cerrar el milestone, y hasta entonces la revisión visual de esas pantallas queda como
+criterio abierto, igual que el criterio 7 de DU-07 espera al despliegue.
+
+### Lo que sigue esperando a Ricardo, en orden de lo que más desbloquea
+
+| # | Qué | Dónde está el paso a paso | Qué desbloquea |
+|---|---|---|---|
+| 1 | Los **cinco servicios y el DNS** (FU-05, criterios 1, 2, 3 y 8) | `docs/deployment.md` §2–§5 | **Todo lo demás.** Sin despliegue no hay staging, y sin staging no se cierran D1–D6 en producción |
+| 2 | El **subdominio de correo** y la prueba de bandeja de entrada (FU-08) | `docs/deployment.md` §4bis, y la comprobación en `/api/ops` | Invitaciones, recuperación de contraseña, avisos de fallo del CRM |
+| 3 | Los **dos buckets privados** de `minio` y las `S3_*` (FU-09) | `docs/deployment.md` §4ter | La entrega real de documentos (DU-08) y los entregables (DU-15) |
+| 4 | Las **dos claves del CRM** (F.2-5) | `docs/deployment.md` §4septies | Que los leads lleguen al CRM y que el tablero enseñe métricas |
+| 5 | **Google y Microsoft** (F.2-2, F.2-3) | `docs/deployment.md` §4quater | El gate **D8** y con él el cierre de DU-01 y DU-14 |
+| 6 | La **firma del copy** (FU-01) y las cuatro enumeraciones literales | `implementation/task_tracker.md` | Pasar de `copy: temporal` a `copy: aprobado` |
+| 7 | **S-01** | Canal privado, nunca aquí | El DoD de go-live |
+
+Opcionales, y el sitio funciona sin ellos: la **analítica autoalojada** (§4quinquies) y los
+**webhooks a n8n** (§4sexies).
