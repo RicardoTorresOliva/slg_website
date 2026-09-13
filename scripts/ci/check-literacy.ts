@@ -175,6 +175,43 @@ check(
   secretosConValor.join(", "),
 );
 
+/**
+ * **CADA `§…` DE LA GUÍA APUNTA A UN APARTADO QUE EXISTE.**
+ *
+ * La guía de despliegue se navega por referencias cruzadas —«ver §4ter»— y una
+ * que apunta a un sitio equivocado manda a Ricardo a leer otra cosa. Escribiendo
+ * la tabla de «lo que solo puedes hacer tú» me equivoqué **dos veces seguidas**:
+ * mandé a `§4ter` para los inicios de sesión sociales, que están en `§4quater`,
+ * y a `§4ter` para los buckets citando solo `§2.1`. Las dos las pillé leyendo,
+ * que es exactamente la forma en que no hay que pillarlas.
+ *
+ * Es el mismo defecto que `check:anexo-d` vigila con los `npm run …` que no
+ * existen: una referencia rota **parece cobertura**.
+ */
+const apartados = new Set(
+  [...guia.matchAll(/^#{2,4}\s+([0-9]+[a-zA-Z]*(?:\.[0-9]+)*)\./gm)].map((m) => m[1]!),
+);
+/**
+ * **Solo las referencias a ESTE documento.** La guía también cita apartados de
+ * `architecture.md` —«`architecture` §13.1 exige…»— y esos viven en otro
+ * archivo con su propia numeración. Se reconocen porque la línea nombra el
+ * documento; una referencia interna nunca lo hace.
+ */
+const OTRO_DOCUMENTO = /architecture|data_model|api_contracts|user_units|scope\.md|\.md\b/;
+const internas = guia
+  .split("\n")
+  .filter((linea) => !OTRO_DOCUMENTO.test(linea))
+  .flatMap((linea) => [...linea.matchAll(/§([0-9]+[a-zA-Z]*(?:\.[0-9]+)*)/g)].map((m) => m[1]!));
+const rotas = [...new Set(internas)]
+  .filter((ref) => !apartados.has(ref))
+  // Un `§4bis.0` referenciado como `§4bis` vale: el apartado padre existe.
+  .filter((ref) => !apartados.has(ref.split(".")[0]!));
+check(
+  "y cada `§…` de la guía apunta a un apartado que existe",
+  rotas.length === 0,
+  rotas.map((r) => `§${r}`).join(", "),
+);
+
 if (fallos > 0) {
   console.error(`\n✗ literacy: ${fallos} de ${comprobaciones} comprobaciones fallaron.\n`);
   process.exit(1);

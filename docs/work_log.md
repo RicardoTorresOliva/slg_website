@@ -2574,7 +2574,7 @@ la trazabilidad de las capturas anteriores.
 | `test:visor` | 25, ninguna contra la base | **45**, nueve contra PostgreSQL real |
 | `test:api` | 124 | **130** |
 | `test:respaldos` | 27 | **32** |
-| `check:brakes` | 31 anunciados, 35 reales, el job sin base | **40 contados solos**, en el job que tiene base |
+| `check:brakes` | 31 anunciados, 35 reales, el job sin base | **41 contados solos**, en el job que tiene base |
 | Chequeos del playbook | pasaban sobre cero unidades | corren en CI, sobre las 25 |
 
 ### Los cuatro frenos que prometían más de lo que comprobaban — **cerrados**
@@ -2698,3 +2698,26 @@ no veía. Un valor de muestra se pega igual esté donde esté — y en una tabla
 una tabla se lee como una lista de cosas que copiar.
 
 `test:acceso` 39 → **42** · `test:autorizacion` 23 → **30** · `check:runtime` 33.
+
+### El repaso de pendientes — lo que encontró de paso
+
+Al hacer la lista de lo que queda, dos cosas más:
+
+**`docs/decision_log.md` se contradecía consigo mismo.** Un bloque daba P-3 y P-4 por **cerradas por
+Ricardo el 2026-09-12** —`no-reply@mailweb.softlandingglobal.com` sobre `mailweb.softlandingglobal.com`—
+y la tabla de «Pendientes de decisión», treinta líneas más abajo en el **mismo archivo**, las daba por
+abiertas. El `task_tracker` copiaba la versión equivocada: «faltan P-3/P-4». Corregido en los dos
+sitios. **No queda ninguna decisión de producto ni de configuración abierta**: P-1 a P-5, las cinco.
+
+**`docs/deployment.md` estrena `§0ter`: las doce cosas que solo puede hacer Ricardo**, en orden, con
+dónde se hace cada una, qué unidad desbloquea y cuánto cuesta. Todo lo que se podía resolver
+escribiendo código está escrito; lo que queda son pestañas de Easypanel, paneles de proveedores y una
+tarde mirando pantallas, y hasta ahora estaba repartido por mil líneas de guía.
+
+Escribiendo esa tabla **me equivoqué dos veces seguidas de apartado** —mandé a `§4ter` lo que está en
+`§4quater`— y las dos las pillé releyendo. Una referencia rota **parece cobertura**: quien la sigue
+cree que hay algo detrás. Así que `check:literacy` comprueba ahora que cada `§…` de la guía apunta a
+un apartado que existe, distinguiendo las internas de las que citan `architecture.md`. Es el mismo
+defecto que `check:anexo-d` vigila con los `npm run …` inexistentes.
+
+`check:brakes` **41**.

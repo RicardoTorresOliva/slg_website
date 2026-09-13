@@ -156,6 +156,20 @@ const CASOS: Caso[] = [
     env: { LITERACY_ROOT: path.join(HERE, "negative/literacy") },
   },
   {
+    /**
+     * La guía se navega por referencias cruzadas, y una que apunta a un sitio
+     * equivocado manda a leer otra cosa. Escribiendo la tabla de «lo que solo
+     * puedes hacer tú» me equivoqué **dos veces seguidas** de apartado, y las
+     * dos las pillé leyendo — que es exactamente como no hay que pillarlas. Es
+     * el mismo defecto que el `npm run …` inexistente de `check:anexo-d`: una
+     * referencia rota **parece cobertura**.
+     */
+    freno: "una referencia `§…` de la guía que apunta a un apartado inexistente",
+    script: "check-literacy.ts",
+    espera: "§42",
+    env: { LITERACY_ROOT: path.join(HERE, "negative/literacy") },
+  },
+  {
     freno: "una de las siete tareas del manual que desaparece",
     script: "check-literacy.ts",
     espera: "las 7 tareas están en el README",

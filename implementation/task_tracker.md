@@ -68,7 +68,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | ━━━ | ━━━ | **▼ M0-B · FUNDACIONES: IDENTIDAD Y SERVICIOS COMPARTIDOS** | ━━━ | ━━━ | ━━━ |
 | FU-06 | FU | Módulo de identidad y autorización | M0-B | FU-04, FU-05 | `done` |
 | FU-07 | FU | Servicio de invitaciones | M0-B | FU-06, FU-08 | `done` |
-| FU-08 | FU | Adaptador de correo transaccional | M0-B | FU-05 · F.2-4 | `in_progress` — código cerrado (criterios 1, 2, 5, 7); faltan P-3/P-4, los registros del subdominio y los tres buzones |
+| FU-08 | FU | Adaptador de correo transaccional | M0-B | FU-05 · F.2-4 | `in_progress` — código cerrado (criterios 1, 2, 5, 7). **P-3 y P-4 ya no faltan**: las cerró Ricardo el 2026-09-12 (`no-reply@mailweb.softlandingglobal.com`), y esta fila seguía diciendo lo contrario. Faltan los registros del subdominio y los tres buzones |
 | FU-09 | FU | Almacenamiento de archivos y URLs firmadas | M0-B | FU-05 · `api_contracts` | `in_progress` — los cinco criterios cerrados en código; faltan los dos buckets privados en `minio` y las variables `S3_*` |
 | DU-01 | DU | Acceso, sesión y recuperación por los tres métodos | M0-B | FU-06, FU-07, FU-08 · F.2-2, F.2-3 | `in_progress` — criterios 2, 4, 5, 6, 7, 8 y 9 cerrados; 1 y 3 esperan F.2-2 y F.2-3 |
 | ━━━ | ━━━ | **▼ M1-A · CAPA PÚBLICA: COMPUERTAS, COMPONENTES Y ARMAZÓN** | ━━━ | ━━━ | ━━━ |

@@ -47,6 +47,42 @@ lo dice en su título.
 **Regla que no se rompe:** ninguna contraseña ni clave se pega en un chat, en un documento ni en este
 repositorio. Van de una pestaña de Easypanel a otra pestaña de Easypanel.
 
+### 0ter. La lista completa de lo que solo puedes hacer tú
+
+Todo lo que se podía resolver escribiendo código **está escrito y verificado**. Lo que queda son
+**doce cosas**, y ninguna es un comando: son pestañas de Easypanel, paneles de proveedores y una
+tarde mirando pantallas. Esta tabla es el estado real del proyecto en una página.
+
+Van en este orden porque cada una desbloquea a la siguiente.
+
+| # | Qué | Dónde | Desbloquea | Rato |
+|---|---|---|---|---|
+| 1 | Los **cinco servicios** y la página de puesta en marcha | Easypanel · §2.1 | FU-05, y con ella todo lo demás | ~40 min |
+| 2 | **Base de datos**: tres variables y el botón de la contraseña | Easypanel · §2.1 paso 2 | FU-05 | ~10 min |
+| 3 | **Los dos buckets**: copiar dos valores y pulsar el botón | Easypanel · §2.1 paso 3 y §4ter | **FU-09, DU-08** (la entrega real de documentos) | ~10 min |
+| 4 | **Despliegue automático** `develop`→staging y `main`→producción | Easypanel · §3 | FU-05, DU-07, DU-23 | ~15 min |
+| 5 | **DNS**: primero la línea base, después los registros nuevos | Panel del dominio · §4 | FU-05, FU-08, DU-25 | ~30 min |
+| 6 | **Correo**: el subdominio de envío y los tres buzones | Panel del dominio + Microsoft 365 · §4bis | **FU-08, DU-01, DU-09** | ~30 min |
+| 7 | **Google y Microsoft** como formas de entrar (F.2-2, F.2-3) | Google Cloud + Entra ID · §4quater | **DU-01, DU-14, DU-21** y el gate **D8** | ~45 min |
+| 8 | **Mirar las intranets**: `SUPERFICIES_EN_REVISION=hq,portal` en staging | Easypanel · §2.2 | **DU-13, DU-14, DU-15, DU-16, DU-17, DU-18, DU-20** | una tarde |
+| 9 | El **visor**: el subdominio, su variable y `DELIVERABLE_VIEWER_SECRET` | Easypanel · §4octies | **DU-19** y el gate **D10** | ~20 min |
+| 10 | **Copias de seguridad**: R2, las claves, las dos tareas y `BACKUP_FIRST_DATE` | Cloudflare + Easypanel · §4nonies | **FU-14** y el gate **D11** | ~40 min |
+| 11 | **Monitor de caída** y provocar una parada para ver si avisa | UptimeRobot · §5 | **DU-25** y el gate **D11** | ~20 min |
+| 12 | **La prueba de tres minutos**: cambiar un texto, subir una descarga, crear un cliente | Solo el navegador · `README.md` | **DU-24** y el gate **D12** | ~15 min |
+
+**Fuera de esta lista quedan tres cosas que no son de despliegue**, y las tres son tuyas también:
+
+- **Firmar el copy** de FU-01 (los 74 registros están redactados y sin marcadores) y las cuatro
+  enumeraciones literales que faltan.
+- **El CRM real** (F.2-5): sus dos claves se ponen siguiendo **§4septies**, y hasta entonces DU-09 y
+  DU-13 están probados contra un doble.
+- **La URL de agenda** de la Sesión Cero (F.2-6): mientras no exista, el portal enseña
+  «próximamente», que es la mitad degradada del criterio 4 de DU-21.
+- **La rotación de S-01**, diferida por decisión tuya al final del proyecto. Es requisito de go-live.
+
+> **Lo que NO hace falta que hagas:** ninguna decisión de producto ni de configuración sigue abierta.
+> P-1 a P-5 están las cinco cerradas. No hay nada esperando a que elijas entre opciones.
+
 ---
 
 ## 0. Antes de empezar: el orden importa

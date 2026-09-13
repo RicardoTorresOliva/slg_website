@@ -385,17 +385,18 @@ existir.
 ## Pendientes de decisión
 
 Las elecciones de producto de **correo transaccional** (D-22) y **destino de backups** (D-21) están
-cerradas, **P-5 incluida** (D-43). Quedan solo dos sub-decisiones de configuración, que se fijan en M0:
+cerradas, **P-5 incluida** (D-43). **P-3 y P-4 también**, desde el 2026-09-12 — esta sección las daba
+por abiertas y la de arriba por cerradas, en el mismo archivo. Lo encontró el repaso de pendientes.
+**No queda ninguna decisión de producto ni de configuración abierta.**
 
 | # | Pendiente | Tipo | Estado |
 |---|-----------|------|--------|
 | ~~P-5~~ | **Monitorización externa de disponibilidad, fuera del VPS.** La abrían `risks.md` R-29 y RF-130 (gate D11). | Elección de **categoría** | ✅ **Cerrada por D-43**: servicio de uptime dedicado con tramo gratuito, externo al VPS. Queda elegir el producto concreto con 2–3 candidatos (paso 5), lo que **no bloquea el arranque**: afecta a FU-05 y DU-25, ambas fuera de M0-A. n8n queda como monitor **secundario**. |
-| P-3 | Dirección remitente visible, tras D-24: `From` en el subdominio con `Reply-To` a `support@` (recomendado), o `From` en la raíz apoyándose solo en alineación DKIM | Sub-decisión de configuración | Abierta, se fija en M0 (antes de FU-08) |
-| P-4 | Nombre exacto del subdominio de envío | Sub-decisión de configuración | Abierta, se fija en M0 (antes de FU-08) |
+| ~~P-3~~ | Dirección remitente visible, tras D-24 | Sub-decisión de configuración | ✅ **Cerrada por Ricardo (2026-09-12)**: `no-reply@mailweb.softlandingglobal.com`, con `support@softlandingglobal.com` como `Reply-To`. Ver el bloque de FU-08 arriba |
+| ~~P-4~~ | Nombre exacto del subdominio de envío | Sub-decisión de configuración | ✅ **Cerrada por Ricardo (2026-09-12)**: `mailweb.softlandingglobal.com` |
 
-**Ninguna de las tres bloquea la aprobación del plan.** P-3 y P-4 se fijan en M0 antes de FU-08.
-El producto de monitorización se elige antes de FU-05, con el mismo procedimiento que P-1 y P-2:
-2–3 candidatos con contrapartidas, y elige Ricardo.
+**Las tres están cerradas.** El producto de monitorización se eligió con el mismo procedimiento que
+P-1 y P-2 —2–3 candidatos con contrapartidas, y elige Ricardo— y es **UptimeRobot** (D-49).
 
 Elecciones de producto resueltas con Ricardo el 2026-09-08 (AGENTS.md Regla 7: elige quien vive las consecuencias):
 
