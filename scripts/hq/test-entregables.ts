@@ -234,6 +234,7 @@ async function main() {
     const idAviso = await publicarAviso(admin(), {
       organizationId: ORG,
       titulo: "Primer aviso",
+      idioma: "es",
       cuerpoMd: "## Hola\n\nUn <script>alert(1)</script> y un [enlace](javascript:alert(2)) y uno [bueno](https://ejemplo.test).",
     });
     check("el aviso se publica", Boolean(idAviso));
@@ -287,11 +288,30 @@ async function main() {
 
     let campoAviso = "";
     try {
-      await publicarAviso(admin(), { organizationId: "", titulo: "Sin empresa", cuerpoMd: "x" });
+      await publicarAviso(admin(), { organizationId: "", titulo: "Sin empresa", cuerpoMd: "x", idioma: "es" });
     } catch (e) {
       campoAviso = (e as Error & { campo?: string }).campo ?? "";
     }
     check("un aviso SIN empresa no se publica: no hay aviso global", campoAviso === "empresa", campoAviso);
+
+    console.log("\nEl aviso guarda EN QUÉ IDIOMA se escribió, no el de quien lo publica (RF-72):\n");
+    await publicarAviso(admin(), {
+      organizationId: ORG,
+      titulo: "Second announcement",
+      cuerpoMd: "Written in English on purpose.",
+      idioma: "en",
+    });
+    const enIngles = (await avisos(admin(), ORG)).find((a) => a.titulo === "Second announcement");
+    check("se guarda como inglés aunque quien lo publica tenga la interfaz en español", enIngles?.idioma === "en", String(enIngles?.idioma));
+    check("y el español sigue marcado como español", losAvisos[0]?.idioma === "es", String(losAvisos[0]?.idioma));
+
+    let campoIdioma = "";
+    try {
+      await publicarAviso(admin(), { organizationId: ORG, titulo: "Roto", cuerpoMd: "x", idioma: "pt" });
+    } catch (e) {
+      campoIdioma = (e as Error & { campo?: string }).campo ?? "";
+    }
+    check("un idioma fuera del vocabulario se rechaza", campoIdioma === "idioma", campoIdioma);
 
     await limpiar();
   } finally {

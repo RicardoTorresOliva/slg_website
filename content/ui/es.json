@@ -306,5 +306,13 @@
   "hq.deliv.filePlaceholder": "informe.pdf",
   "hq.deliv.mimePlaceholder": "application/pdf",
   "hq.deliv.mime": "Tipo MIME",
-  "hq.deliv.bytes": "Tamaño en bytes"
+  "hq.deliv.bytes": "Tamaño en bytes",
+  "portal.ann.title": "Avisos",
+  "portal.ann.empty": "No hay avisos por ahora",
+  "portal.ann.emptyText": "Cuando SLG publique algo para tu empresa, aparecerá aquí. No hace falta que vuelvas a mirar: te llegará por correo.",
+  "portal.ann.from": "Publicado por",
+  "portal.ann.error": "No hemos podido cargar los avisos",
+  "portal.ann.errorText": "No es algo que hayas hecho mal. Vuelve a intentarlo en un momento.",
+  "hq.ann.language": "Idioma del aviso",
+  "hq.ann.languageHint": "En qué idioma lo estás escribiendo. El cliente lo leerá tal cual, sin traducir."
 }

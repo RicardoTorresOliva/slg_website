@@ -448,6 +448,13 @@ export const announcement = pgTable(
       .references(() => organization.id, { onDelete: "restrict" }),
     title: text("title").notNull(),
     bodyMd: text("body_md").notNull(),
+    /**
+     * El idioma EN QUE SE ESCRIBIÓ, no el de quien lo lee (RF-72, DU-18). Sin
+     * él, el portal solo podía marcar el aviso con el idioma de la interfaz, y
+     * el atributo `lang` —el que decide cómo lo pronuncia un lector de
+     * pantalla— mentía.
+     */
+    locale: text("locale").notNull().default("es"),
     publishedAt: timestamp("published_at", { withTimezone: true }),
     authorType: text("author_type"),
     authorId: text("author_id"),

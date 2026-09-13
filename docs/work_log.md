@@ -1918,3 +1918,47 @@ degrada con el nombre de la variable que falta, y una acción inventada no rompe
 
 **Las cadenas de conexión de ejemplo van partidas en trozos a propósito**: escritas enteras, el
 análisis de secretos pone el CI en rojo, y tiene razón aunque sea un ejemplo.
+
+---
+
+## 2026-09-13 · DU-18 — Inicio del portal con avisos
+
+**Qué se construyó.** `/portal`: los avisos dirigidos a la empresa del usuario, con el cuerpo en
+Markdown saneado y el estado vacío **redactado**.
+
+**La pantalla no recibe ningún `organization_id`** (**D-127**), y esa es la unidad entera. Ni por
+parámetro, ni por la URL, ni como prop: el filtrado lo hace la política de fila con el contexto de la
+sesión. Por eso el criterio 1 —«los de otras empresas no aparecen **ni por enlace directo**»— es
+cierto sin ninguna comprobación añadida: **no hay enlace que construir**. Lo que no existe no se
+puede manipular.
+
+**El estado vacío está redactado, no es un hueco** (criterio 2). Dice qué va a pasar y, sobre todo,
+**que no hace falta volver a mirar**: el aviso llega por correo. Un portal al que hay que asomarse
+por si acaso es un portal que nadie abre.
+
+### El defecto que esta unidad destapó: el aviso no sabía en qué idioma estaba
+
+`announcement` no guardaba idioma. Al ir a mostrar el aviso «tal como se entregó» (RF-72) resultó que
+lo único que se podía poner en `lang` era **el idioma de la interfaz de quien lo lee** — o sea, el
+atributo mentía. Y no es decorativo: `lang` es lo que hace que un lector de pantalla lea un aviso en
+inglés con fonética inglesa en vez de deletrearlo en español, que es exactamente el caso de un
+cliente internacional leyendo lo que SLG le escribió.
+
+Migración **0012**: `announcement.locale`, con `CHECK (locale IN ('es','en'))` y defecto `es`. Lo
+elige **quien publica**, en el formulario de `/hq/avisos`, porque se escribe a clientes
+internacionales en inglés con el panel en español todos los días (**D-126**).
+
+### Y un fallo de encadenado que solo aparece corriendo la suite entera
+
+`test:webhooks` borraba sus capturas sin borrar antes su traza de `crm_delivery`, que las referencia
+con `ON DELETE RESTRICT` —la traza de una entrega es evidencia y no se borra en cascada—. En
+ejecuciones sueltas nunca había traza; encadenado detrás de `test:crm`, sí. **Los hijos primero.**
+
+**Verificación.** `test:aislamiento` sube a **19** y cubre ya la superficie del portal: `client_member`
+alcanza «avisos» y «entregables» y **no** alcanza «miembros», que es de `client_admin` — eso no es una
+fuga, es la matriz haciendo su trabajo. `test:entregables` sube a **43** con el idioma del aviso.
+`test:db`: **538** comprobaciones. Todos los frenos en verde, `check:brakes` **veintidós**.
+
+**Lo que queda abierto.** Como el resto de M3 y M4: el portal **sigue devolviendo 404** mientras M4
+esté abierto (RF-87), así que la revisión visual espera. Y DU-19 necesita el **subdominio del visor**
+(D-45), que sigue sin fijarse.

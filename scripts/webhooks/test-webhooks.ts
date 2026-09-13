@@ -423,6 +423,15 @@ async function main() {
                 (select id::text from lead_capture where email like '%@du12-cableado.test')`;
     await dueno`delete from download_event where lead_capture_id in
                 (select id from lead_capture where email like '%@du12-cableado.test')`;
+    /**
+     * **Los hijos primero.** `crm_delivery` referencia a `lead_capture` con
+     * `ON DELETE RESTRICT` —la traza de una entrega es evidencia y no se borra
+     * en cascada—, así que borrar el lead sin borrar antes su traza falla con
+     * una violación de clave ajena. Pasó en una ejecución encadenada: el
+     * barrido de la cola había dejado filas para estas capturas.
+     */
+    await dueno`delete from crm_delivery where lead_capture_id in
+                (select id from lead_capture where email like '%@du12-cableado.test')`;
     await dueno`delete from lead_capture where email like '%@du12-cableado.test'`;
 
     /* ── Criterio 7 · los secretos solo en variables de entorno ─────────── */

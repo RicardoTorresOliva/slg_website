@@ -32,6 +32,8 @@ export type Aviso = {
   readonly organizationId: string;
   readonly titulo: string;
   readonly cuerpoMd: string;
+  /** El idioma EN QUE SE ESCRIBIÓ (RF-72). Lo usa `lang` en el portal. */
+  readonly idioma: string;
   readonly publicadoEn: string | null;
   readonly autorTipo: string | null;
   readonly autor: string | null;
@@ -41,6 +43,12 @@ export type DatosDeAviso = {
   readonly organizationId: string;
   readonly titulo: string;
   readonly cuerpoMd: string;
+  /**
+   * En qué idioma está escrito. **Lo elige quien publica**, no se deduce del
+   * idioma de su interfaz: alguien con la interfaz en español escribe a un
+   * cliente internacional en inglés continuamente.
+   */
+  readonly idioma: string;
 };
 
 const MAXIMO_CUERPO = 20_000;
@@ -52,6 +60,7 @@ function validar(datos: DatosDeAviso): string | null {
   // Un tope generoso, pero tope: un aviso no es un entregable, y un cuerpo sin
   // límite es una columna de texto que alguien acaba usando de almacén.
   if (datos.cuerpoMd.length > MAXIMO_CUERPO) return "cuerpo";
+  if (datos.idioma !== "es" && datos.idioma !== "en") return "idioma";
   return null;
 }
 
@@ -66,6 +75,7 @@ export async function avisos(ctx: AuthContext, organizationId?: string): Promise
     organizationId: f.organizationId,
     titulo: f.title,
     cuerpoMd: f.bodyMd,
+    idioma: f.locale,
     publicadoEn: f.publishedAt?.toISOString() ?? null,
     autorTipo: f.authorType,
     autor: f.authorLabel,
@@ -94,6 +104,7 @@ export async function publicarAviso(ctx: AuthContext, datos: DatosDeAviso): Prom
           organizationId: datos.organizationId,
           title: datos.titulo.trim(),
           bodyMd: datos.cuerpoMd,
+          locale: datos.idioma,
           publishedAt: new Date(),
           // Como en los entregables (RF-111): del contexto, no de un parámetro.
           authorType: ctx.actorType,

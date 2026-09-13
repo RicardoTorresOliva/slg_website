@@ -88,8 +88,8 @@ async function sembrar() {
     await dueno`insert into deliverable (id, project_id, organization_id, title, type, version, family_id, visibility, published_at)
                 values (${crypto.randomUUID()}, ${lado.proyecto}, ${lado.org}, ${`Entregable ${lado.slug}`},
                         'link', 1, ${crypto.randomUUID()}, 'client', now())`;
-    await dueno`insert into announcement (id, organization_id, title, body_md, published_at)
-                values (${crypto.randomUUID()}, ${lado.org}, ${`Aviso ${lado.slug}`}, 'cuerpo', now())`;
+    await dueno`insert into announcement (id, organization_id, title, body_md, locale, published_at)
+                values (${crypto.randomUUID()}, ${lado.org}, ${`Aviso ${lado.slug}`}, 'cuerpo', 'es', now())`;
   }
 }
 
@@ -150,6 +150,23 @@ async function main() {
       porProyectoAjeno.length === 0,
       JSON.stringify(porProyectoAjeno),
     );
+
+    /* ── La superficie del portal (DU-18, criterio 1) ───────────────────── */
+    console.log("\nDU-18 — el portal de A no alcanza NADA de B, tampoco sus secciones:\n");
+    const delPortal = SECCIONES.filter((s) => s.superficie === "portal");
+    check("hay secciones de portal que probar", delPortal.length >= 3, `${delPortal.length}`);
+    for (const seccion of delPortal) {
+      let pasa = true;
+      try {
+        exigirSeccion(clienteDe(A), seccion.clave);
+      } catch {
+        pasa = false;
+      }
+      // `members` es de `client_admin`: un `client_member` no la tiene, y eso
+      // no es una fuga — es la matriz haciendo su trabajo.
+      const esperado = seccion.clave !== "members";
+      check(`\`client_member\` ${esperado ? "SÍ" : "NO"} alcanza «${seccion.clave}»`, pasa === esperado);
+    }
 
     /* ── Criterio 2 · las rutas de HQ ───────────────────────────────────── */
     console.log("\nCriterio 2 — ningún grupo de rutas de `/hq` admite un `client_*` (RF-95):\n");

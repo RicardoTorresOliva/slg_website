@@ -1,4 +1,5 @@
 import { Boton, Campo, Formulario, Lista, Texto } from "@/components/app/Campos";
+import { ContenidoEntregado } from "@/components/app/ContenidoEntregado";
 import { Estado } from "@/components/app/EstadosCanonicos";
 import { Markdown } from "@/components/Markdown";
 import { idiomaDeInterfaz } from "@/lib/app/idioma";
@@ -64,6 +65,19 @@ export default async function Avisos({
           <Campo etiqueta={t["hq.ann.subject"]} error={err("titulo")}>
             <Texto name="titulo" required maxLength={200} />
           </Campo>
+          {/* El idioma DEL AVISO, no el de la interfaz (RF-72): el cliente lo
+              leerá tal como se escribió, y este valor es lo que hace que un
+              lector de pantalla lo pronuncie bien. */}
+          <Campo etiqueta={t["hq.ann.language"]} error={err("idioma")} pista={t["hq.ann.languageHint"]}>
+            <Lista
+              name="idioma"
+              defaultValue="es"
+              opciones={[
+                { valor: "es", etiqueta: "es" },
+                { valor: "en", etiqueta: "en" },
+              ]}
+            />
+          </Campo>
           <Campo etiqueta={t["hq.ann.body"]} error={err("cuerpo")} pista={t["hq.ann.bodyHint"]}>
             <textarea name="cuerpo" required rows={8} style={cuerpo} />
           </Campo>
@@ -91,7 +105,9 @@ export default async function Avisos({
               <p style={{ margin: "0.75rem 0 0.25rem", fontSize: "0.75rem", color: "var(--slg-ink-2)" }}>
                 {t["hq.ann.preview"]}
               </p>
-              <Markdown texto={a.cuerpoMd} />
+              <ContenidoEntregado idioma={a.idioma}>
+                <Markdown texto={a.cuerpoMd} />
+              </ContenidoEntregado>
             </li>
           ))}
         </ul>

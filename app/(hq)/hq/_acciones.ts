@@ -303,6 +303,10 @@ export async function accionPublicarAviso(datos: FormData) {
       organizationId: texto(datos, "empresa"),
       titulo: texto(datos, "titulo"),
       cuerpoMd: String(datos.get("cuerpo") ?? ""),
+      // El idioma del AVISO, que no tiene por qué ser el de la interfaz de
+      // quien lo escribe: se escribe a clientes internacionales en inglés con
+      // el panel en español todos los días.
+      idioma: texto(datos, "idioma") === "en" ? "en" : "es",
     });
   } catch (e) {
     salida("/hq/avisos", e);

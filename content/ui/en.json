@@ -306,5 +306,13 @@
   "hq.deliv.filePlaceholder": "report.pdf",
   "hq.deliv.mimePlaceholder": "application/pdf",
   "hq.deliv.mime": "MIME type",
-  "hq.deliv.bytes": "Size in bytes"
+  "hq.deliv.bytes": "Size in bytes",
+  "portal.ann.title": "Announcements",
+  "portal.ann.empty": "No announcements right now",
+  "portal.ann.emptyText": "When SLG publishes something for your company, it will show up here. You do not need to keep checking: you will get an email.",
+  "portal.ann.from": "Published by",
+  "portal.ann.error": "We could not load the announcements",
+  "portal.ann.errorText": "This is not something you did wrong. Try again in a moment.",
+  "hq.ann.language": "Announcement language",
+  "hq.ann.languageHint": "Which language you are writing it in. The client reads it exactly as written, untranslated."
 }

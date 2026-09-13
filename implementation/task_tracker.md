@@ -38,7 +38,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 9 `pending` · **13 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01, DU-07, DU-08, DU-09, DU-13, DU-14, DU-15, DU-16, DU-17) · **17 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12, FU-12, FU-13) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
+**Estado global:** 8 `pending` · **14 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01, DU-07, DU-08, DU-09, DU-13, DU-14, DU-15, DU-16, DU-17, DU-18) · **17 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12, FU-12, FU-13) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -87,7 +87,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | DU-17 | DU | Claves de API y registro de auditoría | M3 | FU-06, DU-14 | `in_progress` — las dos pantallas construidas y verificadas (31 comprobaciones); el secreto **no pasa por la URL** (**D-114**) y la inmutabilidad de la auditoría se prueba intentando romperla **con el usuario dueño**. Falta la revisión visual, que espera a que HQ se abra |
 | ━━━ | ━━━ | **▼ M4 · PORTAL DE CLIENTES** | ━━━ | ━━━ | ━━━ |
 | FU-13 | FU | Batería de pruebas de aislamiento entre empresas | M4 | FU-04, FU-06, DU-15 | `done` — quince comprobaciones sobre las **funciones de la aplicación** (**D-121**), en `test:db` y en `check:ci`; prueba negativa registrada (**D-122**) |
-| DU-18 | DU | Inicio del portal con avisos | M4 | FU-12, FU-13, DU-15 | `pending` |
+| DU-18 | DU | Inicio del portal con avisos | M4 | FU-12, FU-13, DU-15 | `in_progress` — construido y verificado; la pantalla **no recibe ningún `organization_id`** (**D-127**). Migración 0012: el aviso guarda **en qué idioma se escribió** (**D-126**). Falta la revisión visual, que espera a que el portal se abra |
 | DU-19 | DU | Proyectos, entregables y visor aislado | M4 | DU-18 · nombre del subdominio del visor (origen separado, D-45) | `pending` |
 | DU-20 | DU | Materiales de programa | M4 | DU-19 | `pending` |
 | DU-21 | DU | Miembros, perfil y paso «Agenda tu Sesión Cero» | M4 | FU-07, DU-18 · F.2-6 | `pending` |
@@ -344,3 +344,10 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   reescribirse: el primero usaba `withSystemScope` y **no filtraba nada**, porque ese ámbito no abre
   las tablas con `organization_id`; el fallo que sí pasa la política es construir el contexto **desde
   el parámetro** (**D-122**). Van **veintidós** frenos y `test:db` sube a **519**.
+- `2026-09-13` — **DU-18 casi.** `/portal` con los avisos de la empresa del usuario. La pantalla **no
+  recibe ningún `organization_id`** (**D-127**): lo que no existe no se puede manipular, y por eso
+  «no aparecen ni por enlace directo» es cierto sin comprobación extra. **Defecto destapado**: el
+  aviso no guardaba **en qué idioma estaba escrito**, así que el atributo `lang` del portal solo
+  podía mentir — migración **0012** y lo elige quien publica (**D-126**). Y un fallo que solo sale
+  encadenando la suite: `test:webhooks` borraba capturas sin borrar antes su traza de `crm_delivery`.
+  `test:db` sube a **538**.
