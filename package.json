@@ -50,13 +50,14 @@
     "test:acceso": "node scripts/auth/test-acceso.ts",
     "test:descargas": "node scripts/descargas/test-descargas.ts",
     "test:crm": "node scripts/crm/test-crm.ts",
-    "test:db": "npm run test:isolation && npm run test:contracts && npm run test:nocompile && npm run test:autorizacion && npm run test:correo && npm run test:invitaciones && npm run test:archivos && npm run test:acceso && npm run test:descargas && npm run test:crm && npm run test:webhooks && npm run test:shell && npm run test:hq",
+    "test:db": "npm run test:isolation && npm run test:contracts && npm run test:nocompile && npm run test:autorizacion && npm run test:correo && npm run test:invitaciones && npm run test:archivos && npm run test:acceso && npm run test:descargas && npm run test:crm && npm run test:webhooks && npm run test:shell && npm run test:hq && npm run test:gestion",
     "test:webhooks": "node scripts/webhooks/test-webhooks.ts",
     "check:terceros": "node scripts/ci/check-terceros.ts",
     "check:shell": "node scripts/ci/check-shell.ts",
     "test:shell": "node scripts/app/test-shell.ts",
     "check:hq": "node scripts/ci/check-hq.ts",
-    "test:hq": "node scripts/hq/test-tablero.ts"
+    "test:hq": "node scripts/hq/test-tablero.ts",
+    "test:gestion": "node scripts/hq/test-gestion.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1131.0",

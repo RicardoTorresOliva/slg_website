@@ -1558,3 +1558,83 @@ y su ficha, que no estaban duplicadas, pasan a `components/app/TablaDeApp.tsx`, 
 PostgreSQL real y un doble del CRM. **La revisión visual del tablero queda como criterio abierto
 hasta que la superficie se abra al cerrar M3**, igual que el criterio 7 de DU-07 espera al
 despliegue. Y las métricas contra el **CRM real** siguen esperando **F.2-5**: las dos claves.
+
+---
+
+## 2026-09-13 · DU-14 — Empresas, proyectos, usuarios e invitaciones
+
+**Qué se construyó.** Las tres pantallas que **convierten FU-07 en algo
+consumible**: `/hq/empresas`, `/hq/proyectos` y `/hq/usuarios`, con sus Server Actions y sus
+servicios en `lib/hq/`. Más `lib/auditoria/`, que faltaba: el registro de quién hizo qué **y de quién
+intentó qué**.
+
+**El registro apunta también los intentos** (**D-106**). El criterio 4 lo pide con todas las letras,
+y es la mitad que casi nunca se implementa: un registro de solo éxitos contesta «¿quién borró esto?»
+y no contesta **«¿alguien ha estado probando puertas?»**, que es la pregunta que avisa antes.
+`conAuditoria()` envuelve toda escritura de HQ, así que el rechazo no se puede olvidar — y solo se
+apunta como rechazo un `ErrorDeAutorizacion`: un fallo de base de datos no es alguien probando
+puertas, y apuntarlo llenaría de ruido justo la consulta que importa.
+
+**Una Server Action es un endpoint HTTP con otro nombre.** Cada una vuelve a resolver la sesión,
+vuelve a exigir la sección y deja que el servicio aplique su fila de B.3: tres capas que fallan por
+separado. Esconder el botón del formulario de «invitar a SLG» a un operador es correcto **y no es la
+defensa** — la acción se puede llamar sin haber visto nunca el formulario.
+
+**Revocar y reenviar son `POST`**, como «cerrar sesión» en FU-12 y por lo mismo: por GET los dispara
+cualquier `<img src>` de cualquier página, y la invitación de alguien se caería sola.
+
+**Verificación — `test:gestion`, 43 comprobaciones contra PostgreSQL real:**
+
+| Criterio | Cómo se comprueba |
+|---|---|
+| 2 · nomenclatura | `«phoenix peex»`, `«Phoenix PEEX»`, `«SLG Readiness»`, un nombre inventado y el vacío: **ninguno vale**, y el rechazo lo hace **el servidor**, no solo el `<select>` |
+| 3 · revocación | Se emite, se revoca y **el mismo testigo que valía hace un segundo ya no vale** |
+| 4 · asignados | El operador **edita su proyecto** y **no** el ajeno; no crea empresas; no invita a SLG; no tiene `apikey.manage` ni `audit.read`. **Los cuatro intentos quedan auditados** |
+| 6 · estados | Sin empresas · sin proyectos · **invitación caducada** · **correo fallido con la invitación viva y reenviable** |
+
+### Cuatro defectos, y los cuatro los encontró la verificación
+
+1. **RF-119 estaba incumplido y nadie lo había visto.** «Si el correo no sale, la invitación existe y
+   es reenviable» era cierto para un fallo de **envío**, pero un fallo de **configuración** de SMTP
+   lanzaba desde `enviarCorreo` y salía de `emitirInvitacion` como excepción — con la fila de la
+   invitación **ya escrita**. La pantalla habría dicho «no se pudo crear» sobre algo que sí existía.
+   Para RF-119 da igual por qué no salió el correo (**D-108**).
+2. **Los once servicios de A.2 no cabían en el formulario.** La lista se derivaba de
+   `LITERAL_TERMS`, y «AI Coaching for Directors» y «Customize Programs» no están ahí porque no son
+   marcas registradas: **dos servicios de la oferta no se habrían podido dar de alta**. Ahora se
+   derivan de la colección de contenido, así que «añadir un servicio es añadir un `.md`» (RF-27)
+   también vale en HQ (**D-107**).
+3. **Un slug repetido devolvía un error crudo de PostgreSQL** —un 500 por repetir un nombre—, y como
+   el slug se deriva del nombre, repetirlo es lo más fácil del mundo (**D-109**).
+4. **`"internal"` donde el vocabulario dice `"slg"`.** Lo paró la restricción
+   `organization_type_valid` en la primera ejecución. Los vocabularios se reexportan ahora del
+   esquema (**D-110**).
+
+Y dos cosas que la base de datos hizo bien y conviene dejar escritas: **`audit_log` rechazó el
+`DELETE` de la propia prueba** (RNF-29, migración 0003 — los apuntes se cuentan desde el instante en
+que arranca la prueba, no en absoluto), y la clave ajena de un entregable **impidió que la limpieza
+se llevara por delante los datos de la semilla**, porque el nombre «Cliente Demo» del criterio 1
+choca con el de `db:seed`. Una prueba que borra datos que no ha creado es una prueba que rompe el
+entorno.
+
+**Verificación global.** `lint` · `check:content` · `check:secrets` (422) · `check:env` ·
+`check:migrations` · `check:fronteras` (177) · `check:archivos` · `check:contraste` ·
+`check:motion` (232) · `check:cadenas` (19) · `check:shell` (37) · `check:hq` (4) ·
+`build:standalone` con las cuatro rutas de HQ · `check:js-budget` (78) · `check:runtime` (30) ·
+`check:armazon` (60) · `check:blog` (33) · `check:paginas` (142) · `check:seo` (220) ·
+`test:gesto` (20) · `check:terceros` (12) · `check:lighthouse` (96/96/92) · `check:brakes`:
+**veintiún frenos** · `test:db`: **410** comprobaciones.
+
+**Lo que queda abierto.** El **criterio 1** («Ricardo crea la empresa e invita a un usuario **desde
+HQ**») y el **criterio 5** (gate **D8**: los tres métodos de acceso, la invitación aceptada por cada
+uno, la vinculación por correo verificado, la recuperación y el cierre global, de punta a punta) no
+se pueden cerrar todavía: el primero necesita la superficie abierta —HQ sigue en 404 por RF-87— y el
+segundo necesita **F.2-2 y F.2-3**, los dos inicios de sesión sociales. Todo lo demás está construido
+y verificado.
+
+### Un arreglo de freno, de paso
+
+`check:cadenas` daba un **falso rojo** sobre una firma de TypeScript: leía el `>` de una flecha
+`=> void | Promise<void>` como si cerrara una etiqueta JSX y señalaba « void | Promise » como texto
+visible escrito a mano. Un freno que da falsos rojos enseña a ignorarlo, que es peor que no tenerlo.
+Su prueba negativa se volvió a ejecutar después del arreglo y sigue poniéndose roja por lo que debe.

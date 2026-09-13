@@ -46,6 +46,10 @@ const VIGILADOS = [
   "components/app/ContenidoEntregado.tsx",
   "components/app/TablaDeApp.tsx",
   "app/(hq)/hq/tablero/TableroDeHq.tsx",
+  "app/(hq)/hq/empresas/page.tsx",
+  "app/(hq)/hq/proyectos/page.tsx",
+  "app/(hq)/hq/usuarios/page.tsx",
+  "components/app/Campos.tsx",
 ];
 
 const ATRIBUTOS_QUE_SE_LEEN = ["aria-label", "title", "alt", "placeholder"];
@@ -65,9 +69,18 @@ function revisar(rel: string, abs: string): Hallazgo[] {
   lineas.forEach((linea, i) => {
     // Texto visible de JSX: `>Hola<`. Se ignora lo que sea una expresión
     // (`>{t["nav.menu"]}<`), que es justamente la forma correcta.
-    for (const m of linea.matchAll(/>([^<>{}]+)</g)) {
-      const texto = m[1].trim();
+    for (const m of linea.matchAll(/(.?)>([^<>{}]+)</g)) {
+      const texto = m[2].trim();
       if (!texto || !/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/.test(texto)) continue;
+      /**
+       * El `>` de una **flecha** no cierra ninguna etiqueta.
+       *
+       * Sin esto, una firma como `(datos: FormData) => void | Promise<void>` se
+       * leía como «texto visible ` void | Promise `», y el freno señalaba una
+       * anotación de tipo. Un freno que da falsos rojos enseña a ignorarlo, que
+       * es peor que no tenerlo.
+       */
+      if (m[1] === "=") continue;
       hallazgos.push({ archivo: rel, linea: i + 1, texto, motivo: "texto visible escrito a mano" });
     }
     // Atributos que se leen en voz alta, con valor literal.

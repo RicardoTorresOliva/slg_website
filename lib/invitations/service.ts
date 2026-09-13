@@ -111,6 +111,32 @@ async function tipoDeOrganizacion(organizationId: string): Promise<string | null
  * Emisión
  * ══════════════════════════════════════════════════════════════════════════ */
 
+/**
+ * Manda el correo de invitación **sin que su fallo se lleve por delante la
+ * invitación** (RF-119).
+ *
+ * POR QUÉ HACE FALTA ESTA ENVOLTURA. `enviarCorreo` devuelve `estado: "failed"`
+ * cuando el envío se intenta y no sale, pero **lanza** cuando el problema es de
+ * configuración —falta `MAIL_SMTP_HOST`, por ejemplo—. Sin esto, esa excepción
+ * sale de `emitirInvitacion` y quien llamó recibe un error en vez de
+ * `correoEnviado: false`… con la fila de la invitación **ya escrita**. Es decir:
+ * la invitación existe, es reenviable, y la pantalla dice que no se pudo crear.
+ *
+ * Lo encontró la prueba de DU-14 al correr sin SMTP. Para RF-119 da igual por
+ * qué no salió el correo: la invitación sobrevive y se puede reenviar, y eso
+ * tiene que ser cierto también cuando el fallo es de configuración.
+ */
+async function intentarCorreo(
+  entrada: Parameters<typeof enviarCorreo>[0],
+): Promise<{ estado: string; error: string | null }> {
+  try {
+    const r = await enviarCorreo(entrada);
+    return { estado: r.estado, error: r.error };
+  } catch (e) {
+    return { estado: "failed", error: (e as Error).message.slice(0, 300) };
+  }
+}
+
 export async function emitirInvitacion(
   ctx: AuthContext,
   entrada: {
@@ -178,7 +204,7 @@ export async function emitirInvitacion(
   // El correo va DESPUÉS de que la fila exista. Si el orden fuera el contrario y
   // el proceso muriera en medio, habría un enlace en el buzón de alguien sin
   // nada detrás que lo canjeara.
-  const envio = await enviarCorreo({
+  const envio = await intentarCorreo({
     tipo: "invitation",
     para: correo,
     idioma: entrada.idioma ?? "es",
@@ -254,7 +280,7 @@ export async function reenviarInvitacion(
       .where(and(eq(invitation.id, invitationId), eq(invitation.status, "pending")));
   });
 
-  const envio = await enviarCorreo({
+  const envio = await intentarCorreo({
     tipo: "invitation",
     para: actual.email,
     idioma: opciones?.idioma ?? "es",

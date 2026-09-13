@@ -52,6 +52,15 @@ export const SECCIONES: readonly Seccion[] = [
   { clave: "dashboard", href: "/hq/tablero", superficie: "hq", accion: "hq.dashboard.read" },
   { clave: "captures", href: "/hq/capturas", superficie: "hq", accion: "capture.read" },
   { clave: "orgs", href: "/hq/empresas", superficie: "hq", accion: "org.read" },
+  { clave: "projects", href: "/hq/proyectos", superficie: "hq", accion: "org.read" },
+  /**
+   * `member.invite` y no `user.invite.slg`: la pantalla la usan los dos roles de
+   * SLG —un operador invita miembros de una empresa cliente—, y **dentro** de
+   * ella el formulario de invitar a SLG solo se enseña a quien puede (RF-86).
+   * Gatear la sección entera con la acción de admin escondería también lo que
+   * el operador sí puede hacer.
+   */
+  { clave: "users", href: "/hq/usuarios", superficie: "hq", accion: "member.invite" },
   { clave: "apikeys", href: "/hq/claves", superficie: "hq", accion: "apikey.manage" },
   { clave: "audit", href: "/hq/auditoria", superficie: "hq", accion: "audit.read" },
   // ── Portal ──────────────────────────────────────────────────────────────

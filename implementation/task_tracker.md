@@ -38,7 +38,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 14 `pending` · **9 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01, DU-07, DU-08, DU-09, DU-13) · **16 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12, FU-12) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
+**Estado global:** 13 `pending` · **10 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01, DU-07, DU-08, DU-09, DU-13, DU-14) · **16 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12, FU-12) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -81,7 +81,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | ━━━ | ━━━ | **▼ M3 · HQ (INTRANET SLG)** | ━━━ | ━━━ | ━━━ |
 | FU-12 | FU | Shell de aplicación para HQ y portal | M3 | FU-06, FU-10 | `done` — los seis estados como UN componente (**D-96**), la sección declara su acción de B.3 y el servidor la aplica (**D-97**), sin conmutador de idioma; `check:shell` + `test:shell` (32 combinaciones rol × sección) |
 | DU-13 | DU | Tablero de HQ | M3 | FU-12, DU-09, DU-11 · F.2-5 | `in_progress` — los nueve bloques construidos y verificados (28 comprobaciones); cada bloque **cae solo** (**D-101**) y `check:hq` vigila la frontera (a) (**D-105**). Falta la revisión visual —HQ sigue en 404 por RF-87— y las métricas contra el CRM real (**F.2-5**) |
-| DU-14 | DU | Empresas, proyectos, usuarios e invitaciones | M3 | FU-07, DU-13 | `pending` |
+| DU-14 | DU | Empresas, proyectos, usuarios e invitaciones | M3 | FU-07, DU-13 | `in_progress` — las tres pantallas, sus acciones y `lib/auditoria` construidos y verificados (43 comprobaciones); los intentos rechazados **se auditan** (**D-106**). Faltan el criterio 1 (necesita HQ abierta) y el criterio 5 / gate **D8** (necesita **F.2-2** y **F.2-3**) |
 | DU-15 | DU | Entregables y avisos | M3 | FU-09, DU-14 | `pending` |
 | DU-16 | DU | Capturas web: lista, detalle de intentos y reintento manual | M3 | DU-09, DU-13 · ~~spec-delta del `data_model`~~ ✅ **CF-1 resuelto por D-50** (`crm_delivery.cycle`, ya construido en FU-04) | `pending` |
 | DU-17 | DU | Claves de API y registro de auditoría | M3 | FU-06, DU-14 | `pending` |
@@ -305,3 +305,11 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   `components/ShellDeApp.tsx`, que mantenía un segundo vocabulario de estados al lado de los seis
   canónicos. Van **veintiún** frenos y `test:db` sube a **367**. Queda la revisión visual —HQ sigue
   en 404 por RF-87— y las métricas contra el CRM real, que esperan **F.2-5**.
+- `2026-09-13` — **DU-14 casi.** `/hq/empresas`, `/hq/proyectos` y `/hq/usuarios`: la superficie que
+  convierte FU-07 en algo consumible. Nuevo `lib/auditoria`, que **apunta también los intentos**
+  (**D-106**) — un registro de solo éxitos no contesta «¿alguien ha estado probando puertas?».
+  **Cuatro defectos los encontró la verificación**: RF-119 incumplido cuando el fallo de correo era
+  de configuración (**D-108**), dos de los once servicios de A.2 que no cabían en el formulario
+  (**D-107**), un slug repetido devolviendo un 500 (**D-109**) y un vocabulario copiado a mano que
+  la restricción de la base rechazó (**D-110**). `test:db` sube a **410**. Quedan el criterio 1
+  —necesita HQ abierta— y el gate **D8**, que necesita **F.2-2** y **F.2-3**.

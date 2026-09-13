@@ -235,6 +235,23 @@ archivos nuevos sin versionar, y al hacer commit dos frenos se pusieron rojos: e
 el primer push de una unidad dada por terminada. Los cinco frenos que barren el repositorio usan ahora
 `--cached --others --exclude-standard` (**D-74**). **Si añades un freno nuevo, cópialo de ahí.**
 
+## El registro de auditoría apunta también los INTENTOS
+`conAuditoria()` envuelve toda escritura de HQ y, cuando la autorización la para, apunta la acción
+con el sufijo `.denied` (**D-106**). Un registro de solo éxitos no contesta «¿alguien ha estado
+probando puertas?». **Si añades una escritura, envuélvela**; y no apuntes como rechazo un error que
+no sea `ErrorDeAutorizacion`, o la consulta por `.denied` se llena de ruido.
+
+## `audit_log` rechaza el DELETE incluso al usuario dueño
+Un disparador de la migración 0003 lo hace inmutable (RNF-29). Una prueba **no puede limpiar sus
+propios apuntes**: cuenta desde un instante inicial (`created_at >= DESDE`) en vez de en absoluto.
+Lo aprendió `test:gestion` chocando contra él.
+
+## Una prueba nunca borra datos que no ha creado
+`test:gestion` usaba «Cliente Demo» —el nombre del criterio 1 de DU-14— y su slug **choca con el de
+`db:seed`**: la limpieza se llevaba por delante los datos de desarrollo y murió contra la clave ajena
+de un entregable sembrado. Los datos de prueba llevan sufijo de unidad (`…-du14`) y la limpieza
+borra solo por esos identificadores.
+
 ## Vacío y error NO se pintan igual, y por eso un bloque no devuelve un array vacío
 En el tablero de HQ cada bloque devuelve **o datos o motivo** (`Bloque<T>`, **D-101**). Si devolviera
 un array vacío en los dos casos, el día que el CRM falle la pantalla diría «todavía no hay nada»: una
