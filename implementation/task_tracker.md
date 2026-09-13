@@ -38,7 +38,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 5 `pending` · **17 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01, DU-07, DU-08, DU-09, DU-13, DU-14, DU-15, DU-16, DU-17, DU-18, DU-19, DU-20, DU-21) · **17 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12, FU-12, FU-13) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
+**Estado global:** 4 `pending` · **17 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01, DU-07, DU-08, DU-09, DU-13, DU-14, DU-15, DU-16, DU-17, DU-18, DU-19, DU-20, DU-21) · **18 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12, FU-12, FU-13, DU-22) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -92,7 +92,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | DU-20 | DU | Materiales de programa | M4 | DU-19 | `in_progress` — los **cinco criterios verificados**: `/portal/materiales` agrupado por proyecto, la puerta devuelve grupos y no lista (**D-131**), migración **0013** con el índice parcial que hace explícita «una empresa por persona» (**D-132**) y el freno **`check:alcance`** para la frontera (b) (**D-133**). `test:materiales`: **21** comprobaciones contra PostgreSQL real. Queda **solo la revisión visual**, que espera a que se abra la superficie del portal (RF-87) |
 | DU-21 | DU | Miembros, perfil y paso «Agenda tu Sesión Cero» | M4 | FU-07, DU-18 · F.2-6 | `in_progress` — las tres pantallas construidas y **42 comprobaciones** contra PostgreSQL real. Criterios **1, 2, 3, 5 y 7 cerrados**; el **4** cumplido en su mitad degradada («próximamente») a la espera de la URL de **F.2-6**. El **criterio 6 es el DoD #5** y necesita **F.2-3** (ingreso con Microsoft 365): no es código. Cambió de signo dos pruebas (**D-134**) y la empresa dejó de ser un parámetro al invitar (**D-135**) |
 | ━━━ | ━━━ | **▼ M5 · API PARA AGENTES Y GO-LIVE** | ━━━ | ━━━ | ━━━ |
-| DU-22 | DU | API v1 de lectura: clave, alcances, límites y auditoría | M5 | FU-06, DU-17, DU-19 · `api_contracts` | `pending` |
+| DU-22 | DU | API v1 de lectura: clave, alcances, límites y auditoría | M5 | FU-06, DU-17, DU-19 · `api_contracts` | `done` — **los diez criterios verificados** con `test:api`: **74** comprobaciones por HTTP contra el servidor real, con las **doce celdas** de alcance × ruta recorridas. Migraciones **0014** (`audit_log.metadata`, **D-138**) y **0015** (la política nombra a `agent_slg`, **D-137**) |
 | DU-23 | DU | API v1 de escritura y especificación OpenAPI | M5 | DU-22 | `pending` |
 | FU-14 | FU | Copias de seguridad cifradas a destino externo y restauración probada | M5 | FU-05 | `pending` |
 | DU-24 | DU | README operativo y prueba de Literacy | M5 | DU-11, DU-14, DU-17, FU-14 | `pending` |
@@ -351,6 +351,14 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   podía mentir — migración **0012** y lo elige quien publica (**D-126**). Y un fallo que solo sale
   encadenando la suite: `test:webhooks` borraba capturas sin borrar antes su traza de `crm_delivery`.
   `test:db` sube a **538**.
+- `2026-09-13` — **DU-22: la API v1 de lectura, y dos cosas que solo se ven ejecutando.** Una clave de
+  SLG **leía cero filas**: `api_key.organization_id` nulo significa «ve todas las empresas», pero la
+  política de fila solo deja cruzar a los dos roles de SLG y el contexto de una clave lleva `agent`.
+  Se nombró el actor donde se decide —en la política, `agent_slg` (**D-137**, migración 0015)— y se
+  prueba ahí: `agent` no cruza, `system` no cruza, `agent_slg` sí. Y el registro **no distinguía «lo
+  hizo» de «lo intentó»**: un 403 y un 200 dejaban filas idénticas (**D-138**, `audit_log.metadata`).
+  De paso, un enlace roto que nadie habría visto fallar: el contrato documentaba `{contact_id}` y el
+  código sustituía `{id}`. `test:api`: **74** comprobaciones por HTTP. `test:db` sube a **682**.
 - `2026-09-13` — **DU-21: miembros, perfil y el paso de Sesión Cero.** «Miembros» se gobernaba con
   `member.invite` y por eso **se le escondía entera a `client_member`**, que es a quien el criterio 2
   manda enseñársela: ver y poder son dos cosas (**D-134**, dos filas derivadas en la matriz). Eso

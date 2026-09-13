@@ -2147,3 +2147,72 @@ invitación **con Microsoft 365**: necesita los registros de **F.2-3**, que son 
 4 queda cumplido en su mitad degradada —«próximamente»— hasta que llegue la URL de **F.2-6**. Y el
 portal sigue devolviendo 404 mientras M4 esté abierto (RF-87), así que la revisión visual espera. **M4
 no se puede dar por cerrado todavía**, y no por código.
+
+---
+
+## 2026-09-13 · DU-22 — API v1 de lectura: clave, alcances, límites y auditoría
+
+**Qué se construyó.** El armazón de `/api/v1` (`lib/api/`) y sus **cuatro rutas de lectura**:
+`GET /captures`, `GET /organizations`, `GET /organizations/{id}/projects` y
+`GET /projects/{id}/deliverables`. Más dos migraciones: **0014** (`audit_log.metadata`) y **0015** (la
+política de fila nombra a `agent_slg`).
+
+**El armazón existe para que ninguna ruta pueda olvidarse de nada.** Autenticar, cobrar el límite,
+exigir el alcance, auditar y poner las cabeceras son cinco cosas que hay que hacer en **todas** las
+respuestas, incluidas las que fallan. Con cada ruta haciéndolas por su cuenta, la que se escriba con
+prisa hará cuatro. El orden es el de `architecture` §2.5 y no es estético: **el límite va antes que el
+alcance** (D-39), porque al revés una clave podría martillear endpoints prohibidos sin gastar cuota.
+
+**Una clave de SLG leía CERO filas, y lo encontró la ejecución** (**D-137**). `api_key.organization_id`
+nulo significa «su universo son todas las empresas», pero la política de la migración 0001 solo deja
+cruzar a `slg_admin` y `slg_operator`, y el contexto de una clave lleva el rol `agent`. `GET
+/organizations` —el criterio 5— es por definición una consulta que cruza, así que devolvía nada. La
+respuesta no fue un `if` en el código: fue **nombrar el actor en la política**, `agent_slg`, que es
+donde este proyecto decide quién ve qué. Y se prueba **ahí**: con `agent` no cruza, con `system`
+tampoco, sin rol tampoco, con `agent_slg` sí.
+
+**El registro no distinguía «lo hizo» de «lo intentó»** (**D-138**). Auditando toda llamada con las
+columnas que había, un 403 y un 200 dejaban filas idénticas. La columna `metadata` lleva el contexto
+**de la llamada** —estado, ruta, método, acción exigida, motivo interno— y **nada del cuerpo, de la
+clave ni de ningún campo personal**; la prueba lo comprueba buscando las ocho claves de su fixture
+dentro del registro, no leyendo el código.
+
+**Fuera no se distingue nada; dentro sí** (**D-139**). Los cinco casos de 401 siguen dando el mismo
+cuerpo y el mismo mensaje —distinguirlos le diría a quien sondea cuáles existieron—, pero el 401 de
+una clave **revocada** ahora se audita **con esa clave**. «Alguien está usando la clave que revocamos
+el martes» es la pregunta que un registro de API existe para contestar.
+
+**Lo que la API no hace, y está enumerado para que se pueda revisar.** `GET /captures` no lleva etapa,
+propietario, valor, moneda, próximo paso ni puntuación: eso es pipeline, vive en el CRM y la frontera
+(a) lo prohíbe — la prueba busca esas diez palabras en la respuesta serializada. Y **ninguna respuesta
+devuelve una URL de descarga**: se devuelve el `checksum_sha256`, porque una URL firmada en una
+respuesta de API es una credencial de lectura con vida propia, imposible de revocar y fácil de acabar
+en el log de un agente (R-11, R-14).
+
+**Un enlace roto que nadie habría visto fallar.** `api_contracts` §11 documentaba la plantilla del
+enlace al CRM con el marcador `{contact_id}` y el código sustituía `{id}`. Una plantilla escrita
+siguiendo el documento habría puesto `{contact_id}` literal dentro de un enlace, en un correo, **sin
+que nada fallara**. Corregido el documento y admitidos los dos marcadores: el valor lo escribe una
+persona en un panel, y ahí no hay compilador que avise.
+
+**Tres desviaciones del documento de contrato, dichas en voz alta.** El contrato se escribió antes que
+el esquema y describe tres campos que la base no tiene: `organization.updated_at`,
+`project.updated_at` y el `mime_type`/`size_bytes` de un entregable. No se inventan —un `updated_at`
+igual al `created_at` es un dato falso—: los dos primeros no se sirven y los otros viajan como `null`,
+que es lo que son. Queda anotado para que el contrato se corrija o el esquema crezca.
+
+**Verificación — `test:api`, 74 comprobaciones contra el servidor real.** Se habla por HTTP, no se
+llaman funciones: lo que esta unidad promete son códigos, cabeceras y cuerpos. Los seis alcances se
+recorren contra las cuatro rutas —**doce celdas**, no un ejemplo— para que un alcance que habilitara
+de más se viera aquí. Los cuatro 401 se comparan carácter a carácter; el 404 de lo ajeno se compara
+con el de lo inexistente; el 429 se provoca con una clave de límite 2; seis parámetros inválidos dan
+422 y el detalle **no repite el valor recibido**; un cursor de otra colección da 400 en vez de una
+página sin sentido.
+
+**Verificación global.** `test:db` completo en verde: **682** comprobaciones sumando el recuento que
+publica cada suite. `check:runtime` 33 · `check:js-budget` 142.3 KB · `test:permisos` 236 · los frenos
+en verde · las cuatro rutas compilan como dinámicas.
+
+**Lo que queda de DU-22.** Nada de código: los diez criterios están cubiertos y verificados. Queda el
+`[PENDIENTE]` de la ruta real del CRM en la plantilla del enlace (F.2-5), que es de Ricardo, y no
+bloquea la API.

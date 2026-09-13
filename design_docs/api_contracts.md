@@ -695,7 +695,7 @@ propia, imposible de revocar y fácil de registrar por error en el log de un age
 
 **Ruta de entrega del visor de HTML, desde origen separado (D-45).** El entregable de `type = 'html'`
 **no** se entrega desde `softlandingglobal.com`: se sirve desde un **origen separado propio**
-—un subdominio dedicado, `[PENDIENTE: nombre del subdominio del visor, se fija en M4]`—, y el portal
+—un subdominio dedicado, `visor.softlandingglobal.com` (fijado en M4, **D-128**)—, y el portal
 lo incrusta desde ahí. Reglas del contrato:
 
 1. **La ruta de entrega vive en ese origen, no en `/api/v1`.** No es un endpoint de agentes: ninguna
@@ -1670,7 +1670,7 @@ Ninguna ruta de la aplicación lista el contenido de un bucket (RF-123, gate D10
 | `CRM_MODE` | `contact_note` · `lead_admission` (D-19, §5.1). Un valor distinto impide arrancar |
 | `CRM_API_KEY_CAPTURE` | Clave «Website — captura»: `contacts:write`, `activities:write`, `crm:read` (RF-56) |
 | `CRM_API_KEY_READ` | Clave «Website — tablero»: solo `crm:read` (RF-56) |
-| `CRM_CONTACT_URL_TEMPLATE` | Plantilla del enlace profundo con `{contact_id}` (RF-54). Ruta real **[PENDIENTE]** |
+| `CRM_CONTACT_URL_TEMPLATE` | Plantilla del enlace profundo. El marcador es **`{id}`**, y `{contact_id}` se acepta como sinónimo (RF-54, DU-22). Ruta real **[PENDIENTE]** |
 | `CRM_TIMEOUT_MS` | Tiempo máximo por episodio HTTP contra el CRM (§5.3) |
 
 Dos claves y no una: **una clave por integración, alcances mínimos, rotación anual, revocación

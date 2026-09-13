@@ -524,6 +524,13 @@ export const auditLog = pgTable(
     entityId: text("entity_id"),
     organizationId: text("organization_id"),
     ip: text("ip"),
+    /**
+     * Contexto **saneado** de la llamada (DU-22, `api_contracts` §2.8): código
+     * de estado, ruta, método, alcance exigido. **Nunca** el cuerpo, la clave ni
+     * el valor de un campo personal (RNF-26, RNF-32). Sin esto, una llamada
+     * rechazada y una atendida dejaban filas idénticas.
+     */
+    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
     createdAt: createdAt(),
   },
   (t) => [

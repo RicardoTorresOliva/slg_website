@@ -62,6 +62,7 @@ export {
   reiniciarContadorDeLimite,
   type ResultadoDeClave,
   type FalloDeClave,
+  type EstadoDelLimite,
 } from "./api-key.ts";
 
 export {

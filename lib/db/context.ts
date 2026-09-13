@@ -51,6 +51,29 @@ export function esActorDeSLG(ctx: AuthContext): boolean {
 }
 
 /**
+ * Quién puede **cruzar empresas** (DU-22).
+ *
+ * Los dos roles de SLG, y además la **clave de API sin empresa**: que
+ * `api_key.organization_id` sea nulo es, por definición, «esta clave es de SLG y
+ * su universo son todas las empresas» (`api_contracts` §2.3). Sin esto,
+ * `GET /organizations` —que es una consulta que cruza— devolvía cero.
+ *
+ * Es la MISMA lista que la política de fila de la migración 0015 (`slg_admin`,
+ * `slg_operator`, `agent_slg`), escrita dos veces a propósito: la de la base
+ * decide qué filas salen y esta decide si la petición sigue. Si divergieran, la
+ * que manda es la de la base — y `test:api` comprueba las dos.
+ */
+export function cruzaEmpresas(ctx: AuthContext): boolean {
+  if (esActorDeSLG(ctx)) return true;
+  return ctx.actorType === "api_key" && ctx.organizationId === null;
+}
+
+/** La marca de rol que `withScope` fija en la transacción. Ver migración 0015. */
+export function marcaDeRol(ctx: AuthContext): string {
+  return ctx.actorType === "api_key" && ctx.organizationId === null ? "agent_slg" : ctx.actorRole;
+}
+
+/**
  * Construye el contexto a partir de una sesión ya verificada.
  * Lo llama la capa de autenticación (FU-06), nunca una ruta.
  */

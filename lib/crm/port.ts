@@ -59,5 +59,16 @@ export type PuertoDeCrm = {
 export function enlaceAlContacto(contactId: string | null): string | null {
   const plantilla = process.env.CRM_CONTACT_URL_TEMPLATE;
   if (!plantilla || !contactId) return null;
-  return plantilla.replace("{id}", encodeURIComponent(contactId));
+  /**
+   * **Se aceptan los DOS marcadores**, `{id}` y `{contact_id}`. No es
+   * permisividad: `api_contracts` §11 documentaba `{contact_id}` y el código
+   * sustituía `{id}`, así que una plantilla escrita siguiendo el documento
+   * habría producido un enlace con `{contact_id}` literal dentro — un enlace
+   * roto, en un correo, **sin que nada fallara**. Se corrige el documento y se
+   * admiten los dos, porque el valor lo escribe una persona en un panel y ahí no
+   * hay compilador que avise.
+   */
+  return plantilla
+    .replace("{contact_id}", encodeURIComponent(contactId))
+    .replace("{id}", encodeURIComponent(contactId));
 }

@@ -113,6 +113,21 @@ compartido sería el primer sitio desde el que colarla a una página pública (R
 `portal.sesion0.url` de `content/ui`, **vacía a propósito**: la cadena vacía es el estado declarado de
 «todavía no» y el paso degrada a «Próximamente». Solo se acepta `https:`.
 
+## Quién cruza empresas está en la POLÍTICA, y ahora son tres (DU-22)
+`slg_admin`, `slg_operator` y **`agent_slg`** — la marca que `withScope` pone cuando el contexto es de
+una clave de API verificada **sin** `organization_id` (migración 0015, **D-137**). Ni `agent` (clave
+acotada a una empresa) ni `system` (`withSystemScope`) cruzan, y `test:api` lo comprueba **contra la
+política**, no a través de HTTP. Si algún día hace falta que algo más cruce, el sitio donde se decide
+es esa lista, no un `if` en un caso de uso.
+
+## El armazón de `/api/v1` está en `lib/api/`, y ninguna ruta repite su trabajo (DU-22)
+`manejador.ts` hace lo que toda ruta hace igual: autenticar (401), cobrar el límite (429, **antes**
+que el alcance por D-39), exigir el alcance (403 sin decir cuál faltaba), auditar **y** poner
+`X-Request-Id`, `RateLimit-*` y `Cache-Control: no-store`. Una ruta nueva escribe su validación de
+entrada y su consulta; lo demás no puede olvidarlo porque no lo escribe.
+El `request_id` de toda respuesta **es** el `audit_log.id` de esa llamada: por eso la auditoría se
+escribe antes de responder.
+
 ## El mapa de rutas vive en `lib/content/rutas.ts`, y es EXPLÍCITO
 Cada página y cada servicio declara su ruta ES y su par EN (**D-79**). No se deriva del nombre del
 archivo: el Anexo A.2 anida la oferta (`/ai/academy/phoenix-peex`) y `/holdings` lo sirve un registro
@@ -202,6 +217,7 @@ se sirven. El par de idioma de cada ruta sale del campo `pair` del frontmatter, 
 | DNS tras cualquier cambio de zona | `npm run check:dns` (antes: `npm run check:dns:baseline`) |
 | Aislamiento entre empresas | `npm run test:db` (necesita PostgreSQL) |
 | Que el portal no se esté volviendo un LMS | `npm run check:alcance` |
+| La API de agentes: 401, 403, 429, alcances y auditoría | `npm run test:api` (necesita el build) |
 | Las cuatro cláusulas del sheet, cuadro a cuadro | `npm run test:gesto` (necesita el build y Chromium) |
 | El armazón público sobre el servidor real | `npm run check:armazon` (necesita el build) |
 | Que la zona DNS no se ha movido | `npm run check:dns` (ya no necesita `dig`) |

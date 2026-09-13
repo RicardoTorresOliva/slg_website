@@ -22,6 +22,10 @@ import { conexionDeAuth } from "./db.ts";
 
 export type FalloDeClave = {
   readonly status: 401 | 403 | 429;
+  /** Presente cuando la clave se resolvió: el 429 lleva sus cabeceras. */
+  readonly limite?: EstadoDelLimite;
+  /** Presente cuando la clave se resolvió: para auditar el 429 con actor. */
+  readonly clave?: { readonly id: string; readonly nombre: string };
   /** Lo único que sale por HTTP. Deliberadamente inútil para quien sondea. */
   readonly mensajePublico: string;
   /** Para `audit_log` y registros. Nunca se serializa. */
@@ -30,8 +34,28 @@ export type FalloDeClave = {
   readonly reintentarEn?: number;
 };
 
+/**
+ * El estado del límite de ESTA clave en ESTE instante (DU-22 · §2.4).
+ *
+ * Sale de aquí y no se recalcula fuera: el contador vive en este módulo, y
+ * pedirle a la capa HTTP que lo estime produciría cabeceras que no coinciden
+ * con la decisión que acaba de tomarse.
+ */
+export type EstadoDelLimite = {
+  readonly max: number;
+  readonly restantes: number;
+  /** Segundos hasta que la ventana se renueva. */
+  readonly resetEnSegundos: number;
+};
+
 export type ResultadoDeClave =
-  | { readonly ok: true; readonly ctx: AuthContext; readonly claveId: string }
+  | {
+      readonly ok: true;
+      readonly ctx: AuthContext;
+      readonly claveId: string;
+      readonly nombre: string;
+      readonly limite: EstadoDelLimite;
+    }
   | { readonly ok: false; readonly fallo: FalloDeClave };
 
 /**
@@ -68,20 +92,37 @@ function dentroDelLimite(
   claveId: string,
   max: number,
   ventanaSegundos: number,
-): { ok: true } | { ok: false; reintentarEn: number } {
+): { ok: true; limite: EstadoDelLimite } | { ok: false; reintentarEn: number; limite: EstadoDelLimite } {
   const ahora = Date.now();
   const desde = ahora - ventanaSegundos * 1000;
   const previos = (golpes.get(claveId) ?? []).filter((t) => t > desde);
 
+  /**
+   * Cuánto falta para que la ventana se renueve: el golpe más antiguo que
+   * sigue contando sale de la ventana dentro de tantos segundos. Sin golpes,
+   * la ventana está entera.
+   */
+  const reset = (lista: number[]): number =>
+    lista.length === 0
+      ? ventanaSegundos
+      : Math.max(1, Math.ceil((lista[0]! + ventanaSegundos * 1000 - ahora) / 1000));
+
   if (previos.length >= max) {
-    const masAntiguo = previos[0];
     golpes.set(claveId, previos);
-    return { ok: false, reintentarEn: Math.max(1, Math.ceil((masAntiguo + ventanaSegundos * 1000 - ahora) / 1000)) };
+    const segundos = reset(previos);
+    return {
+      ok: false,
+      reintentarEn: segundos,
+      limite: { max, restantes: 0, resetEnSegundos: segundos },
+    };
   }
 
   previos.push(ahora);
   golpes.set(claveId, previos);
-  return { ok: true };
+  return {
+    ok: true,
+    limite: { max, restantes: Math.max(0, max - previos.length), resetEnSegundos: reset(previos) },
+  };
 }
 
 /** Solo para pruebas: reinicia el contador del proceso. */
@@ -162,9 +203,21 @@ export async function verificarClave(cabeceras: Headers): Promise<ResultadoDeCla
   const enMilisegundos = (v: Date | string | null): number | null =>
     v === null ? null : (v instanceof Date ? v : new Date(v)).getTime();
 
-  const noAutenticado = (motivoInterno: string): ResultadoDeClave => ({
+  /**
+   * `clave` se adjunta **cuando la fila se resolvió** —revocada o caducada— y no
+   * cuando no hay fila. No cambia ni una coma de lo que sale por HTTP: los
+   * cinco casos siguen dando el mismo 401 con el mismo cuerpo. Cambia el
+   * **registro**: «alguien está usando la clave de Hermes, que revocamos el
+   * martes» es una pregunta que se contesta con el actor, y con `unknown` en
+   * todas las filas no se contesta. El contrato lo dice así (§2.8): el actor es
+   * `unknown` **cuando el 401 impide resolverlo**, no siempre.
+   */
+  const noAutenticado = (
+    motivoInterno: string,
+    clave?: { id: string; nombre: string },
+  ): ResultadoDeClave => ({
     ok: false,
-    fallo: { status: 401, mensajePublico: "No autenticado", motivoInterno },
+    fallo: { status: 401, mensajePublico: "No autenticado", motivoInterno, clave },
   });
 
   if (!fila) return noAutenticado("ninguna clave con ese hash");
@@ -174,10 +227,12 @@ export async function verificarClave(cabeceras: Headers): Promise<ResultadoDeCla
   if (!igualEnTiempoConstante(hashDeClave(presentada), hash)) {
     return noAutenticado("hash incoherente");
   }
-  if (fila.revoked_at !== null) return noAutenticado(`clave ${fila.id} revocada`);
+  if (fila.revoked_at !== null) {
+    return noAutenticado(`clave ${fila.id} revocada`, { id: fila.id, nombre: fila.name });
+  }
   const caduca = enMilisegundos(fila.expires_at);
   if (caduca !== null && caduca <= Date.now()) {
-    return noAutenticado(`clave ${fila.id} caducada`);
+    return noAutenticado(`clave ${fila.id} caducada`, { id: fila.id, nombre: fila.name });
   }
 
   // Paso 3 — límite, ANTES del alcance (D-39).
@@ -190,6 +245,8 @@ export async function verificarClave(cabeceras: Headers): Promise<ResultadoDeCla
         mensajePublico: "Demasiadas peticiones",
         motivoInterno: `clave ${fila.id} sobre su límite (${fila.rate_limit_max}/${fila.rate_limit_window_seconds}s)`,
         reintentarEn: limite.reintentarEn,
+        limite: limite.limite,
+        clave: { id: fila.id, nombre: fila.name },
       },
     };
   }
@@ -201,6 +258,8 @@ export async function verificarClave(cabeceras: Headers): Promise<ResultadoDeCla
   return {
     ok: true,
     claveId: fila.id,
+    nombre: fila.name,
+    limite: limite.limite,
     ctx: contextoDeClaveApi({
       apiKeyId: fila.id,
       name: fila.name,

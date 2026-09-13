@@ -21,7 +21,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { sql } from "drizzle-orm";
 import postgres from "postgres";
 
-import { type AuthContext, esActorDeSLG } from "./context.ts";
+import { type AuthContext, cruzaEmpresas, marcaDeRol } from "./context.ts";
 import * as schema from "./schema.ts";
 
 if (!process.env.DATABASE_URL) {
@@ -64,8 +64,14 @@ export async function withScope<T>(
     await tx.execute(
       sql`select set_config('app.organization_id', ${ctx.organizationId ?? ""}, true)`,
     );
+    /**
+     * `marcaDeRol`, no `ctx.actorRole`: una clave de API **sin empresa** entra
+     * como `agent_slg`, que es el actor que la política de la migración 0015
+     * deja cruzar empresas. Una clave **con** empresa sigue entrando como
+     * `agent`, que no cruza nada.
+     */
     await tx.execute(
-      sql`select set_config('app.actor_role', ${ctx.actorRole}, true)`,
+      sql`select set_config('app.actor_role', ${marcaDeRol(ctx)}, true)`,
     );
     return trabajo(tx);
   });
@@ -103,7 +109,7 @@ export async function withSystemScope<T>(
  * petición sigue o se corta; el filtrado lo hace la política de fila.
  */
 export function assertMismaEmpresa(ctx: AuthContext, idDeLaRuta: string): void {
-  if (esActorDeSLG(ctx)) return;
+  if (cruzaEmpresas(ctx)) return;
   if (ctx.organizationId !== idDeLaRuta) {
     const e = new Error("No encontrado");
     (e as Error & { status?: number }).status = 404;

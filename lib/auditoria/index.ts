@@ -103,3 +103,58 @@ export async function conAuditoria<T>(
     throw e;
   }
 }
+
+/**
+ * El apunte de **una llamada a `/api/v1`**, que devuelve su identificador
+ * (DU-22 · `api_contracts` §2.8 · RF-107).
+ *
+ * **DEVOLVER EL IDENTIFICADOR ES EL PUNTO.** El `request_id` que viaja en la
+ * cabecera `X-Request-Id` de toda respuesta y en el cuerpo de todo error **es
+ * esta fila**. Así, cuando un agente dice «me falló la llamada
+ * `aud_01J9…`», Ricardo la encuentra en HQ sin que el agente tenga que
+ * describirla y sin que la respuesta haya tenido que contar nada de dentro
+ * (RNF-32).
+ *
+ * **NUNCA LANZA, Y AUN ASÍ SIEMPRE DEVUELVE UN IDENTIFICADOR.** Si la escritura
+ * fallara, la petición no puede convertirse en un 500 por culpa del registro —y
+ * menos en la ruta del 401, donde un 500 confirmaría que la ruta existe—. Se
+ * devuelve el identificador que se había generado: no habrá fila que buscar,
+ * pero la respuesta sigue siendo correcta y el fallo del registro se ve en los
+ * registros del proceso, que es donde se mira.
+ *
+ * `actorType` llega como `system` cuando la clave no se pudo resolver: el 401
+ * también se audita, y la fila no puede mentir diciendo que había una clave.
+ */
+export async function auditarLlamadaDeApi(
+  quien: {
+    readonly actorType: "api_key" | "system";
+    readonly actorId: string | null;
+    readonly actorLabel: string | null;
+  },
+  apunte: Apunte & { readonly metadata?: Record<string, unknown> },
+): Promise<string> {
+  const id = crypto.randomUUID();
+  try {
+    await withSystemScope(
+      "DU-22 · toda llamada a /api/v1 se audita, incluidas las que acaban en 401, " +
+        "403 y 429: el registro describe al actor, no pertenece a su empresa.",
+      async (db) => {
+        await db.insert(auditLog).values({
+          id,
+          actorType: quien.actorType,
+          actorId: quien.actorId,
+          actorLabel: quien.actorLabel,
+          action: apunte.accion,
+          entity: apunte.entidad,
+          entityId: apunte.entidadId ?? null,
+          organizationId: apunte.organizationId ?? null,
+          ip: apunte.ip ?? null,
+          metadata: apunte.metadata ?? null,
+        });
+      },
+    );
+  } catch {
+    // Ver la cabecera: el identificador se devuelve igual.
+  }
+  return id;
+}
