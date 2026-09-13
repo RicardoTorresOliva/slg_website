@@ -38,7 +38,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 12 `pending` · **11 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01, DU-07, DU-08, DU-09, DU-13, DU-14, DU-16) · **16 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12, FU-12) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
+**Estado global:** 11 `pending` · **12 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01, DU-07, DU-08, DU-09, DU-13, DU-14, DU-16, DU-17) · **16 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12, FU-12) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -84,7 +84,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | DU-14 | DU | Empresas, proyectos, usuarios e invitaciones | M3 | FU-07, DU-13 | `in_progress` — las tres pantallas, sus acciones y `lib/auditoria` construidos y verificados (43 comprobaciones); los intentos rechazados **se auditan** (**D-106**). Faltan el criterio 1 (necesita HQ abierta) y el criterio 5 / gate **D8** (necesita **F.2-2** y **F.2-3**) |
 | DU-15 | DU | Entregables y avisos | M3 | FU-09, DU-14 | `pending` |
 | DU-16 | DU | Capturas web: lista, detalle de intentos y reintento manual | M3 | DU-09, DU-13 · ~~spec-delta del `data_model`~~ ✅ **CF-1 resuelto por D-50** (`crm_delivery.cycle`, ya construido en FU-04) | `in_progress` — lista, detalle y reintento construidos y verificados (23 comprobaciones); **CF-1 demostrado**: el ciclo nuevo no pisa la traza vieja (**D-111**). Falta la revisión visual, que espera a que HQ se abra |
-| DU-17 | DU | Claves de API y registro de auditoría | M3 | FU-06, DU-14 | `pending` |
+| DU-17 | DU | Claves de API y registro de auditoría | M3 | FU-06, DU-14 | `in_progress` — las dos pantallas construidas y verificadas (31 comprobaciones); el secreto **no pasa por la URL** (**D-114**) y la inmutabilidad de la auditoría se prueba intentando romperla **con el usuario dueño**. Falta la revisión visual, que espera a que HQ se abra |
 | ━━━ | ━━━ | **▼ M4 · PORTAL DE CLIENTES** | ━━━ | ━━━ | ━━━ |
 | FU-13 | FU | Batería de pruebas de aislamiento entre empresas | M4 | FU-04, FU-06, DU-15 | `pending` |
 | DU-18 | DU | Inicio del portal con avisos | M4 | FU-12, FU-13, DU-15 | `pending` |
@@ -322,3 +322,9 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   `lead_capture_contact_note_shape` demostró que la señal de trabajo manual **es el modo**, no un
   campo que falte (R-04); y `check:shell` cazó la pantalla escribiendo su propio `role="status"`,
   de donde salió el componente `Aviso` (**D-113**). `test:db` sube a **433**.
+- `2026-09-13` — **DU-17 casi, y M3 con sus cinco pantallas.** `/hq/claves` y `/hq/auditoria`. El
+  secreto de una clave recién creada **no viaja por la URL** (**D-114**): una URL acaba en el
+  historial, en el proxy y en la primera captura de pantalla que alguien comparta. La caducidad se
+  deja **vacía** a propósito (**D-115**) y los alcances se guardan **sin expandir** (**D-116**). La
+  inmutabilidad de la auditoría no se afirma: la prueba **intenta romperla con el usuario dueño de
+  la base** y los dos intentos fallan (RNF-29). `test:db` sube a **464**; siete rutas de HQ.

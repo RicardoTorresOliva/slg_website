@@ -1693,3 +1693,49 @@ nuevo se apunta sin perder la captura · trabajo manual señalado por fila · en
 
 **Lo que queda abierto.** La revisión visual, como en DU-13 y DU-14: HQ sigue devolviendo 404
 mientras M3 esté abierto (RF-87).
+
+---
+
+## 2026-09-13 · DU-17 — Claves de API y registro de auditoría
+
+**Qué se construyó.** `/hq/claves` —crear con alcances, límite y caducidad **obligatorios**, y
+revocar— y `/hq/auditoria` —el registro consultable y filtrable, **solo para `slg_admin`**—, con
+`lib/hq/claves.ts` detrás. Con esto M3 tiene sus cinco pantallas.
+
+**El secreto no pasa por la URL** (**D-114**). Lo cómodo sería `?clave=slg_…` después de crearla, y
+esa URL acaba en el historial, en el registro del proxy, en el `Referer` de la petición siguiente y
+en la primera captura de pantalla que alguien comparta. Viaja un identificador opaco de un solo uso;
+el valor vive en memoria del servidor hasta que la pantalla lo enseña, y al enseñarlo se borra.
+Recargar no lo vuelve a mostrar, y eso es el comportamiento correcto.
+
+**La caducidad se deja vacía a propósito** (**D-115**). Prerrellenarla con «dentro de un año» haría
+que todas las claves duraran un año porque nadie lo cambió: el defecto silencioso que R-14 existe
+para evitar.
+
+**Los alcances son casillas y se guardan tal cual** (**D-116**). Un `<select multiple>` esconde media
+lista y se desmarca solo al hacer clic sin `Ctrl`; y expandirlos al guardar inventaría en la base de
+datos una jerarquía que RF-147 prohíbe.
+
+**La auditoría dice en voz alta que es inmutable.** No por transparencia: porque quien opera tiene
+que saber que lo que hace **queda**, y esa expectativa es la mitad del valor de un registro. Los
+intentos rechazados tienen su propio filtro — llevan sufijo `.denied` en la misma columna (D-106),
+así que «enséñame lo que alguien intentó y no pudo» es una casilla, no una consulta.
+
+**Verificación — `test:claves`, 31 comprobaciones contra PostgreSQL real:**
+
+| Criterio | Cómo se comprueba |
+|---|---|
+| 1 · obligatorios | Sin alcances, con un alcance inventado, sin caducidad, con caducidad pasada, con límite cero y sin nombre: **ninguna se crea**, y quien lo impide es el servidor |
+| 2 · una vez | El secreto vuelve al crear; en la base **solo la huella**; la primera visita lo enseña y **la segunda no**; el apunte de auditoría **no lo contiene** |
+| 3 · revocación | Antes verifica, después **no**, en la petición siguiente y sin caché que invalidar |
+| 4 · granularidad | `deliverables:write` **no** trae `deliverables:read`; el contexto lleva exactamente lo pedido |
+| 5 · auditoría | `slg_admin` la lee; `slg_operator` recibe denegación **y su intento queda auditado** |
+| 6 · inmutable | La prueba intenta un `UPDATE` y un `DELETE` **con el usuario dueño de la base** y **los dos fallan**; el apunte sigue con su acción original; y no existe función de editar ni borrar en `lib/hq` |
+| 7 · estados | Sin claves · sin eventos · filtro sin resultados · **clave caducada**, que la lista da por muerta sin necesidad de revocarla |
+
+**Verificación global.** Todos los frenos en verde · `check:brakes`: **veintiún frenos** ·
+`test:db`: **464** comprobaciones · las **siete** rutas de HQ compilan.
+
+**Lo que queda abierto.** La revisión visual, como en las demás de M3: HQ sigue devolviendo 404
+mientras el milestone esté abierto (RF-87). El cierre de M3 con **DoD #4** necesita además la
+superficie desplegada.

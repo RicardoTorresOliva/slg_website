@@ -7,6 +7,7 @@ import { ErrorDeAutorizacion, exigirSuperficie } from "@/lib/auth";
 import { exigirSeccion } from "@/lib/app/navegacion";
 import { crearEmpresa, DatoInvalido, editarEmpresa } from "@/lib/hq/empresas";
 import { crearProyecto, editarProyecto } from "@/lib/hq/proyectos";
+import { crearClave, guardarParaMostrar, revocarClave } from "@/lib/hq/claves";
 import { reintentarCaptura } from "@/lib/hq/reintento";
 import { invitarACliente, invitarASlg, reenviar, revocar } from "@/lib/hq/usuarios";
 
@@ -208,4 +209,47 @@ export async function accionReintentarCaptura(datos: FormData) {
   revalidatePath("/hq/capturas");
   const aviso = resultado.ok ? "reintentada" : resultado.motivo;
   redirect(`/hq/capturas?aviso=${encodeURIComponent(aviso)}#${encodeURIComponent(id)}`);
+}
+
+/* ── Claves de API ────────────────────────────────────────────────────────── */
+
+/**
+ * Crear una clave (DU-17 · RF-82).
+ *
+ * **El secreto NO viaja en la URL.** Lo que vuelve en el redirect es un
+ * identificador opaco de un solo uso; el valor se queda en memoria del servidor
+ * hasta que la pantalla lo enseña, y al enseñarlo se borra. Una URL con la
+ * clave dentro acaba en el historial, en el registro del proxy y en la primera
+ * captura de pantalla que alguien comparta.
+ */
+export async function accionCrearClave(datos: FormData) {
+  const sesion = await sesionDeHq("apikeys");
+  let vale: string;
+  try {
+    const { enClaro } = await crearClave(sesion.ctx, {
+      nombre: texto(datos, "nombre"),
+      organizationId: opcional(datos, "empresa"),
+      // `getAll` porque son casillas: varios valores con el mismo nombre.
+      alcances: datos.getAll("alcances").map(String),
+      limite: Number(texto(datos, "limite")),
+      ventanaSegundos: Number(texto(datos, "ventana")),
+      caducaEn: texto(datos, "caduca"),
+    });
+    vale = guardarParaMostrar(enClaro);
+  } catch (e) {
+    salida("/hq/claves", e);
+  }
+  revalidatePath("/hq/claves");
+  redirect(`/hq/claves?nueva=${encodeURIComponent(vale)}`);
+}
+
+export async function accionRevocarClave(datos: FormData) {
+  const sesion = await sesionDeHq("apikeys");
+  try {
+    await revocarClave(sesion.ctx, texto(datos, "id"));
+  } catch (e) {
+    salida("/hq/claves", e);
+  }
+  revalidatePath("/hq/claves");
+  redirect("/hq/claves?aviso=revocada");
 }
