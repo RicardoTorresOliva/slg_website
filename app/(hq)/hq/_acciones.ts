@@ -7,7 +7,9 @@ import { ErrorDeAutorizacion, exigirSuperficie } from "@/lib/auth";
 import { exigirSeccion } from "@/lib/app/navegacion";
 import { crearEmpresa, DatoInvalido, editarEmpresa } from "@/lib/hq/empresas";
 import { crearProyecto, editarProyecto } from "@/lib/hq/proyectos";
+import { publicarAviso } from "@/lib/hq/avisos";
 import { crearClave, guardarParaMostrar, revocarClave } from "@/lib/hq/claves";
+import { publicarEntregable } from "@/lib/hq/entregables";
 import { reintentarCaptura } from "@/lib/hq/reintento";
 import { invitarACliente, invitarASlg, reenviar, revocar } from "@/lib/hq/usuarios";
 
@@ -252,4 +254,59 @@ export async function accionRevocarClave(datos: FormData) {
   }
   revalidatePath("/hq/claves");
   redirect("/hq/claves?aviso=revocada");
+}
+
+/* ── Entregables y avisos ─────────────────────────────────────────────────── */
+
+/**
+ * Publicar un entregable (DU-15 · RF-80 · RF-143).
+ *
+ * **EL ARCHIVO NO PASA POR AQUÍ.** El formulario manda solo su nombre, su tipo
+ * y su tamaño; el servidor valida esos tres **antes de firmar** y devuelve una
+ * URL de subida directa al bucket. Hacer que el archivo atraviese el servidor
+ * costaría memoria y tiempo por cada entregable y no añadiría ninguna
+ * comprobación que no se pueda hacer con los metadatos.
+ *
+ * La URL firmada vuelve por el mismo camino que el secreto de una clave
+ * (**D-114**): un identificador de un solo uso, nunca en la barra de
+ * direcciones.
+ */
+export async function accionPublicarEntregable(datos: FormData) {
+  const sesion = await sesionDeHq("deliverablesHq");
+  let vale: string | null = null;
+  try {
+    const bytes = Number(texto(datos, "bytes"));
+    const resultado = await publicarEntregable(sesion.ctx, {
+      projectId: texto(datos, "proyecto"),
+      organizationId: texto(datos, "empresa"),
+      titulo: texto(datos, "titulo"),
+      tipo: texto(datos, "tipo"),
+      visibilidad: texto(datos, "visibilidad"),
+      url: opcional(datos, "url"),
+      archivo: texto(datos, "nombre")
+        ? { nombre: texto(datos, "nombre"), mime: texto(datos, "mime"), bytes }
+        : null,
+      familyId: opcional(datos, "familia"),
+    });
+    if (resultado.subida) vale = guardarParaMostrar(resultado.subida.url);
+  } catch (e) {
+    salida("/hq/entregables", e);
+  }
+  revalidatePath("/hq/entregables");
+  redirect(vale ? `/hq/entregables?subida=${encodeURIComponent(vale)}` : "/hq/entregables");
+}
+
+export async function accionPublicarAviso(datos: FormData) {
+  const sesion = await sesionDeHq("announcementsHq");
+  try {
+    await publicarAviso(sesion.ctx, {
+      organizationId: texto(datos, "empresa"),
+      titulo: texto(datos, "titulo"),
+      cuerpoMd: String(datos.get("cuerpo") ?? ""),
+    });
+  } catch (e) {
+    salida("/hq/avisos", e);
+  }
+  revalidatePath("/hq/avisos");
+  redirect("/hq/avisos");
 }

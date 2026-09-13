@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-import en from "@/content/ui/en.json";
-import es from "@/content/ui/es.json";
+import en from "@/content/ui/error.en.json";
+import es from "@/content/ui/error.es.json";
 
 /**
  * 404 y 500 — **propias, bilingües y con navegación de vuelta** (RF-17).
@@ -13,6 +13,13 @@ import es from "@/content/ui/es.json";
  * **El idioma se decide por la RUTA** cuando existe; si no se puede saber —un
  * 404 profundo no siempre la trae—, el español es el defecto, porque es el que
  * vive en la raíz (§10-5).
+ *
+ * **Las cadenas se importan de `content/ui/error.<lang>.json`**, que tiene SOLO
+ * las siete de esta pantalla, y no del archivo grande. La diferencia la destapó
+ * `check:js-budget` poniéndose rojo: importando el JSON completo, **cada cadena
+ * nueva de HQ o del portal viajaba al navegador de cada página pública**, y las
+ * pantallas de M3 metieron ciento cincuenta. Un límite de error tiene que ser
+ * componente de cliente, así que lo que importe pesa en todas partes.
  *
  * **Las cadenas se importan del JSON, no del cargador de contenido**, y es
  * obligado: `error.tsx` tiene que ser un componente de CLIENTE —un límite de

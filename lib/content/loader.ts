@@ -128,17 +128,37 @@ export function loadCollectionAllLangs<T = Record<string, unknown>>(
 export function loadUiStrings(): Record<Lang, Record<string, string>> {
   const out = {} as Record<Lang, Record<string, string>>;
 
+  /**
+   * DOS ARCHIVOS POR IDIOMA, y se leen los dos: `<lang>.json` con todo, y
+   * `error.<lang>.json` con **las siete cadenas de la 404 y la 500**.
+   *
+   * La separación no es organizativa: es de **peso del bundle**. `error.tsx`
+   * tiene que ser un componente de cliente —un límite de error solo puede
+   * serlo— y por eso importa el JSON directamente en vez de usar este cargador
+   * (D-85). Con un único archivo, **cada cadena que se añadiera para HQ o para
+   * el portal viajaría al navegador de cada página pública**: lo destapó
+   * `check:js-budget` poniéndose rojo al pasar de 150 KB, después de que las
+   * pantallas de M3 metieran 150 cadenas nuevas.
+   *
+   * Quien consume este cargador sigue viendo **un solo mapa**: la partición no
+   * se nota fuera de aquí, y la comprobación de paridad de abajo la cubre
+   * entera.
+   */
   for (const lang of LANGS) {
-    const abs = path.join(CONTENT_ROOT, "ui", `${lang}.json`);
-    const rel = path.relative(process.cwd(), abs);
-    if (!fs.existsSync(abs)) {
-      throw new Error(`Faltan las cadenas de interfaz: ${rel}`);
+    const partes: Record<string, string> = {};
+    for (const nombre of [`${lang}.json`, `error.${lang}.json`]) {
+      const abs = path.join(CONTENT_ROOT, "ui", nombre);
+      const rel = path.relative(process.cwd(), abs);
+      if (!fs.existsSync(abs)) {
+        throw new Error(`Faltan las cadenas de interfaz: ${rel}`);
+      }
+      try {
+        Object.assign(partes, JSON.parse(fs.readFileSync(abs, "utf8")));
+      } catch (e) {
+        throw new Error(`${rel} no es JSON válido: ${(e as Error).message}`);
+      }
     }
-    try {
-      out[lang] = JSON.parse(fs.readFileSync(abs, "utf8"));
-    } catch (e) {
-      throw new Error(`${rel} no es JSON válido: ${(e as Error).message}`);
-    }
+    out[lang] = partes;
   }
 
   const [a, b] = LANGS;

@@ -1,0 +1,9 @@
+{
+  "error.404.title": "This page does not exist",
+  "error.404.body": "The link may be misspelled, or the page may have moved. From here you can carry on through any of these three.",
+  "error.500.title": "Something broke on our side",
+  "error.500.body": "It is not you. It is already logged and we are looking at it. Try again in a moment, or carry on through any of these three.",
+  "error.home": "Home",
+  "error.ai": "SLG_AI",
+  "error.blog": "Blog"
+}

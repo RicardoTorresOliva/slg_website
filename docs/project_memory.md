@@ -235,6 +235,21 @@ archivos nuevos sin versionar, y al hacer commit dos frenos se pusieron rojos: e
 el primer push de una unidad dada por terminada. Los cinco frenos que barren el repositorio usan ahora
 `--cached --others --exclude-standard` (**D-74**). **Si añades un freno nuevo, cópialo de ahí.**
 
+## `error.tsx` importa JSON, y todo lo que importe pesa en CADA página pública
+Un límite de error **tiene que ser** componente de cliente (D-85), así que importa las cadenas del
+JSON directamente. Con un solo `content/ui/<lang>.json`, **cada cadena nueva de HQ o del portal
+viaja al navegador de alguien que solo entra a leer el blog**: `check:js-budget` se puso rojo al
+pasar de 150 KB después de que M3 añadiera 150 cadenas. Las siete de la 404 y la 500 viven ahora en
+`content/ui/error.<lang>.json` (**D-120**). **No vuelvas a importar el archivo grande desde un
+componente de cliente.**
+
+## El Markdown acota el esquema de los enlaces, y la regla vive fuera del JSX
+`lib/content/markdown-seguro.ts` decide qué `href` se pinta: `http`, `https`, `mailto` y relativos, y
+nada más (**D-119**). Está fuera del componente porque **un script de Node no puede cargar un
+`.tsx`**, y una regla de seguridad que solo se prueba abriendo un navegador se prueba poco. Se
+comprueba con `new URL()` y no con `startsWith`: sin normalizar, `JavaScript:` y ` javascript:`
+pasan.
+
 ## El registro de auditoría apunta también los INTENTOS
 `conAuditoria()` envuelve toda escritura de HQ y, cuando la autorización la para, apunta la acción
 con el sufijo `.denied` (**D-106**). Un registro de solo éxitos no contesta «¿alguien ha estado

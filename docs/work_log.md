@@ -1739,3 +1739,61 @@ así que «enséñame lo que alguien intentó y no pudo» es una casilla, no una
 **Lo que queda abierto.** La revisión visual, como en las demás de M3: HQ sigue devolviendo 404
 mientras el milestone esté abierto (RF-87). El cierre de M3 con **DoD #4** necesita además la
 superficie desplegada.
+
+---
+
+## 2026-09-13 · DU-15 — Entregables y avisos · **M3 completo en código**
+
+**Qué se construyó.** `/hq/entregables` —los cinco tipos, por archivo o por enlace, con visibilidad
+`client` o `internal` y **versionado desde el primer día**— y `/hq/avisos` —un aviso dirigido a **una
+empresa**, con cuerpo en Markdown y vista previa de lo que verá el cliente—. Con esto HQ tiene sus
+**nueve rutas** y M3 está construido entero.
+
+**De paso se cierran los dos emisores que DU-12 dejó declarados**: `deliverable.published` y
+`announcement.published` salen ya desde sus superficies, por las funciones de `lib/webhooks` que
+impiden inventarse el payload. Ninguno lleva el título, el archivo ni el cuerpo: un webhook que sale
+de nuestra infraestructura no puede ser la puerta por donde viaja material de un cliente (§10-6).
+
+**Cada versión tiene su propio objeto** (**D-117**). Con la misma clave, la fila de la versión 1
+apuntaría al archivo de la 2: el histórico existiría en la base y **mentiría**.
+
+**La lista del cliente es otra función, no un parámetro** (**D-118**). Un filtro opcional es un
+filtro que alguien olvida pasar, y aquí el olvido enseña material interno a un cliente.
+
+**El archivo no pasa por el servidor.** El formulario manda nombre, tipo y tamaño; el servidor valida
+los tres **antes de firmar** (RNF-25) y devuelve una URL de subida directa al bucket privado. Sin
+firma no hay escritura posible, así que no existe ninguna ventana en la que un archivo no validado
+esté en el bucket.
+
+**Verificación — `test:entregables`, 40 comprobaciones contra PostgreSQL real:** los cinco tipos ·
+MIME que no corresponde, archivo por encima del tope, tipo sin archivo y `link` con esquema que no es
+http(s): **los cuatro rechazados y ninguno escrito** · la versión 2 con las dos consultables y
+**objetos distintos** · `internal` que HQ ve y el cliente no · atribución `user` vs `api_key` con su
+nombre · el aviso ligado a su empresa, guardado **tal como se escribió**, y sin aviso global.
+
+### Dos defectos que encontró esta unidad, y ninguno era de ella
+
+1. **El Markdown pintaba `href` de cualquier esquema.** Hasta ahora todo venía del repositorio y
+   revisado; **los avisos de HQ los escribe una persona y los lee un cliente**, así que
+   `[pulsa aquí](javascript:…)` deja de ser teórico. La regla salió del `.tsx` a
+   `lib/content/markdown-seguro.ts` (**D-119**) porque dentro del JSX **solo se podía probar abriendo
+   un navegador**, y se comprueba con `new URL()` y no con una lista negra: la prueba recorre
+   `javascript:`, `JavaScript:`, ` javascript:`, `data:text/html`, `vbscript:` y `file:`.
+2. **`check:js-budget` se puso ROJO al pasar de 150 KB**, y la causa no era una librería: `error.tsx`
+   tiene que ser componente de cliente e **importa `content/ui/<lang>.json` entero**, así que las
+   ciento cincuenta cadenas que M3 añadió para HQ viajaban al navegador de alguien que solo entra a
+   leer el blog. Las siete de la 404 y la 500 pasan a `content/ui/error.<lang>.json` (**D-120**): la
+   ruta más pesada baja de **150,2 KB a 142,3 KB** y el goteo queda cortado de raíz.
+
+**Verificación global.** `lint` · `check:content` · `check:secrets` (436) · `check:env` ·
+`check:migrations` · `check:fronteras` (188) · `check:archivos` · `check:contraste` ·
+`check:motion` (246) · `check:cadenas` (25) · `check:shell` (41) · `check:hq` (4) ·
+`build:standalone` con las **nueve** rutas de HQ · `check:js-budget` (**142,3 KB**) ·
+`check:runtime` (30) · `check:armazon` (60) · `check:blog` (33) · `check:paginas` (142) ·
+`check:seo` (220) · `test:gesto` (20) · `check:terceros` (12) · `check:lighthouse` (96/97/90) ·
+`check:brakes`: **veintiún frenos** · `test:db`: **504** comprobaciones.
+
+**Lo que queda abierto de M3.** Las cinco unidades están construidas y verificadas contra
+PostgreSQL real, un doble del CRM y un doble de S3. Lo que falta **no es código**: la revisión visual
+y el cierre de **DoD #4** necesitan la superficie abierta —HQ devuelve 404 mientras M3 esté abierto
+(RF-87)— y el gate **D8** necesita **F.2-2** y **F.2-3**, los dos inicios de sesión sociales.

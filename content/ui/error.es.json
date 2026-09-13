@@ -1,0 +1,9 @@
+{
+  "error.404.title": "Esta página no existe",
+  "error.404.body": "Puede que el enlace esté mal escrito, o que la página se haya movido. Desde aquí puedes seguir por cualquiera de estos tres sitios.",
+  "error.500.title": "Algo se rompió por nuestra parte",
+  "error.500.body": "No es cosa tuya. Ya está registrado y lo estamos mirando. Prueba de nuevo en un momento, o sigue por cualquiera de estos tres sitios.",
+  "error.home": "Portada",
+  "error.ai": "SLG_AI",
+  "error.blog": "Blog"
+}

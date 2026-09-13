@@ -1,3 +1,5 @@
+import { trozosDeLinea } from "@/lib/content/markdown-seguro";
+
 /**
  * Markdown.tsx — El subconjunto de Markdown que el contenido de SLG usa.
  *
@@ -12,27 +14,13 @@
  * y 3, párrafos, listas, negrita, cursiva, código en línea y enlaces. Si algún
  * día hace falta más, se amplía aquí y se ve en la revisión — que es justo lo
  * que una librería no deja hacer.
+ *
+ * **EL ANÁLISIS Y LA DECISIÓN DE SEGURIDAD VIVEN EN
+ * `lib/content/markdown-seguro.ts`**, no aquí. Este archivo es JSX y un script
+ * de Node no lo puede cargar, así que con la regla dentro solo se podía probar
+ * abriendo un navegador — y «qué `href` se pinta y cuál no» es justo la clase
+ * de regla que hay que poder probar caso a caso. Aquí queda el pintado.
  */
-type Trozo = { tipo: "texto" | "negrita" | "cursiva" | "codigo" | "enlace"; texto: string; href?: string };
-
-/** Divide una línea en sus marcas en línea. Sin `dangerouslySetInnerHTML`. */
-function enLinea(texto: string): Trozo[] {
-  const trozos: Trozo[] = [];
-  const re = /\*\*([^*]+)\*\*|\*([^*]+)\*|`([^`]+)`|\[([^\]]+)\]\(([^)]+)\)/g;
-  let ultimo = 0;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(texto)) !== null) {
-    if (m.index > ultimo) trozos.push({ tipo: "texto", texto: texto.slice(ultimo, m.index) });
-    if (m[1] !== undefined) trozos.push({ tipo: "negrita", texto: m[1] });
-    else if (m[2] !== undefined) trozos.push({ tipo: "cursiva", texto: m[2] });
-    else if (m[3] !== undefined) trozos.push({ tipo: "codigo", texto: m[3] });
-    else trozos.push({ tipo: "enlace", texto: m[4], href: m[5] });
-    ultimo = m.index + m[0].length;
-  }
-  if (ultimo < texto.length) trozos.push({ tipo: "texto", texto: texto.slice(ultimo) });
-  return trozos;
-}
-
 /**
  * Una línea suelta con sus marcas en línea resueltas.
  *
@@ -48,7 +36,7 @@ export function MarkdownEnLinea({ texto }: { texto: string }) {
 function Linea({ texto }: { texto: string }) {
   return (
     <>
-      {enLinea(texto).map((t, i) => {
+      {trozosDeLinea(texto).map((t, i) => {
         if (t.tipo === "negrita") return <strong key={i}>{t.texto}</strong>;
         if (t.tipo === "cursiva") return <em key={i}>{t.texto}</em>;
         if (t.tipo === "codigo")

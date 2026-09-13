@@ -61,6 +61,8 @@ export const SECCIONES: readonly Seccion[] = [
    * el operador sí puede hacer.
    */
   { clave: "users", href: "/hq/usuarios", superficie: "hq", accion: "member.invite" },
+  { clave: "deliverablesHq", href: "/hq/entregables", superficie: "hq", accion: "deliverable.publish" },
+  { clave: "announcementsHq", href: "/hq/avisos", superficie: "hq", accion: "announcement.publish" },
   { clave: "apikeys", href: "/hq/claves", superficie: "hq", accion: "apikey.manage" },
   { clave: "audit", href: "/hq/auditoria", superficie: "hq", accion: "audit.read" },
   // ── Portal ──────────────────────────────────────────────────────────────
