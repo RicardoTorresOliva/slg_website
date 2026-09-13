@@ -603,6 +603,71 @@ después.
 
 ---
 
+## 4septies. Las dos claves del CRM (F.2-5) — **esto sí hace falta**
+
+Sin esto, la web **captura leads igual** —quedan guardados y en cola— pero **no llegan al CRM**, y el
+tablero de HQ no puede enseñar las métricas. Es la dependencia externa que más tiempo lleva parada.
+
+**Son DOS claves y no una**, y no es burocracia: si el tablero leyera con la clave que escribe, el
+día que haya que revocar la de lectura se apagaría también la captura de leads. Cada una lleva el
+permiso mínimo de lo suyo.
+
+### 4septies.1 Crearlas en el CRM
+
+1. Entra en el CRM en `https://crm.softlandingglobal.com` con tu cuenta.
+2. Busca **Settings** (o **Configuración**) → **API keys** / **Claves de API** → botón para crear
+   una nueva. (Si no encuentras la sección, es porque hace falta un usuario administrador: entra con
+   ese.)
+3. Crea la **primera**:
+   - *Nombre*: `Website — captura`
+   - *Permisos / scopes*: `contacts:write`, `activities:write`, `crm:read`
+   - **Copia la clave ahora**: casi todos los CRM la enseñan **una sola vez**.
+4. Crea la **segunda**:
+   - *Nombre*: `Website — tablero`
+   - *Permisos / scopes*: **solo** `crm:read`
+   - Cópiala también.
+
+> **No las pegues en un chat, ni en un documento, ni en este repositorio.** Van directas de la
+> pantalla del CRM a Easypanel. Este repositorio es público y hay un freno del CI que pone el
+> pipeline en rojo si aparece una credencial.
+
+### 4septies.2 Ponerlas en Easypanel
+
+**Easypanel** → proyecto `slg_website` → servicio **`slg-web`** → pestaña **Environment**. Y lo mismo
+en **`slgweb-staging`**.
+
+| Variable | Valor |
+|---|---|
+| `CRM_BASE_URL` | la base de la API del CRM (normalmente `https://crm.softlandingglobal.com`, **sin barra al final**) |
+| `CRM_API_KEY_CAPTURE` | la clave de «Website — captura» |
+| `CRM_API_KEY_READ` | la clave de «Website — tablero» |
+| `CRM_MODE` | `contact_note` |
+| `CRM_APP_URL` | `https://crm.softlandingglobal.com` — a donde lleva el botón «Abrir CRM» |
+| `CRM_CONTACT_URL_TEMPLATE` | ver justo debajo |
+
+**`CRM_CONTACT_URL_TEMPLATE`** es la dirección de la **ficha de un contacto**, con `{id}` donde va el
+identificador. Para saber cuál es: abre cualquier contacto en el CRM y mira la barra de direcciones
+del navegador. Si ves algo como `https://crm.softlandingglobal.com/contacts/abc123`, entonces el
+valor es `https://crm.softlandingglobal.com/contacts/{id}`.
+
+Si **no** la pones, no pasa nada malo: el tablero enseña las capturas igual, simplemente sin el
+enlace «Abrir el contacto». Es a propósito — un enlace inventado llevaría a un 404 que parece culpa
+del CRM.
+
+Cuando las pongas, **Deploy** en `slg-web`.
+
+### 4septies.3 Por qué `contact_note` y qué trabajo deja
+
+Hoy el CRM **no permite crear empresa ni oportunidad por clave de API**. Así que cada captura
+entregada deja en el CRM **un contacto y una nota** con todo el contexto (documento, página, idioma,
+UTM), y **abrir la oportunidad lo tiene que hacer una persona**.
+
+El tablero de HQ te dice **cuántas capturas están esperando ese paso**, para que no sea trabajo
+invisible. El día que el CRM publique el endpoint de admisión, se cambia `CRM_MODE` a
+`lead_admission` y ya está: no hay que migrar nada ni tocar código.
+
+---
+
 ## 5. Monitor de caída externo (criterios 8 y 9)
 
 **Producto: UptimeRobot** (D-49), dentro de la categoría que cerró D-43: servicio de
