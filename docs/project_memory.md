@@ -235,6 +235,20 @@ archivos nuevos sin versionar, y al hacer commit dos frenos se pusieron rojos: e
 el primer push de una unidad dada por terminada. Los cinco frenos que barren el repositorio usan ahora
 `--cached --others --exclude-standard` (**D-74**). **Si añades un freno nuevo, cópialo de ahí.**
 
+## Un fixture negativo servido como `file://` puede mentir
+Chromium **no guarda cookies de un origen `file://`**. La prueba negativa de `check:terceros` —una
+página que carga un script de terceros y escribe `_ga`— salía roja por las peticiones y **verde por
+las cookies**: la mitad del medidor no se había ejecutado nunca y la prueba negativa la daba por
+buena (**D-95**). El fixture se sirve ahora por HTTP desde el propio freno. **Si escribes un fixture
+negativo que dependa de tener origen —cookies, `localStorage`, CSP, CORS—, sírvelo por HTTP.**
+
+## Los webhooks no pueden tumbar nada
+`emitir()` **nunca lanza** y se llama **después** de la escritura que anuncia (**D-94**). Un webhook
+es un flujo opcional (RF-115): si propagara su error, un suscriptor mal configurado le costaría el
+documento a un visitante. En `lib/crm/cola.ts` el evento sale además **fuera** de la transacción que
+marca `delivered`, porque dentro un fallo del webhook revertiría una entrega al CRM que sí ocurrió y
+el reintento crearía un contacto duplicado. **Si añades un emisor nuevo, respeta las dos cosas.**
+
 ## Lo que hay que saber del sheet antes de tocarlo
 El cierre es **estado de render**, no `style` escrito sobre el nodo (**D-69**). Escribirlo a mano
 parecía funcionar y no funcionaba: el render que dispara el propio gesto reescribía la duración recién

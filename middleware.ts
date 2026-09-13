@@ -99,6 +99,34 @@ function credencialCorrecta(cabecera: string | null, usuario: string, clave: str
  * `style-src` conserva `'unsafe-inline'` en ambas **a propósito**: los estilos
  * en línea de React (`style={{…}}`) son atributos, y un nonce no los cubre.
  */
+/**
+ * El origen de la analítica autoalojada (DU-12).
+ *
+ * SE LEE DE LA MISMA VARIABLE QUE USA EL COMPONENTE. Escribir el dominio a mano
+ * aquí sería la forma exacta de que, el día que la instancia cambie de
+ * subdominio, la etiqueta se emita y la CSP la bloquee: un fallo que no rompe
+ * la página, solo deja de medir, y por eso tarda meses en notarse.
+ *
+ * Sin variable devuelve cadena vacía y la política NO se ensancha ni un byte:
+ * el caso por defecto sigue siendo `'self'` a secas.
+ */
+function origenDeAnalitica(): string {
+  const url = process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL;
+  if (!url) return "";
+  try {
+    return new URL(url).origin;
+  } catch {
+    // Una URL mal escrita no puede tumbar el middleware: sin origen, sin
+    // permiso. El script no cargará y se verá en la consola, que es donde se
+    // arregla, en vez de quedarse el sitio entero sin responder.
+    return "";
+  }
+}
+
+const ANALITICA = origenDeAnalitica();
+/** El sufijo que se añade a una directiva: `" https://…"` o nada. */
+const CON_ANALITICA = ANALITICA ? ` ${ANALITICA}` : "";
+
 const BASE_CSP = [
   "default-src 'self'",
   "style-src 'self' 'unsafe-inline'",
@@ -139,11 +167,25 @@ function politicaEstricta(nonce: string): string {
   // `'strict-dynamic'` es lo que permite que el bootstrap con nonce cargue los
   // chunks; sin él habría que nombrar cada uno. `'self'` queda detrás como
   // repliegue para navegadores que no entienden `'strict-dynamic'`.
+  // LA ANALÍTICA NO SE NOMBRA AQUÍ, y es a propósito: `<Analitica />` solo
+  // cuelga de `ArmazonPublico`, que es la capa pública. Las superficies que
+  // muestran datos de personas —`(auth)`, `(hq)`, `(portal)`, la API— no se
+  // miden, así que permitirles hablar con el servidor de analítica sería
+  // ensanchar la política estricta para algo que nunca ocurre. Verificado en un
+  // navegador: con la analítica configurada, `/acceder` no la carga.
   return [`script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`, ...BASE_CSP].join("; ");
 }
 
 function politicaPublica(): string {
-  return [`script-src 'self' 'unsafe-inline'`, ...BASE_CSP].join("; ");
+  // Las dos directivas que necesita la analítica autoalojada, y solo aquí:
+  // `script-src` para cargar la etiqueta y `connect-src` porque manda sus
+  // mediciones por `fetch` a su propio servidor. Sin la segunda, el script
+  // carga, no da error visible y NINGUNA visita se registra.
+  return [
+    `script-src 'self' 'unsafe-inline'${CON_ANALITICA}`,
+    `connect-src 'self'${CON_ANALITICA}`,
+    ...BASE_CSP.filter((d) => !d.startsWith("connect-src")),
+  ].join("; ");
 }
 
 function nonceNuevo(): string {

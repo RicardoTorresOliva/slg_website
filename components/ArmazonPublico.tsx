@@ -4,6 +4,7 @@ import { loadUiStrings } from "@/lib/content/loader";
 import { ACCESO, DESTINOS, idiomaDeLaRuta, rutaEnElOtroIdioma } from "@/lib/content/rutas";
 import { organizacionJsonLd } from "@/lib/content/seo";
 
+import { Analitica } from "./Analitica";
 import { BarraDeNavegacion } from "./BarraDeNavegacion";
 import { DatosEstructurados } from "./DatosEstructurados";
 
@@ -66,6 +67,10 @@ export function ArmazonPublico({
       <main id="contenido">{children}</main>
 
       <PiePublico idioma={idioma} t={t} />
+
+      {/* Sin variable, esto no emite nada: la capa pública se sirve sin un solo
+          script de terceros (RF-127). */}
+      <Analitica />
     </>
   );
 }

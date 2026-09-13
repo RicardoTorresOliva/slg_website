@@ -20,6 +20,7 @@ import { sql } from "drizzle-orm";
 
 import { destinatarioDeAvisos, enviarCorreo } from "../mail/index.ts";
 import { withSystemScope } from "../db/scope.ts";
+import { emitir } from "../webhooks/index.ts";
 
 import { adaptadorContactNote } from "./contact-note.ts";
 import { adaptadorLeadAdmission } from "./lead-admission.ts";
@@ -121,6 +122,14 @@ const comoCaptura = (f: Fila): CapturaParaCrm => ({
  */
 async function entregarUna(fila: Fila, puerto: PuertoDeCrm): Promise<void> {
   const intento = fila.crm_attempts + 1;
+  /**
+   * Se pone a cierto DENTRO de la transacción que marca `delivered`, y el
+   * evento sale FUERA de ella. Emitir dentro haría que el registro del webhook
+   * compartiera transacción con el estado de la captura: un fallo del webhook
+   * revertiría una entrega al CRM que de verdad ocurrió, y el reintento
+   * volvería a llamar al CRM con un contacto ya creado.
+   */
+  let entregado = false;
   let resultado;
   try {
     resultado = await puerto.entregar(comoCaptura(fila));
@@ -162,6 +171,7 @@ async function entregarUna(fila: Fila, puerto: PuertoDeCrm): Promise<void> {
                crm_delivered_at = now()
          WHERE id = ${fila.id}
       `);
+      entregado = true;
       return;
     }
 
@@ -176,6 +186,16 @@ async function entregarUna(fila: Fila, puerto: PuertoDeCrm): Promise<void> {
        WHERE id = ${fila.id}
     `);
   });
+
+  if (entregado) {
+    await emitir("lead.delivered_to_crm", {
+      leadId: fila.id,
+      crmMode: puerto.modo,
+      // El identificador del contacto, no la captura entera: el suscriptor solo
+      // necesita saber dónde ha aterrizado.
+      crmContactId: resultado.ok ? resultado.contactId : null,
+    });
+  }
 
   if (!resultado.ok && intento >= MAX_INTENTOS) await avisarDelFallo(fila, resultado.error);
 }

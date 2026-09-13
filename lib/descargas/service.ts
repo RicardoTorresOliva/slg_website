@@ -20,6 +20,7 @@ import { verificarEnvio, type Veredicto } from "../antiabuso/index.ts";
 import { downloadEvent, leadCapture } from "../db/schema.ts";
 import { withSystemScope } from "../db/scope.ts";
 import { adaptadorS3 } from "../files/index.ts";
+import { emitir } from "../webhooks/index.ts";
 
 export type Documento = {
   slug: string;
@@ -122,6 +123,36 @@ export async function registrarCaptura(entrada: {
     },
   );
 
+  // ── 2bis · Los eventos salientes (DU-12) ─────────────────────────────────
+  // DESPUÉS de la escritura y NUNCA antes: un evento que anuncia un lead que no
+  // llegó a guardarse es peor que no anunciar nada. `emitir` no lanza (RF-115),
+  // así que esto no puede llevarse por delante la captura que ya está a salvo.
+  //
+  // `lead.captured` sale SIEMPRE, y además el evento propio del origen: quien
+  // escucha todo no tiene que deducir de qué tipo era, y quien solo escucha
+  // contactos no tiene que filtrar el resto.
+  await emitir("lead.captured", {
+    leadId,
+    source: entrada.origen,
+    emailDomain: veredicto.dominio,
+    locale: entrada.locale,
+    page: entrada.pagina,
+  });
+  if (entrada.origen === "contact") {
+    await emitir("contact.submitted", {
+      leadId,
+      emailDomain: veredicto.dominio,
+      locale: entrada.locale,
+    });
+  }
+  if (entrada.origen === "doctrine-request") {
+    await emitir("doctrine.requested", {
+      leadId,
+      emailDomain: veredicto.dominio,
+      locale: entrada.locale,
+    });
+  }
+
   // ── 3 · La entrega. Solo si hay archivo ──────────────────────────────────
   // Contacto y solicitud de doctrina no traen documento: se quedan aquí, con
   // su captura guardada, que es todo lo que tenían que hacer.
@@ -161,6 +192,14 @@ export async function registrarCaptura(entrada: {
         });
       },
     );
+
+    // `download.completed` solo aquí: el documento «próximamente» NO lo dispara
+    // (RF-40), y el fallo de firma tampoco, porque sale antes por el `catch`.
+    await emitir("download.completed", {
+      leadId,
+      downloadSlug: documento.slug,
+      locale: entrada.locale,
+    });
 
     return { ok: true, leadId, url: firmada.url, caducaEn: caduca.toISOString(), proximamente: false };
   } catch {

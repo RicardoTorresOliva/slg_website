@@ -119,6 +119,19 @@ const CASOS: Caso[] = [
     ],
     env: { GESTO_URL: `file://${path.join(HERE, "negative/gesto/roto.html")}` },
   },
+  {
+    freno: "un tercero en la capa pública · script, fuente o cookie",
+    script: "check-terceros.ts",
+    /**
+     * Tres fragmentos: el fixture carga un script de Google Tag Manager, pide
+     * una fuente a un CDN y escribe `_ga`. El freno tiene que ver LAS DOS
+     * cosas —peticiones ajenas y cookie—, no una y dar por buena la otra.
+     */
+    espera: ["ni una sola petición fuera de nuestro origen", "ni una sola cookie", "googletagmanager"],
+    env: {
+      TERCEROS_FIXTURE: path.join(HERE, "negative/terceros/roto.html"),
+    },
+  },
 ];
 
 let fallos = 0;
@@ -356,4 +369,4 @@ if (fallos) {
   console.error(`\n✗ ${fallos} freno(s) no se comportaron como deben.\n`);
   process.exit(1);
 }
-console.log("\n✓ Los dieciocho frenos fallan cuando deben y pasan cuando deben.\n");
+console.log("\n✓ Los diecinueve frenos fallan cuando deben y pasan cuando deben.\n");

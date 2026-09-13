@@ -38,7 +38,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 17 `pending` · **8 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01, DU-07, DU-08, DU-09) · **14 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
+**Estado global:** 16 `pending` · **8 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01, DU-07, DU-08, DU-09) · **15 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -77,7 +77,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | DU-09 | DU | Captura al CRM: adaptador de dos modos, cola y aviso | M2 | FU-08, DU-08 · F.2-5 · S-01 | `pending` |
 | DU-10 | DU | Contacto y solicitud del documento completo de Doctrina | M2 | DU-06, DU-09 | `done` — las tres puertas por la misma máquina (**D-89**); `/gracias` distingue las tres variantes |
 | DU-11 | DU | Blog: índice, artículo, etiquetas, RSS y borradores | M2 | FU-03, DU-02 | `done` — ocho rutas prerrenderizadas en los dos idiomas; 33 comprobaciones sobre el servidor real |
-| DU-12 | DU | Webhooks salientes firmados y analítica privacy-first | M2 | DU-09, DU-11 | `pending` |
+| DU-12 | DU | Webhooks salientes firmados y analítica privacy-first | M2 | DU-09, DU-11 | `done` — los nueve eventos firmados y con cola propia (**D-91**…**D-94**); `check:terceros` mide cero terceros en un navegador real (**D-95**) |
 | ━━━ | ━━━ | **▼ M3 · HQ (INTRANET SLG)** | ━━━ | ━━━ | ━━━ |
 | FU-12 | FU | Shell de aplicación para HQ y portal | M3 | FU-06, FU-10 | `pending` |
 | DU-13 | DU | Tablero de HQ | M3 | FU-12, DU-09, DU-11 · F.2-5 | `pending` |
@@ -274,3 +274,12 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   Contacto y solicitud de Doctrina entran por la **misma máquina** que la descarga (**D-89**). Dos
   rojos falsos cazados: Lighthouse dando 0 por un audit que no corrió (**D-90**) y un `spawnSync`
   que bloqueaba el doble del CRM en la propia prueba.
+- `2026-09-13` — **DU-12 `done`.** Los **nueve** eventos de B.7 salen firmados con HMAC-SHA256 sobre
+  el cuerpo exacto, con **secreto por suscriptor** y una fila de `webhook_delivery` **por destino**
+  (**D-92**). El evento se registra **antes** de intentar enviarlo y **también cuando no hay nadie
+  escuchando** (**D-91**), que es lo que hace cierta la promesa de RF-115. Siete emisores están
+  cableados a código que ya existía; `post.published` se dispara comparando el repositorio con lo ya
+  registrado y va **apagado por defecto** (**D-93**). Freno nuevo, **`check:terceros`**: cero
+  peticiones ajenas y cero cookies en seis páginas, **medido con un Chromium real** (**D-95**) —su
+  propia prueba negativa destapó que sobre `file://` la mitad que busca cookies salía verde sin medir
+  nada. Con `check:terceros` van **diecinueve** frenos y `test:db` sube a **320** comprobaciones.

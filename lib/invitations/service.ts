@@ -17,6 +17,8 @@ import type { AuthContext } from "../db/context.ts";
 import { invitation, ORG_TYPES, USER_ROLES, type UserRole } from "../db/schema.ts";
 import { withScope, withSystemScope } from "../db/scope.ts";
 import { enviarCorreo } from "../mail/index.ts";
+import { emitir } from "../webhooks/index.ts";
+
 import {
   caducidadDesdeAhora,
   enlaceDeInvitacion,
@@ -193,6 +195,16 @@ export async function emitirInvitacion(
         .set({ sentAt: new Date() })
         .where(eq(invitation.id, invitacion.id));
     });
+    // `invitation.sent` solo cuando el correo SALIÓ (DU-12). Una invitación
+    // creada cuyo correo falló no se ha enviado, y anunciarla haría que un
+    // flujo externo diera por avisada a una persona que no recibió nada.
+    // El payload NO lleva el correo ni el testigo: quien escucha necesita saber
+    // que ocurrió, no a quién ni con qué llave.
+    await emitir("invitation.sent", {
+      invitationId: invitacion.id,
+      organizationId: entrada.organizationId,
+      role: entrada.role,
+    });
   }
 
   return {
@@ -252,6 +264,14 @@ export async function reenviarInvitacion(
   if (envio.estado === "delivered") {
     await withScope(ctx, async (db) => {
       await db.update(invitation).set({ sentAt: new Date() }).where(eq(invitation.id, invitationId));
+    });
+    // Un reenvío ES un envío: sale el mismo evento. Callarlo aquí haría que el
+    // flujo externo viera una sola invitación donde hubo dos correos, que es
+    // justo la diferencia que importa cuando alguien dice que no le llegó.
+    await emitir("invitation.sent", {
+      invitationId,
+      organizationId: actual.organizationId,
+      role: actual.role,
     });
   }
 

@@ -24,6 +24,13 @@ export type Articulo = {
   etiquetas: readonly string[];
   pair: string | null;
   autor: string;
+  /**
+   * Los tres extractos de A.5. Los lee `post.published` (RF-145) para que un
+   * suscriptor pueda publicar en redes **sin leer de vuelta el repositorio**.
+   * Se exponen aquí y no se releen aparte: dos lectores del mismo frontmatter
+   * es el sitio donde uno de los dos se queda viejo.
+   */
+  social: { hook: string; linkedin: string; x: string };
   cuerpo: string;
 };
 
@@ -41,6 +48,7 @@ type Frontmatter = {
   status?: string;
   pair?: string | null;
   author: string;
+  social?: { hook?: string; linkedin?: string; x?: string };
 };
 
 function fechaISO(valor: string | Date): string {
@@ -61,6 +69,11 @@ export function articulos(lang: Lang): Articulo[] {
       etiquetas: p.data.tags ?? [],
       pair: p.data.pair ?? null,
       autor: p.data.author,
+      social: {
+        hook: p.data.social?.hook ?? "",
+        linkedin: p.data.social?.linkedin ?? "",
+        x: p.data.social?.x ?? "",
+      },
       cuerpo: p.body,
     }))
     .sort((a, b) => b.fecha.localeCompare(a.fecha));

@@ -1,0 +1,22 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Fixture negativo · capa pública con terceros</title>
+<!--
+  FIXTURE NEGATIVO de `check-terceros.ts` (R-26).
+
+  Esta página hace, a propósito, las tres cosas que el freno tiene que atrapar:
+    1. carga un script de un tercero,
+    2. pide una hoja de estilos y una fuente a otro tercero,
+    3. escribe una cookie de seguimiento.
+
+  Si el medidor no se pone ROJO aquí, su verde sobre el sitio real no vale nada.
+  NINGUNA de estas URL se llega a resolver: el navegador las intenta y la
+  comprobación observa el INTENTO, que es lo que importa.
+-->
+<script src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXX"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter">
+<h1>Fixture negativo</h1>
+<img src="https://www.facebook.com/tr?id=0&ev=PageView" alt="" width="1" height="1">
+<script>
+  document.cookie = "_ga=GA1.1.0.0; path=/";
+</script>

@@ -1296,3 +1296,87 @@ el **pipeline**, no el texto que la persona escribió.
 **Lo que sigue esperando.** DU-09 necesita **F.2-5** —las dos claves del CRM real— para el criterio 2
 en su mitad `contact_note` contra el CRM de verdad, y **S-01 cerrada**. Todo lo demás está construido
 y probado contra dobles.
+
+---
+
+## 2026-09-13 · DU-12 — Webhooks salientes firmados y analítica sin terceros
+
+**Qué se construyó.** `lib/webhooks/`: los **nueve** eventos de B.7 con su payload cerrado
+(`eventos.ts`), la firma **HMAC-SHA256 sobre el cuerpo exacto que se envía** con la marca de tiempo
+**dentro** de lo firmado (`firma.ts`), la lista de suscriptores con **secreto por suscriptor** y que
+puede estar legítimamente vacía (`suscriptores.ts`), y la cola con la misma forma que la del CRM
+—`FOR UPDATE SKIP LOCKED`, reserva de 5 min, escalera 1/10/60/360/1440, cinco intentos—
+(`cola.ts`). Más `components/Analitica.tsx`: la analítica **autoalojada**, que sin variable no emite
+absolutamente nada.
+
+**Dónde salen los eventos.** Siete están cableados a código que ya existía: `lead.captured`,
+`contact.submitted`, `doctrine.requested` y `download.completed` en `lib/descargas/service.ts`;
+`lead.delivered_to_crm` en `lib/crm/cola.ts`; `invitation.sent` en `lib/invitations/service.ts`,
+**también en el reenvío** —un reenvío es un envío, y callarlo haría que el flujo externo viera una
+invitación donde hubo dos correos—. `post.published` no tiene momento que interceptar porque un
+artículo se publica cambiando un archivo: se dispara al arrancar, comparando el repositorio con lo ya
+registrado, y **apagado por defecto** (**D-93**). Los dos de M3/M4 tienen ya su función —
+`anunciarEntregable`, `anunciarAviso`— para que la pantalla que los llame no pueda inventarse el
+payload.
+
+**El orden que no es negociable.** El evento **se registra antes de intentar enviarlo**, y **se
+registra aunque no haya nadie escuchando** (**D-91**): es lo que hace cierta la promesa de RF-115.
+`emitir()` **nunca lanza** (**D-94**): un suscriptor mal configurado no puede costarle el documento
+a un visitante. En la cola del CRM el evento sale **fuera** de la transacción que marca `delivered`,
+porque dentro un fallo del webhook revertiría una entrega al CRM que de verdad ocurrió.
+
+**Ningún payload lleva contenido.** Ni el mensaje de contacto, ni el correo del invitado, ni el
+cuerpo del artículo, ni el nombre del entregable. La excepción está razonada en RF-145 y es
+`post.published`, que lleva los tres extractos de redes **y el enlace canónico en su idioma** para
+que el suscriptor publique sin leer de vuelta el repositorio.
+
+**Verificación — `test:webhooks`, 32 comprobaciones contra receptores HTTP reales y PostgreSQL real:**
+
+| Criterio | Cómo se comprueba |
+|---|---|
+| 1 · nueve eventos | Se emiten **los nueve** y los nueve aparecen en `webhook_delivery`. No una muestra: el que falta siempre es el que nadie probó |
+| 2 · firma | El receptor **recalcula la firma sobre el texto crudo** y verifica. **Un cuerpo alterado la invalida**; una marca alterada también; y la firma de A **no vale** con el secreto de B |
+| 3 · reintentos | Primer fallo → `pending`, 1 intento, error guardado y cita **en el futuro**. Al quinto → `failed`, sin próxima cita. El receptor contó los cinco |
+| 4 · sin suscriptor | El evento queda registrado con destino `(sin suscriptor)` y el barrendero no tiene nada que reclamar |
+| 5 · `post.published` | Enlace canónico correcto en cada idioma (`/blog/…` y `/en/blog/…`), los tres extractos rellenos y las etiquetas |
+| 7 · secretos | Ni en el payload, ni en la URL de destino, ni en `last_error` |
+| cableado | `registrarCaptura` real: las tres capturas disparan `lead.captured`, el contacto añade `contact.submitted`, y el documento **«próximamente» NO dispara `download.completed`** (RF-40) |
+
+**Prueba negativa del cableado (R-26).** Se desactivó la llamada a `download.completed` y las dos
+comprobaciones que la vigilan se pusieron en rojo. Un `emitir` que funciona y que **nadie llama** es
+el fallo más fácil de esconder detrás de una prueba verde.
+
+### El freno nuevo: `check:terceros` — cero terceros, medido en un navegador
+
+El criterio 6 y el gate **D1** no se pueden comprobar leyendo el repositorio (**D-95**). El freno
+abre un Chromium sobre seis páginas públicas y afirma dos cosas: **toda petición sale de nuestro
+origen** —o del de la analítica autoalojada, si está configurada— y **no queda ni una cookie**. Doce
+comprobaciones en verde sobre el sitio real.
+
+**Un hallazgo de la propia prueba negativa.** El fixture roto —un script de Google Tag Manager, una
+fuente de un CDN y una cookie `_ga`— se abría al principio como `file://`, y **la mitad del medidor
+que busca cookies salía verde**: Chromium no guarda cookies de un origen `file://`. La prueba
+negativa estaba certificando un freno medio roto. Ahora el fixture **se sirve por HTTP** y las dos
+mitades se ponen rojas.
+
+### La analítica, mirada con el navegador antes de darla por hecha
+
+Se levantó un Umami de mentira, se reconstruyó con la variable puesta y se abrió el sitio:
+
+- en la capa pública el script **carga y se ejecuta**, sin ninguna violación de CSP, y **no escribe
+  ninguna cookie**;
+- en `/acceder` **no se carga** —`<Analitica />` solo cuelga del armazón público—, lo que dejó ver
+  que el origen de la analítica sobraba en la política **estricta**: se movió a la pública, donde es
+  lo único que lo necesita. Sin abrir el navegador, la CSP se habría quedado más ancha de lo
+  necesario en justo las superficies que muestran datos de personas.
+
+**Verificación global.** `lint` · `check:content` (1338) · `check:secrets` (391 archivos) ·
+`check:env` · `check:migrations` · `check:fronteras` · `check:archivos` · `check:contraste` (21) ·
+`check:motion` (201) · `check:cadenas` · `build:standalone` · `check:js-budget` (78 rutas) ·
+`check:runtime` (30) · `check:armazon` (60) · `check:blog` (33) · `check:paginas` (142) ·
+`check:seo` (220) · `test:gesto` (20) · **`check:terceros` (12)** · `check:lighthouse` (96/97/90) ·
+`check:brakes`: **diecinueve frenos** · `test:db`: **320** comprobaciones.
+
+**Lo que sigue esperando.** El criterio 6 queda cerrado en su forma más exigente —cero terceros— y
+la analítica **no está desplegada todavía**: es un servicio `slg-analytics` en Easypanel y dos
+variables. Mientras no exista, el sitio no mide nada, que es el estado por defecto correcto.

@@ -492,6 +492,117 @@ aplicación le manda al proveedor, y si no coincide con la registrada, `redirect
 
 ---
 
+## 4quinquies. La analítica autoalojada (DU-12) — **opcional, y el sitio funciona sin ella**
+
+Hasta que hagas esto, **el sitio no mide nada**. No está roto: ese es el estado por defecto correcto
+(RF-127). Hazlo cuando quieras saber qué páginas se visitan, no antes.
+
+**Por qué Umami y no Google Analytics.** RF-35 y RF-127 prohíben scripts de terceros y cookies de
+seguimiento en la capa pública, y hay un freno del CI que lo mide con un navegador de verdad
+(`npm run check:terceros`): si alguien mete Google Analytics, el pipeline se pone rojo. Umami
+autoalojado no pone cookies y los datos se quedan en **tu** VPS.
+
+### 4quinquies.1 Crear el servicio, paso a paso
+
+1. **Easypanel** → proyecto **`slg_website`** → botón **+ Service** → **App**.
+2. *Name*: `slg-analytics`. **Create**.
+3. Dentro del servicio nuevo → pestaña **Source** → elige **Docker Image** y escribe:
+   `ghcr.io/umami-software/umami:postgresql-latest`. **Save**.
+4. Pestaña **Environment**. Añade **tres** variables:
+
+   | Variable | Valor |
+   |---|---|
+   | `DATABASE_TYPE` | `postgresql` |
+   | `APP_SECRET` | una cadena larga que te inventes ahora y no uses en ningún otro sitio |
+   | `DATABASE_URL` | ver justo debajo |
+
+   **Cómo se escribe `DATABASE_URL`** (no está escrita aquí entera a propósito: este repositorio es
+   público y el freno `npm run check:secrets` pone el CI en rojo si aparece una cadena de conexión
+   con contraseña). Es una sola línea, sin espacios, con estas cinco piezas en este orden:
+
+   `postgres://` + `slg` + `:` + **la contraseña** + `@slg-postgres:5432/umami`
+
+   **La contraseña** es la que ya tiene el servicio `slg-postgres` en **su** pestaña Environment, en
+   `POSTGRES_PASSWORD`: cópiala desde ahí y pégala en el hueco. **No la pegues en ningún otro sitio**
+   —ni en un chat, ni en un documento, ni en este repositorio—.
+5. La base `umami` **tiene que existir antes de arrancar**. En Easypanel → servicio
+   **`slg-postgres`** → pestaña **Console** (o **Terminal**) → escribe:
+   `psql -U slg -c "CREATE DATABASE umami;"` y pulsa Enter. Si contesta `CREATE DATABASE`, hecho; si
+   dice que ya existe, también hecho.
+6. Vuelve a `slg-analytics` → pestaña **Domains** → **Add Domain**. *Host*:
+   `analytics.softlandingglobal.com`. *Port*: **3000**. Marca **HTTPS**. **Create**.
+7. **Hostinger** → DNS de `softlandingglobal.com` → **Add record**. *Type*: `A`. *Name*:
+   `analytics`. *Points to*: `167.88.42.76`. *TTL*: el que venga por defecto. **Add**.
+   (Este nombre **no** está en la lista de protegidos de §4.2: se puede crear sin riesgo.)
+8. **Deploy** en `slg-analytics`. Espera a que quede verde.
+
+### 4quinquies.2 Sacar el identificador del sitio
+
+1. Abre `https://analytics.softlandingglobal.com`.
+2. Entra con el usuario inicial de Umami: **`admin`** / **`umami`**.
+3. **Lo primero, antes que nada**: arriba a la derecha, tu usuario → **Profile** → **Change
+   password**. Pon una contraseña tuya. Dejar `umami` es dejar el panel abierto a cualquiera.
+4. **Settings → Websites → Add website**. *Name*: `softlandingglobal.com`. *Domain*:
+   `softlandingglobal.com`. **Save**.
+5. En la lista, botón **Edit** del sitio recién creado. Verás un **Website ID** con forma de
+   `xxxxxxxx-xxxx-...`. **Cópialo.**
+
+### 4quinquies.3 Las dos variables
+
+En Easypanel, en **`slg-web`** y en **`slgweb-staging`**, pestaña **Environment**:
+
+| Variable | Valor |
+|---|---|
+| `NEXT_PUBLIC_UMAMI_SCRIPT_URL` | `https://analytics.softlandingglobal.com/script.js` |
+| `NEXT_PUBLIC_UMAMI_WEBSITE_ID` | el **Website ID** del paso anterior |
+
+> **Importante y fácil de olvidar**: estas dos empiezan por `NEXT_PUBLIC_`, así que **se leen al
+> COMPILAR, no al arrancar**. Ponerlas y reiniciar no basta: hay que **volver a desplegar**
+> (`slg-web` → **Deploy**). Si el script no aparece, casi siempre es esto.
+
+La política de seguridad del sitio (CSP) **se ajusta sola** al dominio que pongas ahí: no hay nada
+más que tocar.
+
+### 4quinquies.4 Comprobación
+
+Abre `https://softlandingglobal.com`, navega dos o tres páginas, espera un minuto y mira el panel de
+Umami: tienen que aparecer las visitas. Si no aparecen, repasa el aviso del recuadro anterior —
+**volver a desplegar**, no solo reiniciar.
+
+---
+
+## 4sexies. Los webhooks salientes (DU-12) — **opcional, y el sitio funciona sin ellos**
+
+**No hace falta hacer nada de esto para que el sitio funcione.** Sin suscriptor configurado, los
+nueve eventos **quedan registrados igual** en la tabla `webhook_delivery` y no se pierde ninguno
+(RF-115). Esto solo hace falta cuando quieras que **n8n** reciba los eventos y automatice algo —por
+ejemplo, publicar en LinkedIn cuando salga un artículo.
+
+Cuando lo quieras, en Easypanel → `slg-web` → **Environment**, dos variables:
+
+| Variable | Valor |
+|---|---|
+| `N8N_WEBHOOK_URL` | la URL del webhook que te dé n8n al crear el flujo |
+| `WEBHOOK_SIGNING_SECRET` | una cadena larga que te inventes. **Es la llave con la que n8n comprueba que el mensaje viene de tu sitio y no de otro.** |
+
+**Cómo verifica n8n la firma.** Cada envío lleva tres cabeceras: `x-slg-event` (qué pasó),
+`x-slg-timestamp` (cuándo) y `x-slg-signature` (la firma). La firma es
+`sha256=` + HMAC-SHA256 de la cadena `<timestamp>.<cuerpo crudo>` con tu secreto. **Sobre el cuerpo
+crudo, tal cual llega**: si n8n vuelve a convertir el JSON a texto antes de comprobar, un espacio de
+más hace que la firma no cuadre y parezca un fallo del sitio.
+
+**Si más adelante quieres más de un destino**, usa `WEBHOOK_SUBSCRIBERS` en vez de las dos de arriba:
+una lista JSON con `nombre`, `url` y `secreto` por destino. **Cada destino lleva su propio secreto** —
+así, si mañana quitas uno, no tienes que cambiarle la llave al otro.
+
+**Los artículos.** Si además quieres que el evento `post.published` salga cuando publiques un
+artículo nuevo, añade `WEBHOOK_ANNOUNCE_POSTS` con valor `1`. Va apagado a propósito: encendida por
+primera vez sobre un sitio que ya tiene artículos, anunciaría **todos los antiguos de golpe**, como
+si se acabaran de publicar. Enciéndela **antes** de conectar el flujo de n8n a redes sociales, no
+después.
+
+---
+
 ## 5. Monitor de caída externo (criterios 8 y 9)
 
 **Producto: UptimeRobot** (D-49), dentro de la categoría que cerró D-43: servicio de
