@@ -18,7 +18,14 @@ fail=0
 
 # Extract IDs of rows whose Type is DU and Status is completed.
 # Convention: markdown table rows "| ID | Type | ... | Status | ..."
-completed_dus="$(grep -iE '\|\s*DU' "$tracker" | grep -iE 'completed' | \
+#
+# ACEPTA DOS VOCABULARIOS, y no es indulgencia: este script buscaba solo
+# `completed`, y el tracker de slg_website usa `done` (el vocabulario de
+# AGENTS.md: pending | in_progress | done | blocked | review). Resultado: desde
+# la primera unidad imprimía "nothing to check" y salía 0 — un verde que no
+# significaba nada, en el script que el playbook `review` usa para comprobar que
+# nada se marca hecho sin estarlo. Lo encontró la revisión final, no el uso.
+completed_dus="$(grep -iE '^\|\s*DU-' "$tracker" | grep -iE '`(completed|done)`' | \
   sed -E 's/^\|\s*//; s/\s*\|.*$//' | tr -d ' ' || true)"
 
 if [[ -z "$completed_dus" ]]; then

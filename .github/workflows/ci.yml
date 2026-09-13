@@ -118,6 +118,14 @@ jobs:
       - name: Los trece gates del Anexo D, verificables
         run: npm run check:anexo-d
 
+      # Los tres chequeos que el playbook `review` exige (AGENTS.md Regla 6):
+      # ninguna unidad marcada hecha sin entrada en el work_log, y el índice de
+      # conocimiento enlazando los documentos que existen. Nunca habían corrido
+      # en el pipeline — y además buscaban `completed` mientras el tracker dice
+      # `done`, así que pasaban sobre cero unidades. Lo encontró la revisión final.
+      - name: Los chequeos del playbook de revisión
+        run: npm run check:playbook
+
       # Criterio 5 de FU-12: toda sección declara su acción de B.3, y esa acción
       # existe. Una sección sin acción es una pantalla que nadie sabe quién ve.
       - name: Armazón de aplicación — cada sección con su acción

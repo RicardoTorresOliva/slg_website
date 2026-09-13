@@ -21,7 +21,10 @@ if [[ -f "$idx" ]]; then
     if ! grep -q "$base" "$idx"; then
       echo "  WARN: $base exists but is not linked from knowledge/index.md (progressive disclosure broken)"
     fi
-  done < <(find "$ROOT/knowledge" "$ROOT/design" -type f -name '*.md' 2>/dev/null | grep -v 'index.md' || true)
+  # `design_docs` además de `design`: el perfil software-app los deja en
+  # `design_docs/`, así que buscando solo `design/` este chequeo no miraba NINGÚN
+  # documento de diseño y aun así decía OK.
+  done < <(find "$ROOT/knowledge" "$ROOT/design" "$ROOT/design_docs" -type f -name '*.md' 2>/dev/null | grep -v 'index.md' || true)
 fi
 
 # Profile-specific drift check (e.g. software: every route in code is in api_contracts).

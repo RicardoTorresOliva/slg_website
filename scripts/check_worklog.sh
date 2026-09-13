@@ -14,7 +14,15 @@ worklog="$ROOT/docs/work_log.md"
 [[ -f "$worklog" ]] || { echo "No work_log.md — create it before marking units done."; exit 1; }
 
 # Last completed unit ID in the tracker (FU or DU).
-last_id="$(grep -iE '\|\s*(FU|DU)' "$tracker" | grep -iE 'completed' | tail -n1 | \
+# Mismo motivo que en check_completeness.sh: `done` es el vocabulario de
+# AGENTS.md, y buscar solo `completed` hacía que este script no mirara nunca nada.
+#
+# Y el ID se ancla a la PRIMERA celda (`^\|\s*(FU|DU)-`). Sin el ancla, una fila
+# cuya tercera columna dijera «DU-23» —una dependencia, por ejemplo— también
+# casaba, y el script acababa exigiendo entrada de work_log para `EXT-5`, que no
+# es una unidad. Un chequeo que falla por el motivo equivocado enseña a
+# ignorarlo, que es como se pierde el que falla por el motivo correcto.
+last_id="$(grep -iE '^\|\s*(FU|DU)-' "$tracker" | grep -iE '`(completed|done)`' | tail -n1 | \
   sed -E 's/^\|\s*//; s/\s*\|.*$//' | tr -d ' ' || true)"
 
 if [[ -z "$last_id" ]]; then
