@@ -247,5 +247,5 @@ jobs:
       - name: Datos de ejemplo
         run: npm run db:seed
 
-      - name: Aislamiento, contratos, autorización, correo, invitaciones, acceso y descargas
+      - name: Aislamiento, autorización, correo, invitaciones, acceso, descargas y CRM
         run: npm run test:db

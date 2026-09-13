@@ -1236,3 +1236,63 @@ en rojo por su motivo.
 **Lo que falta de estas unidades.** El criterio 7 de DU-07 —declarar D1…D6 en verde **en staging**—
 necesita el despliegue. Y DU-08 entrega «disponible próximamente» en los once documentos porque
 **no hay PDFs**: el camino con archivo está construido y se probará en cuanto exista el primero.
+
+---
+
+## 2026-09-13 · DU-09 y DU-10 — La entrega al CRM y las otras dos puertas
+
+### DU-09 — el CRM, con los dos modos y la cola que sobrevive
+
+**El visitante nunca espera al CRM** (criterio 1). Su documento se entrega cuando la captura está
+guardada; la sincronización ocurre después, en un barrido que corre **dentro del propio servicio**
+(A-01): sin orquestador externo, sin servicio aparte y sin una URL disparable desde fuera.
+
+**Los dos modos, los dos probados** (criterio 2). `contact_note` recorre buscar → crear → nota, y la
+nota transporta documento, ruta, idioma, UTM y el mensaje **en su texto**. `lead_admission` hace un
+`POST` idempotente por correo + documento contra un **doble** del endpoint, que es lo que el criterio
+pide mientras el CRM no lo publique. Cambiar de modo es cambiar `CRM_MODE`: comprobado en la misma
+prueba, sin migrar datos y sin tocar la unidad.
+
+**La cola es la tabla** (criterio 5, R-23). La prueba lo demuestra como hay que demostrarlo: crea la
+captura en un proceso, lo deja, y **lanza un proceso Node distinto** que la entrega. Si la cola
+viviera en memoria del contenedor, ahí se perdería.
+
+| Criterio | Cómo se comprueba |
+|---|---|
+| 6 · CRM apagado | El doble se «tira»: la captura queda `pending` con su error saneado y su próximo intento. Al volver, el reintento entrega. Es el gate **D7** |
+| 7 · cinco fallos | Tras el quinto, `failed` + aviso por correo. Y el fallo del aviso **no revierte nada** (RF-119) |
+| 8 · traza | Una fila de `crm_delivery` por intento, con endpoint y código |
+| 9 · credenciales | La clave viaja **solo** en la cabecera; la prueba comprueba que no aparece en ningún cuerpo ni en `crm_last_error` |
+
+**El barrido corre cada 20 s** (**D-87**), que cierra el `[PENDIENTE]` de `architecture` §6.2: tiene
+que ser **menor que el escalón más corto** (1 min) o la espera real no sería la de RF-50.
+
+### DU-10 — contacto y solicitud de Doctrina: la MISMA máquina
+
+Las tres puertas —descarga, contacto, doctrina— llaman a `registrarCaptura` (**D-89**). Tres
+manejadores paralelos habrían sido **tres sitios donde olvidarse del campo trampa**, y el que se
+olvida no da ningún error: deja pasar. La prueba comprueba que las tres rechazan dominios gratuitos y
+descartan la trampa en silencio.
+
+`/gracias` distingue las tres variantes (criterio 7): un «gracias» genérico después de escribir un
+mensaje deja al visitante sin saber si lo que mandó llegó.
+
+`lead_capture` gana una columna `message` (**D-88**): la «ausencia deliberada» de `data_model` prohíbe
+el **pipeline**, no el texto que la persona escribió.
+
+### Dos rojos falsos, cazados antes de que enseñaran a ignorar los frenos
+
+1. **Lighthouse dio 0 de rendimiento** en una ejecución, con 96 antes y 97 después. Un 0 no es una
+   página lenta: es un audit que no llegó a correr. Ahora se repite **una** vez y se distingue «no se
+   pudo medir» de «suspende» (**D-90**).
+2. **`spawnSync` en la prueba del CRM** bloqueaba el proceso que aloja el doble, así que el hijo
+   reclamaba la fila y el doble no podía contestarle. La entrega fallaba por timeout y **parecía un
+   fallo de la cola** cuando era un fallo de la prueba.
+
+**Verificación.** `test:crm`: **19** comprobaciones contra un doble del CRM y PostgreSQL real ·
+`test:descargas`: **18**, con las tres puertas · `check:ci` en verde con **78 rutas** ·
+`test:db`: **295** comprobaciones · **dieciocho frenos**.
+
+**Lo que sigue esperando.** DU-09 necesita **F.2-5** —las dos claves del CRM real— para el criterio 2
+en su mitad `contact_note` contra el CRM de verdad, y **S-01 cerrada**. Todo lo demás está construido
+y probado contra dobles.

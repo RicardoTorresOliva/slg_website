@@ -51,9 +51,12 @@ export function PaginaDeGracias({
           </a>
           <p style={aviso}>{t["thanks.expires"]}</p>
         </section>
-      ) : estado === "proximamente" ? (
+      ) : estado ? (
         <section style={caja}>
-          <p style={{ margin: 0, color: "var(--slg-ink-2)" }}>{t["thanks.comingSoon"]}</p>
+          {/* Criterio 7 de DU-10: la página distingue de dónde vienes. Un
+              «gracias» genérico tras escribir un mensaje deja al visitante sin
+              saber si lo que mandó llegó. */}
+          <p style={{ margin: 0, color: "var(--slg-ink-2)" }}>{t[`thanks.${variante(estado)}`]}</p>
         </section>
       ) : null}
 
@@ -67,6 +70,13 @@ export function PaginaDeGracias({
       </section>
     </div>
   );
+}
+
+/** El estado que llega por la URL, acotado a lo que esta página sabe decir. */
+function variante(estado: string): "comingSoon" | "contact" | "doctrine" {
+  if (estado === "contact") return "contact";
+  if (estado === "doctrine-request") return "doctrine";
+  return "comingSoon";
 }
 
 const caja: React.CSSProperties = {

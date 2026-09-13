@@ -1,5 +1,6 @@
 import { loadCollection, loadUiStrings } from "@/lib/content/loader";
 
+import { FormularioPublico } from "./FormularioPublico";
 import { Markdown } from "./Markdown";
 import { HeroTipografico } from "./piezas";
 
@@ -11,9 +12,10 @@ import { HeroTipografico } from "./piezas";
  * `order`.** Añadir una sección a la doctrina es añadir un `.md`: esta página
  * no sabe cuántas hay ni cómo se llaman.
  *
- * El bloque de solicitud **no tiene formulario todavía** y eso está dicho, no
- * escondido (criterio 4): su máquina es DU-10. Un botón que no hace nada es
- * peor que una frase que explica por qué aún no está.
+ * El bloque «documento completo a solicitud» **ya tiene su formulario** (DU-10):
+ * produce un `lead_capture` con `source: doctrine-request` y recorre
+ * exactamente el mismo camino que una descarga — misma validación, misma cola,
+ * mismo aviso. Una sola máquina, tres puertas.
  */
 export function PaginaDeDoctrina({ lang }: { lang: "es" | "en" }) {
   const t = loadUiStrings()[lang];
@@ -40,7 +42,12 @@ export function PaginaDeDoctrina({ lang }: { lang: "es" | "en" }) {
         <h2 id="solicitud" style={{ ...titulo, marginTop: 0 }}>
           {t["doctrine.requestTitle"]}
         </h2>
-        <p style={{ margin: 0, color: "var(--slg-ink-2)" }}>{t["doctrine.requestEmpty"]}</p>
+        <p style={{ margin: "0 0 1.25rem", color: "var(--slg-ink-2)" }}>{t["doctrine.requestIntro"]}</p>
+        <FormularioPublico
+          lang={lang}
+          origen="doctrine-request"
+          titulo={t["doctrine.requestTitle"]}
+        />
       </section>
     </div>
   );

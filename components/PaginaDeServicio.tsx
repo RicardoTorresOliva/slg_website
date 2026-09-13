@@ -4,7 +4,7 @@ import { loadCollection, loadUiStrings } from "@/lib/content/loader";
 import { servicioJsonLd } from "@/lib/content/seo";
 import { secciones } from "@/lib/content/secciones";
 
-import { Markdown, MarkdownEnLinea } from "./Markdown";
+import { Markdown } from "./Markdown";
 import { DatosEstructurados } from "./DatosEstructurados";
 import { BloqueQueIncluye, HeroTipografico } from "./piezas";
 

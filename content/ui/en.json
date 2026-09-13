@@ -87,5 +87,12 @@
   "thanks.linkCta": "Download now",
   "thanks.expires": "The link expires, so download it when you open it.",
   "thanks.comingSoon": "This document is not available yet. We will email you as soon as it is.",
-  "thanks.next": "Next step"
+  "thanks.next": "Next step",
+  "form.name": "Your name",
+  "form.message": "Tell us what you are working on",
+  "form.send": "Send",
+  "doctrine.requestCta": "Request the document",
+  "thanks.contact": "We have your message. We reply from support@softlandingglobal.com.",
+  "thanks.doctrine": "We have your request. We will send you the full document by email.",
+  "doctrine.requestIntro": "The summary on this page is public. The full document is delivered on request."
 }

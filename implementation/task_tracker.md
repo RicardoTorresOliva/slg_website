@@ -38,7 +38,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
 | **TOTAL** | **14** | **25** | **39** |
 
-**Estado global:** 19 `pending` · **7 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01, DU-07, DU-08) · **13 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-11) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
+**Estado global:** 17 `pending` · **8 `in_progress`** (FU-05, FU-08, FU-09, DU-01, FU-01, DU-07, DU-08, DU-09) · **14 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
 
 > **M0 y M1 están subdivididos** porque salían con 9 y 8 unidades, por encima del máximo de 6 por
 > milestone. No cambia su contenido ni el orden comercial del Anexo E: **M0 → M1 → M2 salen a
@@ -75,7 +75,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | FU-11 | FU | Anti-abuso propio: límite, honeypot y dominios gratuitos | M2 | FU-04, FU-05 | `pending` |
 | DU-08 | DU | Biblioteca de descargas, formulario de captura y entrega firmada | M2 | FU-09, FU-11, DU-05 | `pending` |
 | DU-09 | DU | Captura al CRM: adaptador de dos modos, cola y aviso | M2 | FU-08, DU-08 · F.2-5 · S-01 | `pending` |
-| DU-10 | DU | Contacto y solicitud del documento completo de Doctrina | M2 | DU-06, DU-09 | `pending` |
+| DU-10 | DU | Contacto y solicitud del documento completo de Doctrina | M2 | DU-06, DU-09 | `done` — las tres puertas por la misma máquina (**D-89**); `/gracias` distingue las tres variantes |
 | DU-11 | DU | Blog: índice, artículo, etiquetas, RSS y borradores | M2 | FU-03, DU-02 | `done` — ocho rutas prerrenderizadas en los dos idiomas; 33 comprobaciones sobre el servidor real |
 | DU-12 | DU | Webhooks salientes firmados y analítica privacy-first | M2 | DU-09, DU-11 | `pending` |
 | ━━━ | ━━━ | **▼ M3 · HQ (INTRANET SLG)** | ━━━ | ━━━ | ━━━ |
@@ -269,3 +269,8 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   PostgreSQL real. **El navegador encontró lo que ningún test veía**: la portada salía en blanco bajo
   el hero porque el reveal se escondía por defecto (**D-84**). Frenos nuevos `check:seo` y
   `check:lighthouse`: van **dieciocho**.
+- `2026-09-13` — **DU-10 `done`, DU-09 casi.** La entrega al CRM con los dos modos, la cola que
+  **sobrevive a un reinicio** —probado lanzando otro proceso— y los cinco intentos hasta `failed`.
+  Contacto y solicitud de Doctrina entran por la **misma máquina** que la descarga (**D-89**). Dos
+  rojos falsos cazados: Lighthouse dando 0 por un audit que no corrió (**D-90**) y un `spawnSync`
+  que bloqueaba el doble del CRM en la propia prueba.

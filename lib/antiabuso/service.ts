@@ -9,7 +9,7 @@
  */
 import { sql } from "drizzle-orm";
 
-import { withSystemScope } from "@/lib/db/scope";
+import { withSystemScope } from "../db/scope.ts";
 
 import { limitar } from "./limite.ts";
 import { campoTrampaRelleno } from "./trampa.ts";

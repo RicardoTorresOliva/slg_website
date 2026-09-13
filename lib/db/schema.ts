@@ -298,6 +298,12 @@ export const leadCapture = pgTable(
     name: text("name"),
     company: text("company"),
     jobTitle: text("job_title"),
+    /**
+     * El texto libre de `/contacto` (DU-10). No es pipeline —eso vive en el
+     * CRM (RF-57)—: es lo que la persona escribió, y viaja al CRM dentro de la
+     * nota. Aquí queda como respaldo.
+     */
+    message: text("message"),
     source: text("source").notNull(),
     downloadSlug: text("download_slug"),
     pagePath: text("page_path").notNull(),

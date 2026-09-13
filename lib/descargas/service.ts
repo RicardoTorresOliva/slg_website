@@ -16,10 +16,10 @@
  * no se emite firma y no se dispara `download.completed`. Es el caso que más se
  * rompe al implementarlo «cuando haya PDFs», y por eso está desde el principio.
  */
-import { verificarEnvio, type Veredicto } from "@/lib/antiabuso";
-import { downloadEvent, leadCapture } from "@/lib/db/schema";
-import { withSystemScope } from "@/lib/db/scope";
-import { adaptadorS3 } from "@/lib/files";
+import { verificarEnvio, type Veredicto } from "../antiabuso/index.ts";
+import { downloadEvent, leadCapture } from "../db/schema.ts";
+import { withSystemScope } from "../db/scope.ts";
+import { adaptadorS3 } from "../files/index.ts";
 
 export type Documento = {
   slug: string;
@@ -46,13 +46,34 @@ export function versionDePrivacidad(): string {
   return process.env.PRIVACY_POLICY_VERSION ?? "2026-09-13";
 }
 
-export async function registrarDescarga(entrada: {
-  documento: Documento;
+/**
+ * Las tres puertas de entrada a la MISMA máquina (DU-10).
+ *
+ * Una descarga, el formulario de contacto y la solicitud del documento de
+ * Doctrina recorren exactamente el mismo camino: verificación de FU-11,
+ * captura antes de responder, y la misma cola de entrega al CRM. Lo único que
+ * cambia es el `source` y si hay archivo que firmar.
+ *
+ * Tres caminos paralelos habrían sido tres sitios donde olvidarse del honeypot.
+ */
+export const ORIGENES = ["download", "contact", "doctrine-request"] as const;
+export type Origen = (typeof ORIGENES)[number];
+
+export async function registrarCaptura(entrada: {
+  /** Sin documento —contacto, solicitud de doctrina— no hay nada que firmar. */
+  documento?: Documento;
+  origen: Origen;
   datos: FormData;
   email: string;
   nombre?: string;
   empresa?: string;
   cargo?: string;
+  /**
+   * Lo que la persona escribió en `/contacto`. Va al CRM dentro de la nota, no
+   * a una columna propia: `lead_capture` no es un buzón (RF-57), y un mensaje
+   * en la base de la web es un mensaje que nadie lee.
+   */
+  mensaje?: string;
   pagina: string;
   locale: string;
   utm?: Record<string, string>;
@@ -87,8 +108,9 @@ export async function registrarDescarga(entrada: {
           name: entrada.nombre ?? null,
           company: entrada.empresa ?? null,
           jobTitle: entrada.cargo ?? null,
-          source: "download",
-          downloadSlug: entrada.documento.slug,
+          message: entrada.mensaje ?? null,
+          source: entrada.origen,
+          downloadSlug: entrada.documento?.slug ?? null,
           pagePath: entrada.pagina,
           locale: entrada.locale,
           utm: entrada.utm ?? null,
@@ -101,18 +123,27 @@ export async function registrarDescarga(entrada: {
   );
 
   // ── 3 · La entrega. Solo si hay archivo ──────────────────────────────────
-  if (!entrada.documento.claveDeArchivo || entrada.documento.estado !== "available") {
+  // Contacto y solicitud de doctrina no traen documento: se quedan aquí, con
+  // su captura guardada, que es todo lo que tenían que hacer.
+  // Se atan ANTES del `if` para que la comprobación las estreche a las dos, y
+  // sigan estrechadas dentro del `try` y del callback.
+  const documento = entrada.documento;
+  const claveDeArchivo = documento?.claveDeArchivo;
+
+  if (!documento || !claveDeArchivo || documento.estado !== "available") {
     // «Disponible próximamente»: se capturó el correo y NO se emite firma ni se
     // dispara `download.completed` (RF-40).
     return { ok: true, leadId, url: null, caducaEn: null, proximamente: true };
   }
 
   try {
+    // `adaptadorS3()` DENTRO del try: si faltan sus variables lanza, y esto
+    // tiene que contarlo, no romperse.
     const firmada = await adaptadorS3().firmarDescarga({
       bucket: "downloads",
-      clave: entrada.documento.claveDeArchivo,
+      clave: claveDeArchivo,
       uso: "download",
-      nombreDeDescarga: `${entrada.documento.slug}.pdf`,
+      nombreDeDescarga: `${documento.slug}.pdf`,
     });
     // La caducidad la dice el propio puerto: es el instante que firmó, no uno
     // recalculado aquí, que se desviaría por los milisegundos de la llamada.
@@ -124,7 +155,7 @@ export async function registrarDescarga(entrada: {
         await db.insert(downloadEvent).values({
           id: crypto.randomUUID(),
           leadCaptureId: leadId,
-          downloadSlug: entrada.documento.slug,
+          downloadSlug: documento.slug,
           signedUrlIssuedAt: new Date(),
           signedUrlExpiresAt: caduca,
         });

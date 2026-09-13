@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { loadCollection } from "@/lib/content/loader";
-import { registrarDescarga } from "@/lib/descargas/service";
+import { registrarCaptura } from "@/lib/descargas/service";
 
 /**
  * El manejador del formulario de descarga (DU-08).
@@ -45,7 +45,8 @@ export async function POST(request: Request) {
 
   if (!doc) redirect(`${base}?error=no-existe`);
 
-  const resultado = await registrarDescarga({
+  const resultado = await registrarCaptura({
+    origen: "download",
     documento: {
       slug: doc.slug,
       titulo: doc.data.title,

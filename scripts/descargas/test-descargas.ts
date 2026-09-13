@@ -125,6 +125,17 @@ async function main() {
     await dueno`delete from download_event where lead_capture_id in (select id from lead_capture where email like '%@prueba-slg.com' or email like '%@gmail.com')`;
     await dueno`delete from lead_capture where email like '%@prueba-slg.com' or email like '%@gmail.com'`;
 
+    /**
+     * El contador del límite se vacía antes de CADA bloque.
+     *
+     * El umbral está en 3 para que el bloque del límite no tenga que hacer
+     * cientos de peticiones, y la IP es la misma en todo lo que envía esta
+     * prueba: sin vaciarlo, el segundo bloque se choca con el límite que dejó
+     * el primero y parece roto lo que funciona.
+     */
+    const reiniciarLimite = () => dueno`delete from rate_limit_hit`;
+
+    await reiniciarLimite();
     console.log("\nCampo trampa — se descarta EN SILENCIO y no deja rastro (RF-33):\n");
     const conTrampa = await enviar(base, {
       documento: "d-06",
@@ -143,6 +154,7 @@ async function main() {
       "un bot que consigue su fila ha conseguido lo que venía a buscar",
     );
 
+    await reiniciarLimite();
     console.log("\nDominio de correo gratuito — mensaje explícito, y sin captura (RF-31):\n");
     const gratuito = await enviar(base, {
       documento: "d-06",
@@ -160,6 +172,7 @@ async function main() {
       "un rechazo no es una captura",
     );
 
+    await reiniciarLimite();
     console.log("\nAmpliar la lista NO requiere desplegar (RF-32):\n");
     await dueno`insert into free_email_domain (domain, added_by, note) values ('prueba-slg.com','test','ampliación en caliente') on conflict do nothing`;
     // La caché en proceso dura un minuto: se espera a que caduque para
@@ -177,6 +190,7 @@ async function main() {
     );
     await dueno`delete from free_email_domain where domain = 'prueba-slg.com'`;
 
+    await reiniciarLimite();
     console.log("\nDocumento SIN archivo — captura igual, y no emite firma (RF-40):\n");
     const sinArchivo = await enviar(base, {
       documento: "d-06",
@@ -208,6 +222,7 @@ async function main() {
       "un documento sin archivo no puede haber entregado nada",
     );
 
+    await reiniciarLimite();
     console.log("\nLímite de peticiones — 429 sin revelar el umbral (RF-34):\n");
     let cortado = "";
     for (let i = 0; i < 6; i++) {
@@ -229,8 +244,83 @@ async function main() {
       `destino: ${cortado}`,
     );
 
+    /* ── DU-10 · las otras dos puertas, la MISMA máquina ─────────────────── */
+    console.log("\nDU-10 — contacto y solicitud de doctrina, por el mismo camino:\n");
+
+    await reiniciarLimite();
+
+    const enviarA = async (ruta: string, campos: Record<string, string>) => {
+      const r = await fetch(`${base}${ruta}`, {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams(campos),
+        redirect: "manual",
+      });
+      return { status: r.status, destino: r.headers.get("location") ?? "" };
+    };
+
+    const contacto = await enviarA("/api/contacto", {
+      origen: "contact",
+      idioma: "es",
+      email: "contacto@empresa-real-slg.test",
+      nombre: "Persona",
+      mensaje: "Queremos hablar de SLG_Readiness.",
+    });
+    check(
+      "el envío de contacto redirige a gracias con su variante",
+      contacto.destino.includes("estado=contact"),
+      `destino: ${contacto.destino}`,
+    );
+    const leadContacto = await dueno`select source, message from lead_capture where email = 'contacto@empresa-real-slg.test'`;
+    check(
+      "crea una captura con source `contact` y guarda el mensaje",
+      leadContacto[0]?.source === "contact" && String(leadContacto[0]?.message).includes("SLG_Readiness"),
+      JSON.stringify(leadContacto[0] ?? {}),
+    );
+
+    const doctrina = await enviarA("/api/contacto", {
+      origen: "doctrine-request",
+      idioma: "es",
+      email: "doctrina@empresa-real-slg.test",
+    });
+    check(
+      "la solicitud de doctrina redirige con SU variante, no con la de contacto",
+      doctrina.destino.includes("estado=doctrine-request"),
+      `destino: ${doctrina.destino}`,
+    );
+    const leadDoctrina = await dueno`select source from lead_capture where email = 'doctrina@empresa-real-slg.test'`;
+    check(
+      "crea una captura con source `doctrine-request`",
+      leadDoctrina[0]?.source === "doctrine-request",
+      JSON.stringify(leadDoctrina[0] ?? {}),
+    );
+
+    // Criterio 3: las tres puertas aplican FU-11 entero.
+    const trampaContacto = await enviarA("/api/contacto", {
+      origen: "contact",
+      idioma: "es",
+      email: "bot-contacto@empresa-real-slg.test",
+      empresa_web: "soy un bot",
+    });
+    check(
+      "el contacto también tiene campo trampa, y descarta en silencio",
+      trampaContacto.destino.includes("/gracias") &&
+        (await dueno`select id from lead_capture where email = 'bot-contacto@empresa-real-slg.test'`).length === 0,
+      `destino: ${trampaContacto.destino}`,
+    );
+    const gratuitoContacto = await enviarA("/api/contacto", {
+      origen: "contact",
+      idioma: "es",
+      email: "alguien@gmail.com",
+    });
+    check(
+      "y rechaza los dominios de correo gratuito igual que la descarga",
+      gratuitoContacto.destino.includes("error=dominio_gratuito"),
+      `destino: ${gratuitoContacto.destino}`,
+    );
+
     await dueno`delete from download_event where lead_capture_id in (select id from lead_capture where email like '%empresa-real-slg.test')`;
-    await dueno`delete from lead_capture where email like '%empresa-real-slg.test'`;
+    await dueno`delete from lead_capture where email like '%empresa-real-slg.test' or email = 'alguien@gmail.com'`;
   } finally {
     parar();
     await dueno.end({ timeout: 5 });

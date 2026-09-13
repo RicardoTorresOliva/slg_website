@@ -17,7 +17,7 @@ import { createHash } from "node:crypto";
 
 import { sql } from "drizzle-orm";
 
-import { withSystemScope } from "@/lib/db/scope";
+import { withSystemScope } from "../db/scope.ts";
 
 export type ResultadoDeLimite = { permitido: boolean; esperaSegundos: number };
 

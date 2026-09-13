@@ -99,6 +99,8 @@ export const PAGINAS_CON_RUTA_PROPIA = new Set([
   "downloads",
   "gracias",
   "thank-you",
+  "contacto",
+  "contact",
 ]);
 
 /** Pares declarados a mano: los que no salen de una colección. */
@@ -110,6 +112,7 @@ const PARES_FIJOS: ReadonlyArray<readonly [string, string]> = [
   ["/nosotros", "/en/about"],
   ["/descargas", "/en/downloads"],
   ["/gracias", "/en/thank-you"],
+  ["/contacto", "/en/contact"],
   ["/acceder", "/en/sign-in"],
   ["/recuperar", "/en/recover"],
 ];

@@ -91,6 +91,24 @@ async function arrancar() {
   throw new Error("el servidor no respondió en 30 s");
 }
 
+type Medicion = Awaited<ReturnType<typeof import("lighthouse")["default"]>>;
+
+async function medir(
+  lighthouse: typeof import("lighthouse")["default"],
+  base: string,
+  ruta: string,
+  puerto: number,
+): Promise<Medicion> {
+  return lighthouse(`${base}${ruta}`, { port: puerto, output: "json", logLevel: "error" }, undefined);
+}
+
+/** Un 0 de rendimiento o un `runtimeError` son la medición rota, no la página. */
+function fueUnFalloDeMedicion(r: Medicion): boolean {
+  if (!r) return true;
+  if (r.lhr.runtimeError) return true;
+  return (r.lhr.categories.performance?.score ?? 0) === 0;
+}
+
 async function main() {
   const { default: lighthouse } = await import("lighthouse");
   const { base, parar } = await arrancar();
@@ -110,11 +128,28 @@ async function main() {
     );
 
     for (const ruta of PAGINAS) {
-      const resultado = await lighthouse(
-        `${base}${ruta}`,
-        { port: puertoDepuracion, output: "json", logLevel: "error" },
-        undefined,
-      );
+      /**
+       * UNA repetición, y solo cuando la medición FALLA.
+       *
+       * Un `runtimeError` o un rendimiento de 0 no significan «la página va
+       * lenta»: significan que el audit no llegó a correr. Tratarlos como un
+       * suspenso pone el freno en rojo por algo que no es del sitio, y un freno
+       * que se pone rojo por sí mismo enseña a ignorarlo. Una repetición
+       * distingue el fallo de medición del suspenso real; si vuelve a fallar,
+       * se dice que **no se pudo medir**, que es otra cosa que suspender.
+       */
+      let resultado = await medir(lighthouse, base, ruta, puertoDepuracion);
+      if (fueUnFalloDeMedicion(resultado)) {
+        resultado = await medir(lighthouse, base, ruta, puertoDepuracion);
+      }
+
+      const error = resultado?.lhr.runtimeError;
+      if (error) {
+        console.error(`  ✗ ${ruta}: NO SE PUDO MEDIR — ${error.code}: ${error.message}`);
+        fallos++;
+        continue;
+      }
+
       const categorias = resultado?.lhr.categories;
       if (!categorias) {
         console.error(`  ✗ ${ruta}: Lighthouse no devolvió resultado`);
