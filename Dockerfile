@@ -50,10 +50,23 @@ ENV HOSTNAME=0.0.0.0
 # —y una copia que no existe se descubre el día que hace falta—. Lo encontró la
 # revisión final, no una ejecución.
 #
-# `postgresql16-client` trae `pg_dump` y `pg_restore`. La versión es la misma
-# que la del servidor (PostgreSQL 16) a propósito: un `pg_dump` más viejo que la
-# base se niega a volcar.
-RUN apk add --no-cache postgresql16-client
+# `pg_dump` y `pg_restore`, con CADENA DE RESPALDO y no un nombre fijo.
+#
+# Aquí había `apk add --no-cache postgresql16-client` a secas, y eso es una
+# apuesta: Alpine mantiene una o dos versiones de PostgreSQL a la vez, así que
+# `postgresql16-client` existe en unas versiones de Alpine y **no existe** en
+# otras. El día que la imagen base de Node cambie de Alpine —que cambia sola, sin
+# tocar nosotros nada— `apk add` falla, la COMPILACIÓN ENTERA falla, y Easypanel
+# se queda sirviendo la imagen anterior **sin decir que el sitio está viejo**.
+# Es el fallo más caro posible: silencioso y disfrazado de normalidad.
+#
+# El orden va del más nuevo al genérico a propósito. La regla de PostgreSQL es
+# que el cliente puede ser MÁS NUEVO que el servidor pero nunca más viejo: un
+# `pg_dump` de 17 vuelca una base 16 sin problema, y uno de 15 se niega. Así que
+# equivocarse hacia arriba es seguro y hacia abajo no.
+RUN apk add --no-cache postgresql17-client \
+ || apk add --no-cache postgresql16-client \
+ || apk add --no-cache postgresql-client
 
 # Usuario sin privilegios: el proceso web no necesita ser root.
 RUN addgroup --system --gid 1001 nodejs \
