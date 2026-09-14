@@ -23,6 +23,30 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# ─── Las dos variables de MENTIRA que la compilación necesita ───────────────
+#
+# SOLO EN ESTA ETAPA. `builder` y `runner` son imágenes distintas: nada de esto
+# llega al contenedor que sirve peticiones, y eso es deliberado. Poner un
+# DATABASE_URL falso en `runner` taparía la ausencia del de verdad con uno que
+# no conecta — el sitio arrancaría y fallaría por dentro, sin decir qué falta.
+#
+# POR QUÉ HACEN FALTA AQUÍ. `lib/db/scope.ts` exige DATABASE_URL **al evaluarse
+# el módulo**, y la recolección de datos de página de Next evalúa las rutas de
+# API. Sin ella la compilación muere en `/api/acceso/cerrar-todo`, que es
+# exactamente lo que pasó en el primer despliegue: la imagen no se construía,
+# Easypanel seguía sirviendo la anterior, y el sitio parecía sano estando viejo.
+#
+# Nada consulta la base durante la compilación —las páginas prerenderizadas son
+# las públicas—, así que una cadena que NO CONECTA es suficiente, y además
+# garantiza que la compilación no habla con ninguna base de verdad.
+#
+# Es el mismo arreglo que el trabajo `gates` de CI. Allí lo puse y aquí no, y
+# por eso el pipeline estaba verde mientras el despliegue llevaba horas roto:
+# **dos sitios construyen esta aplicación, y solo uno estaba arreglado**.
+ENV DATABASE_URL=postgresql://nadie@127.0.0.1:1/no-se-usa
+ENV BETTER_AUTH_SECRET=solo-para-compilar-la-imagen
+
 # El contenido se valida aquí: un frontmatter inválido detiene la IMAGEN, no
 # solo el despliegue (FU-03, criterio 1).
 RUN npm run build:standalone
