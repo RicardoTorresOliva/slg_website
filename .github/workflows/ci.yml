@@ -255,10 +255,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      # RUTA ABSOLUTA, y no `.gitleaks.toml` a secas. Con la ruta relativa el
+      # primer empuje a `main` —que escanea el historial entero, no solo el
+      # último commit— no encontró la configuración, corrió con la suya por
+      # defecto y marcó como filtración el fixture de `negative/secrets/`, que
+      # está ahí precisamente para contener secretos de mentira.
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_CONFIG: .gitleaks.toml
+          GITLEAKS_CONFIG: ${{ github.workspace }}/.gitleaks.toml
 
   # ──────────────────────────────────────────────────────────────────────────
   # Migraciones, aislamiento entre empresas y contratos del esquema (FU-04).
