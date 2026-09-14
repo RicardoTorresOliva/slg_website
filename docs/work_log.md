@@ -2721,3 +2721,33 @@ un apartado que existe, distinguiendo las internas de las que citan `architectur
 defecto que `check:anexo-d` vigila con los `npm run …` inexistentes.
 
 `check:brakes` **41**.
+
+---
+
+## Publicación — el cambio de ramas (2026-09-14)
+
+**El bloqueo no era de código: era de git.** Al preparar la publicación apareció que `main` tenía
+**dos commits** —`Initial commit` y `Summary`—, o sea que **el sitio no estaba en `main`**, y que
+`develop` llevaba una **línea paralela** del mismo proyecto: 18 commits hasta FU-06, del 2026-09-10,
+con otros nombres de archivo (`lib/auth/config.ts`, `app/hq/page.tsx`, `proxy.ts`). Mi rama y esa
+línea **no comparten historia**: se separan en el commit inicial y difieren en 480 archivos.
+
+Y el freno `guarda-staging` exige que todo commit que llega a `main` **ya esté en `develop`** (R-20).
+Con las ramas divergidas, ese freno —que está bien puesto— bloqueaba el camino entero.
+
+**Lo hecho, con autorización explícita de Ricardo:**
+
+1. La línea anterior queda guardada en la rama **`develop-linea-anterior-2026-09-10`** (`b2bce2c`).
+   Reemplazar `develop` no pierde nada: un `--force` deja los commits alcanzables solo por el reflog
+   del servidor, y eso se recoge solo con el tiempo. Una rama con nombre no.
+2. `develop` pasa a apuntar a la línea actual, con `--force-with-lease` **anclado al SHA anterior**:
+   si alguien hubiera empujado a `develop` entre mi lectura y mi escritura, el push se habría negado
+   en vez de pisarlo.
+
+**Lo que esa línea anterior dice que ya está montado**, y conviene no volver a hacerlo: los ganchos
+de auto-despliegue en las dos ramas, los cubos `downloads` y `deliverables` de MinIO, y los monitores
+de UptimeRobot. Todo del 10 de septiembre y confirmado por Ricardo en su momento.
+
+**El riesgo que queda, dicho antes de que muerda:** las variables de entorno de Easypanel se
+configuraron para la **otra** línea de código, y los nombres no coinciden con los de esta. La página
+`/api/ops?token=…` los diagnostica uno a uno —pero para que exista hay que poner `OPS_TOKEN` primero.
