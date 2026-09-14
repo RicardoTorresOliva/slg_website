@@ -8,5 +8,14 @@ node_modules
 *.key
 *.pem
 deliverables
-drizzle/meta
+# Los SNAPSHOTS de drizzle-kit no viajan: son grandes y solo hacen falta para
+# GENERAR migraciones, que se hace en desarrollo.
+#
+# EL DIARIO SÍ, y esto ya rompió una vez. `drizzle/meta` entero estaba excluido,
+# así que la imagen se llevaba `drizzle/` con el SQL y SIN `_journal.json` — y el
+# migrador lee el diario para saber qué aplicar. El comando de despliegue
+# documentado (`npm run db:migrate`) habría muerto en el servidor con «Can't find
+# meta/_journal.json», reproducido tal cual antes de arreglarlo.
+drizzle/meta/*
+!drizzle/meta/_journal.json
 .DS_Store
