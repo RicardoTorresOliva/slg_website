@@ -57,6 +57,26 @@ jobs:
   gates:
     name: Gates · contenido, secretos, entorno, JS y cabeceras
     runs-on: ubuntu-latest
+
+    # ── A NIVEL DE TRABAJO, y no de un paso suelto ──────────────────────────
+    #
+    # Las dos son de mentira y las dos tienen que estar. `lib/db/scope.ts` exige
+    # `DATABASE_URL` **al evaluarse el módulo**, y en la salida `standalone` ese
+    # módulo se carga **por ruta y bajo demanda**: por eso el fallo no es
+    # evidente. La portada es estática y responde 200 tan campante; `/api/ops` y
+    # las pantallas dinámicas tocan la base, cargan el módulo, y devuelven 500.
+    #
+    # Puestas en el paso de compilación, la compilación pasaba y `check:runtime`
+    # se caía con nueve fallos —todos de `/api/ops`— porque el servidor que
+    # arranca ÉL no heredaba nada. Pasó en el primer despliegue a `develop`.
+    #
+    # Aquí NO hay PostgreSQL y no hace falta: una cadena que no conecta basta
+    # para que el módulo se evalúe, y `/api/ops` está hecha precisamente para
+    # informar de que la base no responde en vez de reventar. Comprobado.
+    env:
+      DATABASE_URL: postgresql://nadie@127.0.0.1:1/no-se-usa
+      BETTER_AUTH_SECRET: solo-para-compilar-en-ci
+
     steps:
       - uses: actions/checkout@v4
 
@@ -161,17 +181,10 @@ jobs:
       - name: Matriz B.3
         run: npm run test:permisos
 
-      # LAS DOS VARIABLES SON DE MENTIRA Y TIENEN QUE ESTAR. `lib/db/scope.ts`
-      # exige `DATABASE_URL` **al evaluarse el módulo**, y la recolección de
-      # datos de página de Next evalúa las rutas de API: sin ella la compilación
-      # muere en `/api/acceso/contrasena` y este job no puede pasar. Nada
-      # consulta la base durante la compilación —las páginas prerenderizadas son
-      # las públicas—, así que una cadena que no conecta sirve y además garantiza
-      # que no se está hablando con ninguna base de verdad desde el `gates`.
+      # Las variables que esto necesita están arriba, en el `env` del trabajo:
+      # la recolección de datos de página de Next evalúa las rutas de API, así
+      # que sin `DATABASE_URL` la compilación muere en `/api/acceso/contrasena`.
       - name: Compilación autocontenida
-        env:
-          DATABASE_URL: postgresql://nadie@127.0.0.1:1/no-se-usa
-          BETTER_AUTH_SECRET: solo-para-compilar-en-ci
         run: npm run build:standalone
 
       - name: Presupuesto de JS inicial (gate D1)
