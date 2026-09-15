@@ -133,3 +133,58 @@ desapercibido por eso, primero en CI y luego en la imagen.
 Antes de proponer un arreglo, reproducir el fallo en las mismas condiciones que el entorno que
 falla. Y cuando el diagnóstico dependa de una pantalla de Easypanel, pedirla una vez y leerla
 entera, en vez de ir preguntando dato a dato.
+
+---
+
+## 9. Sesión 2026-09-15 (tarde) — la imagen queda descartada
+
+Se reprodujo el despliegue **fuera de Easypanel**, en una máquina limpia, siguiendo la nota del §8:
+compilación `linux/amd64` de `4da5bfa` y ejecución del contenedor con la base de datos
+**deliberadamente inalcanzable**, sin ninguna red de seguridad local.
+
+| Comprobación | Resultado |
+|---|---|
+| `docker build --platform linux/amd64` | ✅ sin errores |
+| Contenedor con `DATABASE_URL` que no conecta | ✅ arranca y **permanece vivo** |
+| `/api/health` | ✅ `{"app":"slg_website","migraciones":17,…}` — línea actual |
+| `/ai/enterprise/readiness` | ✅ 200 (en la línea anterior daba 404) |
+| Barrido de 23 rutas | ✅ 20 × 200; `/hq` y `/portal` → 307 a `/acceder`; inexistente → 404 |
+| CSS, fuentes, chunks y prefetch | ✅ todo 200 |
+
+**Consecuencia: el paso 3 del §6 ya no hace falta.** La imagen arranca y sirve; no hay que separar
+«la imagen no arranca» de «la aplicación no arranca», porque las dos arrancan.
+
+### Hipótesis que el §5 no contempla
+
+Los tres síntomas del §3 se explican con una sola causa: **Swarm no consigue arrancar ninguna tarea
+nueva en ese nodo.**
+
+- `slg-web` y `slgweb-staging` sirven la línea anterior porque sus contenedores **antiguos siguen
+  vivos**: nunca fueron reemplazados.
+- `web` es un servicio nuevo, sin contenedor previo que sobreviva → «cero contenedores en ejecución».
+- Los despliegues salen verdes porque **construir y programar son pasos distintos**, y solo falla el
+  segundo.
+
+Esto predice que quitar la `HEALTHCHECK` (§5) **no** arregla nada, y que la causa está en la
+programación de la tarea, no en la imagen.
+
+**El comando que lo responde**, en el VPS:
+
+```
+docker service ps $(docker service ls --format '{{.Name}}' | grep -E 'slg-web|web') --no-trunc
+```
+
+La columna `ERROR` da el motivo literal por el que muere cada tarea. Complementos útiles en la misma
+sesión: `df -h`, `free -m` y `docker system df`.
+
+### No se pudo verificar
+
+El acceso por SSH al VPS quedó fuera de alcance en esta sesión: `root@167.88.42.76` rechaza la clave
+del equipo (`Permission denied (publickey,password)`). Hace falta autorizar una clave, o ejecutar el
+comando de arriba a mano.
+
+### Ramas
+
+`develop` local llevaba 29 commits **sin publicar** de la línea anterior (punta `9e2c7b0`, 2026-09-11).
+Se preservaron en `origin/develop-linea-2026-09-11-local` antes de alinear la copia local con
+`origin/main` / `origin/develop`. No se borró nada.
