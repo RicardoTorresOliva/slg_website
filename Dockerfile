@@ -133,7 +133,16 @@ EXPOSE 3000
 
 # Sonda de vida propia del contenedor. NO sustituye al monitor externo de D-49:
 # esta sonda vive dentro del VPS, y un VPS caído no puede informar de su caída.
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD node -e "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+# SIN HEALTHCHECK PROPIA, y no por descuido. La imagen traía una que consultaba
+# `/api/health` cada 30 s con 20 s de gracia. En Docker Swarm —que es lo que
+# Easypanel usa por debajo— una tarea marcada «unhealthy» se mata y se reprograma:
+# si el arranque tarda más que la gracia, o si la sonda falla por cualquier
+# motivo ajeno a la aplicación, el resultado es un ciclo de reinicios que acaba
+# **sin ningún contenedor en ejecución** y con la compilación en verde. Ese es
+# exactamente el estado en el que apareció el servicio nuevo.
+#
+# Easypanel ya vigila el servicio por su cuenta y el monitor externo de D-49 mira
+# desde fuera del VPS, que es lo único que detecta un VPS caído. Una tercera
+# sonda no añadía cobertura y sí añadía una forma de matar el contenedor.
 
 CMD ["node", "server.js"]
