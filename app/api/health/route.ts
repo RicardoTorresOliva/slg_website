@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { obligatoriasQueFaltan } from "@/lib/ops/variables";
+
 /**
  * Sonda de vida del contenedor.
  *
@@ -50,6 +52,22 @@ const MIGRACIONES: number | null = (() => {
   }
 })();
 
+/**
+ * `faltan` — QUÉ VARIABLES OBLIGATORIAS NO ESTÁN PUESTAS.
+ *
+ * Está aquí y no solo en `/api/ops` por una razón que costó una noche entera:
+ * **`/api/ops` no puede decirte qué falta si lo que falta es la variable que la
+ * enciende.** Sin `OPS_TOKEN` devuelve 404 —a propósito— y en ese momento no
+ * queda un solo sitio donde mirar. Un diagnóstico que exige estar bien
+ * configurado para funcionar no sirve cuando la configuración es el problema.
+ *
+ * SOLO NOMBRES, JAMÁS VALORES. Los nombres ya están en `.env.example`, que vive
+ * en un repositorio público; el valor no sale de Easypanel ni aquí ni en ningún
+ * otro sitio. Lista vacía significa que no falta ninguna obligatoria.
+ */
 export function GET() {
-  return Response.json({ status: "ok", app: "slg_website", migraciones: MIGRACIONES }, { status: 200 });
+  return Response.json(
+    { status: "ok", app: "slg_website", migraciones: MIGRACIONES, faltan: obligatoriasQueFaltan() },
+    { status: 200 },
+  );
 }
