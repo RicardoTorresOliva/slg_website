@@ -7,6 +7,7 @@ import { organizacionJsonLd } from "@/lib/content/seo";
 import { Analitica } from "./Analitica";
 import { BarraDeNavegacion } from "./BarraDeNavegacion";
 import { DatosEstructurados } from "./DatosEstructurados";
+import { Fotografia } from "./Fotografia";
 
 /**
  * El marco por el que se navega todo lo demás (DU-02).
@@ -64,7 +65,10 @@ export function ArmazonPublico({
         textos={{ menu: t["nav.menu"], navegacion: t["nav.aria"], inicio: t["nav.home"] }}
       />
 
-      <main id="contenido">{children}</main>
+      <main id="contenido">
+        <Fotografia ruta={ruta} />
+        {children}
+      </main>
 
       <PiePublico idioma={idioma} t={t} />
 

@@ -56,7 +56,14 @@ const EXIGEN_RESPALDO: ReadonlyArray<{ re: RegExp; que: string }> = [
    * se colaba entera. Lo comprobó el fixture negativo, no una lectura.
    */
   { re: /\b(?:premio|premiad|award|galard[oó]n)/gi, que: "premio" },
-  { re: /\b(?:l[ií]der|leading|n[uú]mero uno|number one|the best|el mejor)/gi, que: "superlativo" },
+  /**
+   * `líder` sin `\b` final para que «líderes» siga cayendo, pero con una
+   * excepción explícita: «liderazgo», «liderar» y «liderado» NO son el
+   * superlativo que este freno persigue. Sin ella, la frase «el liderazgo en
+   * esta era no es el del que más sabe» quedaba marcada como jactancia, que es
+   * exactamente lo contrario de lo que dice.
+   */
+  { re: /\b(?:l[ií]der(?!azgo|a[rd])|leading|n[uú]mero uno|number one|the best|el mejor)/gi, que: "superlativo" },
   { re: /\b(?:caso de [eé]xito|success story|case study)\b/gi, que: "caso de cliente" },
 ];
 
