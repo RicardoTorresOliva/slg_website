@@ -495,3 +495,52 @@ porque lo que se prueba son **políticas de fila reales**, y contra un doble sie
 - `scripts/auth/`: `test-permisos.ts`, `test-autorizacion.ts` · `scripts/ci/check-auth-boundary.ts`,
   `check-migrations.ts` · `scripts/db/local-pg.sh`
 - `implementation/task_tracker.md` · `package.json` · `scripts/tsconfig.json`
+
+---
+
+## Sesión 2026-09-17 — el sitio está publicado
+
+**`https://softlandingglobal.com` sirve en producción, desde Vercel.** No desde el
+VPS: Easypanel sigue sin arrancar contenedores nuevos (ver `handoff-despliegue.md`
+§9) y se rodeó, no se arregló.
+
+- Proyecto `slg-website` en la cuenta de Vercel de Ricardo. Protección SSO
+  **desactivada** a propósito — con ella puesta el sitio pedía login.
+- Las variables NO están en el almacén del proyecto: viajan en cada despliegue
+  con `--build-env`/`--env`. `DATABASE_URL` apunta adrede a una dirección que no
+  conecta; el sitio público no la necesita y una cadena que no conecta es más
+  segura que una que sí. **Los formularios no guardan nada todavía.**
+- **`output: "standalone"` es condicional** (`next.config.ts`): Vercel escribe
+  los `.nft.json` que su ejecutor lee, y con la salida autocontenida Next no los
+  emite. Así falló el primer despliegue. Fuera de Vercel no cambia nada.
+- DNS en Hostinger: raíz y `www` → `76.76.21.21`. Ricardo lo cambió el 17.
+
+**Contenido.** Los seis servicios de `SLG_Academy`/`SLG_Factory` y las páginas
+Doctrina y Nosotros reescritos contra las fuentes reales
+(`The_Phoenix_Doctrine_v1.1.md`, `SLG Overhauling.md`). Phoenix RETx describía
+otro servicio: es para investigadores y estudiantes, no para revisar
+implementaciones fallidas. Los 76 registros siguen en `copy: temporal`.
+
+**Marca.** `public/marca/isotipo-slg.svg` se había perdido al reemplazar la línea
+de código; recuperado de `origin/develop-linea-2026-09-11-local`. Once
+fotografías propias en `public/fotos/` (WebP, 352 KB en total).
+
+**`app/apple.css`** aporta la capa de acabado que faltaba. Lleva `!important`
+porque las páginas escriben estilo en línea; quitarlos es trabajo aparte.
+
+**Los 11 documentos de descarga EXISTEN**, en `~/Dev/SLG_Overhauling/docs/`
+(markdown) y `docs/pdf/` (PDF con la marca, vía pandoc + typst). 29.671 palabras,
+222 citas de fuente, 69 `[PENDIENTE]` declarados. **Todavía no están conectados
+al sitio**: las fichas siguen diciendo «disponible próximamente».
+
+**Dos frenos corregidos, ninguno cosmético:**
+- `check-copy` marcaba «liderazgo» como superlativo: la expresión sin `\b` final
+  cazaba toda la familia de «liderar».
+- `eslint` analizaba `.claude/worktrees/`, copias completas del repo de otra
+  línea — 583 errores en archivos que no son fuente.
+
+**Pendiente de Ricardo, y solo de él:** aprobar el título nuevo de D-03;
+verificar el «12× de capacidad» de D-10 (medición interna con supuestos sin
+confirmar); los 69 pendientes de los documentos, casi todos precios, duraciones
+y casos reales; y qué son ACP y SelectUSA/SGWIT para poder escribirlos en
+Nosotros.
