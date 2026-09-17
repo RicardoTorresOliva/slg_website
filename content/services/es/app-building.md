@@ -11,21 +11,21 @@ copy: temporal
 
 ## Para quién y qué problema
 
-Para la empresa que necesita una aplicación concreta y ha descubierto que el catálogo de software no la tiene, o la tiene a cambio de rehacer su operación alrededor del producto.
-El problema de construirla en casa suele ser el mismo: se puede empezar, y se puede terminar; sostenerla dos años es otra cosa.
+Para la organización que necesita una aplicación concreta y ha descubierto que el catálogo de software no la tiene, o la tiene a cambio de rehacer su operación alrededor del producto.
+El problema de construirla en casa suele ser el mismo: se puede empezar y se puede terminar; sostenerla dos años es otra cosa.
 
 ## Qué es
 
-Construcción de aplicaciones a medida en `SLG_Factory`.
-Lo que se entrega no es una demo sino un sistema en producción, con su despliegue, sus pruebas y su documentación — y con el código en un repositorio que es tuyo desde el primer día.
+La **fábrica de activos digitales** de `SLG_Factory`.
+Lo que se entrega no es una demostración sino un sistema en producción, con su despliegue, sus pruebas y su documentación — y con el código en un repositorio que es tuyo desde el primer día.
 
 ## Qué incluye
 
 Especificación antes que código: se escribe qué tiene que hacer y cómo se sabrá que lo hace.
-Construcción con compuertas de aprobación, no con entregas sorpresa al final.
+Construcción con compuertas de aprobación, no con una entrega sorpresa al final.
 Despliegue en la infraestructura que elijas, incluida la tuya.
 Pruebas automáticas y documentación de operación, que es lo que separa un sistema de un prototipo.
-Traspaso al equipo que lo va a mantener, con el tiempo de acompañamiento que haga falta.
+Traspaso al equipo que lo va a mantener, con el acompañamiento que haga falta.
 
 ## Cómo trabajamos
 

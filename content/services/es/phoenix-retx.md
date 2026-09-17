@@ -11,20 +11,20 @@ copy: temporal
 
 ## Para quién y qué problema
 
-Para la organización que ya intentó implementar inteligencia artificial, tiene resultados por debajo de lo prometido, y necesita saber qué falló antes de volver a invertir.
-El problema rara vez es la tecnología: es que se compró una herramienta donde hacía falta un cambio de operación.
+Para investigadores y para estudiantes de pregrado y postgrado que ya usan inteligencia artificial en su trabajo académico sin un criterio explícito sobre dónde ayuda, dónde contamina y qué hay que declarar.
+El problema no es el acceso a la herramienta: es que el rigor que se le exige a un método no se le está exigiendo al modelo.
 
 ## Qué es
 
-Un programa de `SLG_Academy` de la familia **Phoenix**, construido sobre The Phoenix Doctrine.
-Su punto de partida no es una hoja en blanco sino lo que ya existe: se trabaja sobre la implementación que se hizo, lo que produjo y lo que no.
+Un programa de `SLG_Academy` de la familia **Phoenix**, construido sobre The Phoenix Doctrine, dirigido al trabajo de investigación.
+Su unidad de trabajo no es una empresa sino el proyecto académico: la pregunta, las fuentes, el método y lo que finalmente se publica.
 
 ## Qué incluye
 
-Revisión de lo implementado: qué se compró, qué se esperaba y qué ocurrió.
-Separación explícita entre lo que falló por tecnología, por proceso y por decisión.
-Los tres pilares de DAL OS aplicados a la corrección, no al diagnóstico inicial.
-Un plan de continuación con las decisiones que hay que tomar antes de gastar el siguiente euro.
+Dónde la inteligencia artificial aporta a una investigación y dónde introduce un sesgo que después no se puede rastrear.
+Trazabilidad de la evidencia: cómo se sostiene una afirmación producida con ayuda de un modelo, y qué hacer cuando no se sostiene.
+Los tres pilares de DAL OS —Destrucción Creativa, Antifragilidad y AI Literacy— aplicados al trabajo de investigación, no a la operación de una empresa.
+Criterios de declaración de uso, para que el trabajo sea defendible ante un comité, un tribunal o un editor.
 
 ## Cómo trabajamos
 

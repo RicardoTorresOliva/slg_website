@@ -11,21 +11,21 @@ copy: temporal
 
 ## Para quién y qué problema
 
-Para la organización que ya automatizó lo evidente y se topa con el trabajo que exige criterio, no solo reglas: lo que hoy hace una persona leyendo, decidiendo y escribiendo.
+Para la organización que ya automatizó lo evidente y se topa con el trabajo que exige criterio y no solo reglas: lo que hoy hace una persona leyendo, decidiendo y escribiendo.
 El problema de automatizar eso con reglas es que la primera excepción rompe el flujo y devuelve el trabajo a la persona, con el enfado añadido.
 
 ## Qué es
 
-Construcción de **agentes** en `SLG_Factory`: sistemas que ejecutan trabajo con criterio delegado, dentro de límites que tú defines.
+La **fábrica de agentes de inteligencia artificial** de `SLG_Factory`: sistemas que ejecutan trabajo con criterio delegado, dentro de límites que tú defines.
 Se construyen igual que una aplicación —con especificación, compuertas y pruebas— y además con algo que una aplicación no necesita: límites explícitos de lo que el agente **no** puede hacer solo.
 
 ## Qué incluye
 
 Definición del alcance del agente y, sobre todo, de sus límites: qué decide, qué propone y qué nunca hace sin una persona.
-Construcción con trazabilidad: de cada acción queda registro de por qué se tomó.
+Guardarraíles y presupuesto de operación, fijados antes de ponerlo a trabajar.
+Trazabilidad: de cada acción queda registro de por qué se tomó.
 Pruebas sobre casos reales, incluidos los que deben terminar en «esto no lo hago yo».
 Despliegue, supervisión y traspaso al equipo que convivirá con él.
-El principio de Agentic Mindset aplicado donde aporta: delegar criterio no es delegar responsabilidad.
 
 ## Cómo trabajamos
 

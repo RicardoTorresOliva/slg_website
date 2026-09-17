@@ -11,20 +11,20 @@ copy: temporal
 
 ## Who it is for and what problem
 
-For the organisation that already tried to implement artificial intelligence, has results below what was promised, and needs to know what failed before investing again.
-The problem is rarely the technology: it is that a tool was bought where a change in operations was needed.
+For researchers and for undergraduate and postgraduate students who already use artificial intelligence in their academic work without an explicit criterion for where it helps, where it contaminates and what must be disclosed.
+The problem is not access to the tool: it is that the rigour demanded of a method is not being demanded of the model.
 
 ## What it is
 
-An `SLG_Academy` programme of the **Phoenix** family, built on The Phoenix Doctrine.
-Its starting point is not a blank page but what already exists: the work is done on the implementation that was carried out, what it produced and what it did not.
+An `SLG_Academy` programme of the **Phoenix** family, built on The Phoenix Doctrine, aimed at research work.
+Its unit of work is not a company but the academic project: the question, the sources, the method and what finally gets published.
 
 ## What it includes
 
-A review of what was implemented: what was bought, what was expected and what happened.
-An explicit separation between what failed through technology, through process and through decision.
-The three pillars of DAL OS applied to the correction, not to the initial diagnosis.
-A continuation plan with the decisions to be taken before spending the next euro.
+Where artificial intelligence contributes to research and where it introduces a bias that cannot be traced afterwards.
+Traceability of evidence: how a claim produced with a model's help holds up, and what to do when it does not.
+The three pillars of DAL OS — Creative Destruction, Antifragility and AI Literacy — applied to research work, not to running a company.
+Disclosure criteria, so the work is defensible before a committee, a board of examiners or an editor.
 
 ## How we work
 
@@ -35,8 +35,8 @@ And the capability stays inside your company: if you still depend on us when we 
 
 ## Download
 
-The briefing document for this service. **The only call to action on this page.**
+The document of interest for this service. **The only call to action on this page.**
 
 ## Next step
 
-If after reading it you want to talk, write to us.
+If you want to talk after reading it, write to us.

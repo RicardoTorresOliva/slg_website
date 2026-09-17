@@ -17,13 +17,13 @@ El problema de preguntar dentro de la empresa es que nadie es neutral; el de pre
 ## Qué es
 
 Acompañamiento individual y continuado para decisiones de inteligencia artificial en el nivel de dirección.
-No es formación ni consultoría de implementación: es un espacio de criterio, con alguien que ha estado en las dos sillas y que no cobra por lo que decidas comprar.
+No es formación ni consultoría de implementación: es un espacio de criterio, y quien acompaña no cobra por lo que decidas comprar.
 
 ## Qué incluye
 
-Sesiones individuales con periodicidad acordada, sobre las decisiones que tengas delante.
-Revisión de propuestas de terceros antes de firmarlas: qué preguntar, qué falta, qué está sobrevalorado.
-Acceso a los marcos de la casa cuando aportan al caso concreto, y no como vocabulario.
+Sesiones individuales con la periodicidad que acordemos, sobre las decisiones que tengas delante.
+Revisión de propuestas de terceros antes de firmarlas: qué preguntar, qué falta y qué está sobrevalorado.
+Los marcos de la casa —Digital Geography, Market Fracking, Hyperflexibility, Agentic Mindset— cuando aportan al caso concreto, y no como vocabulario.
 Confidencialidad, que en este servicio es la condición de que sirva para algo.
 
 ## Cómo trabajamos

@@ -11,20 +11,20 @@ copy: temporal
 
 ## Para quién y qué problema
 
-Para el equipo directivo que ya decidió avanzar en inteligencia artificial y descubre que cada miembro entiende algo distinto por «avanzar».
-El problema no es resistencia al cambio: es que no comparten un lenguaje, y sin lenguaje común cada reunión vuelve a empezar de cero.
+Para la alta gerencia que recibe una decisión ya tomada por el directorio y tiene que convertirla en operación, con equipos, presupuestos y plazos que sí son suyos.
+El problema no es resistencia al cambio: es que la decisión llega sin los criterios con que se tomó, y cada gerencia la traduce a su manera.
 
 ## Qué es
 
-Un programa de `SLG_Academy` de la familia **Phoenix**, construido sobre The Phoenix Doctrine.
-A diferencia de un programa individual, su unidad de trabajo es **el equipo**: lo que produce no es un conjunto de personas formadas, es un comité que decide con los mismos criterios.
+Un programa de `SLG_Academy` de la familia **Phoenix**, construido sobre The Phoenix Doctrine, dirigido al nivel de alta gerencia.
+A diferencia de un programa individual, su unidad de trabajo es **el equipo**: lo que produce no es un conjunto de personas formadas, es una capa gerencial que decide con los mismos criterios.
 
 ## Qué incluye
 
-Sesiones con el equipo completo, sobre casos de la propia empresa.
+Sesiones con el equipo completo, sobre iniciativas que esa gerencia ya tiene sobre la mesa.
 Un vocabulario común y explícito: qué llamamos agente, qué llamamos automatización, qué llamamos criterio.
-Los tres pilares de DAL OS aplicados a las decisiones que ese equipo tiene delante.
-Un acuerdo escrito sobre cómo se evalúan y se aprueban las iniciativas de IA a partir de ahí.
+Los tres pilares de DAL OS —Destrucción Creativa, Antifragilidad y AI Literacy— aplicados a la ejecución, no a la estrategia.
+Un acuerdo escrito sobre cómo se evalúan, se priorizan y se aprueban las iniciativas de inteligencia artificial a partir de ahí.
 
 ## Cómo trabajamos
 

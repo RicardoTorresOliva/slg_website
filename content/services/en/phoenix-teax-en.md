@@ -11,20 +11,20 @@ copy: temporal
 
 ## Who it is for and what problem
 
-For the leadership team that has already decided to move on artificial intelligence and discovers that each member means something different by "move".
-The problem is not resistance to change: it is that they do not share a language, and without a common language every meeting starts again from zero.
+For senior management, who receive a decision the board has already taken and have to turn it into operations — with teams, budgets and deadlines that are theirs.
+The problem is not resistance to change: it is that the decision arrives without the criteria it was taken with, and each manager translates it their own way.
 
 ## What it is
 
-An `SLG_Academy` programme of the **Phoenix** family, built on The Phoenix Doctrine.
-Unlike an individual programme, its unit of work is **the team**: what it produces is not a set of trained people, it is a committee that decides by the same criteria.
+An `SLG_Academy` programme of the **Phoenix** family, built on The Phoenix Doctrine, aimed at senior management.
+Unlike an individual programme, its unit of work is **the team**: what it produces is not a set of trained people, it is a management layer that decides by the same criteria.
 
 ## What it includes
 
-Sessions with the full team, on the company's own cases.
+Sessions with the full team, on initiatives that management already has on the table.
 A common, explicit vocabulary: what we call an agent, what we call automation, what we call judgement.
-The three pillars of DAL OS applied to the decisions that team has in front of it.
-A written agreement on how AI initiatives are evaluated and approved from then on.
+The three pillars of DAL OS — Creative Destruction, Antifragility and AI Literacy — applied to execution, not to strategy.
+A written agreement on how AI initiatives are evaluated, prioritised and approved from then on.
 
 ## How we work
 
@@ -35,8 +35,8 @@ And the capability stays inside your company: if you still depend on us when we 
 
 ## Download
 
-The briefing document for this service. **The only call to action on this page.**
+The document of interest for this service. **The only call to action on this page.**
 
 ## Next step
 
-If after reading it you want to talk, write to us.
+If you want to talk after reading it, write to us.
