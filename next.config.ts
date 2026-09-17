@@ -3,7 +3,14 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Despliegue en Easypanel sobre el VPS Hostinger (§10-1): la imagen Docker
   // necesita la salida autocontenida. Ver design_docs/architecture.md §8.
-  output: "standalone",
+  //
+  // CONDICIONAL, Y NO POR GUSTO. Vercel traza las dependencias por su cuenta y
+  // escribe los `.nft.json` que su propio ejecutor luego lee; con
+  // `output: "standalone"` Next no los emite y la compilación muere con
+  // «ENOENT: .next/next-server.js.nft.json» — reproducido en el primer
+  // despliegue. Fuera de Vercel no cambia nada: la imagen Docker sigue
+  // recibiendo la salida autocontenida que su Dockerfile copia.
+  output: process.env.VERCEL ? undefined : "standalone",
 
   // El contenido visible vive en content/ (B.4), no en componentes.
   reactStrictMode: true,
