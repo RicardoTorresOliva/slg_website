@@ -30,7 +30,7 @@ export const DESTINOS = [
  */
 export const ACCESO = { clave: "nav.signin", es: "/acceder", en: "/en/sign-in" } as const;
 
-/** Las tres líneas de `SLG_AI`, con el slug de su registro de página. */
+/** Las tres líneas de `SLG_VoltAi`, con el slug de su registro de página. */
 export const RAMAS = [
   { slug: "slg-academy", slugEn: "slg-academy-en", es: "/ai/academy", en: "/en/ai/academy" },
   { slug: "slg-enterprise", slugEn: "slg-enterprise-en", es: "/ai/enterprise", en: "/en/ai/enterprise" },

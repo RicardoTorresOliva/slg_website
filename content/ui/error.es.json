@@ -4,6 +4,6 @@
   "error.500.title": "Algo se rompió por nuestra parte",
   "error.500.body": "No es cosa tuya. Ya está registrado y lo estamos mirando. Prueba de nuevo en un momento, o sigue por cualquiera de estos tres sitios.",
   "error.home": "Portada",
-  "error.ai": "SLG_AI",
+  "error.ai": "SLG_VoltAi",
   "error.blog": "Blog"
 }

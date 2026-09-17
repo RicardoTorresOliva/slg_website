@@ -9,7 +9,7 @@ updated: "2026-09-17"
 copy: temporal
 ---
 
-**SLG Agency Inc.** es una compañía constituida en Florida, Estados Unidos. La dirige **Ricardo Torres Oliva**.
+**SLG Agency Inc.** es una compañía constituida en Florida, Estados Unidos. La dirige **Ricardo Torres Oliva**, cuyo recorrido profesional y sus mentorías —ACP, SelectUSA/SGWIT— están en [su perfil de LinkedIn](https://www.linkedin.com/in/ricardotorresoliva/).
 
 Trabajamos con directorios y comités de dirección que tienen que decidir sobre inteligencia artificial y no quieren hacerlo con la información que da quien vende. Nuestro modelo es informativo: publicamos el criterio, entregamos el documento, y la conversación llega después si la quieres.
 

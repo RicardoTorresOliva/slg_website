@@ -9,7 +9,7 @@ updated: "2026-09-12"
 copy: temporal
 ---
 
-The `SLG_AI` line that answers two questions in this order: **where are we** and **how do we get there**.
+The `SLG_VoltAi` line that answers two questions in this order: **where are we** and **how do we get there**.
 
 `SLG_Readiness` is the diagnosis: an exhaustive readiness analysis across eleven dimensions, with evidence per dimension and a reasoned order of priority.
 

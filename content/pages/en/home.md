@@ -5,31 +5,31 @@ description: "SLG Agency helps boards and executive committees decide on artific
 lang: en
 pair: "home"
 nav_order: 1
-updated: "2026-09-13"
+updated: "2026-09-17"
 copy: temporal
 ---
 
 ## Hero
 
-We do not sell artificial intelligence. We help you buy it.
+We do not sell artificial intelligence. Together, we build your future with it.
 
 We work with boards and executive committees that have to decide on AI and do not want to do it on the information supplied by whoever is selling.
 
-## The two doors
+## The Agency's axes
 
-The house has two branches, and it is worth choosing before reading on.
+The agency works on two axes, and it is worth choosing before reading on.
 
-### SLG_AI
+### SLG_VoltAi
 
-The artificial intelligence branch. Building judgement, diagnosing, implementing, and building what the catalogue does not have.
+The artificial intelligence axis. Building judgement, diagnosing, implementing, and building what the catalogue does not have.
 
 ### SLG_Holdings
 
 Building and operating companies outside their home market, with direct involvement in the outcome.
 
-## SLG_AI
+## SLG_VoltAi
 
-`SLG_AI` runs in three lines, and they answer three different moments.
+`SLG_VoltAi` runs in three lines, and they answer three different moments.
 
 ### SLG_Academy
 

@@ -16,7 +16,7 @@ The problem with doing it through separate advisers is that each solves their ow
 
 ## What it is
 
-The other branch of the house — the only context in which the brand is written **Softlanding Global**.
+The Agency's other axis — the only context in which the brand is written **Softlanding Global**.
 It is not internationalisation advisory: it is the building and operation of companies outside their home market, with direct involvement in the outcome.
 `SLG_Holdings` runs in **three lines**.
 

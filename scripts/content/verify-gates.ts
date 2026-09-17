@@ -48,7 +48,7 @@ const CASES: Case[] = [
     gate: "nomenclatura literal",
     script: "check-nomenclature.ts",
     fixture: "negative/nomenclature",
-    expect: "SLG_AI",
+    expect: "SLG_VoltAi",
   },
   {
     gate: "nomenclatura · DAL OS",

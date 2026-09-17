@@ -13,8 +13,8 @@ import { HeroTipografico, TarjetaDeArticulo, TarjetaDeServicio } from "./piezas"
  * La portada — **los siete bloques de RF-09, en orden fijo**.
  *
  *   1. Hero tipográfico, una idea
- *   2. Las dos ramas como dos puertas
- *   3. Las tres tarjetas de `SLG_AI`
+ *   2. Los dos ejes de la Agencia
+ *   3. Las tres tarjetas de `SLG_VoltAi`
  *   4. Franja Doctrina con pull-quote y enlace
  *   5. Últimos artículos
  *   6. Descarga destacada
@@ -35,7 +35,7 @@ export function Portada({ lang }: { lang: "es" | "en" }) {
   const [hero, puertas, lineas, doctrina, articulosBloque, descarga] = bloques;
   const idx = lang === "en" ? "en" : "es";
 
-  // Las dos puertas y las tres líneas traen sus propios subtítulos (`###`):
+  // Los dos ejes y las tres líneas traen sus propios subtítulos (`###`):
   // se parten aquí para no repetir los nombres en el componente.
   const puertasSub = subsecciones(puertas?.cuerpo ?? "");
   const lineasSub = subsecciones(lineas?.cuerpo ?? "");
@@ -54,7 +54,7 @@ export function Portada({ lang }: { lang: "es" | "en" }) {
         apoyo={restoDeLineas(hero?.cuerpo ?? "")}
       />
 
-      {/* 2 · Las dos puertas. El visitante elige rama antes de ver nada más. */}
+      {/* 2 · Los dos ejes. El visitante elige eje antes de ver nada más. */}
       <Reveal>
         <section aria-labelledby="puertas" style={seccion}>
           <h2 id="puertas" style={tituloDeSeccion}>
@@ -76,7 +76,7 @@ export function Portada({ lang }: { lang: "es" | "en" }) {
         </section>
       </Reveal>
 
-      {/* 3 · Las tres líneas de SLG_AI. */}
+      {/* 3 · Las tres líneas de SLG_VoltAi. */}
       <Reveal>
         <section aria-labelledby="lineas" style={seccion}>
           <h2 id="lineas" style={tituloDeSeccion}>

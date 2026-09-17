@@ -24,7 +24,7 @@ We take no commission from any vendor, and when the conversation reaches somethi
 
 Individual sessions at the cadence we agree, on the decisions in front of you.
 Review of third-party proposals before you sign them: what to ask, what is missing and what is overpriced.
-The house frameworks — Digital Geography, Market Fracking, Hyperflexibility, Agentic Mindset — where they serve the specific case, and not as vocabulary.
+The agency's frameworks — Digital Geography, Market Fracking, Hyperflexibility, Agentic Mindset — where they serve the specific case, and not as vocabulary.
 Confidentiality, which in this service is the condition for it to be worth anything.
 
 ## How we work

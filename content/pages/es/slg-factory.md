@@ -9,7 +9,7 @@ updated: "2026-09-12"
 copy: temporal
 ---
 
-La línea de `SLG_AI` que construye.
+La línea de `SLG_VoltAi` que construye.
 
 `APP_Building` para aplicaciones a medida que llegan a producción, no a demo. `AGE_Building` para agentes que ejecutan trabajo con criterio delegado y límites explícitos. `CoO as a Service` para la dirección de operaciones que una empresa en crecimiento necesita antes de poder incorporarla en plantilla.
 

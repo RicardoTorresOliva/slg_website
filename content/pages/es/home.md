@@ -5,31 +5,31 @@ description: "SLG Agency ayuda a directorios y comités de dirección a decidir 
 lang: es
 pair: "home"
 nav_order: 1
-updated: "2026-09-13"
+updated: "2026-09-17"
 copy: temporal
 ---
 
 ## Hero
 
-No vendemos inteligencia artificial. Ayudamos a comprarla.
+No vendemos inteligencia artificial. Construimos juntos tu futuro con ella.
 
 Trabajamos con directorios y comités de dirección que tienen que decidir sobre IA y no quieren hacerlo con la información que da quien vende.
 
-## Las dos puertas
+## Los ejes de la Agencia
 
-La casa tiene dos ramas, y conviene elegir antes de seguir leyendo.
+La agencia trabaja sobre dos ejes, y conviene elegir antes de seguir leyendo.
 
-### SLG_AI
+### SLG_VoltAi
 
-La rama de inteligencia artificial. Formar criterio, diagnosticar, implementar y construir lo que no está en el catálogo.
+El eje de inteligencia artificial. Formar criterio, diagnosticar, implementar y construir lo que no está en el catálogo.
 
 ### SLG_Holdings
 
 Construir y operar compañías fuera de su mercado de origen, con implicación directa en el resultado.
 
-## SLG_AI
+## SLG_VoltAi
 
-`SLG_AI` se despliega en tres líneas, y responden a tres momentos distintos.
+`SLG_VoltAi` se despliega en tres líneas, y responden a tres momentos distintos.
 
 ### SLG_Academy
 

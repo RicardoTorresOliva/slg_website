@@ -26,7 +26,7 @@ import { trozosDeLinea } from "@/lib/content/markdown-seguro";
  *
  * Existe porque hay sitios que muestran **una sola línea** de un registro —la
  * bajada de un bloque de la portada, el resumen de una tarjeta— y ahí el
- * párrafo completo sobra. Sin esto, un `SLG_AI` entre acentos graves se
+ * párrafo completo sobra. Sin esto, un `SLG_VoltAi` entre acentos graves se
  * publicaba con los acentos a la vista.
  */
 export function MarkdownEnLinea({ texto }: { texto: string }) {

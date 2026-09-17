@@ -24,7 +24,7 @@ No cobramos comisión de ningún proveedor, y cuando la conversación llegue a a
 
 Sesiones individuales con la periodicidad que acordemos, sobre las decisiones que tengas delante.
 Revisión de propuestas de terceros antes de firmarlas: qué preguntar, qué falta y qué está sobrevalorado.
-Los marcos de la casa —Digital Geography, Market Fracking, Hyperflexibility, Agentic Mindset— cuando aportan al caso concreto, y no como vocabulario.
+Los marcos de la agencia —Digital Geography, Market Fracking, Hyperflexibility, Agentic Mindset— cuando aportan al caso concreto, y no como vocabulario.
 Confidencialidad, que en este servicio es la condición de que sirva para algo.
 
 ## Cómo trabajamos

@@ -16,7 +16,7 @@ El problema de hacerlo con asesores sueltos es que cada uno resuelve su parte y 
 
 ## Qué es
 
-La otra rama de la casa — el único contexto en el que la marca se escribe **Softlanding Global**.
+El otro eje de la Agencia — el único contexto en el que la marca se escribe **Softlanding Global**.
 No es asesoría de internacionalización: es construcción y operación de compañías fuera de su mercado de origen, con implicación directa en el resultado.
 `SLG_Holdings` se despliega en **tres líneas**.
 

@@ -6,13 +6,17 @@
  * criterio 4) y cualquier componente que necesite validar una etiqueta.
  *
  * Regla: estos nombres NO se traducen, NO se pluralizan y NO cambian de
- * capitalización ni de separador. `SLG_AI` no es «SLG AI», ni «slg_ai», ni
- * «IA SLG». Un texto que los altere rompe el build.
+ * capitalización ni de separador. `SLG_VoltAi` no es «SLG VoltAi», ni
+ * «SLG_VOLTAI», ni «IA SLG». Un texto que los altere rompe el build.
+ *
+ * `SLG_VoltAi` sustituye a `SLG_AI` desde el 2026-09-17 por decisión de Ricardo
+ * (en honor a Alessandro Volta: la pila, la corriente sostenida). El nombre
+ * anterior pasa a ser una variante PROHIBIDA para que ningún resto sobreviva.
  */
 
 /** Los nombres que deben aparecer literalmente, en cualquier idioma. */
 export const LITERAL_TERMS = [
-  "SLG_AI",
+  "SLG_VoltAi",
   "SLG_Holdings",
   "SLG_Academy",
   "SLG_Enterprise",
@@ -34,7 +38,7 @@ export type LiteralTerm = (typeof LITERAL_TERMS)[number];
  * Cada entrada es un patrón que NO debe aparecer, con el término correcto.
  *
  * El patrón se construye para no dar falsos positivos sobre el término bueno:
- * por eso `SLG AI` (con espacio) es error pero `SLG_AI` no dispara.
+ * por eso `SLG VoltAi` (con espacio) es error pero `SLG_VoltAi` no dispara.
  */
 export const FORBIDDEN_VARIANTS: ReadonlyArray<{
   pattern: RegExp;
@@ -42,8 +46,18 @@ export const FORBIDDEN_VARIANTS: ReadonlyArray<{
   why: string;
 }> = [
   // Separador cambiado o eliminado
-  { pattern: /\bSLG\s+AI\b/g, correct: "SLG_AI", why: "espacio en vez de guion bajo" },
-  { pattern: /\bSLG-AI\b/g, correct: "SLG_AI", why: "guion en vez de guion bajo" },
+  { pattern: /\bSLG\s+VoltAi\b/g, correct: "SLG_VoltAi", why: "espacio en vez de guion bajo" },
+  { pattern: /\bSLG-VoltAi\b/g, correct: "SLG_VoltAi", why: "guion en vez de guion bajo" },
+  // El nombre anterior del eje. Cualquier resto es un error, no una variante.
+  { pattern: /\bSLG_AI\b/g, correct: "SLG_VoltAi", why: "nombre anterior del eje (hasta 2026-09-17)" },
+  { pattern: /\bSLG\s+AI\b/g, correct: "SLG_VoltAi", why: "nombre anterior del eje, además sin guion bajo" },
+  { pattern: /\bSLG-AI\b/g, correct: "SLG_VoltAi", why: "nombre anterior del eje, además con guion" },
+  // Capitalización de VoltAi: la «i» final va en minúscula, y la «V» y la «A» en mayúscula
+  { pattern: /\bSLG_VOLTAI\b/g, correct: "SLG_VoltAi", why: "capitalización alterada" },
+  { pattern: /\bSLG_VoltAI\b/g, correct: "SLG_VoltAi", why: "capitalización alterada (la i final es minúscula)" },
+  { pattern: /\bSLG_Voltai\b/g, correct: "SLG_VoltAi", why: "capitalización alterada" },
+  { pattern: /\bSLG_voltai\b/g, correct: "SLG_VoltAi", why: "capitalización alterada" },
+  { pattern: /\bVolt\s+Ai\b/gi, correct: "SLG_VoltAi", why: "espacio dentro del nombre" },
   { pattern: /\bSLG\s+Holdings\b/g, correct: "SLG_Holdings", why: "espacio en vez de guion bajo" },
   { pattern: /\bSLG\s+Academy\b/g, correct: "SLG_Academy", why: "espacio en vez de guion bajo" },
   { pattern: /\bSLG\s+Enterprise\b/g, correct: "SLG_Enterprise", why: "espacio en vez de guion bajo" },
@@ -54,8 +68,9 @@ export const FORBIDDEN_VARIANTS: ReadonlyArray<{
   { pattern: /\bAGE\s+Building\b/g, correct: "AGE_Building", why: "espacio en vez de guion bajo" },
 
   // Traducción: el error más probable en la versión ES
-  { pattern: /\bIA\s+SLG\b/g, correct: "SLG_AI", why: "traducido al español" },
-  { pattern: /\bSLG_IA\b/g, correct: "SLG_AI", why: "traducido al español" },
+  { pattern: /\bIA\s+SLG\b/g, correct: "SLG_VoltAi", why: "traducido al español" },
+  { pattern: /\bSLG_IA\b/g, correct: "SLG_VoltAi", why: "traducido al español" },
+  { pattern: /\bSLG_VoltIA\b/g, correct: "SLG_VoltAi", why: "traducido al español" },
   { pattern: /\bAcademia\s+SLG\b/gi, correct: "SLG_Academy", why: "traducido al español" },
   { pattern: /\bFábrica\s+SLG\b/gi, correct: "SLG_Factory", why: "traducido al español" },
   { pattern: /\bSLG_Fábrica\b/gi, correct: "SLG_Factory", why: "traducido al español" },
