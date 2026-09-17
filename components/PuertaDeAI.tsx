@@ -20,15 +20,22 @@ export function PuertaDeAI({ lang }: { lang: "es" | "en" }) {
   const pagina = loadCollection<{ title: string; description: string }>("page", lang).find(
     (p) => p.slug === slug,
   );
-  const bloques = secciones(pagina?.body ?? "");
+  const cuerpo = pagina?.body ?? "";
+  const bloques = secciones(cuerpo);
+  // La entrada es lo que va ANTES del primer `##`: se pinta siempre. Antes solo
+  // se pintaba el cuerpo cuando no había ninguna sección, así que añadir una
+  // («Por qué VoltAi») hizo desaparecer también el párrafo de entrada. Las
+  // secciones van después de las tres líneas: primero la oferta, luego el
+  // nombre y su historia.
+  const entrada = cuerpo.split(/\n##\s+/)[0]?.trim() ?? "";
 
   return (
     <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "0 1.25rem" }}>
       <HeroTipografico titular={pagina?.data.title ?? ""} apoyo={pagina?.data.description ?? ""} />
 
-      {bloques.length === 0 ? (
+      {entrada ? (
         <div style={{ maxWidth: "44rem" }}>
-          <Markdown texto={pagina?.body ?? ""} />
+          <Markdown texto={entrada} />
         </div>
       ) : null}
 
@@ -57,6 +64,13 @@ export function PuertaDeAI({ lang }: { lang: "es" | "en" }) {
           })}
         </ul>
       </section>
+
+      {bloques.map((b) => (
+        <section key={b.titulo} aria-label={b.titulo} style={{ maxWidth: "44rem", padding: "0 0 4rem" }}>
+          <h2 style={titulo}>{b.titulo}</h2>
+          <Markdown texto={b.cuerpo} />
+        </section>
+      ))}
     </div>
   );
 }
