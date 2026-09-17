@@ -106,7 +106,7 @@ export function PaginaDeServicio({
               {documento.data.audience}
             </p>
             <Link href={`${descargas}/${documento.slug}`} style={boton}>
-              {documento.data.status === "available" ? t["download.cta"] : t["download.comingSoon"]}
+              {documento.data.status === "published" ? t["download.cta"] : t["download.comingSoon"]}
             </Link>
           </div>
         ) : (

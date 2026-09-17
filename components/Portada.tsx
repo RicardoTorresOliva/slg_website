@@ -44,7 +44,7 @@ export function Portada({ lang }: { lang: "es" | "en" }) {
   const destacada = loadCollection<{ title: string; audience: string; status: string }>(
     "download",
     lang,
-  ).find((d) => d.data.status === "available");
+  ).find((d) => d.data.status === "published");
 
   return (
     <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "0 1.25rem" }}>

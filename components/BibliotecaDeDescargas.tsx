@@ -37,7 +37,7 @@ export function BibliotecaDeDescargas({ lang }: { lang: "es" | "en" }) {
             <li key={d.slug} style={{ listStyle: "none" }}>
               <article className="slg-card" style={tarjeta}>
                 <p style={estado}>
-                  {d.data.status === "available" ? t["downloads.available"] : t["download.comingSoon"]}
+                  {d.data.status === "published" ? t["downloads.available"] : t["download.comingSoon"]}
                 </p>
                 <h2 style={titulo}>
                   <Link href={`${base}/${d.slug}`} style={{ color: "inherit", textDecoration: "none" }}>

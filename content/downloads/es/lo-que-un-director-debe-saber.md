@@ -8,7 +8,8 @@ learns:
   - "Cómo distinguir un problema de tecnología de uno de operación, que es donde falla la mayoría"
   - "Qué señales indican que una implementación va a quedarse en piloto"
   - "Cómo se mide el resultado de una iniciativa de IA sin recurrir a la anécdota"
-status: coming-soon
+file_key: "D-01-phoenix-peex.pdf"
+status: published
 lang: es
 pair: what-a-director-should-know
 copy: temporal

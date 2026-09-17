@@ -161,7 +161,7 @@ export async function registrarCaptura(entrada: {
   const documento = entrada.documento;
   const claveDeArchivo = documento?.claveDeArchivo;
 
-  if (!documento || !claveDeArchivo || documento.estado !== "available") {
+  if (!documento || !claveDeArchivo || documento.estado !== "published") {
     // «Disponible próximamente»: se capturó el correo y NO se emite firma ni se
     // dispara `download.completed` (RF-40).
     return { ok: true, leadId, url: null, caducaEn: null, proximamente: true };

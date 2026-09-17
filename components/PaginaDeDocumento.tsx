@@ -34,7 +34,12 @@ export function PaginaDeDocumento({ slug, lang }: { slug: string; lang: "es" | "
   if (!doc) return <p style={{ padding: "4rem 1.25rem" }}>{t["downloads.notFound"]}</p>;
 
   const privacidad = lang === "en" ? "/en/legal/privacy" : "/legal/privacidad";
-  const disponible = doc.data.status === "available";
+  // `published` es el único estado que el esquema admite para un documento con
+  // PDF (`DOWNLOAD_STATUS` en `lib/content/schema.ts`). Aquí decía
+  // `"available"`, un valor que el esquema rechaza, así que el botón de descarga
+  // no podía activarse NUNCA: cualquier documento, publicado o no, enseñaba
+  // «disponible próximamente». Lo destapó el primer PDF real.
+  const disponible = doc.data.status === "published";
 
   return (
     <div style={{ maxWidth: "44rem", margin: "0 auto", padding: "0 1.25rem 4rem" }} lang={lang}>
