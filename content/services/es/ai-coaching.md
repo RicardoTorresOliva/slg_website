@@ -17,7 +17,8 @@ El problema de preguntar dentro de la empresa es que nadie es neutral; el de pre
 ## Qué es
 
 Acompañamiento individual y continuado para decisiones de inteligencia artificial en el nivel de dirección.
-No es formación ni consultoría de implementación: es un espacio de criterio, y quien acompaña no cobra por lo que decidas comprar.
+No es formación ni consultoría de implementación: es un espacio de criterio.
+No cobramos comisión de ningún proveedor, y cuando la conversación llegue a algo que esta casa vende —`SLG_Implement`, `SLG_Factory`— se dice en ese momento y decides con esa información delante.
 
 ## Qué incluye
 

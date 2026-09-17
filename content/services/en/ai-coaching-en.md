@@ -17,7 +17,8 @@ The problem with asking inside the company is that nobody is neutral; the proble
 ## What it is
 
 Individual, continuing support for artificial intelligence decisions at board and executive level.
-It is neither training nor implementation consulting: it is a space for judgement, and the person accompanying you is not paid on what you decide to buy.
+It is neither training nor implementation consulting: it is a space for judgement.
+We take no commission from any vendor, and when the conversation reaches something this firm sells — `SLG_Implement`, `SLG_Factory` — that is said at the time, and you decide with that on the table.
 
 ## What it includes
 
