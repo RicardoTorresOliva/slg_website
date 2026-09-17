@@ -1,9 +1,12 @@
 /**
  * Wordmark — Marca denominativa provisional de SLG Agency.
  *
- * PROVISIONAL POR DISEÑO. El Anexo I-5 del brief deja pendiente el logo de
- * SLG Agency en SVG/PNG, y el propio brief define este respaldo: wordmark
- * tipográfico «SLG Agency» en Montserrat 700 sobre `--slg-blue-deep`.
+ * Isotipo corporativo + wordmark tipográfico. El isotipo es vectorial,
+ * convertido desde el `Isotipo-SLG.pdf` oficial: ni recortado de un PNG ni
+ * redibujado. Se usa el ISOTIPO y no el logotipo completo por norma de marca
+ * (§10-4, `naming-rules.md`): los lockups oficiales dicen «Softlanding Global»
+ * o «Softlanding Global Academy», y la marca pública de este sitio es
+ * **SLG Agency** — el isotipo no contradice ninguna de las dos.
  *
  * Está aislado en un componente y un token justamente para que sustituirlo por
  * el logo real sea cambiar un archivo, sin tocar ninguna página (R-35).
@@ -34,17 +37,31 @@ export function Wordmark({ label = "SLG Agency", className = "" }: WordmarkProps
       style={{
         // El margen de respeto del kit: 1 altura de la «S» ≈ 0.72em
         padding: "0.72em",
-        display: "inline-block",
         color: "var(--slg-blue-deep)",
         fontFamily: "var(--slg-font-sans)",
         fontWeight: 700,
         fontSize: "1.25rem",
         letterSpacing: "-0.01em",
         lineHeight: 1,
-        // Sin deformación: la caja se adapta al texto, no al revés
+        // Sin deformación: la caja se adapta al contenido, no al revés
         whiteSpace: "nowrap",
+        // El isotipo y el texto, en una sola línea óptica
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "0.45em",
       }}
     >
+      {/* eslint-disable-next-line @next/next/no-img-element --
+          `next/image` no optimiza SVG (lo sirve tal cual) y añadiría un
+          componente cliente y una petición al optimizador para un archivo
+          vectorial de 3,5 KB. Aquí `<img>` es la opción correcta, no el atajo.
+          `alt=""` porque es decorativo: el nombre accesible lo da el texto de
+          al lado, y anunciarlo dos veces sería ruido para un lector. */}
+      <img
+        src="/marca/isotipo-slg.svg"
+        alt=""
+        style={{ height: "1.15em", width: "auto", display: "block" }}
+      />
       {label}
     </span>
   );

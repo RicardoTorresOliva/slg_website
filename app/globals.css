@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "./tokens.css";
 @import "./motion.css";
+@import "./apple.css";
 
 /* ============================================================================
  * globals.css — Base tipográfica y de interacción
