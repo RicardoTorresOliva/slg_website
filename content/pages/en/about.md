@@ -35,7 +35,7 @@ We do not resell licences. We take no commission from any vendor. And we publish
 
 ## Where to start
 
-If you want to see how we think before talking to us, read the [Doctrine](/en/doctrine) or download any of the documents. If you prefer the direct conversation, [write to us](/en/contact).
+If this is your first visit, [start here](/en/start-here): the map of the site on one page. If you want to see how we think before talking to us, read the [Doctrine](/en/doctrine) or download any of the documents. If you prefer the direct conversation, [write to us](/en/contact).
 
 ## Who we are
 

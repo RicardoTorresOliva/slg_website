@@ -2928,3 +2928,43 @@ responde `error_de_firma`. `test:webhooks`: 2 de 32 fallan igual en la base `5ca
 **Desviaciones.** El `node_modules` enlazado al repositorio principal, como decía el brief, lo
 rechaza Turbopack («Symlink … points out of the filesystem root»): en el worktree se sustituyó por
 un clon APFS (`cp -c -R`) y se enlazó el `.env`, los dos ignorados por git.
+## «Empieza aquí» / «Start here»: el mapa del sitio en una página (2026-09-18)
+
+**Qué es.** Página bilingüe `/empieza-aqui` ⇄ `/en/start-here` con el árbol completo del sitio:
+SLG Agency → SLG_VoltAi (sus tres líneas y los once servicios), SLG_Holdings, Doctrina, Blog y
+Nosotros; Descargas y Contacto como accesos desde cualquier página. Cada nodo lleva su nombre, una
+línea que dice qué es y el enlace a su página. Entra por el pie —primer enlace, `footer.startHere`—
+y no por la barra: los destinos del menú siguen siendo cinco (RF-01).
+
+**Decisiones.**
+
+- **El árbol se genera desde la estructura real.** Los nodos salen de `DESTINOS`, `RAMAS` y
+  `SERVICIOS` (`lib/content/rutas.ts`) y las líneas del `title`/`description` de cada registro vía
+  `loadCollection`; Blog toma `blog.metaDescription`; SLG_Holdings, la primera línea de su registro
+  de servicio, como hace el índice de rama. No hay una segunda lista que se pueda desincronizar.
+- **Los once servicios se enseñan por su nombre, sin línea.** Su registro no tiene `description`
+  —tiene seis secciones— y la línea de su rama ya dice qué hay debajo. La alternativa, la primera
+  frase de «Para quién» (entre 130 y 260 caracteres), multiplicaba por cinco la altura de la
+  columna de `SLG_VoltAi` y mataba el vistazo que la página existe para dar.
+- `components/MapaDelSitio.tsx` es componente de servidor. Los conectores viven en `app/mapa.css`:
+  CSS puro con tokens, sin transiciones ni `@keyframes`; apilado en móvil y árbol a partir de
+  64 rem, con `SLG_VoltAi` al doble de ancho porque lleva dentro tres líneas y once servicios.
+- Ruta propia (no `/[slug]`), registrada en `PAGINAS_CON_RUTA_PROPIA` y `PARES_FIJOS` para que el
+  conmutador cruce; en el sitemap; tres cadenas nuevas `mapa.*` en `content/ui`.
+- **Los frenos crecen con la unidad**: `check:armazon` mide las dos rutas nuevas y `check:cadenas`
+  vigila `MapaDelSitio.tsx`.
+
+**Fuera de este encargo.** La frase en «Dónde empezar» de Nosotros/About queda para otra sesión:
+Ricardo pidió no tocar esos dos registros desde este worktree.
+
+**Entorno del worktree, para el siguiente.** El enlace simbólico a `node_modules` que proponía el
+brief rompe Turbopack («Symlink … points out of the filesystem root»); se sustituyó por un clon
+APFS (`cp -Rc`), que es instantáneo y no ocupa espacio. La compilación exige `.env`
+(`DATABASE_URL`): enlazado desde el repo principal y sigue ignorado por git.
+
+**Verificado:** lint, `check:types`, `check:content`, `check:cadenas`, `check:secrets`,
+`check:motion`, `build:standalone` (93 páginas; las dos nuevas, estáticas), `check:armazon` (62
+comprobaciones, con `/empieza-aqui ⇄ /en/start-here`), `check:paginas` (142), `check:js-budget`
+(142,5 KB por ruta nueva, 95 % del presupuesto), `check:seo` (226). Servidor compilado en 3211:
+las dos rutas responden 200, contienen los once servicios con su enlace, el conmutador lleva de
+una a la otra y vuelve, y el sitemap las lista.

@@ -42,6 +42,7 @@ const VIGILADOS = [
   "components/PuertaDeAI.tsx",
   "components/OverviewDeRama.tsx",
   "components/PaginaDeServicio.tsx",
+  "components/MapaDelSitio.tsx",
   "components/app/ArmazonDeApp.tsx",
   "components/app/EstadosCanonicos.tsx",
   "components/app/PantallaDeApp.tsx",

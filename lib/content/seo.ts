@@ -146,6 +146,8 @@ export function rutasDelSitemap(): string[] {
     "/en/downloads",
     "/contacto",
     "/en/contact",
+    "/empieza-aqui",
+    "/en/start-here",
     "/legal/privacidad",
     "/en/legal/privacy",
     "/legal/terminos",

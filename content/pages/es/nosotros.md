@@ -35,7 +35,7 @@ No revendemos licencias. No cobramos comisión de ningún proveedor. Y no public
 
 ## Dónde empezar
 
-Si quieres ver cómo pensamos antes de hablar con nosotros, lee la [Doctrina](/doctrina) o descarga cualquiera de los documentos. Si prefieres la conversación directa, [escríbenos](/contacto).
+Si es tu primera visita, [Empieza aquí](/empieza-aqui): el mapa del sitio en una página. Si quieres ver cómo pensamos antes de hablar con nosotros, lee la [Doctrina](/doctrina) o descarga cualquiera de los documentos. Si prefieres la conversación directa, [escríbenos](/contacto).
 
 ## Quiénes somos
 
