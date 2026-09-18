@@ -3,6 +3,7 @@ import Link from "next/link";
 import { NOMBRE_DEL_CAMPO_TRAMPA } from "@/lib/antiabuso";
 import { loadCollection, loadUiStrings } from "@/lib/content/loader";
 
+import { AvisoDelFormulario } from "./AvisoDelFormulario";
 import { BloqueQueIncluye, HeroTipografico } from "./piezas";
 
 /**
@@ -21,6 +22,11 @@ import { BloqueQueIncluye, HeroTipografico } from "./piezas";
  * **El enlace a la política de privacidad es obligatorio** (RF-36, criterio 3
  * de DU-06): el consentimiento se guarda con su versión, y el visitante tiene
  * que poder leer a qué está consintiendo antes de enviarlo.
+ *
+ * **Nombre, apellido y correo corporativo, los tres obligatorios.** El CRM crea
+ * el contacto con nombre y apellido por separado, y una captura que llega como
+ * «parte local del correo» es una llamada que nadie sabe a quién hacer. El
+ * `required` es cortesía; la comprobación que vale es la de `registrarCaptura`.
  */
 export function PaginaDeDocumento({ slug, lang }: { slug: string; lang: "es" | "en" }) {
   const t = loadUiStrings()[lang];
@@ -66,6 +72,23 @@ export function PaginaDeDocumento({ slug, lang }: { slug: string; lang: "es" | "
             defaultValue=""
           />
         </div>
+
+        <AvisoDelFormulario
+          textos={{
+            dominio_gratuito: t["download.freeEmailRejected"],
+            datos_incompletos: t["download.incompleteData"],
+          }}
+        />
+
+        <label htmlFor="nombre" style={etiqueta}>
+          {t["form.name"]}
+        </label>
+        <input id="nombre" name="nombre" type="text" required autoComplete="given-name" style={campo} />
+
+        <label htmlFor="apellido" style={etiqueta}>
+          {t["form.lastName"]}
+        </label>
+        <input id="apellido" name="apellido" type="text" required autoComplete="family-name" style={campo} />
 
         <label htmlFor="email" style={etiqueta}>
           {t["download.emailLabel"]}

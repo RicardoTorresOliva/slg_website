@@ -898,7 +898,8 @@ La tabla más sensible del esquema, y la más fácil de estropear. **Es evidenci
 | `id` | `text` | NO | — | `PK` |
 | `email` | `text` | NO | — | Correo del visitante. Corporativo obligatorio (RF-31) |
 | `email_domain` | `text` | NO | `GENERATED ALWAYS AS (split_part(lower(email),'@',2)) STORED` | Dominio. **Columna generada**: no puede desalinearse del correo, que es lo que pasa cuando se calcula en la aplicación |
-| `name` | `text` | SÍ | `NULL` | Nombre declarado |
+| `name` | `text` | SÍ | `NULL` | Nombre declarado (**solo el nombre**; el apellido va en `last_name`). Obligatorio en los formularios públicos |
+| `last_name` | `text` | SÍ | `NULL` | Apellido declarado. Obligatorio en los formularios públicos; `NULL` solo en capturas anteriores a la migración `0017`. Se pide aparte porque el CRM exige nombre y apellido por separado, y partir un texto libre falla con los nombres compuestos |
 | `company` | `text` | SÍ | `NULL` | Empresa **como texto libre**: el visitante no es todavía una `organization` |
 | `job_title` | `text` | SÍ | `NULL` | Cargo. B.2 lo llama `role`; se renombra para no confundirlo con `user.role`, que es autorización |
 | `source` | `text` | NO | — | `download` · `contact` · `doctrine-request` (§3.7) |

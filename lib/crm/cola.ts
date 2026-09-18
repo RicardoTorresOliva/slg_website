@@ -62,6 +62,7 @@ type Fila = {
   email: string;
   email_domain: string;
   name: string | null;
+  last_name: string | null;
   company: string | null;
   job_title: string | null;
   message: string | null;
@@ -93,7 +94,7 @@ async function reclamar(limite: number): Promise<Fila[]> {
            SET crm_next_attempt_at = now() + ${`${RESERVA_MINUTOS} minutes`}::interval
           FROM reclamadas r
          WHERE l.id = r.id
-        RETURNING l.id, l.email, l.email_domain, l.name, l.company, l.job_title, l.message,
+        RETURNING l.id, l.email, l.email_domain, l.name, l.last_name, l.company, l.job_title, l.message,
                   l.source, l.download_slug, l.page_path, l.locale, l.utm,
                   l.crm_attempts, l.crm_cycle
       `);
@@ -106,6 +107,7 @@ const comoCaptura = (f: Fila): CapturaParaCrm => ({
   email: f.email,
   dominio: f.email_domain,
   nombre: f.name,
+  apellido: f.last_name,
   empresa: f.company,
   cargo: f.job_title,
   mensaje: f.message,

@@ -58,6 +58,8 @@ export async function POST(request: Request) {
     },
     datos,
     email,
+    nombre: String(datos.get("nombre") ?? ""),
+    apellido: String(datos.get("apellido") ?? ""),
     pagina: `${base}/${slug}`,
     locale: lang,
     utm: utmDe(request),

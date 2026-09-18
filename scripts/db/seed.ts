@@ -72,10 +72,10 @@ async function main() {
   // Los TRES estados de sincronización. Sin la `failed`, la pantalla de
   // reintento de HQ nunca se ve y R-24 queda sin mitigación visible.
   await sql`insert into lead_capture
-    (id,email,email_domain,name,company,source,download_slug,page_path,locale,consent_at,privacy_version,crm_mode,crm_contact_id,crm_sync_status,crm_attempts,crm_delivered_at,crm_last_error,crm_next_attempt_at) values
-    ('l1','ceo@empresa.test','empresa.test','Un CEO','Empresa','download','lo-que-un-director-debe-saber','/ai/academy/phoenix-peex','es',${hace(2)},'v1','contact_note','crm-1','delivered',1,${hace(2)},null,null),
-    ('l2','cfo@otra.test','otra.test','Una CFO','Otra','download','lo-que-un-director-debe-saber','/ai/academy/phoenix-peex','es',${hace(1)},'v1',null,null,'pending',0,null,null,${ahora}),
-    ('l3','coo@tercera.test','tercera.test','Un COO','Tercera','contact',null,'/contacto','en',${hace(3)},'v1','contact_note',null,'failed',5,null,'El CRM no respondió tras 5 intentos',null)`;
+    (id,email,email_domain,name,last_name,company,source,download_slug,page_path,locale,consent_at,privacy_version,crm_mode,crm_contact_id,crm_sync_status,crm_attempts,crm_delivered_at,crm_last_error,crm_next_attempt_at) values
+    ('l1','ceo@empresa.test','empresa.test','Un CEO','Primero','Empresa','download','lo-que-un-director-debe-saber','/ai/academy/phoenix-peex','es',${hace(2)},'v1','contact_note','crm-1','delivered',1,${hace(2)},null,null),
+    ('l2','cfo@otra.test','otra.test','Una CFO','Segunda','Otra','download','lo-que-un-director-debe-saber','/ai/academy/phoenix-peex','es',${hace(1)},'v1',null,null,'pending',0,null,null,${ahora}),
+    ('l3','coo@tercera.test','tercera.test','Un COO','Tercero','Tercera','contact',null,'/contacto','en',${hace(3)},'v1','contact_note',null,'failed',5,null,'El CRM no respondió tras 5 intentos',null)`;
 
   await sql`insert into download_event (id,lead_capture_id,download_slug,signed_url_issued_at,signed_url_expires_at,completed_at) values
     ('de1','l1','lo-que-un-director-debe-saber',${hace(2)},${hace(2)},${hace(2)})`;

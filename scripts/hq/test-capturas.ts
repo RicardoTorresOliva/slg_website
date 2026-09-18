@@ -95,9 +95,9 @@ function crearDoble() {
 async function crearCaptura(email: string): Promise<string> {
   const id = crypto.randomUUID();
   await dueno`
-    insert into lead_capture (id, email, email_domain, name, source, download_slug, page_path,
+    insert into lead_capture (id, email, email_domain, name, last_name, source, download_slug, page_path,
                               locale, consent_at, privacy_version)
-    values (${id}, ${email}, ${DOMINIO}, 'Persona DU16', 'download', 'd-06', '/descargas/d-06',
+    values (${id}, ${email}, ${DOMINIO}, 'Persona DU16', 'Apellido', 'download', 'd-06', '/descargas/d-06',
             'es', now(), '2026-09-13')`;
   return id;
 }

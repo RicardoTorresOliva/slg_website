@@ -44,19 +44,26 @@ function textoDeLaNota(c: CapturaParaCrm): string {
 }
 
 /**
- * El CRM exige nombre Y apellido, y la descarga solo pide correo. Con nombre,
- * se parte por el primer espacio; sin él, la parte local del correo hace de
+ * El CRM exige nombre Y apellido, y los formularios públicos piden los dos,
+ * obligatorios: el contacto se crea con `firstName = nombre` y
+ * `lastName = apellido`, tal cual los escribió la persona.
+ *
+ * El repliegue queda SOLO para las capturas anteriores a la columna
+ * `last_name`, que pueden seguir en cola: con nombre y sin apellido se parte el
+ * nombre por el primer espacio; sin nada, la parte local del correo hace de
  * nombre y el dominio, entre paréntesis, de apellido. Es visiblemente
  * provisional a propósito: quien abra la oportunidad lo completa (RF-57).
  */
 function nombreYApellido(c: CapturaParaCrm): { firstName: string; lastName: string } {
-  const limpio = (c.nombre ?? "").trim().replace(/\s+/g, " ");
-  if (limpio) {
-    const [primero, ...resto] = limpio.split(" ");
-    return { firstName: primero ?? limpio, lastName: resto.join(" ") || "—" };
+  const nombre = (c.nombre ?? "").trim().replace(/\s+/g, " ");
+  const apellido = (c.apellido ?? "").trim().replace(/\s+/g, " ");
+  if (nombre && apellido) return { firstName: nombre, lastName: apellido };
+  if (nombre) {
+    const [primero, ...resto] = nombre.split(" ");
+    return { firstName: primero ?? nombre, lastName: resto.join(" ") || "—" };
   }
   const [local, dominio] = c.email.split("@");
-  return { firstName: local || c.email, lastName: `(${dominio || c.dominio})` };
+  return { firstName: local || c.email, lastName: apellido || `(${dominio || c.dominio})` };
 }
 
 export function adaptadorContactNote(): PuertoDeCrm {

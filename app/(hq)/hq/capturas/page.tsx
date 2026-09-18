@@ -134,6 +134,13 @@ export default async function Capturas({
               <div style={cabeceraFila}>
                 <div style={{ minWidth: 0 }}>
                   <p style={{ margin: 0, fontWeight: 600, overflowWrap: "anywhere" }}>{c.email}</p>
+                  {/* Nombre y apellido tal como los escribió la persona: es lo
+                      que hay que ver antes de abrir el contacto en el CRM. */}
+                  {c.nombre || c.apellido ? (
+                    <p style={{ margin: "0.125rem 0 0", fontSize: "0.9375rem", overflowWrap: "anywhere" }}>
+                      {[c.nombre, c.apellido].filter(Boolean).join(" ")}
+                    </p>
+                  ) : null}
                   <p style={{ margin: "0.25rem 0 0", fontSize: "0.8125rem", color: "var(--slg-ink-2)", overflowWrap: "anywhere" }}>
                     {c.origen} · {c.documento ?? "—"} · {c.pagina} · {c.idioma} ·{" "}
                     <time dateTime={c.creadaEn}>{c.creadaEn.slice(0, 16).replace("T", " ")}</time>
