@@ -583,14 +583,14 @@ modo JSON: invocarlo con `env -u CLAUDECODE` (ver memoria del agente).
 
 ## PRÓXIMA SESIÓN — la nueva arquitectura está en producción
 
-Estado al 2026-09-18, 02:15 (Lima). Producción = `slg-website-9m4nbgavt` (01:57, SIN la corrección de Nosotros: el despliegue salió dos minutos antes del commit `2d8edd6`): menú de cuatro destinos
+Estado al 2026-09-18, 02:15 (Lima). Producción = `slg-website-56kh73gri` (02:10, completa, Nosotros corregido y About reflejado): menú de cuatro destinos
 con el mapa de portada, Servicios en `/servicios` con Holdings desarrollado y descargas destacadas,
 renombre VoltAi by SLG / Holdings by SLG / VoltAi Academy·Enterprise·Factory, regreso al nivel
 anterior, quince fotos nuevas, fechas del blog repartidas, formularios con apellido, CRM, correo.
 Verificado tras el despliegue: sonda (18 migraciones), portada, Readiness con foto y regreso,
 `/empieza-aqui` → `/`.
 
-**Pendiente de un despliegue** (`2d8edd6`, verificado en el preview `czjwfwsni`): dos erratas de la edición manual
+**Desplegado** (`2d8edd6`): dos erratas de la edición manual
 de Ricardo en Nosotros («con ella tecnología… implementados», «y no está preparado») corregidas y
 About reflejado en inglés. La edición manual entró en el commit `0354c08` sin revisar: lección,
 mirar `git status` de `content/` antes de un `git add -A`.
