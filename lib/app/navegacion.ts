@@ -73,7 +73,18 @@ export const SECCIONES: readonly Seccion[] = [
   { clave: "apikeys", href: "/hq/claves", superficie: "hq", accion: "apikey.manage" },
   { clave: "audit", href: "/hq/auditoria", superficie: "hq", accion: "audit.read" },
   // ── Portal ──────────────────────────────────────────────────────────────
-  { clave: "announcements", href: "/portal", superficie: "portal", accion: "announcement.read" },
+  /**
+   * «Hoy» (DU-26 · RF-149): la portada del portal, que antes era la lista de
+   * avisos. La clave cambia de `announcements` a `today` porque el título de
+   * la pantalla sale de aquí (`app.nav.<clave>`, RNF-43) y ya no es «Avisos».
+   * La acción se queda en `announcement.read` **a propósito**: la portada la ve
+   * todo el que puede ver los avisos de su empresa —todos los roles de
+   * cliente—, y las otras cuatro puertas que consulta (`news.read`,
+   * `milestone.read`, `deliverable.read`) las exige cada servicio por su
+   * cuenta. Inventar una acción «ver la portada» obligaría a tocar la matriz
+   * B.3 por una pantalla que no gobierna ningún dato propio.
+   */
+  { clave: "today", href: "/portal", superficie: "portal", accion: "announcement.read" },
   { clave: "deliverables", href: "/portal/proyectos", superficie: "portal", accion: "deliverable.read" },
   /**
    * Los materiales de programa (DU-20). Misma acción que los proyectos **a
@@ -82,6 +93,12 @@ export const SECCIONES: readonly Seccion[] = [
    * no entregables, que no existe en B.3.
    */
   { clave: "materials", href: "/portal/materiales", superficie: "portal", accion: "deliverable.read" },
+  /**
+   * La lista completa de avisos (DU-18 · RF-88), que DU-26 saca de la portada
+   * a su propia ruta: «Hoy» enseña los últimos tres y enlaza aquí (RNF-43).
+   * Misma acción que tenía en `/portal`, porque son los mismos datos.
+   */
+  { clave: "announcements", href: "/portal/avisos", superficie: "portal", accion: "announcement.read" },
   /**
    * «Clases» (DU-28 · RF-155): los mismos materiales de programa, vistos de
    * otra manera — con los de vídeo distinguidos y abiertos aparte. Misma acción

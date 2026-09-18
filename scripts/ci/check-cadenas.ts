@@ -65,6 +65,9 @@ const VIGILADOS = [
   // que cualquier otra pantalla de HQ.
   "app/(hq)/hq/conexiones/page.tsx",
   "app/(portal)/portal/page.tsx",
+  // DU-26 · RF-88: la lista de avisos sale de la portada a su propia ruta; el
+  // mismo render, la misma vigilancia.
+  "app/(portal)/portal/avisos/page.tsx",
   "app/(portal)/portal/proyectos/page.tsx",
   "app/(portal)/portal/proyectos/[id]/page.tsx",
   "app/(portal)/portal/materiales/page.tsx",

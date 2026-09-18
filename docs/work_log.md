@@ -3217,3 +3217,47 @@ dos etiquetas existen en los dos idiomas), `check:fronteras`, `check:secrets`, `
 (`DATABASE_URL_MIGRATIONS`) y esta máquina no lo tiene; se corre en CI. `design_docs/ui_wireframes.md`
 §7.8 documenta la pantalla sin renumerar §7.5-§7.7 (`§7.6` y `§7.7` los cita `docs/design_summary.md`
 y esta misma página, y renumerar habría roto esas referencias sin necesidad).
+
+## DU-26 · Portal «Hoy» (2026-09-18)
+
+**Qué hay.** `/portal` (`app/(portal)/portal/page.tsx`) deja de ser la lista de avisos y pasa a ser
+«Hoy»: cinco bloques en este orden — **noticias de hoy** por importancia (1 primero), cada una con
+título, fuente (`target="_blank" rel="noopener"`), resumen y **el comentario para esta empresa
+destacado** con marco y fondo propios, porque es el producto (D-161); **qué sigue**, el próximo hito
+de cada proyecto activo con el nombre del proyecto y su fecha; **pendientes** abiertos, los que cierra
+el cliente primero, con insignia («Te toca a ti» / «Lo cierra SLG») y fecha límite; los tres
+**últimos entregables**; los tres últimos **avisos** con el mismo render de siempre. Cada bloque tiene
+su vacío redactado (`portal.today.*`, ES/EN) y enlaza a su pantalla completa (RNF-43): Programa,
+Proyectos, Avisos. El paso «Agenda tu Sesión Cero» sigue arriba, donde estaba.
+
+**La lista completa de avisos** se mueve **tal cual** a `/portal/avisos`
+(`app/(portal)/portal/avisos/page.tsx`): mismo componente de estado, mismo `ContenidoEntregado` y
+`Markdown`, mismo vacío redactado. En `lib/app/navegacion.ts`, `/portal` pasa de la clave
+`announcements` a `today` —el título de la pantalla sale de `app.nav.<clave>` y ya no es «Avisos»—
+con la **misma acción** `announcement.read`, y `announcements` renace en `/portal/avisos` después
+de `materials`. `test-shell`, `check-shell` y `test-aislamiento` leen `SECCIONES` y no necesitaron
+cambio; `check-cadenas` vigila la página nueva.
+
+**Decisiones de forma.** (1) Las funciones que deciden la portada —qué es «de hoy», el próximo hito
+por proyecto activo, el orden de los pendientes, el recorte a tres— son puras y viven en
+`lib/portal/hoy.ts`, no en la página: se prueban sin sesión ni HTTP, y una página de Next no puede
+exportar nada más que la página. `bloquesDeHoy(ctx)` es la única puerta y **no escribe ningún
+`organizationId`** en ninguna de las cinco llamadas; `test:hoy` barre el archivo para que siga así.
+(2) «Hoy» es el día de calendario en UTC, el mismo que enseña `publicadaEn.slice(0, 10)`: con la
+zona del servidor, la fecha impresa y la condición «de hoy» podrían discrepar a medianoche. (3)
+`news_item` no guarda el idioma en que se escribió (FU-15, fuera de alcance aquí), así que el
+`lang` del resumen y del comentario es el de la cuenta; lo que RNF-31 exige —saneado, tal como se
+entregó, `translate="no"`— se cumple igual. (4) Las noticias no enlazan a ninguna pantalla completa
+porque no la tienen: «Hoy» es la suya (la navegación del spec-delta no prevé `/portal/noticias`).
+
+**Verificado**: `check:types`, `lint`, `tsc --noEmit` de la app, `check:cadenas` (40 archivos),
+`check:shell` (51 comprobaciones: `today` y `announcements` declaran su acción y tienen etiqueta en
+los dos idiomas), `check:alcance` (245 archivos), `check:fronteras`, `check:secrets`, `check:pairs`.
+**No verificado**: `scripts/portal/test-hoy.ts` (`npm run test:hoy`, añadido a `test:db`) — un
+`client_member` de A ve solo lo de A en los cinco bloques y pedir lo de B a `lib/academy` devuelve
+cero; el orden de RF-149 (importancia, proyecto activo y no pausado, cliente antes que SLG, sin
+`internal`); las últimas tres sin noticias de hoy; el wayfinding de la pantalla; y la portada por
+HTTP con sesión real (alta por invitación, compuerta de staging y `SUPERFICIES_EN_REVISION=portal`,
+como `test-acceso`), que responde 200 con los cinco bloques y sin la noticia de B. Necesita
+PostgreSQL y `build:standalone`, que esta máquina no tiene; se corre en CI. `/portal/programa` la
+hace DU-27 en paralelo: el enlace es correcto aunque hoy dé 404 en este árbol.
