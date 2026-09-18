@@ -167,13 +167,22 @@ textarea:focus-visible,
   }
 }
 
-/* ── Barra de navegación: móvil = rápido, escritorio = profundo (C.6 §5) ──── */
-@media (max-width: 48rem) {
+/* ── Barra de navegación: móvil = rápido, escritorio = profundo (C.6 §5) ────
+   Hasta 56rem (896px) manda el menú móvil: con cinco destinos, las banderas y
+   el acceso, entre 48 y 56rem la fila de escritorio no cabe sin montarse. */
+@media (max-width: 56rem) {
   [data-slg-desktop] {
     display: none !important;
   }
   [data-slg-mobile] {
     display: inline-block !important;
+  }
+}
+/* En un teléfono estrecho (≤ 26rem) el nombre baja un punto: logo, banderas y
+   botón de menú tienen que caber en 360 px sin montarse ni desbordar. */
+@media (max-width: 26rem) {
+  .slg-wordmark {
+    font-size: 1.1rem !important;
   }
 }
 

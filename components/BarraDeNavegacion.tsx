@@ -64,8 +64,8 @@ export function BarraDeNavegacion({
     <>
       <header className="slg-material" style={barra}>
         <nav style={fila} aria-label={textos.navegacion}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", minWidth: 0 }}>
-            <Link href={inicio} style={{ display: "flex", alignItems: "center" }} aria-label={textos.inicio}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", flexShrink: 0 }}>
+            <Link href={inicio} style={{ display: "flex", alignItems: "center", flexShrink: 0 }} aria-label={textos.inicio}>
               <Wordmark />
             </Link>
             {/* El idioma se elige con dos banderas pegadas al logo, en escritorio
@@ -156,7 +156,7 @@ const fila: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
-  gap: "1rem",
+  gap: "0.75rem",
   maxWidth: "72rem",
   margin: "0 auto",
   padding: "0.75rem 1.25rem",

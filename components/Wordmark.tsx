@@ -33,10 +33,12 @@ type WordmarkProps = {
 export function Wordmark({ label = "SLG Agency", className = "" }: WordmarkProps) {
   return (
     <span
-      className={className}
+      className={`slg-wordmark ${className}`.trim()}
       style={{
-        // El margen de respeto del kit: 1 altura de la «S» ≈ 0.72em
-        padding: "0.72em",
+        // El margen de respeto del kit: 1 altura de la «S» ≈ 0.72em. A la
+        // derecha la mitad: ahí van las banderas de idioma, que traen el suyo,
+        // y en un teléfono de 360 px esos 7 px son los que evitan que se monten.
+        padding: "0.72em 0.36em 0.72em 0.72em",
         color: "var(--slg-blue-deep)",
         fontFamily: "var(--slg-font-sans)",
         fontWeight: 700,

@@ -79,8 +79,8 @@ function Bandera({ idioma }: { idioma: Idioma }) {
 const grupo: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
-  gap: "0.375rem",
-  marginLeft: "0.25rem",
+  gap: "0.25rem",
+  flexShrink: 0,
 };
 
 const svg: React.CSSProperties = {
@@ -95,7 +95,7 @@ const borde: React.CSSProperties = {
 
 const base: React.CSSProperties = {
   display: "inline-flex",
-  padding: "0.25rem",
+  padding: "0.25rem 0.125rem",
   borderRadius: "var(--slg-radius-sm)",
   lineHeight: 0,
 };
