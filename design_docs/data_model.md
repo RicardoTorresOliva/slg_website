@@ -81,7 +81,7 @@ documento define esas 18 más **una** que el brief no nombra y que D-22 hace nec
 |---|---|---|
 | Filas de la tabla B.2 | **16** | Filas del cuerpo de la tabla, sin cabecera |
 | Entidades nombradas en B.2 | **18** | 15 filas de una entidad + 1 fila con tres (`account`, `session`, `verification`) |
-| Tablas definidas aquí | **19** | Las 18 de B.2 + `email_delivery` |
+| Tablas definidas aquí | **24** | Las 18 de B.2 + `email_delivery`, + 2 de antiabuso (0010: `free_email_domain`, `rate_limit_hit`), + **3 de la Academy** (0018, FU-15: `news_item`, `milestone`, `action_item`, §5.20–5.22) |
 | Vocabularios enumerados cerrados | **19** | §3. Se aplican a **27 columnas** (varios se reutilizan: el rol, el idioma, el vocabulario de cola, el modo del CRM y la nomenclatura literal) |
 | Valores literales de `project.service` | **11** | Las 11 páginas de servicio de A.2 (D-17) |
 
@@ -334,9 +334,9 @@ actualice, y ese proceso es exactamente lo que falla en silencio.
 
 ### 3.6 Alcances de `api_key.scopes`
 
-**Seis** alcances, granulares y **sin implicación entre ellos** (RF-147: que una clave con
-`events:write` consiga crear un entregable es un defecto de seguridad, no una comodidad). Seis y no
-más: son exactamente los que B.3 y B.5 nombran.
+**Ocho** alcances, granulares y **sin implicación entre ellos** (RF-147: que una clave con
+`events:write` consiga crear un entregable es un defecto de seguridad, no una comodidad). Los seis de
+B.3 y B.5, más los dos de la Academy (FU-15, RF-153).
 
 | Alcance | Qué habilita | Origen |
 |---|---|---|
@@ -346,11 +346,13 @@ más: son exactamente los que B.3 y B.5 nombran.
 | `deliverables:write` | `POST /api/v1/deliverables` y su publicación | B.5, RF-102 |
 | `announcements:write` | `POST /api/v1/announcements` | B.5, RF-104 |
 | `events:write` | `POST /api/v1/events` | B.5, RF-105 |
+| `news:write` | `POST /api/v1/organizations/{id}/news` — una noticia con comentario para esa empresa | RF-153 (FU-15) |
+| `milestones:write` | `POST/PATCH` de hitos y pendientes de un proyecto | RF-153 (FU-15) |
 
 `GET /api/v1/openapi.json` responde a **cualquier** clave válida (RF-106) y por eso no consume
 alcance: no es una laguna, es el requisito.
 
-`CHECK api_key_scopes_valid: scopes <@ ARRAY['captures:read','orgs:read','deliverables:read','deliverables:write','announcements:write','events:write']::text[]`
+`CHECK api_key_scopes_valid: scopes <@ '["captures:read","orgs:read","deliverables:read","deliverables:write","announcements:write","events:write","news:write","milestones:write"]'::jsonb` (reescrito entero en 0018)
 — el operador de contención hace que un alcance inventado no llegue a guardarse.
 `CHECK api_key_scopes_not_empty: cardinality(scopes) > 0` — una clave sin alcance no puede hacer nada
 y solo sirve para confundir en HQ.
@@ -538,6 +540,8 @@ criterio:
 | `agent_event.api_key_id` | `api_key` | `RESTRICT` | Las claves se **revocan** (`revoked_at`), no se borran (RF-82). La actividad del agente sobrevive a la revocación, que es precisamente cuando más se necesita leerla (R-14). |
 | `agent_event.organization_id` | `organization` | `RESTRICT` | Nulo cuando el evento no es de una empresa. |
 | `email_delivery.organization_id` | `organization` | `RESTRICT` | Nulo en correos que no pertenecen a una empresa. |
+| `news_item.organization_id` | `organization` | `RESTRICT` | Una noticia publicada a un cliente es evidencia de lo que se le dijo (FU-15). |
+| `milestone.project_id` · `action_item.project_id` | `project` | `RESTRICT` | Compromisos de entrega: sobreviven al proyecto igual que un entregable. `organization_id` desnormalizado como en `deliverable` (FU-15). |
 | `audit_log.*` | — | **sin clave foránea** | §2.4. Su inmutabilidad no puede depender de la política de otra tabla. |
 | `deliverable.published_by_*` · `announcement.author_*` | — | **sin clave foránea** | §2.4. |
 
@@ -1398,6 +1402,74 @@ por tanto, **su propia evidencia en Postgres**, con la misma forma que `webhook_
 
 ---
 
+### 5.20 `news_item` — noticia con comentario para una empresa (FU-15)
+
+| Columna | Tipo SQL | Nulo | Defecto | Propósito |
+|---|---|---|---|---|
+| `id` | `text` | NO | — | `PK` |
+| `organization_id` | `text` | NO | — | `FK → organization.id`. La noticia es **de una empresa**: el comentario es el producto (RF-150) |
+| `title` | `text` | NO | — | Título |
+| `source_url` | `text` | SÍ | `NULL` | De dónde sale la noticia |
+| `summary_md` | `text` | NO | — | La noticia, en Markdown. Se sanea al renderizar (RNF-31) |
+| `comment_md` | `text` | NO | — | **Qué significa para esta empresa.** Lo escribe un agente o SLG |
+| `importance` | `integer` | NO | `2` | 1–3, 1 = más importante. **Editorial** (D-161), nunca calculada |
+| `published_at` | `timestamptz` | SÍ | `NULL` | Nulo = borrador |
+| `author_type` · `author_id` · `author_label` | `text` | SÍ | `NULL` | Actor polimórfico (§2.4) |
+| `created_at` | `timestamptz` | NO | `now()` | — |
+
+**Restricciones**: `news_item_importance_valid CHECK (importance BETWEEN 1 AND 3)` ·
+`news_item_published_needs_author CHECK ((published_at IS NULL) = (author_id IS NULL))`.
+
+| Índice | Definición | Consulta que sirve |
+|---|---|---|
+| `idx_news_item_portal` | `(organization_id, importance, published_at DESC) WHERE published_at IS NOT NULL` | «Hoy» (RF-149): las de mi empresa, primero las importantes |
+
+### 5.21 `milestone` — hito de entrega de un proyecto (FU-15)
+
+| Columna | Tipo SQL | Nulo | Defecto | Propósito |
+|---|---|---|---|---|
+| `id` | `text` | NO | — | `PK` |
+| `project_id` | `text` | NO | — | `FK → project.id` |
+| `organization_id` | `text` | NO | — | `FK → organization.id`, desnormalizado como en `deliverable` para la política de fila |
+| `title` | `text` | NO | — | Qué se entrega |
+| `due_at` | `timestamptz` | NO | — | Cuándo |
+| `status` | `text` | NO | `'pending'` | `pending` · `done` |
+| `position` | `integer` | NO | `0` | Orden dentro del proyecto |
+| `done_at` | `timestamptz` | SÍ | `NULL` | — |
+| `created_at` · `updated_at` | `timestamptz` | NO | `now()` | — |
+
+**Restricciones**: `milestone_status_valid` · `milestone_done_has_date CHECK ((status = 'done') = (done_at IS NOT NULL))`.
+**Lo que no lleva, a propósito**: porcentaje, participante, calificación. Frontera (b).
+
+| Índice | Definición | Consulta que sirve |
+|---|---|---|
+| `idx_milestone_project` | `(project_id, position)` | «Programa» (RF-151) |
+| `idx_milestone_next` | `(organization_id, due_at) WHERE status = 'pending'` | «Próximo hito» en «Hoy» (RF-149) |
+
+### 5.22 `action_item` — obligación pendiente de un proyecto (FU-15)
+
+| Columna | Tipo SQL | Nulo | Defecto | Propósito |
+|---|---|---|---|---|
+| `id` | `text` | NO | — | `PK` |
+| `project_id` · `organization_id` | `text` | NO | — | Como en `milestone` |
+| `title` | `text` | NO | — | Qué hay que hacer |
+| `due_at` | `timestamptz` | SÍ | `NULL` | Para cuándo |
+| `status` | `text` | NO | `'open'` | `open` · `done` |
+| `closes_by` | `text` | NO | `'client'` | **Quién puede cerrarlo**: `client` · `slg`. El cliente solo cierra los suyos (RF-151), y se decide aquí, no en la pantalla |
+| `done_at` | `timestamptz` | SÍ | `NULL` | — |
+| `done_by_type` · `done_by_id` · `done_by_label` | `text` | SÍ | `NULL` | Quién lo cerró: actor polimórfico (§2.4) |
+| `created_at` · `updated_at` | `timestamptz` | NO | `now()` | — |
+
+**Restricciones**: `action_item_status_valid` · `action_item_closes_by_valid` ·
+`action_item_done_is_complete CHECK ((status = 'done') = (done_at IS NOT NULL AND done_by_id IS NOT NULL))`.
+
+| Índice | Definición | Consulta que sirve |
+|---|---|---|
+| `idx_action_item_project` | `(project_id, status)` | «Programa» |
+| `idx_action_item_open` | `(organization_id, due_at) WHERE status = 'open'` | «Pendientes abiertos» en «Hoy» |
+
+---
+
 ## 6. Modelo de aislamiento
 
 Es el corazón del DoD #5 y del gate D9, y la mitigación de R-10 (impacto **crítico**). B.1 lo enuncia
@@ -1995,5 +2067,9 @@ registran juntas, con su razón y su coste asumido, antes de escribir la primera
   (`agent_event.kind`, RF-146).
   Cierra **RNF-25**. Deja **7 huecos declarados** (§11.1) y **5 decisiones** pendientes de registro en
   `docs/decision_log.md` (§11.2).
+- `2026-09-18` — **FU-15 (Academy, D-160)**: tres tablas (§5.20–5.22), dos alcances (§3.6), tres
+  claves foráneas (§4.2). Migración `0018_academy.sql` con la **misma política de fila** de 0015 y
+  `GRANT` explícito al rol de aplicación. El conteo de §1.1 pasa a **24**, y reconoce de paso las dos
+  tablas de antiabuso de 0010 que este documento no había contado.
 - `2026-09-08` — **D-45** cierra la discrepancia del §3.10 (CF-4): el **origen separado** del visor de
   `type = 'html'` es **normativo**, como este documento ya lo daba. El esquema no cambia.

@@ -127,6 +127,13 @@
       "when": 1788918117312,
       "tag": "0017_apellido_en_la_captura",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1789760000000,
+      "tag": "0018_academy",
+      "breakpoints": true
     }
   ]
 }

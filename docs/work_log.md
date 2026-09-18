@@ -3160,3 +3160,27 @@ para su caso, programación, hitos y pendientes con cero incertidumbre, bibliote
 con él: **misma app, no un proyecto aparte** (D-160). El delta completo —RF-149…RF-156, milestone M6
 con FU-15 y DU-26…DU-30, qué se modifica, qué fronteras se mantienen (no LMS, no chat, sin incrustar
 vídeo), riesgo de regresión— está en `planning/spec-delta-academy.md`. **Espera aprobación** (Regla 1).
+
+## FU-15 · Modelo de datos de la Academy (2026-09-18, 19:00)
+
+**Qué hay.** Migración `0018_academy.sql`: `news_item`, `milestone`, `action_item`, las tres con
+`organization_id`, la **misma política de fila** de 0001/0015 en la propia migración, `GRANT`
+explícito al rol de aplicación —«ON ALL TABLES» de 0001 no alcanza a las tablas que nacen después— y
+la contención de `api_key.scopes` reescrita de seis a ocho (`news:write`, `milestones:write`). En el
+esquema Drizzle, tres tablas y cuatro enumerados. `test:isolation` gana **nueve comprobaciones**
+(tres por tabla: cero sin contexto, solo lo mío con él, escritura cruzada rechazada) además de la
+comprobación 8, que ya las cubría por catálogo. Fixture negativo `9998_hitos_con_progreso.sql`:
+`check:alcance` lo marca con dos hallazgos, así que el freno ve también las tablas nuevas.
+
+**Decisiones de forma.** `news_item` lleva dos textos porque el comentario para esa empresa **es el
+producto**; la importancia es editorial (D-161). `action_item.closes_by` decide en el servidor quién
+puede cerrarlo. Tres `CHECK` de coherencia: publicado ⇔ con autor, hecho ⇔ con fecha, cerrado ⇔ con
+fecha y actor. `organization_id` desnormalizado como en `deliverable`, sin clave compuesta: la
+compuesta que `data_model` §4.2 describe para `deliverable` **no existe en las migraciones**; se
+anota, no se arregla aquí.
+
+**Verificado**: `check:types`, `lint`, `tsc` de la app, `check:migrations` (19/19), `check:alcance`
+(228 archivos), `fronteras`, `env`, `secrets`, `literacy`, `playbook`. **No verificado**: la migración
+y `test:isolation` contra PostgreSQL — esta máquina no tiene. Se corren en CI y al migrar.
+
+`data_model.md` §1.1 pasa a **24 tablas** y reconoce las dos de antiabuso (0010) que no contaba.

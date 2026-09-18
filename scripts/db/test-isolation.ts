@@ -150,6 +150,62 @@ async function main() {
     comprobar(`audit_log rechaza ${op} incluso para slg_admin (RNF-29)`, rechazado);
   }
 
+  // ── 7bis. Las tres tablas de la Academy (FU-15), una a una ───────────────
+  // La comprobación 8 recorre el catálogo y vería una tabla SIN política; esto
+  // comprueba lo otro: que la política que tienen se COMPORTA — cero filas sin
+  // contexto, solo las mías con él, y la escritura cruzada rechazada.
+  const ACADEMY = [
+    {
+      tabla: "news_item",
+      insertar: (tx: postgres.TransactionSql, id: string, org: string) =>
+        tx`insert into news_item (id,organization_id,title,summary_md,comment_md,importance)
+           values (${id},${org},'Noticia','Resumen','Comentario',1)`,
+    },
+    {
+      tabla: "milestone",
+      insertar: (tx: postgres.TransactionSql, id: string, org: string) =>
+        tx`insert into milestone (id,project_id,organization_id,title,due_at)
+           values (${id},${org === "test-a" ? "test-pa" : "test-pb"},${org},'Hito',now())`,
+    },
+    {
+      tabla: "action_item",
+      insertar: (tx: postgres.TransactionSql, id: string, org: string) =>
+        tx`insert into action_item (id,project_id,organization_id,title)
+           values (${id},${org === "test-a" ? "test-pa" : "test-pb"},${org},'Pendiente')`,
+    },
+  ] as const;
+
+  for (const { tabla, insertar } of ACADEMY) {
+    await owner.begin(async (tx) => {
+      await insertar(tx as unknown as postgres.TransactionSql, `test-${tabla}-a`, "test-a");
+      await insertar(tx as unknown as postgres.TransactionSql, `test-${tabla}-b`, "test-b");
+    });
+
+    const nada = await conContexto(null, "", (tx) => tx.unsafe(`select count(*)::int as n from ${tabla}`));
+    comprobar(`${tabla}: sin contexto, cero filas`, nada[0].n === 0, `devolvió ${nada[0].n}`);
+
+    const mias = await conContexto("test-a", "client_member", (tx) =>
+      tx.unsafe(`select id from ${tabla} where id like 'test-%'`),
+    );
+    comprobar(
+      `${tabla}: con contexto de A, solo la fila de A`,
+      mias.length === 1 && mias[0].id === `test-${tabla}-a`,
+      `vio ${mias.map((r) => r.id).join(",") || "nada"}`,
+    );
+
+    let cruzada = false;
+    try {
+      await conContexto("test-a", "client_admin", (tx) =>
+        insertar(tx as unknown as postgres.TransactionSql, `test-${tabla}-x`, "test-b"),
+      );
+    } catch {
+      cruzada = true;
+    }
+    comprobar(`${tabla}: escribir en la empresa ajena se rechaza`, cruzada);
+
+    await owner.unsafe(`delete from ${tabla} where id like 'test-%'`);
+  }
+
   // ── 8. Catálogo: ninguna tabla con organization_id sin política ───────────
   const sinPolitica = await owner`
     select c.relname as tabla

@@ -27,6 +27,7 @@ async function main() {
   console.log("Sembrando datos de ejemplo…\n");
 
   await sql`truncate agent_event, crm_delivery, download_event, lead_capture,
+    news_item, milestone, action_item,
     deliverable, announcement, project, contact, membership, invitation,
     api_key, organization, "user" restart identity cascade`;
 

@@ -36,7 +36,8 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | **M3** — HQ (intranet SLG) | 1 | 5 | **6** |
 | **M4** — Portal de clientes | 1 | 4 | **5** |
 | **M5** — API para agentes y go-live | 1 | 4 | **5** |
-| **TOTAL** | **14** | **25** | **39** |
+| **M6** — Academy y centro de mando (spec-delta 2026-09-18) | 1 | 5 | **6** |
+| **TOTAL** | **15** | **30** | **45** |
 
 **Estado global:** 0 `pending` · **21 `in_progress`** (FU-05, FU-08, FU-09, FU-14, DU-01, FU-01, DU-07, DU-08, DU-09, DU-13, DU-14, DU-15, DU-16, DU-17, DU-18, DU-19, DU-20, DU-21, DU-23, DU-24, DU-25) · **18 `done`** (FU-02, FU-03, FU-04, FU-06, FU-07, FU-10, FU-11, DU-02, DU-03, DU-04, DU-05, DU-06, DU-10, DU-11, DU-12, FU-12, FU-13, DU-22) · 0 `blocked` · 0 `review`. **FU-05 en curso desde 2026-09-12**: la mitad que vive en el repositorio está construida y verificada —pipeline, frenos con prueba negativa, cabeceras, compuerta de staging, `.env.example`, scripts de DNS— y los criterios 5, 6, 7 y 9 están cerrados. Los criterios 1, 2, 3 y 8 necesitan los cinco servicios arriba y la zona DNS delante: el paso a paso está en **`docs/deployment.md`**.
 
@@ -107,6 +108,12 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | FU-14 | FU | Copias de seguridad cifradas a destino externo y restauración probada | M5 | FU-05 | `in_progress` — **criterios 1…5, 7 y 8 verificados** con `test:respaldos` (**27** comprobaciones con copia y restauración reales). Cifrado **asimétrico** (**D-143**), nada lista el bucket (**D-144**), el par de claves lo genera `/api/ops` (**D-145**). El **criterio 6** está demostrado en el laboratorio pero **no en staging**: necesita el bucket de R2, sus dos credenciales y la clave privada — `docs/deployment.md` **§4nonies** |
 | DU-24 | DU | README operativo y prueba de Literacy | M5 | DU-11, DU-14, DU-17, FU-14 | `in_progress` — **el manual está escrito y los criterios 1, 3, 4, 5, 6 y 7 verificados** por `check:literacy` (**11** comprobaciones, gate D12, con prueba negativa). Las siete tareas se hacen **solo desde el navegador** (**D-147**) y la raíz del repositorio se abre con el manual (**D-146**). Falta el **criterio 2**: que Ricardo ejecute tres de las siete **sin ayuda técnica** — cada atasco es un defecto del manual (RNF-39) |
 | DU-25 | DU | Go-live: contenido de producción, DNS raíz, monitor y auditoría final | M5 | todas las anteriores | `in_progress` — **criterios 1, 4, 5 y 8 hechos**: el DoD #10 se mide sobre el **texto servido** de las 68 rutas (**D-148**, `check:produccion`), los **trece gates del Anexo D** están en `docs/gates.md` como comprobaciones con su estado (**D-149**, `check:anexo-d`), la evidencia de los trece está en `work_log`, y `run_metadata` dice «no medido» con el motivo (**D-150**). Los criterios **2, 3, 6 y 7 necesitan el despliegue**; el **9** (`/review` final) se ejecuta al final |
+| FU-15 | FU | Modelo de datos de la Academy: noticias, hitos y pendientes | M6 | FU-04, FU-13 | `in_progress` — migración `0018`, esquema, `test:isolation` extendido y fixture negativo de `check:alcance` escritos; **falta correrlos contra PostgreSQL** (esta máquina no tiene) |
+| DU-30 | DU | API v1 para noticias, hitos y pendientes | M6 | FU-15, DU-23 | `pending` |
+| DU-29 | DU | HQ: Conexiones, y escritura de hitos, pendientes y noticias | M6 | FU-15, DU-14, DU-15 | `pending` |
+| DU-26 | DU | Portal «Hoy» | M6 | FU-15, DU-18, DU-29 | `pending` |
+| DU-27 | DU | Portal «Programa» | M6 | FU-15, DU-19, DU-29 | `pending` |
+| DU-28 | DU | Portal «Clases» | M6 | DU-20 | `pending` |
 
 ---
 

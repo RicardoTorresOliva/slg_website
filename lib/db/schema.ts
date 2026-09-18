@@ -40,6 +40,12 @@ export const QUEUE_STATUS = ["pending", "delivered", "failed"] as const;
 export const CRM_MODES = ["contact_note", "lead_admission"] as const;
 export const DOWNLOAD_STATUS = ["draft", "coming-soon", "published"] as const;
 export const DELIVERABLE_TYPES = ["pdf", "html", "md", "link", "material"] as const;
+/** FU-15 · Academy. Un hito se entrega o no; un pendiente lo cierra quien `closes_by` diga. */
+export const MILESTONE_STATUS = ["pending", "done"] as const;
+export const ACTION_ITEM_STATUS = ["open", "done"] as const;
+export const ACTION_ITEM_CLOSER = ["client", "slg"] as const;
+/** Importancia editorial de una noticia (D-161): la fija quien la escribe, 1 = más importante. */
+export const NEWS_IMPORTANCE = [1, 2, 3] as const;
 export const VISIBILITY = ["client", "internal"] as const;
 export const API_SCOPES = [
   "captures:read",
@@ -48,6 +54,10 @@ export const API_SCOPES = [
   "deliverables:write",
   "announcements:write",
   "events:write",
+  // FU-15 · Academy (RF-153). Sin implicación entre alcances: `news:write` no
+  // permite tocar hitos ni al revés (RF-147).
+  "news:write",
+  "milestones:write",
 ] as const;
 
 export type UserRole = (typeof USER_ROLES)[number];
@@ -481,6 +491,106 @@ export const announcement = pgTable(
 /* ══════════════════════════════════════════════════════════════════════════
  * Agentes, auditoría y colas
  * ══════════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * Academy (FU-15, spec-delta 2026-09-18, D-160) — noticias, hitos y pendientes
+ *
+ * Tres tablas con `organization_id` y la MISMA política de fila que las ocho de
+ * 0001/0015 (migración 0018). Lo que NO son: lecciones, progreso por persona,
+ * cohortes ni certificados. La frontera (b) de `scope.md` no se mueve, y
+ * `check:alcance` la vigila también aquí.
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * news_item — una noticia CON comentario PARA una empresa (RF-150).
+ *
+ * Dos textos y no uno: `summaryMd` es la noticia; `commentMd` es lo que esa
+ * noticia significa para esa empresa. El comentario es el producto, y por eso
+ * la fila pertenece a la empresa y no se comparte entre varias.
+ */
+export const newsItem = pgTable(
+  "news_item",
+  {
+    id: id(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "restrict" }),
+    title: text("title").notNull(),
+    sourceUrl: text("source_url"),
+    summaryMd: text("summary_md").notNull(),
+    commentMd: text("comment_md").notNull(),
+    /** 1 = más importante. Editorial (D-161), nunca calculada. */
+    importance: integer("importance").notNull().default(2),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    // Actor polimórfico: la escribe un usuario de SLG o una clave de agente.
+    authorType: text("author_type"),
+    authorId: text("author_id"),
+    authorLabel: text("author_label"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("idx_news_item_portal")
+      .on(t.organizationId, t.importance, t.publishedAt)
+      .where(sql`published_at is not null`),
+  ],
+);
+
+/**
+ * milestone — un hito de ENTREGA de un proyecto (RF-151). Fecha, hecho o no,
+ * y orden. Nada más: no mide a nadie.
+ */
+export const milestone = pgTable(
+  "milestone",
+  {
+    id: id(),
+    projectId: text("project_id").notNull().references(() => project.id, { onDelete: "restrict" }),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "restrict" }),
+    title: text("title").notNull(),
+    dueAt: timestamp("due_at", { withTimezone: true }).notNull(),
+    status: text("status").notNull().default("pending"),
+    position: integer("position").notNull().default(0),
+    doneAt: timestamp("done_at", { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_milestone_project").on(t.projectId, t.position),
+    index("idx_milestone_next").on(t.organizationId, t.dueAt).where(sql`status = 'pending'`),
+  ],
+);
+
+/**
+ * action_item — una obligación pendiente de un proyecto (RF-151): «envíanos el
+ * organigrama antes del 30». `closesBy` dice QUIÉN puede cerrarla, y eso se
+ * decide en el servidor con esta columna, no en la pantalla.
+ */
+export const actionItem = pgTable(
+  "action_item",
+  {
+    id: id(),
+    projectId: text("project_id").notNull().references(() => project.id, { onDelete: "restrict" }),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "restrict" }),
+    title: text("title").notNull(),
+    dueAt: timestamp("due_at", { withTimezone: true }),
+    status: text("status").notNull().default("open"),
+    closesBy: text("closes_by").notNull().default("client"),
+    doneAt: timestamp("done_at", { withTimezone: true }),
+    // Quién lo cerró es parte del hecho: actor polimórfico (§2.4).
+    doneByType: text("done_by_type"),
+    doneById: text("done_by_id"),
+    doneByLabel: text("done_by_label"),
+    createdAt: createdAt(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_action_item_project").on(t.projectId, t.status),
+    index("idx_action_item_open").on(t.organizationId, t.dueAt).where(sql`status = 'open'`),
+  ],
+);
 
 export const agentEvent = pgTable(
   "agent_event",
