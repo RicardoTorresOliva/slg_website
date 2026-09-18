@@ -3141,3 +3141,14 @@ busca **formas conocidas** —claves de proveedor, cabeceras de clave privada, c
 una contraseña generada no tiene forma de nada. No es un fallo del escáner: es su límite, y conviene
 saberlo antes de confiarle una revisión. Lo que sí cabría añadirle es la pareja «palabra que anuncia
 un secreto + valor pegado al lado», que es como se escapan de verdad. Queda anotado, no hecho.
+
+**500 en `/hq/capturas` de la vista previa: el pool de conexiones, no la pantalla (2026-09-18, 17:30).**
+`vercel logs` lo dice en una línea: `EMAXCONNSESSION — max clients are limited to pool_size: 15`. El
+*pooler* de Supabase en modo sesión limita a **15 clientes en total**, y el código abría 10
+(`lib/db/scope.ts`) + 5 (`lib/auth/db.ts`) **por instancia**: una sola instancia agotaba el cupo, y
+producción llevaba el mismo riesgo latente desde el 17-09. Arreglo en dos mitades: el código pasa a
+pools de 3 + 2 con `prepare: false` —el modo transacción no admite sentencias preparadas con nombre—,
+y `DATABASE_URL` pasa al puerto **6543** (transacción), que quita el límite. El orden importa: primero
+el código, después la variable; `prepare: false` funciona en los dos modos, así que no hay ventana
+rota. Nada usa `LISTEN`, `NOTIFY` ni bloqueos consultivos; todo el trabajo con alcance va dentro de
+`db.transaction`, que en modo transacción es exactamente la unidad que conserva `set_config(…, true)`.

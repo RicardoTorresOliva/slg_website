@@ -555,9 +555,11 @@ aplicadas con el rol dueño; `slg_app` con contraseña y LOGIN; 21 tablas, 11 co
 RLS forzada. Bucket privado `downloads` con los 11 PDF (uno por ficha, clave =
 `file_key` del frontmatter).
 
-- **Vercel conecta por el pooler** `aws-0-us-east-1.pooler.supabase.com:5432`
-  (sesión, porque el código usa `prepare: true`), usuario `slg_app.<ref>`.
-  Las migraciones van por el host directo, que es IPv6.
+- **Vercel conecta por el pooler** `aws-0-us-east-1.pooler.supabase.com`, usuario `slg_app.<ref>`.
+  **Puerto 6543 (modo transacción) desde el 18-09**: el 5432 (sesión) limita a 15 clientes en total y
+  una sola instancia con los pools de 10 + 5 lo agotaba (`EMAXCONNSESSION`, 500 en `/hq/capturas`).
+  El código lleva ahora `prepare: false` y pools de 3 + 2. Las migraciones van por el host directo,
+  que es IPv6.
 - **Archivos por `FILES_DRIVER=supabase`**: la API de gestión no crea claves S3,
   así que existe `lib/files/supabase.ts` (REST de Storage, clave de servicio) y
   `adaptadorDeArchivos()` elige proveedor en un solo sitio. El adaptador S3 y el
