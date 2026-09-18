@@ -70,6 +70,9 @@ export const SECCIONES: readonly Seccion[] = [
   { clave: "users", href: "/hq/usuarios", superficie: "hq", accion: "member.invite" },
   { clave: "deliverablesHq", href: "/hq/entregables", superficie: "hq", accion: "deliverable.publish" },
   { clave: "announcementsHq", href: "/hq/avisos", superficie: "hq", accion: "announcement.publish" },
+  // DU-29(c): escribir una noticia para una empresa. `slg_operator` la ve solo
+  // si tiene prueba de asignación, igual que entregables y avisos.
+  { clave: "newsHq", href: "/hq/noticias", superficie: "hq", accion: "news.write" },
   { clave: "apikeys", href: "/hq/claves", superficie: "hq", accion: "apikey.manage" },
   { clave: "audit", href: "/hq/auditoria", superficie: "hq", accion: "audit.read" },
   // ── Portal ──────────────────────────────────────────────────────────────

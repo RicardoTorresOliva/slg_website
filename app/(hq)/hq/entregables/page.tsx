@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { Boton, Campo, Formulario, Lista, Texto } from "@/components/app/Campos";
 import { Estado } from "@/components/app/EstadosCanonicos";
 import { idiomaDeInterfaz } from "@/lib/app/idioma";
@@ -8,6 +10,7 @@ import { DELIVERABLE_TYPES, VISIBILITY } from "@/lib/db/schema";
 import { recogerParaMostrar } from "@/lib/hq/claves";
 import { entregables } from "@/lib/hq/entregables";
 import { proyectos } from "@/lib/hq/proyectos";
+import { urlDelVisor } from "@/lib/visor/origen";
 
 import { accionPublicarEntregable } from "../_acciones";
 
@@ -29,13 +32,19 @@ import { accionPublicarEntregable } from "../_acciones";
  * etiqueta —es que el portal pide la lista por `entregablesDelCliente()`, que
  * no tiene forma de devolver un `internal`— pero una etiqueta evita el susto de
  * publicar algo interno creyendo que se estaba entregando.
+ *
+ * **DESDE DU-29(d), LO QUE ENTREGAN LOS AGENTES SE VE FILTRADO Y SE ABRE.** El
+ * filtro «publicados por agentes» es `published_by_type = 'api_key'` sobre la
+ * misma lista, y vive en la URL como el resto de estados de HQ. Cada `html`
+ * lleva un enlace al visor aislado con **la misma URL firmada que usa el
+ * portal** (D-45): no hay un segundo visor para HQ.
  */
 export const dynamic = "force-dynamic";
 
 export default async function Entregables({
   searchParams,
 }: {
-  searchParams: Promise<{ subida?: string; error?: string }>;
+  searchParams: Promise<{ subida?: string; error?: string; agentes?: string }>;
 }) {
   const sesion = await exigirSuperficie("hq");
   exigirSeccion(sesion.ctx, "deliverablesHq");
@@ -49,15 +58,37 @@ export default async function Entregables({
   const urlDeSubida = recogerParaMostrar(q.subida);
   const err = (campo: string) => (q.error?.startsWith(campo) ? t["hq.form.error"] : null);
 
-  // Agrupadas por familia, y de cada una la versión más alta arriba.
-  const familias = new Map<string, typeof lista>();
-  for (const e of lista) familias.set(e.familyId, [...(familias.get(e.familyId) ?? []), e]);
+  // El filtro de agentes es un filtro de VISTA sobre la misma lista, no otra
+  // consulta: la puerta sigue siendo `entregables()`, y el estado va en la URL
+  // para que se comparta y sobreviva a recargar.
+  const soloAgentes = q.agentes === "1";
+  const visibles = soloAgentes ? lista.filter((e) => e.publicadoPorTipo === "api_key") : lista;
+
+  // Agrupadas por familia, y de cada una la versión más alta arriba. Las del
+  // formulario («versión nueva de») salen de TODAS: filtrar la vista no puede
+  // esconder una familia a la que se quiere añadir versión.
+  const agrupar = (filas: typeof lista) => {
+    const porFamilia = new Map<string, typeof lista>();
+    for (const e of filas) porFamilia.set(e.familyId, [...(porFamilia.get(e.familyId) ?? []), e]);
+    return porFamilia;
+  };
+  const familias = agrupar(lista);
+  const familiasVisibles = agrupar(visibles);
 
   return (
     <div style={{ display: "grid", gap: "1.5rem" }}>
       <h1 style={{ margin: 0, fontSize: "1.5rem", color: "var(--slg-blue-deep)" }}>
         {t["hq.deliv.title"]}
       </h1>
+
+      <p style={{ margin: 0, fontSize: "0.875rem", display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+        <Link href="/hq/entregables" aria-current={soloAgentes ? undefined : "page"} style={filtro(!soloAgentes)}>
+          {t["hq.deliv.all"]}
+        </Link>
+        <Link href="/hq/entregables?agentes=1" aria-current={soloAgentes ? "page" : undefined} style={filtro(soloAgentes)}>
+          {t["hq.deliv.byAgents"]}
+        </Link>
+      </p>
 
       {urlDeSubida ? (
         <section style={cajaSubida}>
@@ -106,7 +137,9 @@ export default async function Entregables({
               opciones={VISIBILITY.map((v) => ({ valor: v, etiqueta: v }))}
             />
           </Campo>
-          <Campo etiqueta={t["hq.deliv.url"]} error={err("url")} pista={t["hq.deliv.urlHint"]}>
+          {/* Para `link` y para `material` por enlace (§3.10): un vídeo alojado
+              fuera se publica aquí sin archivo, y «Clases» lo encuentra. */}
+          <Campo etiqueta={t["hq.deliv.url"]} error={err("url")} pista={t["hq.deliv.urlHintMaterial"]}>
             <Texto name="url" type="url" maxLength={500} />
           </Campo>
           <Campo etiqueta={t["hq.deliv.file"]} error={err("archivo")} pista={t["hq.deliv.fileHint"]}>
@@ -139,9 +172,15 @@ export default async function Entregables({
           estado="vacio_inicial"
           textos={{ titulo: t["hq.deliv.empty"], texto: t["hq.deliv.emptyText"] }}
         />
+      ) : visibles.length === 0 ? (
+        <Estado
+          estado="vacio_por_filtro"
+          textos={{ titulo: t["hq.deliv.byAgentsEmpty"], texto: t["hq.deliv.byAgentsEmptyText"] }}
+          accion={{ href: "/hq/entregables" }}
+        />
       ) : (
         <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: "0.75rem" }}>
-          {[...familias.values()].map((versiones) => {
+          {[...familiasVisibles.values()].map((versiones) => {
             const ordenadas = [...versiones].sort((a, b) => b.version - a.version);
             const ultima = ordenadas[0];
             return (
@@ -161,6 +200,7 @@ export default async function Entregables({
                   {ultima.publicadoEn ? ultima.publicadoEn.slice(0, 16).replace("T", " ") : "—"}
                   {ultima.url ? ` · ${ultima.url}` : ""}
                 </p>
+                {ultima.tipo === "html" ? <EnlaceAlVisor entregable={ultima} t={t} /> : null}
                 {/* Las versiones anteriores NO desaparecen (RF-143): se pliegan,
                     que es distinto. La pregunta «¿qué le dimos en marzo?» tiene
                     que tener respuesta. */}
@@ -188,6 +228,46 @@ export default async function Entregables({
   );
 }
 
+/**
+ * El enlace al visor aislado para un `html` (DU-29(d)): **la misma URL firmada
+ * que usa el portal** (`urlDelVisor`, D-45), abierta en pestaña nueva en vez de
+ * en un iframe. No hay un segundo visor para HQ ni una segunda firma.
+ *
+ * El visor sirve **solo** `client` + `html` + publicado + con archivo: lo decide
+ * `app_entregable_para_el_visor` en la base (migración 0016) y no admite
+ * filtros de quien llama. Un `internal` —el dashboard que un agente publica
+ * para HQ— hoy no se abre ahí, y la ficha lo dice en vez de enseñar un enlace a
+ * un 404. Abrirlo desde HQ exige tocar esa función, que no es de esta unidad.
+ */
+function EnlaceAlVisor({
+  entregable,
+  t,
+}: {
+  entregable: { readonly id: string; readonly visibilidad: string; readonly claveDeArchivo: string | null };
+  t: Record<string, string>;
+}) {
+  if (entregable.visibilidad !== "client" || !entregable.claveDeArchivo) {
+    return <p style={nota}>{t["hq.deliv.viewerClientOnly"]}</p>;
+  }
+  const src = urlDelVisor(entregable.id);
+  if (!src) return <p style={nota}>{t["hq.deliv.viewerMissing"]}</p>;
+  return (
+    <p style={nota}>
+      {/* `rel` completo y `target` explícito: el visor es otro origen a
+          propósito, y sin `noopener` podría manipular esta pestaña. */}
+      <a href={src} target="_blank" rel="noreferrer noopener" style={{ color: "var(--slg-link)" }}>
+        {t["hq.deliv.viewerOpen"]}
+      </a>
+    </p>
+  );
+}
+
+const filtro = (activo: boolean): React.CSSProperties => ({
+  color: "var(--slg-link)",
+  fontWeight: activo ? 600 : 400,
+  textDecoration: activo ? "none" : "underline",
+});
+const nota: React.CSSProperties = { margin: "0.5rem 0 0", fontSize: "0.8125rem", color: "var(--slg-ink-2)" };
 const cajaSubida: React.CSSProperties = {
   display: "grid",
   gap: "0.5rem",

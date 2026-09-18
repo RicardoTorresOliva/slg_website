@@ -3,6 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import {
+  actualizarHito,
+  cerrarPendiente,
+  crearHito,
+  crearNoticia,
+  crearPendiente,
+  reabrirPendiente,
+  type Importancia,
+} from "@/lib/academy";
 import { ErrorDeAutorizacion, exigirSuperficie } from "@/lib/auth";
 import { exigirSeccion } from "@/lib/app/navegacion";
 import { crearEmpresa, DatoInvalido, editarEmpresa } from "@/lib/hq/empresas";
@@ -38,9 +47,16 @@ async function sesionDeHq(seccion: string) {
   return sesion;
 }
 
-/** Convierte el fallo en lo que toca y **nunca** deja pasar un error crudo. */
-function salida(destino: string, e: unknown): never {
-  if (e instanceof DatoInvalido) redirect(`${destino}?error=${encodeURIComponent(e.campo)}`);
+/**
+ * Convierte el fallo en lo que toca y **nunca** deja pasar un error crudo.
+ *
+ * `prefijo` distingue el formulario cuando una pantalla tiene varios (la ficha
+ * de proyecto, DU-29): «hito:titulo» y «pendiente:titulo» son campos distintos
+ * aunque se llamen igual, y sin prefijo los dos formularios señalarían el
+ * mismo error a la vez.
+ */
+function salida(destino: string, e: unknown, prefijo = ""): never {
+  if (e instanceof DatoInvalido) redirect(`${destino}?error=${encodeURIComponent(prefijo + e.campo)}`);
   if (e instanceof ErrorDeAutorizacion) {
     // El 404 lo produce `notFound()` en la página; aquí basta con no revelar
     // nada: se vuelve a la misma pantalla sin cambiar nada.
@@ -313,4 +329,125 @@ export async function accionPublicarAviso(datos: FormData) {
   }
   revalidatePath("/hq/avisos");
   redirect("/hq/avisos");
+}
+
+/* ── Noticias (DU-29 · RF-150 · RF-152) ───────────────────────────────────── */
+
+/**
+ * Escribir una noticia para **una** empresa. La sección es `newsHq`
+ * (`news.write`): `slg_operator` solo llega con prueba de asignación, y la
+ * prueba la resuelve `crearNoticia` contra la base, no este formulario.
+ *
+ * La importancia se convierte a número y se pasa **tal cual**: el servicio es
+ * quien decide si 1, 2 o 3 valen y devuelve `importancia` como campo si no. El
+ * `as` de abajo es solo de tipo, no una validación.
+ */
+export async function accionCrearNoticia(datos: FormData) {
+  const sesion = await sesionDeHq("newsHq");
+  try {
+    await crearNoticia(sesion.ctx, {
+      organizationId: texto(datos, "empresa"),
+      titulo: texto(datos, "titulo"),
+      fuenteUrl: opcional(datos, "fuente"),
+      resumenMd: String(datos.get("resumen") ?? ""),
+      comentarioMd: String(datos.get("comentario") ?? ""),
+      importancia: Number(texto(datos, "importancia")) as Importancia,
+      // Explícito en el formulario (una lista con dos opciones), porque que un
+      // cliente vea o no vea algo no es una decisión que se pueda olvidar.
+      publicar: texto(datos, "publicar") === "si",
+    });
+  } catch (e) {
+    salida("/hq/noticias", e);
+  }
+  revalidatePath("/hq/noticias");
+  redirect("/hq/noticias");
+}
+
+/* ── Hitos y pendientes de un proyecto (DU-29 · RF-151 · RF-152) ─────────── */
+
+/**
+ * Las cinco acciones de la ficha de proyecto vuelven **siempre a esa ficha**:
+ * el proyecto viaja en el formulario solo para saber a dónde volver; la
+ * pertenencia del hito o del pendiente la decide el servicio con la política de
+ * fila. Un `null` del servicio —fuera del alcance de este actor— se trata como
+ * el rechazo: se vuelve sin decir nada, que es lo que hace `salida` con un
+ * `ErrorDeAutorizacion`.
+ */
+const fichaDeProyecto = (id: string) => `/hq/proyectos/${encodeURIComponent(id)}`;
+
+export async function accionCrearHito(datos: FormData) {
+  const sesion = await sesionDeHq("projects");
+  const proyecto = texto(datos, "proyecto");
+  const destino = fichaDeProyecto(proyecto);
+  try {
+    const orden = texto(datos, "orden");
+    await crearHito(sesion.ctx, {
+      projectId: proyecto,
+      titulo: texto(datos, "titulo"),
+      venceEn: texto(datos, "fecha"),
+      // Vacío es «sin orden» (0); un texto que no es número lo rechaza el
+      // servicio como `posicion`, no se convierte en 0 a escondidas.
+      posicion: orden ? Number(orden) : null,
+    });
+  } catch (e) {
+    salida(destino, e, "hito:");
+  }
+  revalidatePath(destino);
+  redirect(destino);
+}
+
+export async function accionCambiarEstadoDeHito(datos: FormData) {
+  const sesion = await sesionDeHq("projects");
+  const destino = fichaDeProyecto(texto(datos, "proyecto"));
+  try {
+    await actualizarHito(sesion.ctx, texto(datos, "id"), {
+      estado: texto(datos, "estado") === "done" ? "done" : "pending",
+    });
+  } catch (e) {
+    salida(destino, e, "hito:");
+  }
+  revalidatePath(destino);
+  redirect(destino);
+}
+
+export async function accionCrearPendiente(datos: FormData) {
+  const sesion = await sesionDeHq("projects");
+  const proyecto = texto(datos, "proyecto");
+  const destino = fichaDeProyecto(proyecto);
+  try {
+    await crearPendiente(sesion.ctx, {
+      projectId: proyecto,
+      titulo: texto(datos, "titulo"),
+      venceEn: opcional(datos, "fecha"),
+      cierra: texto(datos, "cierra") === "client" ? "client" : "slg",
+    });
+  } catch (e) {
+    salida(destino, e, "pendiente:");
+  }
+  revalidatePath(destino);
+  redirect(destino);
+}
+
+export async function accionCerrarPendiente(datos: FormData) {
+  const sesion = await sesionDeHq("projects");
+  const destino = fichaDeProyecto(texto(datos, "proyecto"));
+  try {
+    await cerrarPendiente(sesion.ctx, texto(datos, "id"));
+  } catch (e) {
+    salida(destino, e, "pendiente:");
+  }
+  revalidatePath(destino);
+  redirect(destino);
+}
+
+export async function accionReabrirPendiente(datos: FormData) {
+  const sesion = await sesionDeHq("projects");
+  const destino = fichaDeProyecto(texto(datos, "proyecto"));
+  try {
+    await reabrirPendiente(sesion.ctx, texto(datos, "id"));
+  } catch (e) {
+    salida(destino, e, "pendiente:");
+  }
+  revalidatePath(destino);
+  redirect(destino);
 }

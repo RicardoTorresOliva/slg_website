@@ -16,6 +16,11 @@
  *   · **criterio 6** — estados: sin empresas · sin proyectos · invitación
  *     caducada · **correo fallido con la invitación viva y reenviable**
  *     (RF-119).
+ *   · **DU-29 (criterio 1)** — hitos, pendientes y noticias desde HQ:
+ *     `slg_operator` sobre un proyecto (o una empresa) no asignado → rechazado
+ *     **y auditado como `.denied`**; título vacío o fecha imposible → dato
+ *     inválido con su campo; crear → aparece; hecho/reabrir y cerrar/reabrir
+ *     dejan el estado y las fechas coherentes (RF-151, RF-152, RF-156).
  *
  * Necesita `bash scripts/db/local-pg.sh up`.
  */
@@ -71,6 +76,10 @@ async function limpiar() {
    */
   await dueno`delete from invitation where organization_id in (select id from organization where slug in (${SLUG_CLIENTE}, 'slg-du14'))`;
   await dueno`delete from membership where organization_id in (select id from organization where slug in (${SLUG_CLIENTE}, 'slg-du14'))`;
+  // Las tres tablas de la Academy cuelgan del proyecto (DU-29): antes que él.
+  await dueno`delete from milestone where organization_id in (select id from organization where slug in (${SLUG_CLIENTE}, 'slg-du14'))`;
+  await dueno`delete from action_item where organization_id in (select id from organization where slug in (${SLUG_CLIENTE}, 'slg-du14'))`;
+  await dueno`delete from news_item where organization_id in (select id from organization where slug in (${SLUG_CLIENTE}, 'slg-du14'))`;
   await dueno`delete from project where organization_id in (select id from organization where slug in (${SLUG_CLIENTE}, 'slg-du14'))`;
   await dueno`delete from organization where slug in (${SLUG_CLIENTE}, 'slg-du14')`;
   /**
@@ -84,6 +93,9 @@ async function limpiar() {
   await dueno`delete from invitation where organization_id in (${ORG_SLG}, ${ORG_CLIENTE})`;
   await dueno`delete from membership where organization_id in (${ORG_SLG}, ${ORG_CLIENTE})`;
   await dueno`delete from deliverable where organization_id in (${ORG_SLG}, ${ORG_CLIENTE})`;
+  await dueno`delete from milestone where organization_id in (${ORG_SLG}, ${ORG_CLIENTE})`;
+  await dueno`delete from action_item where organization_id in (${ORG_SLG}, ${ORG_CLIENTE})`;
+  await dueno`delete from news_item where organization_id in (${ORG_SLG}, ${ORG_CLIENTE})`;
   await dueno`delete from project where organization_id in (${ORG_SLG}, ${ORG_CLIENTE})`;
   await dueno`delete from "user" where id in (${ADMIN}, ${OPERADOR})`;
   await dueno`delete from organization where id in (${ORG_SLG}, ${ORG_CLIENTE})`;
@@ -307,6 +319,178 @@ async function main() {
       "y queda auditado",
       (await apuntes("user.invite.slg.denied", OPERADOR)).length === 1,
     );
+
+    /* ── DU-29 · hitos, pendientes y noticias desde HQ ──────────────────── */
+    const {
+      actualizarHito,
+      cerrarPendiente,
+      crearHito,
+      crearNoticia,
+      crearPendiente,
+      hitosDeProyecto,
+      noticias,
+      pendientesAbiertos,
+      pendientesDeProyecto,
+      reabrirPendiente,
+    } = await import("../../lib/academy/index.ts");
+
+    /**
+     * La edición del operador de más arriba no llevaba `responsableId`, y
+     * `editarProyecto` lo guarda tal cual: el proyecto se quedó **sin
+     * responsable**. Se reasigna a propósito, porque lo que se prueba aquí es
+     * «asignado sí / no asignado no», y sin asignación las dos mitades darían
+     * «no» y la prueba pasaría por la razón equivocada.
+     */
+    await editarProyecto(admin(), proyectoId, {
+      organizationId: ORG_CLIENTE,
+      nombre: "Proyecto Demo",
+      servicio: "Phoenix PEEx",
+      estado: "active",
+      responsableId: OPERADOR,
+    });
+    check("el operador vuelve a ser responsable de su proyecto", await estaAsignado(operador(), proyectoId));
+
+    const campoDe = async (fn: () => Promise<unknown>) => {
+      try {
+        await fn();
+        return "(aceptado)";
+      } catch (e) {
+        return (e as Error & { campo?: string }).campo ?? (e as Error).name;
+      }
+    };
+    const estadoDe = async (fn: () => Promise<unknown>) => {
+      try {
+        await fn();
+        return 0;
+      } catch (e) {
+        return e instanceof ErrorDeAutorizacion ? e.status : -1;
+      }
+    };
+
+    console.log("\nDU-29 — hitos: solo en los proyectos asignados, y el rechazo queda auditado (RF-152, RF-156):\n");
+    const estadoHitoAjeno = await estadoDe(() =>
+      crearHito(operador(), { projectId: ajeno, titulo: "Hito ajeno", venceEn: "2026-10-01" }),
+    );
+    check(
+      "el operador NO crea un hito en un proyecto que no tiene asignado",
+      estadoHitoAjeno === 403 || estadoHitoAjeno === 404,
+      `estado ${estadoHitoAjeno}`,
+    );
+    check("y el intento queda auditado como rechazo", (await apuntes("milestone.create.denied", OPERADOR)).length === 1);
+    check(
+      "un hito sin título es un dato inválido, no una avería",
+      (await campoDe(() => crearHito(admin(), { projectId: proyectoId, titulo: "   ", venceEn: "2026-10-01" }))) === "titulo",
+    );
+    check(
+      "y uno con fecha imposible también",
+      (await campoDe(() => crearHito(admin(), { projectId: proyectoId, titulo: "Entrega", venceEn: "no es una fecha" }))) === "fecha",
+    );
+
+    const hito = await crearHito(operador(), {
+      projectId: proyectoId,
+      titulo: "Entrega del diagnóstico",
+      venceEn: "2026-10-15",
+      posicion: 1,
+    });
+    check("en su proyecto asignado, el hito se crea pendiente y sin fecha de hecho", hito.estado === "pending" && hito.hechoEn === null);
+    check("con la empresa copiada del proyecto, no de un parámetro", hito.organizationId === ORG_CLIENTE);
+    check("y aparece en la lista del proyecto", (await hitosDeProyecto(admin(), proyectoId)).some((h) => h.id === hito.id));
+    check("la creación queda auditada", (await apuntes("milestone.create", OPERADOR)).length === 1);
+
+    const hecho = await actualizarHito(admin(), hito.id, { estado: "done" });
+    check("marcarlo hecho pone la fecha", hecho?.estado === "done" && hecho.hechoEn !== null, JSON.stringify(hecho));
+    const reabierto = await actualizarHito(admin(), hito.id, { estado: "pending" });
+    check("y reabrirlo la quita: hecho ⇔ con fecha", reabierto?.estado === "pending" && reabierto.hechoEn === null);
+    check("un hito que no existe para este actor es `null`, no un error", (await actualizarHito(admin(), "no-existe", { estado: "done" })) === null);
+
+    console.log("\nDU-29 — pendientes: crear, cerrar y reabrir, con quién lo cerró (RF-151):\n");
+    const estadoPendienteAjeno = await estadoDe(() =>
+      crearPendiente(operador(), { projectId: ajeno, titulo: "Ajeno", cierra: "client" }),
+    );
+    check(
+      "el operador NO crea un pendiente en un proyecto ajeno",
+      estadoPendienteAjeno === 403 || estadoPendienteAjeno === 404,
+      `estado ${estadoPendienteAjeno}`,
+    );
+    check("y queda auditado", (await apuntes("action_item.create.denied", OPERADOR)).length === 1);
+    check(
+      "un pendiente sin título es un dato inválido",
+      (await campoDe(() => crearPendiente(admin(), { projectId: proyectoId, titulo: "", cierra: "client" }))) === "titulo",
+    );
+    check(
+      "y uno con fecha límite imposible también",
+      (await campoDe(() => crearPendiente(admin(), { projectId: proyectoId, titulo: "Organigrama", venceEn: "ayer", cierra: "client" }))) === "fecha",
+    );
+
+    const pendiente = await crearPendiente(operador(), {
+      projectId: proyectoId,
+      titulo: "Enviar el organigrama",
+      venceEn: "2026-09-30",
+      cierra: "client",
+    });
+    check("en su proyecto asignado, el pendiente se crea abierto y sin cierre", pendiente.estado === "open" && pendiente.hechoPor === null);
+    check("y aparece entre los abiertos de la empresa", (await pendientesAbiertos(admin(), ORG_CLIENTE)).some((p) => p.id === pendiente.id));
+
+    const cerrado = await cerrarPendiente(admin(), pendiente.id);
+    check(
+      "cerrarlo guarda quién y cuándo, del contexto y no de un parámetro",
+      cerrado?.estado === "done" && cerrado.hechoPorTipo === "user" && cerrado.hechoPorId === ADMIN && cerrado.hechoEn !== null,
+      JSON.stringify(cerrado),
+    );
+    check("y sale de los abiertos", !(await pendientesAbiertos(admin(), ORG_CLIENTE)).some((p) => p.id === pendiente.id));
+    check("el cierre queda auditado", (await apuntes("action_item.close", ADMIN)).length === 1);
+    const reabiertoP = await reabrirPendiente(admin(), pendiente.id);
+    check(
+      "reabrirlo borra el cierre entero",
+      reabiertoP?.estado === "open" && reabiertoP.hechoEn === null && reabiertoP.hechoPor === null,
+      JSON.stringify(reabiertoP),
+    );
+    check(
+      "y vuelve a la lista del proyecto como abierto",
+      (await pendientesDeProyecto(admin(), proyectoId)).some((p) => p.id === pendiente.id && p.estado === "open"),
+    );
+
+    console.log("\nDU-29 — noticias: de UNA empresa, y solo donde el operador tiene proyecto (RF-150, RF-152):\n");
+    const noticiaBase = {
+      titulo: "Nueva norma sectorial",
+      resumenMd: "Resumen de la noticia.",
+      comentarioMd: "Para esta empresa significa revisar el plan.",
+      importancia: 1 as const,
+      publicar: true,
+    };
+    // En la empresa de SLG el operador tiene membresía pero ningún proyecto:
+    // sin prueba de asignación, el silencio vale «no».
+    const estadoNoticiaAjena = await estadoDe(() => crearNoticia(operador(), { ...noticiaBase, organizationId: ORG_SLG }));
+    check(
+      "el operador NO escribe para una empresa donde no tiene proyecto",
+      estadoNoticiaAjena === 403 || estadoNoticiaAjena === 404,
+      `estado ${estadoNoticiaAjena}`,
+    );
+    check("y queda auditado", (await apuntes("news.create.denied", OPERADOR)).length === 1);
+    check(
+      "una noticia sin título es un dato inválido",
+      (await campoDe(() => crearNoticia(admin(), { ...noticiaBase, titulo: "", organizationId: ORG_CLIENTE }))) === "titulo",
+    );
+    check(
+      "y una con fuente que no es http(s) también",
+      (await campoDe(() => crearNoticia(admin(), { ...noticiaBase, organizationId: ORG_CLIENTE, fuenteUrl: "javascript:alert(1)" }))) === "fuente",
+    );
+
+    const publicada = await crearNoticia(operador(), { ...noticiaBase, organizationId: ORG_CLIENTE, fuenteUrl: "https://ejemplo.test/norma" });
+    check(
+      "donde sí tiene proyecto, la publica con su autoría del contexto",
+      publicada.publicadaEn !== null && publicada.autorTipo === "user" && publicada.autorId === OPERADOR,
+      JSON.stringify(publicada),
+    );
+    const borrador = await crearNoticia(admin(), { ...noticiaBase, organizationId: ORG_CLIENTE, titulo: "Borrador", publicar: false });
+    check("un borrador no lleva fecha de publicación ni autor", borrador.publicadaEn === null && borrador.autor === null);
+    const deLaEmpresa = await noticias(admin(), { organizationId: ORG_CLIENTE });
+    check("HQ ve las dos", deLaEmpresa.some((n) => n.id === publicada.id) && deLaEmpresa.some((n) => n.id === borrador.id));
+    check(
+      "y solo la publicada sale por `soloPublicadas`, que es lo que ve el portal",
+      (await noticias(admin(), { organizationId: ORG_CLIENTE, soloPublicadas: true })).every((n) => n.id !== borrador.id),
+    );
+    check("la escritura queda auditada", (await apuntes("news.create", OPERADOR)).length === 1);
 
     /* ── Criterios 1, 3 y 6 · invitaciones ──────────────────────────────── */
     console.log("\nCriterio 3 — una invitación no aceptada se revoca y deja de servir DE INMEDIATO:\n");
