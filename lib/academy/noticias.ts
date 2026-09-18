@@ -22,6 +22,7 @@ import { and, asc, desc, eq, isNotNull } from "drizzle-orm";
 
 import { exigir } from "../auth/matriz.ts";
 import type { AuthContext } from "../db/context.ts";
+import { cruzaEmpresas } from "../db/context.ts";
 import { NEWS_IMPORTANCE, newsItem, organization, project } from "../db/schema.ts";
 import { withScope } from "../db/scope.ts";
 import { DatoInvalido } from "../hq/empresas.ts";
@@ -151,7 +152,14 @@ export async function crearNoticia(ctx: AuthContext, datos: DatosDeNoticia): Pro
       const empresas = await withScope(ctx, (db) =>
         db.select({ id: organization.id }).from(organization).where(eq(organization.id, datos.organizationId)).limit(1),
       );
-      const ajena = ctx.organizationId !== null && ctx.organizationId !== datos.organizationId;
+      /**
+       * «Ajena» solo tiene sentido para quien NO cruza empresas. Un actor de SLG
+       * lleva en el contexto la empresa de SLG —es su pertenencia— y escribe
+       * para clientes precisamente porque cruza: comparar su `organizationId`
+       * con la del cliente lo rechazaba siempre (lo encontró `test:gestion` en
+       * CI, no una lectura). La prueba de asignación ya la hizo `exigir` arriba.
+       */
+      const ajena = !cruzaEmpresas(ctx) && ctx.organizationId !== datos.organizationId;
       if (empresas.length === 0 || ajena) throw new DatoInvalido("empresa");
 
       const publicadaEn = datos.publicar ? new Date() : null;
