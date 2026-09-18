@@ -1,0 +1,234 @@
+/* ============================================================================
+ * mapa.css — El árbol de «Empieza aquí» / «Start here»
+ * ----------------------------------------------------------------------------
+ * Conectores en CSS puro, sin JavaScript de cliente y sin nada animado: un
+ * mapa que se mueve no se lee de un vistazo. En móvil los nodos se apilan; a
+ * partir de 64 rem el primer nivel se abre en árbol con tronco y ramas, y el
+ * interior de `SLG_VoltAi` sigue siendo una lista con conector a la izquierda,
+ * porque tres líneas con once servicios no caben en columnas.
+ *
+ * Cero colores literales: todo sale de tokens.css (FU-02, criterio 2).
+ * ========================================================================== */
+
+.slg-mapa {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 1.25rem 4rem;
+}
+
+.slg-mapa ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Nodo ──────────────────────────────────────────────────────────────────── */
+
+.slg-mapa-tarjeta {
+  display: block;
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--slg-line);
+  border-radius: var(--slg-radius-md);
+  background: var(--slg-paper);
+  color: inherit;
+  text-decoration: none;
+}
+
+.slg-mapa-tarjeta:hover .slg-mapa-nombre,
+.slg-mapa-rama:hover .slg-mapa-nombre {
+  text-decoration: underline;
+}
+
+.slg-mapa-nombre {
+  display: block;
+  color: var(--slg-blue-deep);
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+.slg-mapa-linea {
+  display: block;
+  margin-top: 0.375rem;
+  color: var(--slg-ink-2);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.slg-mapa-raiz {
+  background: var(--slg-paper-2);
+}
+
+.slg-mapa-raiz .slg-mapa-nombre {
+  font-size: 1.125rem;
+}
+
+/* ── Primer nivel: apilado en móvil ───────────────────────────────────────── */
+
+.slg-mapa-arbol {
+  margin-top: 1.5rem;
+}
+
+.slg-mapa-hijos {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+/* ── Interior: ramas y servicios, con conector a la izquierda ─────────────── */
+
+.slg-mapa-lista {
+  margin-top: 0.5rem;
+  margin-left: 1rem;
+}
+
+.slg-mapa-lista > li {
+  position: relative;
+  padding: 0.375rem 0 0.375rem 1rem;
+}
+
+.slg-mapa-lista > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-left: 1px solid var(--slg-line);
+}
+
+.slg-mapa-lista > li::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 1.05rem;
+  width: 0.75rem;
+  border-top: 1px solid var(--slg-line);
+}
+
+.slg-mapa-lista > li:last-child::before {
+  bottom: auto;
+  height: 1.05rem;
+}
+
+.slg-mapa-rama {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.slg-mapa-servicios {
+  margin-left: 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.slg-mapa-servicios > li::after {
+  top: 1rem;
+}
+
+.slg-mapa-servicios > li:last-child::before {
+  height: 1rem;
+}
+
+.slg-mapa-servicios a {
+  color: var(--slg-link);
+  text-decoration: none;
+}
+
+.slg-mapa-servicios a:hover {
+  text-decoration: underline;
+}
+
+/* ── Accesos transversales ────────────────────────────────────────────────── */
+
+.slg-mapa-transversal {
+  margin-top: 3rem;
+}
+
+/* Mismo título de sección que el índice de rama (OverviewDeRama): apple.css
+   fija el tamaño de los h2, así que aquí solo se declara lo que no impone. */
+.slg-mapa-transversal h2 {
+  margin: 0 0 1.5rem;
+  color: var(--slg-blue-deep);
+  font-size: clamp(1.375rem, 3vw, 1.75rem);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.slg-mapa-transversal ul {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+}
+
+/* ── Escritorio: árbol con tronco y ramas ─────────────────────────────────── */
+
+@media (min-width: 64rem) {
+  .slg-mapa-raiz-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .slg-mapa-raiz {
+    width: 100%;
+    max-width: 30rem;
+    text-align: center;
+  }
+
+  /* El tronco: baja del nodo raíz hasta la barra de la que cuelgan los cinco. */
+  .slg-mapa-raiz-wrap::after {
+    content: "";
+    width: 1px;
+    height: 2rem;
+    background: var(--slg-line);
+  }
+
+  .slg-mapa-hijos {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    margin-top: 0;
+  }
+
+  .slg-mapa-hijos > li {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 2rem 0.5rem 0;
+  }
+
+  /* `SLG_VoltAi` lleva dentro tres líneas y once servicios: el doble de ancho. */
+  .slg-mapa-hijos > li.slg-mapa-ancho {
+    flex: 2 1 0;
+  }
+
+  /* Cada hijo dibuja su mitad de la barra y la caída hasta su nodo. El primero
+     no dibuja la mitad izquierda; el último, la derecha. */
+  .slg-mapa-hijos > li::before,
+  .slg-mapa-hijos > li::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    width: 50%;
+    height: 2rem;
+    border-top: 1px solid var(--slg-line);
+  }
+
+  .slg-mapa-hijos > li::before {
+    left: 0;
+  }
+
+  .slg-mapa-hijos > li::after {
+    right: 0;
+    border-left: 1px solid var(--slg-line);
+  }
+
+  .slg-mapa-hijos > li:first-child::before {
+    border-top: 0;
+  }
+
+  .slg-mapa-hijos > li:last-child::after {
+    border-top: 0;
+  }
+}

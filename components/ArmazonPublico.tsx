@@ -83,16 +83,19 @@ export function ArmazonPublico({
 }
 
 /**
- * 7 · Pie. Cinco enlaces y una línea de derechos.
+ * 7 · Pie. Seis enlaces y una línea de derechos.
  *
- * **No lleva mapa del sitio ni columnas de enlaces**: el sitio tiene cinco
- * destinos, y un pie que repite la navegación con otro formato es ruido. Lo que
- * sí lleva es lo que solo se busca abajo: legales y contacto.
+ * **No lleva columnas de enlaces**: el sitio tiene cinco destinos, y un pie que
+ * repite la navegación con otro formato es ruido. Lo que sí lleva es lo que solo
+ * se busca abajo: legales y contacto, y la puerta al mapa del sitio
+ * («Empieza aquí»), que vive en el pie y no en la barra para que los destinos
+ * del menú sigan siendo cinco (RF-01).
  */
 function PiePublico({ idioma, t }: { idioma: "es" | "en"; t: Record<string, string> }) {
   const enlaces =
     idioma === "en"
       ? [
+          { href: "/en/start-here", etiqueta: t["footer.startHere"] },
           { href: "/en/doctrine", etiqueta: t["footer.doctrine"] },
           { href: "/en/downloads", etiqueta: t["footer.downloads"] },
           { href: "/en/contact", etiqueta: t["footer.contact"] },
@@ -100,6 +103,7 @@ function PiePublico({ idioma, t }: { idioma: "es" | "en"; t: Record<string, stri
           { href: "/en/legal/privacy", etiqueta: t["footer.legalPrivacy"] },
         ]
       : [
+          { href: "/empieza-aqui", etiqueta: t["footer.startHere"] },
           { href: "/doctrina", etiqueta: t["footer.doctrine"] },
           { href: "/descargas", etiqueta: t["footer.downloads"] },
           { href: "/contacto", etiqueta: t["footer.contact"] },
