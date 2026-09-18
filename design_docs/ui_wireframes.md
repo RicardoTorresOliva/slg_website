@@ -1155,6 +1155,22 @@ La lista completa de avisos de la empresa, **movida tal cual desde la antigua po
 por ahora" + "no hace falta que vuelvas a mirar: te llegará por correo". Sección `announcements` en la
 navegación; `/portal` pasa a la clave `today` con la misma acción (`announcement.read`).
 
+### 7.10 Programa (`/portal/programa`) — RF-151, RF-156 · DU-27
+
+Un bloque por **proyecto activo** (los pausados y cerrados no tienen «qué sigue» y no se pintan), en
+el orden de `/portal/proyectos`. Dentro, en este orden: **«Qué sigue»** —el próximo hito pendiente
+destacado con su fecha o, si no hay ninguno, la frase «sin hitos programados: contacta a SLG»; un
+proyecto **nunca queda en silencio** (criterio 2)—; **la línea de hitos** (hechos con su fecha,
+futuros con la suya); **pendientes** abiertos —los que cierra el cliente primero, por fecha límite,
+sin fecha al final; luego los de SLG— y cerrados (fecha y quién). Cada pendiente dice **quién lo
+cierra**; el botón «Marcar como hecho» solo se pinta en los del cliente, y la Server Action vuelve a
+exigirlo por `closes_by` en `lib/academy` (esconder no es proteger). Mensajes: `?aviso=ok` (hecho),
+`?error=permiso` («ese lo cierra SLG» — la única acción del portal que cuenta el rechazo, porque el
+pendiente ya está en la pantalla de quien lo intenta), `?error=pendiente` (ya no está). Vacío
+inicial redactado con salida a `/portal/proyectos`. Sección `program`, acción `milestone.read`.
+La redacción del reparto (hechos / siguiente / futuros; abiertos / cerrados) es pura en
+`lib/portal/programa.ts`, que no escribe ningún `organizationId`.
+
 ---
 
 ## 8. Estados: catálogo y aplicación

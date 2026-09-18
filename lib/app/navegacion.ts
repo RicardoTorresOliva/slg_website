@@ -85,6 +85,12 @@ export const SECCIONES: readonly Seccion[] = [
    * B.3 por una pantalla que no gobierna ningún dato propio.
    */
   { clave: "today", href: "/portal", superficie: "portal", accion: "announcement.read" },
+  /**
+   * «Programa» (DU-27): hitos y pendientes por proyecto. `milestone.read` es de
+   * los cuatro roles, así que la sección la ve toda la empresa; cerrar un
+   * pendiente lo decide `cerrarPendiente` por `closes_by`, no la sección.
+   */
+  { clave: "program", href: "/portal/programa", superficie: "portal", accion: "milestone.read" },
   { clave: "deliverables", href: "/portal/proyectos", superficie: "portal", accion: "deliverable.read" },
   /**
    * Los materiales de programa (DU-20). Misma acción que los proyectos **a

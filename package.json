@@ -60,7 +60,7 @@
     "test:acceso": "node scripts/auth/test-acceso.ts",
     "test:descargas": "node scripts/descargas/test-descargas.ts",
     "test:crm": "node scripts/crm/test-crm.ts",
-    "test:db": "npm run test:isolation && npm run test:aislamiento && npm run test:contracts && npm run test:nocompile && npm run test:autorizacion && npm run test:correo && npm run test:invitaciones && npm run test:archivos && npm run test:aprovisionar && npm run test:acceso && npm run test:descargas && npm run test:crm && npm run test:webhooks && npm run test:shell && npm run test:hq && npm run test:gestion && npm run test:capturas && npm run test:claves && npm run test:entregables && npm run test:visor && npm run test:materiales && npm run test:miembros && npm run test:hoy && npm run test:api && npm run test:respaldos",
+    "test:db": "npm run test:isolation && npm run test:aislamiento && npm run test:contracts && npm run test:nocompile && npm run test:autorizacion && npm run test:correo && npm run test:invitaciones && npm run test:archivos && npm run test:aprovisionar && npm run test:acceso && npm run test:descargas && npm run test:crm && npm run test:webhooks && npm run test:shell && npm run test:hq && npm run test:gestion && npm run test:capturas && npm run test:claves && npm run test:entregables && npm run test:visor && npm run test:materiales && npm run test:miembros && npm run test:hoy && npm run test:programa && npm run test:api && npm run test:respaldos",
     "test:webhooks": "node scripts/webhooks/test-webhooks.ts",
     "check:terceros": "node scripts/ci/check-terceros.ts",
     "check:shell": "node scripts/ci/check-shell.ts",
@@ -78,6 +78,7 @@
     "test:materiales": "node scripts/portal/test-materiales.ts",
     "test:miembros": "node scripts/portal/test-miembros.ts",
     "test:hoy": "node scripts/portal/test-hoy.ts",
+    "test:programa": "node scripts/portal/test-programa.ts",
     "test:api": "node scripts/api/test-api.ts"
   },
   "dependencies": {
