@@ -29,7 +29,11 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 
-const URL_DUENO = process.env.DATABASE_URL_MIGRATIONS ?? process.env.DATABASE_URL;
+// `DATABASE_URL_OWNER` es el nombre del archivo de `ops/` que se carga con
+// `node --env-file`: así la cadena del dueño no pasa por la línea de comandos
+// (mismo trato que en `scripts/auth/primer-admin.ts`).
+const URL_DUENO =
+  process.env.DATABASE_URL_MIGRATIONS ?? process.env.DATABASE_URL_OWNER ?? process.env.DATABASE_URL;
 if (!URL_DUENO) {
   console.error(
     "Falta DATABASE_URL_MIGRATIONS. Las migraciones las aplica el rol DUEÑO, nunca el rol de " +
