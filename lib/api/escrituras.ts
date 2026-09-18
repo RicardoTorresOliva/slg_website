@@ -1,6 +1,7 @@
 /**
- * escrituras.ts — Las **cuatro escrituras** de `/api/v1` (DU-23 · RF-102 ·
- * RF-104 · RF-105 · RF-111 · RF-146).
+ * escrituras.ts — Las **nueve escrituras** de `/api/v1`: cuatro de DU-23
+ * (RF-102 · RF-104 · RF-105 · RF-111 · RF-146) y cinco de la Academy, DU-30
+ * (RF-153 · RF-156).
  *
  * **CREAR Y PUBLICAR SON DOS ACTOS, Y ESA ES LA UNIDAD.** El ciclo es
  * crear → subir → publicar, y no un `POST` que hace las tres cosas. La razón no
@@ -22,14 +23,29 @@
  */
 import { eq, sql } from "drizzle-orm";
 
+import {
+  actualizarHito,
+  cerrarPendiente,
+  crearHito,
+  crearNoticia,
+  crearPendiente,
+  type EstadoDeHito,
+  type Hito,
+  type Importancia,
+  type Noticia,
+  type Pendiente,
+  type QuienCierra,
+} from "../academy/index.ts";
 import type { AuthContext } from "../db/context.ts";
 import { agentEvent, announcement, deliverable, organization, project } from "../db/schema.ts";
 import { withScope } from "../db/scope.ts";
 import { adaptadorDeArchivos, validarSubida } from "../files/index.ts";
+import { DatoInvalido } from "../hq/empresas.ts";
 import { destinoDe } from "../hq/entregables.ts";
 import { anunciarAviso, anunciarEntregable } from "../webhooks/index.ts";
 
 import { ErrorDeApi } from "./errores.ts";
+import { empresaVisible } from "./lecturas.ts";
 
 /**
  * **AQUÍ NO SE AUDITA, Y NO ES UN OLVIDO** (D-140).
@@ -45,6 +61,11 @@ import { ErrorDeApi } from "./errores.ts";
  *
  * Si algún día estas funciones se llaman desde fuera de la API, el apunte se
  * añade **ahí**, no aquí.
+ *
+ * Las de la Academy (5–9) no escriben por su cuenta: delegan en `lib/academy`,
+ * que es la única puerta a esas tres tablas y que apunta las escrituras de las
+ * personas —HQ, portal—. Para una clave de API omite el apunte de dominio por
+ * exactamente esta razón (`lib/academy/comun.ts`).
  */
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -474,4 +495,201 @@ export async function registrarEvento(
         },
       };
   })();
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * M6 · Academy (DU-30 · RF-153 · RF-156) — lo común a las cinco
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * **EL 404 SE DECIDE ANTES DE TOCAR LA PUERTA.** La empresa o el proyecto de la
+ * ruta se comprueban con el contexto de la clave (§2.6): ajeno o inexistente
+ * responden **404 con el mismo cuerpo**, nunca 403, porque un 403 confirmaría
+ * que existen (RF-71). Solo después se llama a `lib/academy`, que vuelve a
+ * exigir la acción y a validar: la API no es un atajo a la puerta, es un
+ * cliente más de ella.
+ */
+async function proyectoVisibleOr404(ctx: AuthContext, projectId: string): Promise<void> {
+  const filas = await withScope(ctx, (db) =>
+    db.select({ id: project.id }).from(project).where(eq(project.id, projectId)).limit(1),
+  );
+  if (filas.length === 0) throw new ErrorDeApi(404, `proyecto ${projectId} fuera del universo de la clave`);
+}
+
+/**
+ * De los códigos de campo de la puerta a los nombres del contrato. Existe como
+ * red: el catálogo ya validó el cuerpo, así que un `DatoInvalido` aquí es un
+ * caso que la declaración no supo prever, y tiene que salir como 422 con su
+ * campo y no como un 500 mudo.
+ */
+const CAMPO_DEL_CONTRATO: Readonly<Record<string, string>> = {
+  titulo: "title",
+  fuente: "source_url",
+  resumen: "summary_md",
+  comentario: "comment_md",
+  importancia: "importance",
+  publicar: "publish",
+  fecha: "due_at",
+  posicion: "position",
+  cierra: "closes_by",
+};
+
+async function porLaPuerta<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (e) {
+    if (e instanceof DatoInvalido) {
+      throw new ErrorDeApi(422, `la puerta rechazó ${e.campo}`, [
+        { field: CAMPO_DEL_CONTRATO[e.campo] ?? e.campo, code: "invalid" },
+      ]);
+    }
+    throw e;
+  }
+}
+
+function actor(tipo: string | null, id: string | null, etiqueta: string | null) {
+  return tipo ? { actor_type: tipo, actor_id: id, actor_label: etiqueta } : null;
+}
+
+function noticiaDelContrato(n: Noticia) {
+  return {
+    id: n.id,
+    organization_id: n.organizationId,
+    title: n.titulo,
+    source_url: n.fuenteUrl,
+    summary_md: n.resumenMd,
+    comment_md: n.comentarioMd,
+    importance: n.importancia,
+    published_at: n.publicadaEn,
+    author: actor(n.autorTipo, n.autorId, n.autor),
+    created_at: n.creadaEn,
+  };
+}
+
+function hitoDelContrato(h: Hito) {
+  return {
+    id: h.id,
+    project_id: h.projectId,
+    organization_id: h.organizationId,
+    title: h.titulo,
+    due_at: h.venceEn,
+    status: h.estado,
+    position: h.posicion,
+    done_at: h.hechoEn,
+    created_at: h.creadoEn,
+    updated_at: h.actualizadoEn,
+  };
+}
+
+function pendienteDelContrato(p: Pendiente) {
+  return {
+    id: p.id,
+    project_id: p.projectId,
+    organization_id: p.organizationId,
+    title: p.titulo,
+    due_at: p.venceEn,
+    status: p.estado,
+    closes_by: p.cierra,
+    done_at: p.hechoEn,
+    done_by: actor(p.hechoPorTipo, p.hechoPorId, p.hechoPor),
+    created_at: p.creadoEn,
+    updated_at: p.actualizadoEn,
+  };
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * 5 · POST /organizations/{id}/news
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+export async function crearNoticiaPorApi(
+  ctx: AuthContext,
+  datos: {
+    organizationId: string;
+    titulo: string;
+    fuenteUrl: string | null;
+    resumenMd: string;
+    comentarioMd: string;
+    importancia: number;
+    publicar: boolean;
+  },
+) {
+  if (!(await empresaVisible(ctx, datos.organizationId))) {
+    throw new ErrorDeApi(404, `empresa ${datos.organizationId} fuera del universo de la clave`);
+  }
+  // Como `external_url` en los entregables: un esquema ejecutable en un enlace
+  // que un cliente abre desde su portal no es un dato, es un ataque.
+  if (datos.fuenteUrl) {
+    let protocolo = "";
+    try {
+      protocolo = new URL(datos.fuenteUrl).protocol;
+    } catch {
+      throw new ErrorDeApi(422, "source_url ilegible", [{ field: "source_url", code: "malformed" }]);
+    }
+    if (protocolo !== "http:" && protocolo !== "https:") {
+      throw new ErrorDeApi(422, "source_url con esquema no admitido", [
+        { field: "source_url", code: "scheme_not_allowed" },
+      ]);
+    }
+  }
+
+  const noticia = await porLaPuerta(() =>
+    crearNoticia(ctx, {
+      organizationId: datos.organizationId,
+      titulo: datos.titulo,
+      fuenteUrl: datos.fuenteUrl,
+      resumenMd: datos.resumenMd,
+      comentarioMd: datos.comentarioMd,
+      // El catálogo ya acotó el entero a 1…3: aquí solo se le pone el nombre.
+      importancia: datos.importancia as Importancia,
+      publicar: datos.publicar,
+    }),
+  );
+  return { organizationId: noticia.organizationId, cuerpo: { data: noticiaDelContrato(noticia) } };
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * 6 · POST /projects/{id}/milestones
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+export async function crearHitoPorApi(
+  ctx: AuthContext,
+  datos: { projectId: string; titulo: string; venceEn: Date; posicion: number | null },
+) {
+  await proyectoVisibleOr404(ctx, datos.projectId);
+  const hito = await porLaPuerta(() => crearHito(ctx, datos));
+  return { organizationId: hito.organizationId, cuerpo: { data: hitoDelContrato(hito) } };
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * 7 · POST /milestones/{id}/done · POST /milestones/{id}/reopen
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+export async function cambiarEstadoDeHitoPorApi(ctx: AuthContext, id: string, estado: EstadoDeHito) {
+  // `null` es «no existe para esta clave»: ajeno o inexistente, el mismo 404.
+  const hito = await porLaPuerta(() => actualizarHito(ctx, id, { estado }));
+  if (!hito) throw new ErrorDeApi(404, `hito ${id} fuera del universo de la clave`);
+  return { organizationId: hito.organizationId, cuerpo: { data: hitoDelContrato(hito) } };
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * 8 · POST /projects/{id}/action-items
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+export async function crearPendientePorApi(
+  ctx: AuthContext,
+  datos: { projectId: string; titulo: string; venceEn: Date | null; cierra: QuienCierra },
+) {
+  await proyectoVisibleOr404(ctx, datos.projectId);
+  const pendiente = await porLaPuerta(() => crearPendiente(ctx, datos));
+  return { organizationId: pendiente.organizationId, cuerpo: { data: pendienteDelContrato(pendiente) } };
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * 9 · POST /action-items/{id}/done
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+export async function cerrarPendientePorApi(ctx: AuthContext, id: string) {
+  const pendiente = await porLaPuerta(() => cerrarPendiente(ctx, id));
+  if (!pendiente) throw new ErrorDeApi(404, `pendiente ${id} fuera del universo de la clave`);
+  return { organizationId: pendiente.organizationId, cuerpo: { data: pendienteDelContrato(pendiente) } };
 }

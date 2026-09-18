@@ -142,7 +142,7 @@ Toda petición autenticada actualiza `api_key.last_request` y `api_key.request_c
 
 ### 2.3 Alcances por clave (RF-98, RF-147)
 
-Los **seis** alcances son exactamente los de `data_model` §3.6, sin implicación entre ellos: una
+Los **ocho** alcances son exactamente los de `data_model` §3.6, sin implicación entre ellos: una
 clave con `events:write` **no** puede crear un entregable, y que pudiera sería un defecto de
 seguridad, no una comodidad (RF-147).
 
@@ -154,7 +154,12 @@ seguridad, no una comodidad (RF-147).
 | `deliverables:write` | `POST /deliverables` · `POST /deliverables/{id}/publish` |
 | `announcements:write` | `POST /announcements` |
 | `events:write` | `POST /events` |
+| `news:write` | `POST /organizations/{id}/news` (M6, DU-30) |
+| `milestones:write` | `POST /projects/{id}/milestones` · `POST /milestones/{id}/done` · `POST /milestones/{id}/reopen` · `POST /projects/{id}/action-items` · `POST /action-items/{id}/done` (M6, DU-30) |
 | *(ninguno)* | `GET /openapi.json` — responde a **cualquier** clave válida (RF-106) |
+
+No hay alcance de **lectura** para noticias, hitos ni pendientes: `news.read` y `milestone.read` no
+tienen alcance de agente en B.3. Un agente escribe; quien lee es la persona, en su portal o en HQ.
 
 Alcance insuficiente → **403** con `code: "insufficient_scope"` y **sin decir qué alcance faltaba**
 (RF-98, gate D9). El mensaje es siempre el mismo, para cualquier ruta y cualquier alcance.
@@ -321,7 +326,9 @@ del error y en la cabecera `X-Request-Id` de **toda** respuesta.
 
 ---
 
-## 3. Los nueve endpoints
+## 3. Los quince endpoints
+
+Nueve de DU-22/DU-23 (§3.1–§3.9) y seis de la Academy, M6 · DU-30 (§3.10–§3.15).
 
 ### 3.1 `GET /api/v1/captures` — evidencia de capturas web
 
@@ -854,6 +861,214 @@ El evento aparece en el tablero de HQ («actividad reciente de agentes», RF-76,
 
 ---
 
+### 3.10 `POST /api/v1/organizations/{id}/news` — noticia con comentario para una empresa
+
+**Alcance:** `news:write` · **RF-150, RF-153, RF-156** · **DU-30**
+
+La empresa va en la **ruta** y se verifica contra el contexto (§2.6): ajena o inexistente → **404**
+con el mismo cuerpo. Una noticia pertenece a **una** empresa: `summary_md` es la noticia y
+`comment_md` es lo que significa **para esa empresa** — el comentario es el producto, y por eso la
+misma noticia para dos empresas son dos filas.
+
+**Petición**
+
+```json
+{
+  "title": "La UE fija el calendario del AI Act",
+  "source_url": "https://ejemplo.test/ai-act",
+  "summary_md": "Las obligaciones para sistemas de alto riesgo entran en vigor en **agosto de 2027**.",
+  "comment_md": "Para tu caso: el copiloto de atención queda fuera del alto riesgo. Documenta la evaluación antes de la Sesión 3.",
+  "importance": 1,
+  "publish": true
+}
+```
+
+| Campo | Obligatorio | Reglas |
+|---|---|---|
+| `title` | sí | 1…200 caracteres |
+| `source_url` | no | Hasta 2 000 caracteres. **Solo `http(s)`**: otro esquema → **422** `scheme_not_allowed` |
+| `summary_md` | sí | Markdown, 1…20 000. Se guarda **tal cual** y se sanea al renderizar (RNF-31) |
+| `comment_md` | sí | Markdown, 1…20 000. Lo que la noticia significa **para esa empresa** |
+| `importance` | sí | Entero **1…3**. **Editorial** (D-161): la fija quien escribe, 1 es lo primero. Fuera de rango → 422 `out_of_range` |
+| `publish` | **sí** | Booleano. **Sin defecto, a propósito**, como en §3.7 |
+
+**Respuesta 201**
+
+```json
+{
+  "data": {
+    "id": "news_01J9…",
+    "organization_id": "org_01J9Z7...",
+    "title": "La UE fija el calendario del AI Act",
+    "source_url": "https://ejemplo.test/ai-act",
+    "summary_md": "Las obligaciones para sistemas de alto riesgo entran en vigor en **agosto de 2027**.",
+    "comment_md": "Para tu caso: …",
+    "importance": 1,
+    "published_at": "2026-09-18T09:12:03Z",
+    "author": {
+      "actor_type": "api_key",
+      "actor_id": "key_01J9Z7...",
+      "actor_label": "Hermes — noticias"
+    },
+    "created_at": "2026-09-18T09:12:03Z"
+  }
+}
+```
+
+Con `publish: false`, `published_at` y `author` son `null` (restricción
+`news_item_published_needs_author`) y la noticia **no aparece en «Hoy»**. **No se emite webhook**:
+las noticias van en un solo sentido (frontera (d)) y §10 no tiene evento para ellas. `audit_log`
+recibe `action: "news.create"`.
+
+### 3.11 `POST /api/v1/projects/{id}/milestones` — hito de entrega de un proyecto
+
+**Alcance:** `milestones:write` · **RF-151, RF-153, RF-156** · **DU-30**
+
+El proyecto va en la ruta y se verifica (§2.6): ajeno o inexistente → **404**. **La empresa del hito
+no viaja en el cuerpo**: sale del proyecto. Un hito es una fecha de entrega, no una lección: no hay
+porcentaje, participante ni nota (frontera (b); `check:alcance`).
+
+**Petición**
+
+```json
+{
+  "title": "Entrega del diagnóstico",
+  "due_at": "2026-10-15T00:00:00Z",
+  "position": 1
+}
+```
+
+| Campo | Obligatorio | Reglas |
+|---|---|---|
+| `title` | sí | 1…200 caracteres |
+| `due_at` | sí | Fecha-hora ISO 8601. Ilegible → 422 `not_a_datetime` |
+| `position` | no | Entero 0…10 000. Orden manual dentro del proyecto. Ausente: 0 |
+
+**Respuesta 201**
+
+```json
+{
+  "data": {
+    "id": "ms_01J9…",
+    "project_id": "prj_01J9Z7...",
+    "organization_id": "org_01J9Z7...",
+    "title": "Entrega del diagnóstico",
+    "due_at": "2026-10-15T00:00:00.000Z",
+    "status": "pending",
+    "position": 1,
+    "done_at": null,
+    "created_at": "2026-09-18T09:14:11Z",
+    "updated_at": "2026-09-18T09:14:11Z"
+  }
+}
+```
+
+Un hito **nace siempre `pending`**: hacerlo es otro acto (§3.12). `audit_log` recibe
+`action: "milestone.create"`.
+
+### 3.12 `POST /api/v1/milestones/{id}/done` — marcar un hito como hecho
+
+**Alcance:** `milestones:write` · **RF-151, RF-153** · **DU-30**
+
+**Petición:** cuerpo vacío o `{}`. Cualquier campo → **422** `unknown_parameter`: el estado no se
+parchea a mano.
+
+> RF-153 nombra `PATCH /milestones/{id}`. Se implementa como **dos sub-acciones `POST`** —`/done` y
+> `/reopen`—, como `POST /deliverables/{id}/publish` (§3.5): un acto con nombre se lee en `audit_log`
+> sin abrir el cuerpo, el catálogo (`lib/api/catalogo.ts`) solo admite `GET` y `POST`, y «solo
+> admite `status` y `due_at`» se cumple por construcción, porque no hay campos que admitir.
+
+**Respuesta 200:** el hito de §3.11 con `status: "done"` y `done_at` puesto. **Hecho ⇔ con fecha**:
+lo impone `milestone_done_has_date` en la base.
+
+| Situación | Código |
+|---|---|
+| Ya estaba hecho | **200**, idempotente: `done_at` **no se mueve**. Un agente que reintenta una llamada cortada no reescribe cuándo se entregó |
+| No existe bajo el contexto de la clave | **404** |
+| Alcance insuficiente | **403** |
+
+`audit_log` recibe `action: "milestone.update"` con la ruta en `metadata.path`.
+
+### 3.13 `POST /api/v1/milestones/{id}/reopen` — devolver un hito a pendiente
+
+**Alcance:** `milestones:write` · **RF-151, RF-153** · **DU-30**
+
+**Petición:** cuerpo vacío o `{}`. **Respuesta 200:** el hito con `status: "pending"` y
+`done_at: null`. Idempotente sobre uno ya pendiente. Existe para que un hito marcado por error se
+deshaga **sin borrar la fila**: el registro conserva las dos escrituras. Mismos códigos que §3.12.
+
+### 3.14 `POST /api/v1/projects/{id}/action-items` — pendiente de un proyecto
+
+**Alcance:** `milestones:write` · **RF-151, RF-153, RF-156** · **DU-30**
+
+El proyecto va en la ruta y se verifica (§2.6): ajeno o inexistente → **404**. Un pendiente es una
+**obligación del contrato** («envíanos el organigrama antes del 30»), no una tarea evaluable.
+
+**Petición**
+
+```json
+{
+  "title": "Enviar el organigrama actualizado",
+  "due_at": "2026-10-01T00:00:00Z",
+  "closes_by": "client"
+}
+```
+
+| Campo | Obligatorio | Reglas |
+|---|---|---|
+| `title` | sí | 1…200 caracteres |
+| `due_at` | no | Fecha-hora ISO 8601. Sin fecha límite, ausente |
+| `closes_by` | **sí** | `client` \| `slg`. **Sin defecto**: quién puede cerrarlo es una decisión, y se decide **en el servidor** (RF-151) |
+
+**Respuesta 201**
+
+```json
+{
+  "data": {
+    "id": "ai_01J9…",
+    "project_id": "prj_01J9Z7...",
+    "organization_id": "org_01J9Z7...",
+    "title": "Enviar el organigrama actualizado",
+    "due_at": "2026-10-01T00:00:00.000Z",
+    "status": "open",
+    "closes_by": "client",
+    "done_at": null,
+    "done_by": null,
+    "created_at": "2026-09-18T09:20:40Z",
+    "updated_at": "2026-09-18T09:20:40Z"
+  }
+}
+```
+
+`audit_log` recibe `action: "action_item.create"`.
+
+### 3.15 `POST /api/v1/action-items/{id}/done` — cerrar un pendiente
+
+**Alcance:** `milestones:write` · **RF-151, RF-153, RF-111** · **DU-30**
+
+**Petición:** cuerpo vacío o `{}`.
+
+**Una clave con `milestones:write` cierra cualquier pendiente**, sea `closes_by = client` o `slg`:
+B.3 no da alcance de agente a `action_item.close`, y la puerta lo resuelve por `action_item.write`.
+La regla «el cliente solo cierra los suyos» se aplica a las **personas** en el portal, y la aplica
+el servidor (`lib/academy/pendientes.ts`), no la pantalla.
+
+**Respuesta 200:** el pendiente de §3.14 con `status: "done"`, `done_at` y `done_by`, que es el
+actor polimórfico de `data_model` §2.4 tomado **del contexto** (RF-111):
+
+```json
+"done_by": { "actor_type": "api_key", "actor_id": "key_01J9Z7...", "actor_label": "Hermes — noticias" }
+```
+
+| Situación | Código |
+|---|---|
+| Ya estaba cerrado | **200**, idempotente: `done_at` y `done_by` **no cambian** — el primer cierre es el hecho |
+| No existe bajo el contexto de la clave | **404** |
+| Alcance insuficiente | **403** |
+
+`audit_log` recibe `action: "action_item.close"`. Reabrir un pendiente **no** tiene ruta en v1: lo
+hace SLG desde HQ (`reabrirPendiente`, RF-152).
+
 ## 4. Matriz de referencia y las tres pruebas del DoD #6
 
 ### 4.1 Ruta × alcance × códigos
@@ -868,9 +1083,15 @@ El evento aparece en el tablero de HQ («actividad reciente de agentes», RF-76,
 | `GET /projects/{id}/deliverables` | `deliverables:read` | ✔ | ✔ | ✔ | ✔ | ✔ | — | ✔ | ✔ |
 | `POST /announcements` | `announcements:write` | ✔ | ✔ | ✔ | ✔ | ✔ | — | ✔ | ✔ |
 | `POST /events` | `events:write` | ✔ | ✔ | ✔ | ✔ | ✔ | — | ✔ | ✔ |
+| `POST /organizations/{id}/news` | `news:write` | ✔ | ✔ | ✔ | ✔ | ✔ | — | ✔ | ✔ |
+| `POST /projects/{id}/milestones` | `milestones:write` | ✔ | ✔ | ✔ | ✔ | ✔ | — | ✔ | ✔ |
+| `POST /milestones/{id}/done` | `milestones:write` | ✔ | ✔ | ✔ | ✔ | ✔ | — | ✔ | ✔ |
+| `POST /milestones/{id}/reopen` | `milestones:write` | ✔ | ✔ | ✔ | ✔ | ✔ | — | ✔ | ✔ |
+| `POST /projects/{id}/action-items` | `milestones:write` | ✔ | ✔ | ✔ | ✔ | ✔ | — | ✔ | ✔ |
+| `POST /action-items/{id}/done` | `milestones:write` | ✔ | ✔ | ✔ | ✔ | ✔ | — | ✔ | ✔ |
 | `GET /openapi.json` | *cualquiera* | ✔ | — | ✔ | — | — | — | — | ✔ |
 
-`413` y `415` aplican a las cuatro rutas `POST`. `500` y `503` a todas.
+`413` y `415` aplican a las diez rutas `POST`. `500` y `503` a todas.
 
 ### 4.2 Las tres pruebas que el DoD #6 exige demostrar
 
