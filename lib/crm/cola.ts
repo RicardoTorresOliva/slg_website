@@ -177,6 +177,12 @@ async function entregarUna(fila: Fila, puerto: PuertoDeCrm): Promise<void> {
 
     const agotado = intento >= MAX_INTENTOS;
     const espera = ESCALERA_MINUTOS[Math.min(intento, MAX_INTENTOS - 1)];
+    // Una línea en el log por intento fallido: el error ya viene saneado por
+    // `http.ts`, y sin esto un fallo del CRM solo se ve entrando en HQ.
+    console.warn(
+      `[crm] entrega fallida · lead=${fila.id} intento=${intento}/${MAX_INTENTOS} ` +
+        `${resultado.endpoint} → ${resultado.codigo ?? "sin respuesta"} · ${resultado.error ?? ""}`,
+    );
     await db.execute(sql`
       UPDATE lead_capture
          SET crm_sync_status = ${agotado ? "failed" : "pending"},

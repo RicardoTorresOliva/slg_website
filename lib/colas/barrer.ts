@@ -38,11 +38,21 @@ import * as webhooks from "@/lib/webhooks";
 export type ResultadoDeBarrido = { readonly crm: number; readonly webhooks: number };
 
 /** Una pasada por cada cola, en paralelo. Devuelve cuántas filas procesó cada una. */
-export async function barrerColasUnaVez(): Promise<ResultadoDeBarrido> {
+export async function barrerColasUnaVez(motivo = "manual"): Promise<ResultadoDeBarrido> {
+  const inicio = Date.now();
   const [c, w] = await Promise.all([
-    crm.barrerUnaVez().catch(() => 0),
-    webhooks.barrerUnaVez().catch(() => 0),
+    crm.barrerUnaVez().catch((e: unknown) => {
+      console.warn(`[colas] barrido crm falló (${motivo}): ${String((e as Error)?.message ?? e).slice(0, 300)}`);
+      return 0;
+    }),
+    webhooks.barrerUnaVez().catch((e: unknown) => {
+      console.warn(`[colas] barrido webhooks falló (${motivo}): ${String((e as Error)?.message ?? e).slice(0, 300)}`);
+      return 0;
+    }),
   ]);
+  // Una línea por barrido, siempre: es la única forma de saber desde los logs de
+  // la plataforma que el barrido posterior a la respuesta llegó a ejecutarse.
+  console.info(`[colas] barrido ${motivo}: crm=${c} webhooks=${w} en ${Date.now() - inicio} ms`);
   return { crm: c, webhooks: w };
 }
 
@@ -69,5 +79,5 @@ export function barrerDespues(opciones: { readonly inmediato?: boolean } = {}): 
   const ahora = Date.now();
   if (!opciones.inmediato && ahora - ultimoBarrido < MINIMO_ENTRE_BARRIDOS_MS) return;
   ultimoBarrido = ahora;
-  after(() => barrerColasUnaVez());
+  after(() => barrerColasUnaVez(opciones.inmediato ? "tras-captura" : "oportunista"));
 }

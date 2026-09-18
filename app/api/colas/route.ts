@@ -35,7 +35,7 @@ function autorizada(request: Request): boolean {
 
 async function manejar(request: Request): Promise<Response> {
   if (!autorizada(request)) return new Response(null, { status: 404 });
-  const resultado = await barrerColasUnaVez();
+  const resultado = await barrerColasUnaVez("planificador");
   return Response.json({ ok: true, ...resultado, at: new Date().toISOString() });
 }
 
