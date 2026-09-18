@@ -21,8 +21,9 @@ lista es un error de compilación, no una elección de redacción.
 
 > **Renombre del 2026-09-18** (decisión de Ricardo): el eje `SLG_VoltAi` pasa a **VoltAi by SLG**,
 > `SLG_Holdings` a **Holdings by SLG**, y las tres líneas dejan el prefijo `SLG_` por **VoltAi**
-> (`VoltAi Academy`, `VoltAi Enterprise`, `VoltAi Factory`). Los servicios no cambian. Los nombres
-> antiguos son ahora variantes prohibidas en `lib/content/nomenclature.ts`.
+> (`VoltAi Academy`, `VoltAi Enterprise`, `VoltAi Factory`). **Los servicios no cambian: `SLG_Readiness` y
+> `SLG_Implement` conservan su prefijo** (confirmado por Ricardo el 2026-09-18). Los nombres antiguos de
+> ejes y líneas son ahora variantes prohibidas en `lib/content/nomenclature.ts`.
 
 Se escriben **exactamente así en los dos idiomas**. No se traducen, no se localizan, no se pluralizan
 en español, no se les cambia el guion bajo por espacio, y no se les añade artículo dentro del propio

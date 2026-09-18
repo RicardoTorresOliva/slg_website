@@ -581,36 +581,63 @@ modo JSON: invocarlo con `env -u CLAUDECODE` (ver memoria del agente).
 
 ---
 
-## PRÓXIMA SESIÓN — la nueva arquitectura está en producción
+## PRÓXIMA SESIÓN — dos objetivos: la plantilla para sitios de clientes y la entrada a la intranet
 
-Estado al 2026-09-18, 02:15 (Lima). Producción = `slg-website-56kh73gri` (02:10, completa, Nosotros corregido y About reflejado): menú de cuatro destinos
-con el mapa de portada, Servicios en `/servicios` con Holdings desarrollado y descargas destacadas,
-renombre VoltAi by SLG / Holdings by SLG / VoltAi Academy·Enterprise·Factory, regreso al nivel
-anterior, quince fotos nuevas, fechas del blog repartidas, formularios con apellido, CRM, correo.
-Verificado tras el despliegue: sonda (18 migraciones), portada, Readiness con foto y regreso,
-`/empieza-aqui` → `/`.
+Cierre del 2026-09-18, 02:30 (Lima). **Producción = `slg-website-56kh73gri`, completa y verificada**
+(menú de cuatro destinos, mapa de portada, Servicios, renombres, regreso, fotos, formularios con
+apellido, CRM, correo, Nosotros corregido). `develop` = `origin/develop`, árbol limpio salvo una
+línea de `.gitignore` de sesiones anteriores. Decisión de Ricardo: `SLG_Readiness` y `SLG_Implement`
+se quedan como están.
 
-**Desplegado** (`2d8edd6`): dos erratas de la edición manual
-de Ricardo en Nosotros («con ella tecnología… implementados», «y no está preparado») corregidas y
-About reflejado en inglés. La edición manual entró en el commit `0354c08` sin revisar: lección,
-mirar `git status` de `content/` antes de un `git add -A`.
+### Objetivo A · Convertir este proyecto en la base para montar sitios de clientes en dos días
+Lo que Ricardo quiere: la misma estructura y arquitectura, replicable, sin volver a tardar dos
+semanas. Punto de partida para la sesión (no decidido todavía; decidirlo con él al arrancar):
 
-### Pregunta abierta para Ricardo
-Los servicios `SLG_Readiness` y `SLG_Implement` conservan el prefijo `SLG_` (el renombre del 18
-fue de ejes y líneas; «los servicios no cambian»). Dentro de «VoltAi Enterprise» desentonan. Si
-decide renombrarlos (¿`VoltAi Readiness` / `VoltAi Implement`? ¿`Readiness` / `Implement` a secas?),
-son `name` en `content/services/{es,en}/readiness*.md` e `implement*.md`, la tabla de
-`nomenclature.ts` y `naming-rules.md`; las URL no cambian.
+- **Qué es motor y qué es piel.** Motor (se reutiliza tal cual): `app/` (rutas, armazón, auth, HQ,
+  portal, API v1), `lib/` (contenido, colas, CRM, correo, archivos, auth), `components/`, `drizzle/`,
+  `scripts/ci` (27 frenos) y `scripts/*/test-*`, `AGENTS.md` + `profiles/software-app`. Piel y
+  contenido (cambia por cliente): `content/**` (92 registros), `content/ui/*.json`, `public/marca`,
+  `public/fotos`, `app/tokens.css`, `components/Wordmark.tsx`, `lib/content/seo.ts` (JSON-LD de la
+  organización), y las **tablas escritas a mano que hoy son de SLG**: `lib/content/rutas.ts`
+  (`DESTINOS`, `RAMAS`, `SERVICIOS`, pares), `lib/content/nomenclature.ts`, `knowledge/naming-rules.md`,
+  `components/Fotografia.tsx` (`POR_RUTA`), `scripts/ci/check-armazon.ts` (destinos) y
+  `check-paginas.ts` (bloques de portada). Esas tablas son el trabajo real de la plantilla: pasar de
+  «escritas para SLG» a «derivadas de un `site.config`» o a un archivo de estructura por cliente.
+- **Mecanismo recomendado** (a discutir): repositorio plantilla en GitHub («Use this template») +
+  un archivo de configuración del sitio (marca, idiomas, destinos, ejes/líneas/servicios, dominio de
+  correo, CRM sí/no) + un playbook `crear-sitio` que genere los esqueletos de `content/`, ajuste las
+  tablas y deje la lista de variables de entorno. Infra por cliente: proyecto Supabase (migraciones
+  + bucket con `montar/subir.mjs`), proyecto Vercel con variables en Production/Preview (la receta
+  de `ops/*.env` ya existe), Resend con subdominio de envío, CRM opcional. Todo lo que hoy es
+  «SLG» en los frenos (`PUBLIC_BRAND`, textos prohibidos, nomenclatura) tiene que salir del config.
+- **Primer paso concreto**: inventario mecánico de todo lo que nombra a SLG fuera de `content/`
+  (`git grep -n "SLG\|Softlanding\|softlandingglobal" -- app lib components scripts knowledge`) y
+  decidir para cada línea si es motor con parámetro o piel. Después, el `site.config` y el playbook.
+- Lo que ya está pensado para reutilizar y conviene no rehacer: `docs/blog-editor.md` (contrato del
+  blog), `lib/colas` (colas por acontecimientos, válidas en cualquier plataforma), el sistema de
+  regreso (`Regreso.tsx`, derivado de la tabla), el mapa (`MapaDelSitio.tsx`, derivado de la tabla).
 
-### Decisiones pendientes de Ricardo
-- Easypanel: parar el proyecto `slg_website`; pegar el «Show Error» de los compose de `clientes`.
-- Blog → redes: flujo n8n y `WEBHOOK_*` (§4 de `docs/blog-editor.md`).
-- Fotos: en `phoenix-peex` salen dos sillas azules; `readiness` es una regla lisa. Regenerar si quiere.
-- Copys en `temporal`: 84 registros. `test:descargas`/`test:webhooks`: premisa S3 por rehacer sobre Supabase.
-- Vercel CLI 54 → 59 (`npm i -g vercel@latest`), sin urgencia.
+### Objetivo B · La entrada a la intranet (HQ y portal), que Ricardo no ha podido ver
+Hallazgo de esta noche: **no existe camino para crear el primer administrador en producción.**
+`/acceder` es correo + contraseña (Better Auth); Google y Microsoft no están configurados (sin
+`GOOGLE_*`/`MICROSOFT_*` en Vercel). Las invitaciones (`lib/invitations`) exigen un actor con rol
+de SLG, y el `seed` es de datos de ejemplo para local. La base de producción no tiene usuarios.
+- **Hacer primero**: un aprovisionamiento de arranque, una sola vez y solo si la tabla de usuarios
+  está vacía: o un script `scripts/auth/primer-admin.ts` (rol dueño, crea la organización SLG y un
+  `slg_admin` con contraseña por el API de Better Auth, respetando el `withSystemScope`), o una
+  acción más en `/api/ops` con la misma guarda. Elegir la que deje traza en `audit`.
+- Después: entrar con Ricardo en `/acceder` → `/hq` (tablero, capturas, empresas, usuarios, claves,
+  auditoría) y `/portal` con un usuario de empresa cliente de prueba, y revisar visualmente las dos
+  superficies (DU-13/DU-16 tienen pendiente «revisión visual»). Nota: `SUPERFICIES_EN_REVISION=hq`
+  era el interruptor para enseñar HQ en staging; con los previews de Vercel ya funcionando, el
+  preview de `develop` sirve para eso.
 
-### Los previews de `git push` ya compilan
-Con las variables en Preview, cada push a `develop` produce un preview funcional
-(`vercel ls` los enseña como «Preview · Ready»). Sirve como staging: comprobar ahí antes de
-`vercel deploy --prod --yes`. Regla operativa: **el despliegue de producción va después del
-último commit**, no antes; un `vercel ls --prod` con hora dice qué árbol subió.
+### Orden sugerido para mañana
+1. Intranet (B): es corto, desbloquea a Ricardo y no depende de nada.
+2. Plantilla (A): inventario → decisión de mecanismo con Ricardo → `site.config` → playbook.
+
+### Pendientes menores
+- Easypanel: parar el proyecto `slg_website`; «Show Error» de los compose de `clientes`.
+- Blog → redes: flujo n8n y `WEBHOOK_*`. Copys en `temporal`: 84. Fotos: dos sillas en
+  `phoenix-peex`, regla lisa en `readiness`. `test:descargas`/`test:webhooks` sobre S3 por rehacer.
+- Worktrees `.claude/worktrees/agent-*`: fusionados, se pueden borrar. Vercel CLI 54 → 59.

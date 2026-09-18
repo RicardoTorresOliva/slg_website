@@ -3003,3 +3003,10 @@ cinco sustituidas —Servicios con piezas que unen los dos bloques, VoltAi con f
 libro protagonista, Nosotros en un balcón con horizonte y mar, Enterprise con lápices de puntas de
 colores y el azul al centro— y una por servicio. Todas con el isotipo como sello en la esquina, como
 las anteriores, y mapeadas en `Fotografia.tsx`. Peso: 24–47 KB.
+
+
+**Cierre (2026-09-18, 02:30).** Producción `56kh73gri` completa. Ricardo confirma que `SLG_Readiness` y
+`SLG_Implement` conservan el prefijo. Para la sesión siguiente quedan dos objetivos: convertir el
+proyecto en la base para montar sitios de clientes en dos días (motor vs. piel, `site.config`,
+playbook) y la entrada a la intranet, que hoy no tiene camino para crear el primer administrador en
+producción. Detalle y orden sugerido en `project_memory.md`.
