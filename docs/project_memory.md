@@ -581,50 +581,48 @@ modo JSON: invocarlo con `env -u CLAUDECODE` (ver memoria del agente).
 
 ---
 
-## PRÓXIMA SESIÓN — todo desplegado; queda confirmar la cola del CRM en Vercel
+## PRÓXIMA SESIÓN — todo verificado en producción; queda una decisión de despliegue
 
-Estado al cierre del 2026-09-17, 21:15 (hora de Lima). Los tres encargos:
+Estado al cierre del 2026-09-17, 22:10 (hora de Lima). Producción =
+`slg-website-66ub5svqp`, alias `softlandingglobal.com`.
 
-### 1 · Traducción — HECHA Y EN PRODUCCIÓN
-- 11 `D-0X-*-en.md` en `~/Dev/SLG_Overhauling/docs/` (`_revisar.py`: 22 documentos, 0 reparos),
-  PDF con la plantilla en su idioma, subidos al bucket `downloads` con `montar/subir.mjs`,
-  fichas EN `published` (commit `22aa6ef`).
-- **Verificado en producción**: `/en/downloads/d-10-en` → POST → 303 → `/en/thank-you?url=…`
-  con la URL firmada de `D-10-coo-as-a-service-en.pdf`.
-- Pendiente de Ricardo: la ficha ES `d-03.md` conserva `audience`/`learns` del RETx antiguo.
+### Verificado en producción esta noche
+- `/api/health` → `faltan: []`.
+- Descarga EN de punta a punta (`/en/downloads/d-08-en` → `/en/thank-you` con URL firmada).
+- **CRM**: la captura llega sola. Log `[colas] barrido tras-captura`; contacto
+  `prueba.captura (softlandingglobal.com)` con notas en `crm.softlandingglobal.com`.
+  Las capturas anteriores se van drenando con cada barrido; las que agotaron
+  cinco intentos con el adaptador viejo quedaron en `failed` y se reintentan a
+  mano desde HQ (DU-16) o esperando: no se pierden.
+- SMTP de Resend autenticado. No hay correo de prueba enviado: el flujo solo
+  manda `capture_failed_alert` cuando una entrega agota los intentos.
+- Banderas ES/US junto al logo (escritorio y móvil) y logotipo en el pie.
 
-### 2 · Correo — CONFIGURADO
-- Clave nueva de Resend (`slg-web`, Sending access, `mailweb.softlandingglobal.com`) en
-  `ops/secretos.env`. Autenticación SMTP comprobada con `transporter.verify()` sin enviar nada.
-- `/api/health` → `faltan: []`. Las ocho variables de correo y `OPS_MAIL_TO` viajan en cada
-  despliegue. No hay correo de prueba enviado: la captura no manda correo si el CRM responde
-  bien (solo `capture_failed_alert`); la prueba de bandeja es §4bis.3 con `OPS_TOKEN`.
+### Lo que se aprendió y quedó escrito
+- Dos causas del CRM vacío, ambas resueltas: el barrendero por `setInterval` no
+  corre en Vercel (→ `lib/colas`, §4septies.4) y el adaptador hablaba el contrato
+  de un doble inventado (→ `contact-note.ts` al contrato real, doble estricto).
+- **Comprobar `vercel ls --prod` antes de dar un despliegue por hecho**: un
+  «desplegado» de palabra no lo era, y costó una vuelta entera.
+- `CRON_SECRET` existe en `ops/secretos.env` y viaja en el despliegue:
+  `POST https://softlandingglobal.com/api/colas` con `Authorization: Bearer …`
+  barre las colas a demanda.
 
-### 3 · CRM — CLAVES PUESTAS; falta ver el lead en el CRM
-- Dos claves nuevas creadas en `crm.softlandingglobal.com/ajustes/api` (`slgweb-captura`
-  con contacts:write · activities:write · crm:read; `slgweb-tablero` con crm:read) y en
-  `ops/secretos.env`. Las seis `CRM_*` viajan en el despliegue.
-- **No se pudo comprobar la entrega**: el modo auto del agente bloqueó la lectura de la base
-  y del MCP del CRM al final de la sesión. Comprobar a mano: CRM → Contactos → buscar
-  `prueba.captura@softlandingglobal.com`; debe tener una nota «Captura web · download».
-- **Resuelto en código (misma noche)**: la cola se vacía por acontecimientos
-  (`lib/colas/barrer.ts`): barrido tras cada captura con `after()`, barrido de
-  reintentos con cada visita de `/api/health`, y `/api/colas` + `CRON_SECRET` como
-  gancho de planificador. Ver `deployment.md` §4septies.4.
-- **Segunda causa, también resuelta**: el adaptador `contact_note` hablaba el
-  contrato de un doble inventado; el CRM real exige `firstName`/`lastName`, busca
-  por `?q=` y envuelve en `{ data }` (§4septies.3). Reescrito y verificado desde
-  local contra el CRM real (contacto `prueba.captura` con nota). El doble de
-  `test:crm` ahora rechaza lo mismo que el CRM.
-- Misma sesión: banderas ES/US junto al logo (escritorio y móvil) y logotipo de
-  Softlanding Global en el pie.
+### Decisión pendiente de Ricardo (propuesta del agente)
+Las variables viajan en cada `vercel deploy` desde `ops/*.env`. Es frágil (un
+despliegue a mano sin ellas deja el sitio sin base) y hace que cada `git push`
+genere un preview que falla por falta de `DATABASE_URL`. La alternativa limpia:
+cargar las variables una vez en el proyecto de Vercel (`vercel env add` para
+Production y Preview, desde los mismos archivos) y dejar que `git push` a
+`develop`/`main` despliegue solo. Es una sesión corta; requiere que Ricardo
+ejecute los `vercel env add` (el agente en modo auto no puede tocar secretos).
 
-### Despliegue (Ricardo, desde su terminal; cada vez que cambie una variable)
-El comando de abajo ya está corregido: el filtro de nombres admite dígitos
-(`S3_BUCKET_DOWNLOADS`), que fue la causa del `error_de_firma` del primer intento.
+### Pendientes menores
+- Ficha ES `d-03.md`: `audience`/`learns` del RETx antiguo.
+- Copy de los 76 registros en `temporal`, a la espera de firma.
+
+### Cómo desplegar mientras tanto (Ricardo, desde su terminal)
 
 ```bash
 cd ~/Dev/slg_website && OPS=~/Dev/SLG_Overhauling/ops && ARGS=() && while IFS= read -r l || [ -n "$l" ]; do [[ "$l" =~ ^[A-Z0-9_]+= ]] || continue; k="${l%%=*}"; v="${l#*=}"; v="${v%\"}"; v="${v#\"}"; case "$k" in DATABASE_URL_APP) k=DATABASE_URL;; DATABASE_URL_OWNER) k=DATABASE_URL_MIGRATIONS;; DB_OWNER_PASSWORD|PROJECT_REF|REGION) continue;; esac; [ -n "$v" ] || continue; ARGS+=(--env "$k=$v" --build-env "$k=$v"); done < <(cat "$OPS/supabase-slg-website.env" "$OPS/web.env" "$OPS/secretos.env") && vercel deploy --prod --yes "${ARGS[@]}"
 ```
-
-Producción actual: `slg-website-jtlktoxz4` (21:13), alias `softlandingglobal.com`.

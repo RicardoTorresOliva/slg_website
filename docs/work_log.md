@@ -2829,3 +2829,10 @@ local contra el CRM real: `400 validation_error`. Reescrito `lib/crm/contact-not
 real y **el doble de `test:crm` ahora rechaza lo mismo que el CRM**, para que no vuelva a pasar.
 Verificado contra el CRM real: contacto `prueba.captura` creado con su nota. Lección registrada:
 un doble que acepta lo que le mandan no prueba nada; el contrato se lee del proveedor.
+
+
+**Cierre (22:10).** Desplegado `66ub5svqp`. Captura desde la web → traza `[colas] barrido tras-captura`
+en los logs de Vercel → dos notas nuevas en el contacto del CRM (la captura y una pendiente arrastrada).
+Lección operativa: el despliegue anterior «hecho» no existía en `vercel ls --prod`; desde ahora se
+comprueba antes de probar. Propuesta pendiente: variables en el proyecto de Vercel y despliegue por
+`git push`, en vez de viajar en cada comando.
