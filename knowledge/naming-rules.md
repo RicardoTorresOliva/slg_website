@@ -19,25 +19,30 @@ lista es un error de compilación, no una elección de redacción.
 
 ## 1. Nombres literales e intraducibles
 
+> **Renombre del 2026-09-18** (decisión de Ricardo): el eje `SLG_VoltAi` pasa a **VoltAi by SLG**,
+> `SLG_Holdings` a **Holdings by SLG**, y las tres líneas dejan el prefijo `SLG_` por **VoltAi**
+> (`VoltAi Academy`, `VoltAi Enterprise`, `VoltAi Factory`). Los servicios no cambian. Los nombres
+> antiguos son ahora variantes prohibidas en `lib/content/nomenclature.ts`.
+
 Se escriben **exactamente así en los dos idiomas**. No se traducen, no se localizan, no se pluralizan
 en español, no se les cambia el guion bajo por espacio, y no se les añade artículo dentro del propio
 nombre.
 
 | Nombre | Es |
 |---|---|
-| `SLG_AI` | Rama de servicios de IA |
-| `SLG_Holdings` | La otra rama |
-| `SLG_Academy` | Línea de `SLG_AI` |
-| `SLG_Enterprise` | Línea de `SLG_AI` |
-| `SLG_Factory` | Línea de `SLG_AI` |
-| `SLG_Readiness` | Servicio de `SLG_Enterprise` |
-| `SLG_Implement` | Servicio de `SLG_Enterprise` |
-| `APP_Building` | Servicio de `SLG_Factory` |
-| `AGE_Building` | Servicio de `SLG_Factory` |
-| `CoO as a Service` | Servicio de `SLG_Factory` |
-| `Phoenix PEEx` | Programa de `SLG_Academy` |
-| `Phoenix TEAx` | Programa de `SLG_Academy` |
-| `Phoenix RETx` | Programa de `SLG_Academy` |
+| `VoltAi by SLG` | Rama de servicios de IA |
+| `Holdings by SLG` | La otra rama |
+| `VoltAi Academy` | Línea de `VoltAi by SLG` |
+| `VoltAi Enterprise` | Línea de `VoltAi by SLG` |
+| `VoltAi Factory` | Línea de `VoltAi by SLG` |
+| `SLG_Readiness` | Servicio de `VoltAi Enterprise` |
+| `SLG_Implement` | Servicio de `VoltAi Enterprise` |
+| `APP_Building` | Servicio de `VoltAi Factory` |
+| `AGE_Building` | Servicio de `VoltAi Factory` |
+| `CoO as a Service` | Servicio de `VoltAi Factory` |
+| `Phoenix PEEx` | Programa de `VoltAi Academy` |
+| `Phoenix TEAx` | Programa de `VoltAi Academy` |
+| `Phoenix RETx` | Programa de `VoltAi Academy` |
 
 **Errores típicos que el script debe cazar**: `SLG_Fábrica`, `SLG Factory`, `SLG-Factory`,
 `slg_factory` en texto visible, `Academia SLG`, `CoO como Servicio`, `Phoenix Peex`, `Fénix PEEx`.
@@ -49,14 +54,14 @@ destino de menú: el logo lleva a Home (RF-01).
 
 - **La marca pública del sitio es `SLG Agency`.** Es lo que dice la web, lo que dice el wordmark y lo
   que espera el visitante.
-- **"Softlanding Global" solo en contexto `SLG_Holdings`.** Fuera de ese contexto no aparece como
+- **"Softlanding Global" solo en contexto `Holdings by SLG`.** Fuera de ese contexto no aparece como
   marca de la web.
 - La entidad legal es **SLG Agency Inc.** (Florida), y así se nombra en Nosotros y en las páginas
   legales.
 - El dominio es `softlandingglobal.com` — el dominio no es la marca, y que el dominio diga
   "softlandingglobal" no autoriza a llamar así a la agencia en el copy.
 - **Lema**: *Precision with Purpose*.
-- `[PENDIENTE: confirmar si el tagline "The discipline of going global" se usa en SLG_Holdings]`
+- `[PENDIENTE: confirmar si el tagline "The discipline of going global" se usa en Holdings by SLG]`
 
 ## 3. Regla dura de DAL OS
 
@@ -110,7 +115,7 @@ incidencias de seguridad. En la documentación solo aparecen **nombres** de vari
 nunca valores (RF-129).
 
 **Fuera de alcance con nombre propio**: `Phoenix Academy` (`academy.softlandingglobal.com`) queda
-fuera; solo se enlaza desde `SLG_Academy` mientras siga vivo (§10-7).
+fuera; solo se enlaza desde `VoltAi Academy` mientras siga vivo (§10-7).
 
 ## Enlaces
 

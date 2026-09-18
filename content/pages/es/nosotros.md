@@ -9,23 +9,23 @@ updated: "2026-09-18"
 copy: temporal
 ---
 
-¿Quién te asesora sobre inteligencia artificial la ha implementado en su propia operación? Nosotros sí, y antes que en ninguna otra. **Somos nuestro propio Cliente Cero.** SLG Agency tiene la estructura de una CoO (Company of One): una persona al frente, agentes y sistemas haciendo el trabajo que antes exigía un equipo, y cada proceso escrito antes de automatizarse. Todo lo que desarrollamos para terceros —la doctrina, los programas, la fábrica de aplicaciones y de agentes, el propio servicio de CoO (Company of One)— lo hemos hecho primero para y por nosotros. Esta web, su captura de contactos y su CRM salieron de esa misma fábrica.
+**Somos nuestro propio Cliente Cero.** SLG Agency tiene la estructura de una CoO (Company of One): una persona al frente, agentes y sistemas haciendo el trabajo que antes exigía un equipo, y cada proceso escrito antes de automatizarse. Contamos con soporte experto de terceros, pero el core es CoO. Todo lo que desarrollamos para terceros —la doctrina, los programas, la fábrica de aplicaciones y de agentes, el propio servicio de CoO (Company of One)— lo hemos hecho primero para y por nosotros.
 
-Trabajamos con directorios y comités de dirección que tienen que decidir sobre inteligencia artificial y no quieren hacerlo con la información que da quien vende. Nuestro modelo es informativo: publicamos el criterio, entregamos el documento, y la conversación llega después si la quieres.
+Trabajamos con directores y comités de dirección que tienen que decidir sobre inteligencia artificial y no quieren hacerlo con la información que da quien la vende. Nuestro modelo es transparente: formamos criterio (AI Literacy), entregamos activos accionables específicos para cada caso, y transferimos conocimiento.
 
 ## Por qué existimos
 
-Las instituciones que tradicionalmente formaban criterio ejecutivo —universidades, escuelas de negocio, consultoras de larga data— actualizan sus programas en ciclos de cinco a siete años. La inteligencia artificial cambia cada seis meses. Ese desfase no es temporal, es estructural, y deja al ejecutivo solo frente a decisiones que no puede posponer.
+Las instituciones que tradicionalmente formaban criterio ejecutivo —universidades, escuelas de negocio, consultoras de larga data— actualizan sus programas en ciclos de tres, cinco y siete años. La inteligencia artificial cambia cada tres meses. Ese desfase no es temporal, es estructural, y deja al director solo frente a decisiones que no puede posponer y no está preparado.
 
-No lo resolvemos con un programa enlatado que llega tarde. Lo resolvemos con doctrina escrita, publicada y discutible, y con trabajo hecho sobre el caso concreto de cada empresa. Y lo probamos en casa antes de proponerlo fuera: si una práctica no sostiene nuestra propia operación, no la recomendamos.
+No lo resolvemos con un programa enlatado que llega tarde. Lo resolvemos con doctrina, fundamentos Lindy y garantías reales, y con trabajo hecho sobre el caso concreto de cada empresa, sin imposiciones ni adaptaciones absurdas.
 
 ## Cómo trabajamos, en cuatro reglas que no negociamos
 
 **Sin lock-in.** Nada de lo que construimos te ata a nosotros ni a un proveedor.
 
-**El stack lo eliges tú.** Y si ya tienes uno, trabajamos con el que tienes.
+**Somos agnósticos tecnológicos.** Trabajamos con ella tecnología que ya tienes o implementados la que más convenga.
 
-**Compuertas de aprobación.** Cada fase pasa por una decisión tuya antes de que empiece la siguiente.
+**Compuertas de aprobación.** Cada fase pasa por decisiones complejas antes de que empiece la siguiente.
 
 **La capacidad se queda dentro.** Si al terminar sigues dependiendo de nosotros, el trabajo no está hecho.
 
@@ -35,7 +35,7 @@ No revendemos licencias. No cobramos comisión de ningún proveedor. Y no public
 
 ## Dónde empezar
 
-Si es tu primera visita, [Empieza aquí](/empieza-aqui): el mapa del sitio en una página. Si quieres ver cómo pensamos antes de hablar con nosotros, lee la [Doctrina](/doctrina) o descarga cualquiera de los documentos. Si prefieres la conversación directa, [escríbenos](/contacto).
+Si quieres ver cómo pensamos antes de hablar con nosotros, lee la [Doctrina](/doctrina) o descarga cualquiera de los documentos. Si prefieres la conversación directa, [escríbenos](/contacto).
 
 ## Quiénes somos
 

@@ -3,7 +3,7 @@
  *
  * DU-02 promete cinco cosas que solo se pueden comprobar pidiendo las páginas:
  *
- *   · **criterio 1** — cinco destinos y un botón. Ni uno más. Y ninguna
+ *   · **criterio 1** — cuatro destinos y un botón. Ni uno más. Y ninguna
  *     etiqueta genérica de «Inicio/Home» como destino de menú (RF-01).
  *   · **criterio 2** — desde CADA ruta, el conmutador lleva a **esa misma
  *     página** en el otro idioma, esa página responde 200, y el viaje de
@@ -27,9 +27,12 @@ import path from "node:path";
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 const SERVER = path.join(REPO_ROOT, ".next", "standalone", "server.js");
 
-/** Los cinco destinos de RF-01, con sus rutas canónicas (ui_wireframes §1.1). */
-const DESTINOS_ES = ["/ai", "/holdings", "/doctrina", "/blog", "/nosotros"];
-const DESTINOS_EN = ["/en/ai", "/en/holdings", "/en/doctrine", "/en/blog", "/en/about"];
+/**
+ * Los cuatro destinos del menú desde el 2026-09-18 (decisión de Ricardo):
+ * Empieza aquí (la portada), Servicios, Blog y Nosotros. RF-01 decía cinco.
+ */
+const DESTINOS_ES = ["/", "/servicios", "/blog", "/nosotros"];
+const DESTINOS_EN = ["/en", "/en/services", "/en/blog", "/en/about"];
 
 /** Etiquetas que NO pueden ser destino de menú (RF-01). */
 const PROHIBIDAS = [/^inicio$/i, /^home$/i, /^portada$/i];
@@ -146,7 +149,8 @@ async function main() {
       "/descargas",
       "/doctrina",
       "/nosotros",
-      "/empieza-aqui",
+      "/ai",
+      "/holdings",
       "/gracias",
       "/legal/terminos",
       "/legal/privacidad",
@@ -160,7 +164,8 @@ async function main() {
       "/en/downloads",
       "/en/doctrine",
       "/en/about",
-      "/en/start-here",
+      "/en/ai",
+      "/en/holdings",
       "/en/thank-you",
       "/en/legal/terms",
       "/en/legal/privacy",
@@ -172,7 +177,7 @@ async function main() {
       "/en/ai/factory/app-building",
     ];
 
-    console.log(`\nCriterio 1 — cinco destinos y un botón, en las ${rutas.length} rutas públicas:\n`);
+    console.log(`\nCriterio 1 — cuatro destinos y un botón, en las ${rutas.length} rutas públicas:\n`);
     const portada = await (await fetch(`${base}/`)).text();
     const barraEs = hrefsDeLaBarra(portada);
     for (const d of DESTINOS_ES) {

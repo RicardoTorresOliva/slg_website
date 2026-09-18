@@ -1,7 +1,7 @@
 ---
 type: service
 name: "AI Coaching for Directors"
-branch: SLG_Academy
+branch: VoltAi Academy
 parent: "slg-academy"
 download: "d-05"
 lang: es
@@ -18,7 +18,7 @@ El problema de preguntar dentro de la empresa es que nadie es neutral; el de pre
 
 Acompañamiento individual y continuado para decisiones de inteligencia artificial en el nivel de dirección.
 No es formación ni consultoría de implementación: es un espacio de criterio.
-No cobramos comisión de ningún proveedor, y cuando la conversación llegue a algo que esta casa vende —`SLG_Implement`, `SLG_Factory`— se dice en ese momento y decides con esa información delante.
+No cobramos comisión de ningún proveedor, y cuando la conversación llegue a algo que esta casa vende —`SLG_Implement`, `VoltAi Factory`— se dice en ese momento y decides con esa información delante.
 
 ## Qué incluye
 

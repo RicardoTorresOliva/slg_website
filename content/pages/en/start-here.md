@@ -4,7 +4,7 @@ title: "Start here"
 description: "The site map on one page: what there is, how it is organised and where each point leads."
 lang: en
 pair: "empieza-aqui"
-nav_order: 6
+nav_order: 1
 updated: "2026-09-17"
 copy: temporal
 ---

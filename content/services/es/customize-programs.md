@@ -1,7 +1,7 @@
 ---
 type: service
 name: "Customize Programs"
-branch: SLG_Academy
+branch: VoltAi Academy
 parent: "slg-academy"
 download: "d-04"
 lang: es
@@ -16,7 +16,7 @@ El problema de un programa estándar aquí no es que sea malo: es que la mitad s
 
 ## Qué es
 
-Un programa de `SLG_Academy` **diseñado sobre tu contexto**, no adaptado desde una plantilla.
+Un programa de `VoltAi Academy` **diseñado sobre tu contexto**, no adaptado desde una plantilla.
 Parte de la misma doctrina y los mismos pilares que el resto de la línea; el alcance, la audiencia y la profundidad se deciden contigo antes de empezar.
 
 ## Qué incluye

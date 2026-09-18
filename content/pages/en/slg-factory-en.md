@@ -1,6 +1,6 @@
 ---
 type: page
-title: "SLG_Factory"
+title: "VoltAi Factory"
 description: "Building what is not in the catalogue: applications, agents and operations leadership."
 lang: en
 pair: "slg-factory"
@@ -9,7 +9,7 @@ updated: "2026-09-12"
 copy: temporal
 ---
 
-The `SLG_VoltAi` line that builds.
+The `VoltAi by SLG` line that builds.
 
 `APP_Building` for bespoke applications that reach production, not demo. `AGE_Building` for agents that carry out work with delegated judgement and explicit limits. `CoO as a Service` for the operations leadership a growing company needs before it can bring that person onto the payroll.
 

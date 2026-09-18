@@ -1,7 +1,7 @@
 ---
 type: service
 name: "Phoenix PEEx"
-branch: SLG_Academy
+branch: VoltAi Academy
 parent: "slg-academy-en"
 download: "what-a-director-should-know"
 lang: en
@@ -16,7 +16,7 @@ The problem is not a lack of information: it is that neither is written from the
 
 ## What it is
 
-An `SLG_Academy` programme of the **Phoenix** family, built on The Phoenix Doctrine.
+An `VoltAi Academy` programme of the **Phoenix** family, built on The Phoenix Doctrine.
 It is designed for the executive level: it does not teach you to use tools, it teaches you to decide about them — what to ask, what to demand, what not to buy, and how to tell whether what was implemented works.
 
 ## What it includes

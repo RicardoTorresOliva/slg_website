@@ -4,7 +4,7 @@ title: "What a Director needs to know about AI Implementation"
 description: "What a board member has to be able to ask before approving an artificial-intelligence initiative, and the answers that disqualify it."
 lang: en
 pair: "director-implementacion-ia"
-date: 2026-09-18
+date: 2026-09-17
 tags:
   - AI Literacy
   - Agentic Mindset
@@ -122,11 +122,11 @@ There is one purchase that does deserve to be defended in the boardroom and is a
 
 This document stops at the boardroom door. It does not cover what happens when the decision goes down the line: a decision approved here reaches senior management as a budget and a deadline, without the criteria by which it was taken, and each function completes it with whatever criterion it has to hand. That is a different problem, with its own document.
 
-Nor does it cover the internal architecture of what is bought — agent anatomy, agentic security, context engineering, autonomy levels — which is the business of those who build, not of those who approve. It does not cover the regulatory regime applicable outside the European Union, whose AI Act is the reference used here because it is today the de facto global standard. And it does not cover how a board installs the capacity to sustain these questions without external assistance, which is the work of **Phoenix PEEx**, from `SLG_Academy`.
+Nor does it cover the internal architecture of what is bought — agent anatomy, agentic security, context engineering, autonomy levels — which is the business of those who build, not of those who approve. It does not cover the regulatory regime applicable outside the European Union, whose AI Act is the reference used here because it is today the de facto global standard. And it does not cover how a board installs the capacity to sustain these questions without external assistance, which is the work of **Phoenix PEEx**, from `VoltAi Academy`.
 
 ## Further reading
 
 - [A leadership team that decides by the same criteria](/en/blog/leadership-team-same-criteria)
-- [Phoenix PEEx, from `SLG_Academy`](/en/ai/academy/phoenix-peex)
+- [Phoenix PEEx, from `VoltAi Academy`](/en/ai/academy/phoenix-peex)
 - [The Phoenix Doctrine](/en/doctrine)
 - [Authority does not announce itself](/en/blog/silent-authority)

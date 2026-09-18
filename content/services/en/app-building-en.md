@@ -1,7 +1,7 @@
 ---
 type: service
 name: "APP_Building"
-branch: SLG_Factory
+branch: VoltAi Factory
 parent: "slg-factory-en"
 download: "d-08-en"
 lang: en
@@ -16,7 +16,7 @@ The problem with building it in-house is usually the same: you can start and you
 
 ## What it is
 
-The **digital asset factory** of `SLG_Factory`.
+The **digital asset factory** of `VoltAi Factory`.
 What is delivered is not a demo but a system in production, with its deployment, its tests and its documentation — and with the code in a repository that is yours from day one.
 
 ## What it includes

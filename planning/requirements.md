@@ -60,8 +60,8 @@ en el **texto** de los requisitos, nunca en la columna «Origen».
 
 - **Nada inventado**: donde el brief no da dato, el requisito lo marca `[PENDIENTE: …]` y ese pendiente
   es visible en staging y prohibido en producción (RNF-18).
-- **Nomenclatura literal e intraducible** en los dos idiomas: `SLG_AI`, `SLG_Holdings`, `SLG_Academy`,
-  `SLG_Enterprise`, `SLG_Factory`, `SLG_Readiness`, `SLG_Implement`, `APP_Building`, `AGE_Building`,
+- **Nomenclatura literal e intraducible** en los dos idiomas: `SLG_AI`, `Holdings by SLG`, `VoltAi Academy`,
+  `VoltAi Enterprise`, `VoltAi Factory`, `SLG_Readiness`, `SLG_Implement`, `APP_Building`, `AGE_Building`,
   `CoO as a Service`, `Phoenix PEEx` / `TEAx` / `RETx`. Marca pública: **SLG Agency**.
 - **Productos, no categorías, donde Ricardo ya ha elegido** (AGENTS.md Regla 7: elige quien vive las
   consecuencias). Las dos categorías que quedaban abiertas están cerradas: correo transaccional →
@@ -82,7 +82,7 @@ en el **texto** de los requisitos, nunca en la columna «Origen».
 
 | ID | Requisito | Origen | Etiqueta | Superficie |
 |---|---|---|---|---|
-| RF-01 | La navegación principal expone exactamente cinco destinos (`SLG_AI`, `SLG_Holdings`, Doctrina, Blog, Nosotros) más el botón "Acceder"; ninguna etiqueta genérica tipo "Inicio/Home" es destino de menú; el logo lleva a Home. | A.1 | explícito | pública |
+| RF-01 | La navegación principal expone exactamente cinco destinos (`SLG_AI`, `Holdings by SLG`, Doctrina, Blog, Nosotros) más el botón "Acceder"; ninguna etiqueta genérica tipo "Inicio/Home" es destino de menú; el logo lleva a Home. | A.1 | explícito | pública |
 | RF-02 | Existen las **27 rutas públicas** que enumera A.2 en español bajo la raíz, cada una con su par en inglés bajo `/en`. A.2 tiene **25 filas de tabla, no 25 rutas**: dos filas contienen dos rutas cada una — «Blog (índice, etiquetas)» aporta `/blog` y `/blog/etiqueta/[tag]`, y «Privacidad · Términos» aporta `/legal/privacidad` y `/legal/terminos`. El canal RSS **no** cuenta aquí: lo exige §5.1 vía RF-23, no A.2. | A.2, §5.1 | explícito | pública |
 | RF-03 | El español se sirve en la raíz del dominio y el inglés bajo el prefijo `/en`; ninguna redirección automática por idioma del navegador sobrescribe la ruta pedida. | §0, §7 | explícito | pública |
 | RF-04 | El conmutador de idioma lleva a la **misma** página en el otro idioma (no a la portada) y conserva la posición de navegación. | DoD #2 | explícito | pública |
@@ -90,11 +90,11 @@ en el **texto** de los requisitos, nunca en la columna «Origen».
 | RF-06 | Toda página de servicio renderiza las seis secciones del contrato A.3 en orden fijo: para quién y qué problema · qué es · qué incluye · cómo trabajamos · descarga · siguiente paso. Falta o desorden de una sección = página rechazada. La estructura del **registro de contenido** que alimenta esas secciones se exige aparte, en RF-135. | A.3 | explícito | pública |
 | RF-07 | La sección 5 (descarga) es el **único** llamado a la acción de la página de servicio: no hay segundo CTA, ni agenda embebida, ni formulario de contacto en la misma página. | A.3-5, §10-8 | explícito | pública |
 | RF-08 | La sección 6 enlaza a `/contacto` con texto sin venta; no incrusta calendario ni widget de terceros. | A.3-6 | explícito | pública |
-| RF-09 | Home renderiza en este orden: hero tipográfico de una idea → las dos ramas como dos puertas (`SLG_AI` · `SLG_Holdings`) → tres tarjetas de `SLG_AI` → franja Doctrina con pull-quote y enlace → últimos artículos → descarga destacada → pie. | A.3 | explícito | pública |
+| RF-09 | Home renderiza en este orden: hero tipográfico de una idea → las dos ramas como dos puertas (`SLG_AI` · `Holdings by SLG`) → tres tarjetas de `SLG_AI` → franja Doctrina con pull-quote y enlace → últimos artículos → descarga destacada → pie. | A.3 | explícito | pública |
 | RF-10 | La página Doctrina publica el resumen ejecutivo de The Phoenix Doctrine y los tres pilares de DAL OS, y ofrece "documento completo a solicitud" mediante un formulario que produce una captura de tipo `doctrine-request`. | A.3, §5.1 | explícito | pública |
 | RF-11 | La página Nosotros presenta SLG Agency Inc. (Florida) y a Ricardo Torres Oliva; toda mención de mentorías, premios o cifras queda `[PENDIENTE]` hasta dato verificado y autorizado. | A.3, §1 Constraints | explícito | pública |
 | RF-12 | Existen `/legal/privacidad` y `/legal/terminos` (y sus pares EN) con URL estables y públicas sin autenticación, porque las pantallas de consentimiento OAuth las exigen. | F.2-1 | explícito | pública |
-| RF-13 | La página `SLG_Academy` enlaza a Phoenix Academy (`academy.softlandingglobal.com`) como enlace externo, sin integración, sin sesión compartida y sin contenido embebido. | §10-7, §1 Constraints | explícito | pública |
+| RF-13 | La página `VoltAi Academy` enlaza a Phoenix Academy (`academy.softlandingglobal.com`) como enlace externo, sin integración, sin sesión compartida y sin contenido embebido. | §10-7, §1 Constraints | explícito | pública |
 | RF-14 | La nomenclatura obligatoria aparece literal en ES y EN; un script de CI falla si detecta cualquier variante traducida o alterada de esas etiquetas. | §1 Constraints, B.4 | explícito | transversal |
 | RF-15 | Toda aparición de DAL OS expande la "D" como **Destrucción Creativa**; un script de CI falla ante cualquier otra expansión. | §1 Constraints | explícito | transversal |
 | RF-16 | Ninguna cadena de negocio está codificada en un componente: todo texto visible (público, HQ y portal) se lee de `content/`. Una revisión encuentra cero literales de negocio en `.tsx`. | §1 Constraints, B.4 | explícito | transversal |
@@ -286,7 +286,7 @@ página de servicio se rige además por RF-06.
 
 | ID | Requisito | Origen | Etiqueta | Superficie |
 |---|---|---|---|---|
-| RF-135 | Cada registro `service` lleva `type: service`, `name` (nomenclatura literal), `branch` (`SLG_Academy`, `SLG_Enterprise`, `SLG_Factory`, `SLG_Holdings`), `parent`, `download` (slug del documento), `lang`, `pair` **y las secciones 1–6 del contrato A.3 como bloques con encabezado fijo**. Falta un bloque, sobra uno o se altera un encabezado = registro inválido, y el script de CI lo rechaza antes de que la página llegue a renderizarse. | B.4, A.3 | explícito | transversal |
+| RF-135 | Cada registro `service` lleva `type: service`, `name` (nomenclatura literal), `branch` (`VoltAi Academy`, `VoltAi Enterprise`, `VoltAi Factory`, `Holdings by SLG`), `parent`, `download` (slug del documento), `lang`, `pair` **y las secciones 1–6 del contrato A.3 como bloques con encabezado fijo**. Falta un bloque, sobra uno o se altera un encabezado = registro inválido, y el script de CI lo rechaza antes de que la página llegue a renderizarse. | B.4, A.3 | explícito | transversal |
 | RF-136 | Cada registro `page` lleva `type: page`, `title`, `description`, `lang`, `pair`, `nav_order` y `updated`. | B.4 | explícito | transversal |
 | RF-137 | Cada registro `download` lleva `type: download`, `service`, `title`, `audience`, `learns[]`, `file_key`, `status` (`draft` / `coming-soon` / `published`), `lang` y `pair`. | B.4, A.4 | explícito | transversal |
 | RF-138 | Cada registro `post` lleva `type: post`, `title`, `description`, `lang`, `pair` (slug del par o `null`), `date`, `tags`, `status` (`draft` / `published`), `cover`, `social: { hook, linkedin, x }` y `author`. | A.5, B.4 | explícito | transversal |
@@ -354,7 +354,7 @@ tabla tiene aquí un requisito verificable. Ninguno de estos requisitos construy
 | RNF-35 | Cobertura de pruebas críticas | Existen pruebas automatizadas de: autenticación por los tres métodos, aislamiento por empresa, alcances y límites de la API, y el camino captura → CRM (incluido el caso de CRM caído) | perfil, D7/D8/D9 | explícito |
 | RNF-36 | Conversión E2E verificada | Prueba real end-to-end: descarga → `lead_capture` → contacto + nota en el CRM → correo a `support@`; y caso de error: CRM apagado → captura en cola → PDF entregado → reintento exitoso al volver | D7, DoD #1 | explícito |
 | RNF-37 | Identidad E2E verificada | Login por los tres métodos, invitación aceptada por cada método, vinculación por correo verificado, recuperación de contraseña y cierre de sesión global — todos probados | D8 | explícito |
-| RNF-38 | Comprensión del visitante | Un ejecutivo que llega desde LinkedIn en móvil entiende qué es `SLG_AI` y qué es `SLG_Holdings` en **menos de 3 minutos**, medido con al menos una prueba con persona real registrada en `work_log` | DoD #1 | explícito |
+| RNF-38 | Comprensión del visitante | Un ejecutivo que llega desde LinkedIn en móvil entiende qué es `SLG_AI` y qué es `Holdings by SLG` en **menos de 3 minutos**, medido con al menos una prueba con persona real registrada en `work_log` | DoD #1 | explícito |
 | RNF-39 | Literacy operativa | Ricardo ejecuta sin ayuda técnica tres tareas siguiendo el README (cambiar un texto, añadir una descarga, crear un cliente); cada fallo del README es un defecto | DoD #9, D12 | explícito |
 | RNF-40 | Higiene de claves del CRM | Una clave por integración, alcances mínimos, rotación anual y revocación inmediata ante sospecha de filtración; nunca un login de persona como cuenta de servicio | B.6 | explícito |
 | RNF-41 | Trazabilidad del conocimiento | Cada documento de diseño está enlazado desde `knowledge/index.md`; cada montaje queda en `knowledge/log.md` | D12, §8 | explícito |

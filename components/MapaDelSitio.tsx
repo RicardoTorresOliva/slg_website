@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { loadCollection, loadUiStrings } from "@/lib/content/loader";
-import { DESTINOS, RAMAS, SERVICIOS, rutaEnDeServicio, slugEnDeServicio } from "@/lib/content/rutas";
+import { DESTINOS, DOCTRINA, EJES, RAMAS, SERVICIOS, rutaEnDeServicio, slugEnDeServicio } from "@/lib/content/rutas";
 import { secciones } from "@/lib/content/secciones";
 
 import { Markdown } from "./Markdown";
@@ -37,8 +37,8 @@ type Rama = Nodo & { hijos: Hoja[] };
 
 /** Los slugs de los registros de página, por idioma. */
 const SLUGS = {
-  es: { home: "home", ai: "ai", doctrina: "doctrina", nosotros: "nosotros" },
-  en: { home: "home", ai: "ai", doctrina: "doctrine", nosotros: "about" },
+  es: { servicios: "servicios", ai: "ai", doctrina: "doctrina", nosotros: "nosotros" },
+  en: { servicios: "services", ai: "ai", doctrina: "doctrine", nosotros: "about" },
 } as const;
 
 /** Descargas y Contacto: accesos transversales, con la ruta del pie. */
@@ -68,10 +68,11 @@ export function MapaDelSitio({ slug, lang }: { slug: string; lang: "es" | "en" }
 
   const esta = pagina(slug);
 
+  // La raíz enlaza a Servicios, la casa comercial: el mapa ES esta página.
   const raiz: Nodo = {
     nombre: t["mapa.root"],
-    linea: pagina(S.home)?.data.description ?? "",
-    href: lang === "en" ? "/en" : "/",
+    linea: pagina(S.servicios)?.data.description ?? "",
+    href: DESTINOS[1][lang],
   };
 
   const ramas: Rama[] = RAMAS.map((r) => {
@@ -91,24 +92,24 @@ export function MapaDelSitio({ slug, lang }: { slug: string; lang: "es" | "en" }
     (x) => x.slug === (lang === "en" ? "slg-holdings-en" : "slg-holdings"),
   );
 
-  const destinos: Array<Nodo & { ramas?: Rama[] }> = DESTINOS.map((d) => {
-    switch (d.clave) {
-      case "nav.ai":
-        return { ...nodoDePagina(S.ai, d[lang], t[d.clave]), ramas };
-      case "nav.holdings":
-        return {
-          nombre: holdings?.data.name ?? t[d.clave],
-          linea: holdings ? primeraLinea(holdings.body) : "",
-          href: d[lang],
-        };
-      case "nav.doctrine":
-        return nodoDePagina(S.doctrina, d[lang], t[d.clave]);
-      case "nav.blog":
-        return { nombre: t[d.clave], linea: t["blog.metaDescription"], href: d[lang] };
-      case "nav.about":
-        return nodoDePagina(S.nosotros, d[lang], t[d.clave]);
-    }
-  });
+  /**
+   * Bajo Servicios cuelgan los dos ejes: el de inteligencia artificial con sus
+   * tres líneas y sus servicios, y Holdings. Doctrina, Blog y Nosotros van al
+   * lado. «Empieza aquí» no aparece como nodo: es esta página.
+   */
+  const voltai: Rama = { ...nodoDePagina(S.ai, EJES.voltai[lang], t["nav.services"]), hijos: [] };
+  const holdingsNodo: Rama = {
+    nombre: holdings?.data.name ?? "",
+    linea: holdings ? primeraLinea(holdings.body) : "",
+    href: EJES.holdings[lang],
+    hijos: [],
+  };
+  const destinos: Array<Nodo & { ramas?: Rama[] }> = [
+    { ...nodoDePagina(S.servicios, DESTINOS[1][lang], t["nav.services"]), ramas: [voltai, ...ramas, holdingsNodo] },
+    nodoDePagina(S.doctrina, DOCTRINA[lang], t["footer.doctrine"]),
+    { nombre: t["nav.blog"], linea: t["blog.metaDescription"], href: DESTINOS[2][lang] },
+    nodoDePagina(S.nosotros, DESTINOS[3][lang], t["nav.about"]),
+  ];
 
   const transversales = TRANSVERSALES[lang].map((x) => nodoDePagina(x.slug, x.href, x.slug));
 

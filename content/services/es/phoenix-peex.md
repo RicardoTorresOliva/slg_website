@@ -1,7 +1,7 @@
 ---
 type: service
 name: "Phoenix PEEx"
-branch: SLG_Academy
+branch: VoltAi Academy
 parent: "slg-academy"
 download: "lo-que-un-director-debe-saber"
 lang: es
@@ -16,7 +16,7 @@ El problema no es falta de información: es que ninguna de las dos está escrita
 
 ## Qué es
 
-Un programa de `SLG_Academy` de la familia **Phoenix**, construido sobre The Phoenix Doctrine.
+Un programa de `VoltAi Academy` de la familia **Phoenix**, construido sobre The Phoenix Doctrine.
 Está pensado para el nivel ejecutivo: no enseña a usar herramientas, enseña a decidir sobre ellas — qué preguntar, qué exigir, qué no comprar y cómo saber si lo que se implementó funciona.
 
 ## Qué incluye

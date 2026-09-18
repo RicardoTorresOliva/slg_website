@@ -26,7 +26,7 @@ build**: un frontmatter inválido rompe el build, no se degrada en silencio (RF-
 | Colección | Ruta | Frontmatter mínimo |
 |---|---|---|
 | `page` | `content/pages/<lang>/<slug>.md` | `type: page`, `title`, `description`, `lang`, `pair`, `nav_order`, `updated` |
-| `service` | `content/services/<lang>/<slug>.md` | `type: service`, `name` (nomenclatura literal), `branch` (`SLG_Academy` · `SLG_Enterprise` · `SLG_Factory` · `SLG_Holdings`), `parent`, `download` (slug del documento), `lang`, `pair` |
+| `service` | `content/services/<lang>/<slug>.md` | `type: service`, `name` (nomenclatura literal), `branch` (`VoltAi Academy` · `VoltAi Enterprise` · `VoltAi Factory` · `Holdings by SLG`), `parent`, `download` (slug del documento), `lang`, `pair` |
 | `download` | `content/downloads/<lang>/<slug>.md` | `type: download`, `service`, `title`, `audience`, `learns[]`, `file_key`, `status` (`draft` · `coming-soon` · `published`), `lang`, `pair` |
 | `post` | `content/blog/<lang>/<slug>.md` | `type: post`, `title`, `description`, `lang`, `pair` (slug del par o `null`), `date`, `tags`, `status` (`draft` · `published`), `cover`, `social: { hook, linkedin, x }`, `author` |
 | `doctrine` | `content/doctrine/<lang>/*.md` | `type: doctrine_section`, `order` |

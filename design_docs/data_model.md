@@ -480,7 +480,7 @@ Once valores, uno por página de servicio de A.2 (D-17), escritos **literales e 
 
 `Phoenix PEEx` · `Phoenix TEAx` · `Phoenix RETx` · `Customize Programs` ·
 `AI Coaching for Directors` · `SLG_Readiness` · `SLG_Implement` · `APP_Building` · `AGE_Building` ·
-`CoO as a Service` · `SLG_Holdings`
+`CoO as a Service` · `Holdings by SLG`
 
 `CHECK project_service_literal: service IN (…los once…)`.
 

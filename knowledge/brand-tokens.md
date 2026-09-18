@@ -33,7 +33,7 @@ combinación no aparece aquí, se mide antes de usarla.
 | `--blue-deep` | `#24394D` | H1 y titulares de portada, texto de enlace, títulos de bloque, superficies de HQ y portal | 6,5:1 sobre blanco; 6,0:1 sobre blanco roto |
 | `--cyan` | `#50B4DC` | Highlights, marcador de palabras clave (fondo con texto tinta: 8,3:1), iconos, subrayados, y anillos de foco **solo como capa exterior de un anillo de dos capas** (D-44), cuya capa interior es `--blue-primary` o `--ink` | **2,4:1 sobre blanco → NUNCA como color de texto sobre claro; nunca anillo de foco de una sola capa.** Como texto, solo sobre índigo (5,3:1) |
 | `--blue-tint` | `#78B4DC` | Fondos de tabla y áreas de respiración, a 20–40 % de opacidad | Solo fondo (texto tinta encima: 8,8:1) |
-| `--indigo` | `#282878` | H3, elementos secundarios de marca, `SLG_Academy`, datos destacados en tablas | 12,6:1 sobre blanco |
+| `--indigo` | `#282878` | H3, elementos secundarios de marca, `VoltAi Academy`, datos destacados en tablas | 12,6:1 sobre blanco |
 | `--red` | `#DC141E` | **Detención visual**: el botón del CTA de descarga (texto blanco) y las alertas críticas de HQ | 5,0:1 sobre blanco; blanco sobre rojo 5,0:1 |
 | `--ink` | `#0A0A14` | Texto de cuerpo | 19,7:1 sobre blanco |
 | `--ink-2` | `#5A6470` | Texto secundario, captions, pie | 6,0:1 sobre blanco |
@@ -111,7 +111,7 @@ revisión, y una pieza que las incumpla se rechaza aunque funcione y aunque gust
 - `[PENDIENTE: favicon]`
 - `[PENDIENTE: imagen Open Graph de marca]`
 - `[PENDIENTE: archivos woff2 de Montserrat]`
-- `[PENDIENTE: confirmar si el tagline "The discipline of going global" se usa en SLG_Holdings]`
+- `[PENDIENTE: confirmar si el tagline "The discipline of going global" se usa en Holdings by SLG]`
 
 ## Enlaces
 

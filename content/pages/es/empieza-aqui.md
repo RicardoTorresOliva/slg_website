@@ -4,7 +4,7 @@ title: "Empieza aquí"
 description: "El mapa del sitio en una página: qué hay, cómo se ordena y adónde lleva cada punto."
 lang: es
 pair: "start-here"
-nav_order: 6
+nav_order: 1
 updated: "2026-09-17"
 copy: temporal
 ---

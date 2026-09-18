@@ -1,7 +1,7 @@
 ---
 type: service
 name: Phoenix PEEx
-branch: SLG_Academy
+branch: VoltAi Academy
 parent: slg-academy
 download: algo
 lang: es

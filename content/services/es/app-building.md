@@ -1,7 +1,7 @@
 ---
 type: service
 name: "APP_Building"
-branch: SLG_Factory
+branch: VoltAi Factory
 parent: "slg-factory"
 download: "d-08"
 lang: es
@@ -16,7 +16,7 @@ El problema de construirla en casa suele ser el mismo: se puede empezar y se pue
 
 ## Qué es
 
-La **fábrica de activos digitales** de `SLG_Factory`.
+La **fábrica de activos digitales** de `VoltAi Factory`.
 Lo que se entrega no es una demostración sino un sistema en producción, con su despliegue, sus pruebas y su documentación — y con el código en un repositorio que es tuyo desde el primer día.
 
 ## Qué incluye

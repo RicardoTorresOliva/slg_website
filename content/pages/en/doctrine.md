@@ -13,7 +13,7 @@ Everything we do comes from a written body of doctrine, and it is written before
 
 ## The thesis
 
-The dominant conversation about artificial intelligence is organised around the wrong word: **adaptation**. Learn prompts. Use the tool. Automate tasks. That narrative is reassuring and false: it assumes the structure of work and of value stays stable and that only the tools change.
+The dominant conversation about artificial intelligence is organised around the wrong word: **adaptation**. Learn prompts. Use the tool. Automate tasks. That narrative is reassuring but false: it assumes the structure of work and of value stays stable and that only the tools change.
 
 **The Phoenix Doctrine** holds the opposite. Those who thrive in the age of intelligent machines will not be the ones who adapt, but the ones who set themselves on fire deliberately and are reborn with a different operating system.
 
@@ -25,11 +25,11 @@ And it burns **itself**. That is the distinction that orders everything else: de
 
 ## The three pillars of DAL OS
 
-**Creative Destruction.** What you must stop doing weighs more than what you must start doing. An organisation that only adds ends up sustaining two ways of working and paying for both.
+**Creative Destruction.** What you must stop doing weighs more than what you must start doing. An organisation that only adds ends up sustaining two ways of working and paying for both. It is the idea the 2025 Nobel Prize in Economics recognised in Aghion, Howitt and Mokyr [source: The Nobel Prize in Economic Sciences 2025].
 
-**Antifragility.** Withstanding the blow is not enough: the operation has to come out of it better. It is the opposite of armouring processes, and it is designed.
+**Antifragility.** Withstanding the blow is not enough: the operation has to come out of it better. It is the opposite of armouring processes, and it is designed. The term is Nassim Nicholas Taleb's, *Antifragile* [source: Taleb, Antifragile, 2012].
 
-**AI Literacy.** Judgement, not tool handling. Whoever decides does not need to know how to program a model; they need to know what to ask, what to demand and how to verify what they are promised.
+**AI Literacy.** Judgement, not tool handling. Whoever decides does not need to know how to program a model; they need to know what to ask, what to demand and how to verify what they are promised. In the new world of business there will be the literate and the illiterate in artificial intelligence.
 
 ## What the doctrine affirms
 

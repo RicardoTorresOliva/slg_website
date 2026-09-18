@@ -84,7 +84,7 @@ Cero valores hexadecimales literales fuera del archivo de tokens (criterio 2 de 
 | `--blue-deep` | `#24394D` | Hero y H1, texto de enlace, títulos de bloque, superficies de HQ y portal, cifras grandes | **11,9:1** sobre `--paper` · **11,0:1** sobre `--paper-2` · blanco encima: **11,9:1** *(medido por `npm run check:contraste`, D-66)* |
 | `--cyan` | `#50B4DC` | Highlights, marcador de palabras clave, iconos, subrayados | **2,4:1** sobre `--paper` → **nunca texto sobre claro** · `--ink` encima: **8,3:1** · sobre `--indigo`: **5,3:1** · sobre `--blue-deep`: **5,0:1** *(medido, D-66)* → **sí alcanza AA ahí** |
 | `--blue-tint` | `#78B4DC` | Fondos de tabla y áreas de respiración, al 20–40 % de opacidad | **Solo fondo** (2,2:1 sobre `--paper`, *medido*) · `--ink` encima: **8,8:1** |
-| `--indigo` | `#282878` | H3, elementos secundarios de marca, `SLG_Academy`, datos destacados en tablas | **12,6:1** sobre `--paper` · **11,7:1** sobre `--paper-2` *(medido)* · blanco encima: **12,6:1** *(medido)* |
+| `--indigo` | `#282878` | H3, elementos secundarios de marca, `VoltAi Academy`, datos destacados en tablas | **12,6:1** sobre `--paper` · **11,7:1** sobre `--paper-2` *(medido)* · blanco encima: **12,6:1** *(medido)* |
 | `--red` | `#DC141E` | **Detención visual**: botón del CTA de descarga (texto blanco) y alertas críticas en HQ | **5,0:1** sobre `--paper` · blanco sobre rojo: **5,0:1** |
 | `--ink` | `#0A0A14` | Texto de cuerpo | **19,7:1** sobre `--paper` · **18,2:1** sobre `--paper-2` *(medido)* |
 | `--ink-2` | `#5A6470` | Texto secundario, captions, pie | **6,0:1** sobre `--paper` · **5,6:1** sobre `--paper-2` *(medido)* |
@@ -364,7 +364,7 @@ puesto y el Anexo I-5 sin cerrar.
 | ~~1~~ | ~~Token del anillo de foco: el cyan medido (2,4:1) no cumple RNF-05 ni el gate D2 (§2.3)~~ | ✅ **Cerrado por D-44**: anillo de dos capas, exterior `--cyan`, interior `--blue-primary` o `--ink` (§2.3). Token en FU-02, verificación en FU-10 |
 | 2 | Tamaño e interlineado web de H1, H2 y H3; interlineado de caption y eyebrow (§4.2) | FU-02 + `decision_log` |
 | 3 | Logo SLG Agency (SVG/PNG), favicon, imagen OG y Montserrat en `woff2` (§10) | Anexo I-5 · requisito de go-live |
-| 4 | Confirmación de si el tagline *«The discipline of going global»* se usa en `SLG_Holdings` (Anexo I-5) | FU-01 (copy maestro) |
+| 4 | Confirmación de si el tagline *«The discipline of going global»* se usa en `Holdings by SLG` (Anexo I-5) | FU-01 (copy maestro) |
 
 ---
 

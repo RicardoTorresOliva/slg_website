@@ -1,7 +1,7 @@
 ---
 type: service
 name: "Phoenix RETx"
-branch: SLG_Academy
+branch: VoltAi Academy
 parent: "slg-academy-en"
 download: "d-03-en"
 lang: en
@@ -16,7 +16,7 @@ The problem is not access to the tool: it is that the rigour demanded of a metho
 
 ## What it is
 
-An `SLG_Academy` programme of the **Phoenix** family, built on The Phoenix Doctrine, aimed at research work.
+An `VoltAi Academy` programme of the **Phoenix** family, built on The Phoenix Doctrine, aimed at research work.
 Its unit of work is not a company but the academic project: the question, the sources, the method and what finally gets published.
 
 ## What it includes

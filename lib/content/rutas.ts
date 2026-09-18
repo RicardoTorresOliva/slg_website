@@ -14,14 +14,31 @@
 import { loadCollection } from "./loader.ts";
 import type { Lang } from "./schema.ts";
 
-/** Los cinco destinos del menú (RF-01), con sus rutas canónicas de A.1. */
+/**
+ * Los cuatro destinos del menú, en este orden (decisión de Ricardo, 2026-09-18):
+ * «Empieza aquí» es la portada —el mapa del sitio, poco invasivo—; «Servicios»
+ * es la casa comercial, con los dos ejes y sus líneas; Blog y Nosotros
+ * sostienen la propuesta. Doctrina, Holdings y Descargas se llegan desde
+ * Servicios, el mapa y el pie. RF-01 hablaba de cinco destinos: son cuatro.
+ */
 export const DESTINOS = [
-  { clave: "nav.ai", es: "/ai", en: "/en/ai" },
-  { clave: "nav.holdings", es: "/holdings", en: "/en/holdings" },
-  { clave: "nav.doctrine", es: "/doctrina", en: "/en/doctrine" },
+  { clave: "nav.start", es: "/", en: "/en" },
+  { clave: "nav.services", es: "/servicios", en: "/en/services" },
   { clave: "nav.blog", es: "/blog", en: "/en/blog" },
   { clave: "nav.about", es: "/nosotros", en: "/en/about" },
 ] as const;
+
+/** Los dos ejes, que ya no son destinos del menú: se entra por Servicios. */
+export const EJES = {
+  voltai: { es: "/ai", en: "/en/ai" },
+  holdings: { es: "/holdings", en: "/en/holdings" },
+} as const;
+
+/** Doctrina tampoco es destino del menú: se llega desde Servicios, el mapa y el pie. */
+export const DOCTRINA = { es: "/doctrina", en: "/en/doctrine" } as const;
+
+/** La biblioteca de descargas. */
+export const DESCARGAS = { es: "/descargas", en: "/en/downloads" } as const;
 
 /**
  * El botón de acceso va aparte de los cinco: es un botón, no un destino de
@@ -30,7 +47,7 @@ export const DESTINOS = [
  */
 export const ACCESO = { clave: "nav.signin", es: "/acceder", en: "/en/sign-in" } as const;
 
-/** Las tres líneas de `SLG_VoltAi`, con el slug de su registro de página. */
+/** Las tres líneas de `VoltAi by SLG`, con el slug de su registro de página. */
 export const RAMAS = [
   { slug: "slg-academy", slugEn: "slg-academy-en", es: "/ai/academy", en: "/en/ai/academy" },
   { slug: "slg-enterprise", slugEn: "slg-enterprise-en", es: "/ai/enterprise", en: "/en/ai/enterprise" },
@@ -42,7 +59,7 @@ export type Rama = (typeof RAMAS)[number];
 /**
  * Las once páginas de servicio (A.2), con su ruta anidada bajo la rama.
  *
- * `SLG_Holdings` NO cuelga de `/ai`: es la otra rama de la casa y vive en la
+ * `Holdings by SLG` NO cuelga de `/ai`: es la otra rama de la casa y vive en la
  * raíz. Por eso su ruta se declara aquí y no se compone desde `RAMAS`.
  */
 export const SERVICIOS = [
@@ -85,7 +102,8 @@ export const LEGALES = [
  * enlaces se dividen y los buscadores ven contenido duplicado.
  */
 export const PAGINAS_CON_RUTA_PROPIA = new Set([
-  "home",
+  "servicios",
+  "services",
   "ai",
   ...RAMAS.map((r) => r.slug),
   ...RAMAS.map((r) => r.slugEn),
@@ -108,6 +126,7 @@ export const PAGINAS_CON_RUTA_PROPIA = new Set([
 /** Pares declarados a mano: los que no salen de una colección. */
 const PARES_FIJOS: ReadonlyArray<readonly [string, string]> = [
   ["/", "/en"],
+  ["/servicios", "/en/services"],
   ["/ai", "/en/ai"],
   ["/blog", "/en/blog"],
   ["/doctrina", "/en/doctrine"],
@@ -115,7 +134,6 @@ const PARES_FIJOS: ReadonlyArray<readonly [string, string]> = [
   ["/descargas", "/en/downloads"],
   ["/gracias", "/en/thank-you"],
   ["/contacto", "/en/contact"],
-  ["/empieza-aqui", "/en/start-here"],
   ["/acceder", "/en/sign-in"],
   ["/recuperar", "/en/recover"],
 ];

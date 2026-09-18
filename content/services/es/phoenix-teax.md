@@ -1,7 +1,7 @@
 ---
 type: service
 name: "Phoenix TEAx"
-branch: SLG_Academy
+branch: VoltAi Academy
 parent: "slg-academy"
 download: "d-02"
 lang: es
@@ -16,7 +16,7 @@ El problema no es resistencia al cambio: es que la decisión llega sin los crite
 
 ## Qué es
 
-Un programa de `SLG_Academy` de la familia **Phoenix**, construido sobre The Phoenix Doctrine, dirigido al nivel de alta gerencia.
+Un programa de `VoltAi Academy` de la familia **Phoenix**, construido sobre The Phoenix Doctrine, dirigido al nivel de alta gerencia.
 A diferencia de un programa individual, su unidad de trabajo es **el equipo**: lo que produce no es un conjunto de personas formadas, es una capa gerencial que decide con los mismos criterios.
 
 ## Qué incluye

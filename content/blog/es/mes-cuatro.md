@@ -4,7 +4,7 @@ title: "El mes cuatro"
 description: "El piloto funcionó y el despliegue no avanza. No es falta de presupuesto: es que nadie presupuestó la diferencia."
 lang: es
 pair: null
-date: 2026-09-11
+date: 2026-08-19
 tags:
   - Antifragilidad
   - Hyperflexibility

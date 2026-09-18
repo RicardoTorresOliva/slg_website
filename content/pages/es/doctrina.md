@@ -13,7 +13,7 @@ Todo lo que hacemos sale de un cuerpo doctrinal escrito, y está escrito antes d
 
 ## La tesis
 
-La conversación dominante sobre inteligencia artificial está organizada alrededor de una palabra equivocada: **adaptación**. Aprenda prompts. Use la herramienta. Automatice tareas. Esa narrativa es tranquilizadora y falsa: asume que la estructura del trabajo y del valor permanece estable y que solo cambian las herramientas.
+La conversación dominante sobre inteligencia artificial está organizada alrededor de una palabra equivocada: **adaptación**. Aprenda prompts. Use la herramienta. Automatice tareas. Esa narrativa es tranquilizadora pero falsa: asume que la estructura del trabajo y del valor permanece estable y que solo cambian las herramientas.
 
 **The Phoenix Doctrine** sostiene lo contrario. Quien prospere en la era de las máquinas inteligentes no será quien se adapte, sino quien se incendie voluntariamente y renazca con un sistema operativo distinto.
 
@@ -25,11 +25,11 @@ Y se incendia **a sí mismo**. Ahí está la distinción que ordena todo lo dem�
 
 ## Los tres pilares de DAL OS
 
-**Destrucción Creativa.** Lo que hay que dejar de hacer pesa más que lo que hay que empezar a hacer. Una organización que solo añade termina sosteniendo dos formas de trabajar y pagando las dos.
+**Destrucción Creativa.** Lo que hay que dejar de hacer pesa más que lo que hay que empezar a hacer. Una organización que solo añade termina sosteniendo dos formas de trabajar y pagando las dos. Es la idea que el Premio Nobel de Economía 2025 reconoció en Aghion, Howitt y Mokyr [fuente: The Nobel Prize in Economic Sciences 2025].
 
-**Antifragilidad.** No basta con resistir el golpe: la operación tiene que salir mejor del golpe. Es lo contrario de blindar procesos, y se diseña.
+**Antifragilidad.** No basta con resistir el golpe: la operación tiene que salir mejor del golpe. Es lo contrario de blindar procesos, y se diseña. El término es de Nassim Nicholas Taleb, *Antifragile* [fuente: Taleb, Antifragile, 2012].
 
-**AI Literacy.** Criterio, no manejo de herramientas. Quien decide no necesita saber programar un modelo; necesita saber qué preguntar, qué exigir y cómo verificar lo que le prometen.
+**AI Literacy.** Criterio, para el manejo de herramientas. Quien decide no necesita saber programar un modelo; necesita saber qué preguntar, qué exigir y cómo verificar lo que le prometen. En el nuevo mundo de los negocios habrá letrados e iletrados en inteligencia artificial.
 
 ## Lo que la doctrina afirma
 

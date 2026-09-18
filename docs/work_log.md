@@ -2968,3 +2968,32 @@ comprobaciones, con `/empieza-aqui ⇄ /en/start-here`), `check:paginas` (142), 
 (142,5 KB por ruta nueva, 95 % del presupuesto), `check:seo` (226). Servidor compilado en 3211:
 las dos rutas responden 200, contienen los once servicios con su enlace, el conmutador lleva de
 una a la otra y vuelve, y el sitemap las lista.
+
+---
+
+## Nueva arquitectura de menú, renombre de ejes y líneas, regreso al nivel anterior (2026-09-18)
+
+**Decisiones de Ricardo, ejecutadas.** (1) El menú pasa de cinco destinos a cuatro: **Empieza aquí ·
+Servicios · Blog · Nosotros**. La portada (`/`, `/en`) es ahora el mapa del sitio —entrada poco
+invasiva— y la portada anterior, con los bloques de RF-09, vive en `/servicios` y `/en/services`, la
+casa comercial. `/empieza-aqui` y `/en/start-here` redirigen (308) a la portada. Doctrina, Holdings
+y Descargas se llegan desde Servicios, el mapa y el pie. `check:armazon` y `check:paginas` miden la
+estructura nueva. (2) Renombre: `SLG_VoltAi` → **VoltAi by SLG**, `SLG_Holdings` → **Holdings by
+SLG**, y las líneas `VoltAi Academy / Enterprise / Factory`. Los servicios no cambian. 76 archivos
+del sitio, 19 documentos fuente y los PDF de D-04 a D-11 regenerados y subidos; los nombres viejos
+son variantes prohibidas en `nomenclature.ts`. (3) Servicios desarrolla Holdings by SLG bajo el eje
+de IA (bloque nuevo) y «Descargas destacadas» enseña tres documentos y enlaza la biblioteca, que
+ahora muestra título, audiencia, abstract y enlace al formulario. (4) `components/Regreso.tsx`: una
+línea «← Volver a …» sobre la fotografía en toda página que no sea la portada, con el padre sacado de
+la tabla de rutas (servicio → línea → eje → Servicios; artículo → Blog; documento → Descargas; el
+resto → Empieza aquí). (5) Fechas del blog repartidas entre agosto y septiembre.
+
+**Ediciones manuales de Ricardo en Doctrina** (Nobel 2025, Taleb, letrados e iletrados) conservadas
+con su fuente declarada en la línea, para que `check:copy` las acepte, y reflejadas en inglés.
+
+**`SLG_Overhauling` es ahora un repositorio privado** (`RicardoTorresOliva/SLG_Overhauling`) con
+`ops/` ignorado.
+
+Frenos: content, cadenas, secretos, env, motion, migraciones, compilación, páginas (142), blog (51),
+armazón (60), SEO (226), presupuesto de JS. Pendiente al cierre: las fotografías nuevas (agente en
+curso) y su mapeo en `Fotografia.tsx`.

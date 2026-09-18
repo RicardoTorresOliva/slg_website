@@ -4,7 +4,7 @@ title: "Un equipo directivo que decide con los mismos criterios"
 description: "Por qué cada reunión sobre inteligencia artificial empieza de cero en el comité, y el vocabulario mínimo para decidir en una sola sesión."
 lang: es
 pair: "leadership-team-same-criteria"
-date: 2026-09-18
+date: 2026-09-12
 tags:
   - AI Literacy
   - Agentic Mindset
@@ -126,11 +126,11 @@ Tres notas de uso, que son donde el marco se gana o se pierde.
 
 Este documento supone la decisión ya tomada y el dinero ya aprobado. No cubre la decisión anterior: si conviene invertir, qué exigir en una propuesta, qué preguntar a un proveedor y qué no comprar. Esas preguntas se resuelven en el directorio, con otra audiencia y otra responsabilidad legal, y tienen su propio documento.
 
-Tampoco cubre la arquitectura técnica de lo que se opera — anatomía del agente, seguridad agéntica, ingeniería de contexto — ni la definición detallada de los niveles de autonomía, que es un marco propio que este texto menciona sin desarrollar. No cubre la formación de la fuerza operativa completa, que es un sistema distinto del acuerdo gerencial que aquí se describe. Y no cubre cómo se construye ese acuerdo con el equipo real, sobre sus propias iniciativas y en su propio calendario, que es el trabajo de **Phoenix TEAx**, de `SLG_Academy`.
+Tampoco cubre la arquitectura técnica de lo que se opera — anatomía del agente, seguridad agéntica, ingeniería de contexto — ni la definición detallada de los niveles de autonomía, que es un marco propio que este texto menciona sin desarrollar. No cubre la formación de la fuerza operativa completa, que es un sistema distinto del acuerdo gerencial que aquí se describe. Y no cubre cómo se construye ese acuerdo con el equipo real, sobre sus propias iniciativas y en su propio calendario, que es el trabajo de **Phoenix TEAx**, de `VoltAi Academy`.
 
 ## Para seguir leyendo
 
 - [Lo que un Director debe saber sobre Implementación IA](/blog/director-implementacion-ia)
-- [Phoenix TEAx, de `SLG_Academy`](/ai/academy/phoenix-teax)
+- [Phoenix TEAx, de `VoltAi Academy`](/ai/academy/phoenix-teax)
 - [El mes cuatro](/blog/mes-cuatro)
 - [The Phoenix Doctrine](/doctrina)

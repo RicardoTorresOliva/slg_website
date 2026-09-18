@@ -4,7 +4,7 @@ title: "The researcher's and the student's challenge in the AI era"
 description: "Where a language model contributes to a piece of research and where it contaminates it without a trace, and the minimum log that makes assisted work defensible."
 lang: en
 pair: "investigador-estudiante-era-ia"
-date: 2026-09-18
+date: 2026-08-28
 tags:
   - AI Literacy
 status: published

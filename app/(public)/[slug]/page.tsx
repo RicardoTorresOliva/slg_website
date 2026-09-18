@@ -12,7 +12,7 @@ import { PAGINAS_CON_RUTA_PROPIA } from "@/lib/content/rutas";
  * El contenido se carga y valida en tiempo de build: un frontmatter inválido
  * detiene el despliegue en vez de publicar una página a medias.
  *
- * Las páginas con ruta propia —la portada, `SLG_AI` y las tres líneas— quedan
+ * Las páginas con ruta propia —la portada, `VoltAi by SLG` y las tres líneas— quedan
  * FUERA de esta lista: sus rutas son las del Anexo A.2, anidadas. Servir la
  * misma página en dos URL divide los enlaces y duplica contenido para los
  * buscadores.

@@ -1,7 +1,7 @@
 ---
 type: page
-title: "SLG_VoltAi"
-description: "SLG_VoltAi, el eje de inteligencia artificial de SLG Agency, y sus tres líneas: SLG_Academy, SLG_Enterprise y SLG_Factory."
+title: "VoltAi by SLG"
+description: "VoltAi by SLG, el eje de inteligencia artificial de SLG Agency, y sus tres líneas: VoltAi Academy, VoltAi Enterprise y VoltAi Factory."
 lang: es
 pair: "ai"
 nav_order: 2
@@ -9,15 +9,15 @@ updated: "2026-09-17"
 copy: temporal
 ---
 
-`SLG_VoltAi` es el eje de inteligencia artificial de la agencia, y se despliega en **tres líneas** que responden a tres momentos distintos.
+`VoltAi by SLG` es el eje de inteligencia artificial de la agencia, y se despliega en **tres líneas** que responden a tres momentos distintos.
 
-**`SLG_Academy`** — formar criterio en quien decide. Los programas de la familia Phoenix, los programas a medida y el acompañamiento individual a dirección.
+**`VoltAi Academy`** — formar criterio en quien decide. Los programas de la familia Phoenix, los programas a medida y el acompañamiento individual a dirección.
 
-**`SLG_Enterprise`** — saber dónde estás y llegar a donde decidas. `SLG_Readiness` diagnostica; `SLG_Implement` ejecuta lo que el diagnóstico priorizó.
+**`VoltAi Enterprise`** — saber dónde estás y llegar a donde decidas. `SLG_Readiness` diagnostica; `SLG_Implement` ejecuta lo que el diagnóstico priorizó.
 
-**`SLG_Factory`** — construir lo que no está en el catálogo. Aplicaciones, agentes y dirección de operaciones como servicio.
+**`VoltAi Factory`** — construir lo que no está en el catálogo. Aplicaciones, agentes y dirección de operaciones como servicio.
 
-No hay un orden obligatorio, pero sí uno recomendable: primero criterio, después diagnóstico, y solo entonces construcción. Empezar por el final es la forma más cara de descubrir que no hacía falta.
+No hay un orden obligatorio, pero sí uno recomendable: primero criterio, después diagnóstico/arquitectura, y solo entonces construcción. Empezar por el final (la IA) es la forma más cara de descubrir que no hacía falta.
 
 ## Por qué VoltAi
 

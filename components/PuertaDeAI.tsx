@@ -6,7 +6,7 @@ import { Markdown } from "./Markdown";
 import { HeroTipografico, TarjetaDeServicio } from "./piezas";
 
 /**
- * `SLG_VoltAi` — el overview de la rama, que es **la puerta a las tres líneas**
+ * `VoltAi by SLG` — el overview de la rama, que es **la puerta a las tres líneas**
  * (DU-04, criterio 2).
  *
  * Enlaza a las tres y a ninguna más. La cuenta de servicios de cada tarjeta

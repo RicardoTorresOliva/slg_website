@@ -4,7 +4,7 @@ title: "Lo que un Director debe saber sobre Implementación IA"
 description: "Lo que un director tiene que poder preguntar antes de aprobar una iniciativa de inteligencia artificial, y las respuestas que descalifican."
 lang: es
 pair: "what-a-director-needs-to-know"
-date: 2026-09-18
+date: 2026-09-17
 tags:
   - AI Literacy
   - Agentic Mindset
@@ -122,11 +122,11 @@ Hay una compra que sí merece defenderse en el directorio y casi nunca se propon
 
 Este documento se detiene en la puerta de la sala del directorio. No cubre lo que ocurre cuando la decisión baja: una decisión aprobada aquí llega a la alta gerencia como presupuesto y plazo, sin los criterios con que se tomó, y cada gerencia la completa con el criterio que tiene a mano. Ese es un problema distinto, con su propio documento.
 
-Tampoco cubre la arquitectura interna de lo que se compra — anatomía del agente, seguridad agéntica, ingeniería de contexto, niveles de autonomía — que es materia de quien construye, no de quien aprueba. No cubre el régimen regulatorio aplicable fuera de la Unión Europea, cuyo AI Act es la referencia usada aquí por ser hoy el estándar global de facto. Y no cubre cómo se instala en un directorio la capacidad de sostener estas preguntas sin asistencia externa, que es el trabajo de **Phoenix PEEx**, de `SLG_Academy`.
+Tampoco cubre la arquitectura interna de lo que se compra — anatomía del agente, seguridad agéntica, ingeniería de contexto, niveles de autonomía — que es materia de quien construye, no de quien aprueba. No cubre el régimen regulatorio aplicable fuera de la Unión Europea, cuyo AI Act es la referencia usada aquí por ser hoy el estándar global de facto. Y no cubre cómo se instala en un directorio la capacidad de sostener estas preguntas sin asistencia externa, que es el trabajo de **Phoenix PEEx**, de `VoltAi Academy`.
 
 ## Para seguir leyendo
 
 - [Un equipo directivo que decide con los mismos criterios](/blog/equipo-directivo-mismos-criterios)
-- [Phoenix PEEx, de `SLG_Academy`](/ai/academy/phoenix-peex)
+- [Phoenix PEEx, de `VoltAi Academy`](/ai/academy/phoenix-peex)
 - [El mes cuatro](/blog/mes-cuatro)
 - [La autoridad no se anuncia](/blog/autoridad-silenciosa)

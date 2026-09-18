@@ -4,7 +4,7 @@
  * Conectores en CSS puro, sin JavaScript de cliente y sin nada animado: un
  * mapa que se mueve no se lee de un vistazo. En móvil los nodos se apilan; a
  * partir de 64 rem el primer nivel se abre en árbol con tronco y ramas, y el
- * interior de `SLG_VoltAi` sigue siendo una lista con conector a la izquierda,
+ * interior de `VoltAi by SLG` sigue siendo una lista con conector a la izquierda,
  * porque tres líneas con once servicios no caben en columnas.
  *
  * Cero colores literales: todo sale de tokens.css (FU-02, criterio 2).
@@ -198,7 +198,7 @@
     padding: 2rem 0.5rem 0;
   }
 
-  /* `SLG_VoltAi` lleva dentro tres líneas y once servicios: el doble de ancho. */
+  /* `VoltAi by SLG` lleva dentro tres líneas y once servicios: el doble de ancho. */
   .slg-mapa-hijos > li.slg-mapa-ancho {
     flex: 2 1 0;
   }

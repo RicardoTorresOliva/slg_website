@@ -1,7 +1,7 @@
 ---
 type: service
 name: "Phoenix RETx"
-branch: SLG_Academy
+branch: VoltAi Academy
 parent: "slg-academy"
 download: "d-03"
 lang: es
@@ -16,7 +16,7 @@ El problema no es el acceso a la herramienta: es que el rigor que se le exige a 
 
 ## Qué es
 
-Un programa de `SLG_Academy` de la familia **Phoenix**, construido sobre The Phoenix Doctrine, dirigido al trabajo de investigación.
+Un programa de `VoltAi Academy` de la familia **Phoenix**, construido sobre The Phoenix Doctrine, dirigido al trabajo de investigación.
 Su unidad de trabajo no es una empresa sino el proyecto académico: la pregunta, las fuentes, el método y lo que finalmente se publica.
 
 ## Qué incluye

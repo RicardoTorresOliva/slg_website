@@ -24,7 +24,7 @@ tienes que haber pasado. Es el único que se lee "por si acaso".
 |---|---|---|
 | [method-sdd-icm](method-sdd-icm.md) | Las cuatro compuertas vinculantes: Planning Gate, copy (FU-01), prototipo (C.5) y revisión por milestone; qué se rechaza por saltárselas | **Siempre, antes de empezar cualquier unidad.** Y otra vez al cerrar un milestone |
 | [naming-rules](naming-rules.md) | Nombres literales e intraducibles, `SLG Agency` vs "Softlanding Global", la "D" de DAL OS, tono y notación de origen | Cada vez que escribas **texto visible** o el nombre de una ruta, colección o etiqueta |
-| [offer-structure](offer-structure.md) | Las dos ramas, las tres líneas de `SLG_AI`, las 11 páginas con documento y el contrato de seis secciones | Al construir navegación, cualquier página pública o el mapa de rutas |
+| [offer-structure](offer-structure.md) | Las dos ramas, las tres líneas de `VoltAi by SLG`, las 11 páginas con documento y el contrato de seis secciones | Al construir navegación, cualquier página pública o el mapa de rutas |
 | [content-schema](content-schema.md) | Las seis colecciones de `content/` con su ruta y frontmatter mínimo, y las cuatro reglas del script de CI | Al crear o validar cualquier registro de contenido; al escribir el script de CI |
 | [brand-tokens](brand-tokens.md) | Tokens de color con contraste medido, tipografía, materiales y las **prohibiciones duras** del kit | Al pintar cualquier interfaz, prototipar un componente o revisar el gate de marca |
 | [crm-integration](crm-integration.md) | El adaptador de dos modos web → CRM, la cola de reintentos y la lectura del tablero | Al construir el formulario de descarga, la entrega al CRM o el tablero de HQ |

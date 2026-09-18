@@ -4,7 +4,7 @@ title: "A leadership team that decides by the same criteria"
 description: "Why every meeting about artificial intelligence starts again from zero in the committee, and the minimum vocabulary to decide in a single session."
 lang: en
 pair: "equipo-directivo-mismos-criterios"
-date: 2026-09-18
+date: 2026-09-12
 tags:
   - AI Literacy
   - Agentic Mindset
@@ -126,11 +126,11 @@ Three notes on use, which are where the framework is won or lost.
 
 This document assumes the decision already taken and the money already approved. It does not cover the prior decision: whether to invest at all, what to require in a proposal, what to ask a vendor and what not to buy. Those questions are resolved at the board, with another audience and another legal responsibility, and they have their own document.
 
-Nor does it cover the technical architecture of what is operated — agent anatomy, agentic security, context engineering — or the detailed definition of autonomy levels, which is a framework of its own that this text mentions without developing. It does not cover training the full operating workforce, which is a different system from the management agreement described here. And it does not cover how that agreement is built with the real team, on its own initiatives and on its own calendar, which is the work of **Phoenix TEAx**, from `SLG_Academy`.
+Nor does it cover the technical architecture of what is operated — agent anatomy, agentic security, context engineering — or the detailed definition of autonomy levels, which is a framework of its own that this text mentions without developing. It does not cover training the full operating workforce, which is a different system from the management agreement described here. And it does not cover how that agreement is built with the real team, on its own initiatives and on its own calendar, which is the work of **Phoenix TEAx**, from `VoltAi Academy`.
 
 ## Further reading
 
 - [What a Director needs to know about AI Implementation](/en/blog/what-a-director-needs-to-know)
-- [Phoenix TEAx, from `SLG_Academy`](/en/ai/academy/phoenix-teax)
+- [Phoenix TEAx, from `VoltAi Academy`](/en/ai/academy/phoenix-teax)
 - [The Phoenix Doctrine](/en/doctrine)
 - [Authority does not announce itself](/en/blog/silent-authority)

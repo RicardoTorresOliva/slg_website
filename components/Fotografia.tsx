@@ -16,8 +16,9 @@
  * y el gate D1 mide LCP. Así pesan 352 KB en total.
  */
 const POR_RUTA: Record<string, string> = {
-  "/": "home",
-  "/en": "home",
+  // La portada es el mapa y va sin fotografía; la escena de la mesa es de Servicios.
+  "/servicios": "home",
+  "/en/services": "home",
   "/ai": "ai",
   "/en/ai": "ai",
   "/ai/academy": "academy",

@@ -8,6 +8,7 @@ import { Analitica } from "./Analitica";
 import { BarraDeNavegacion } from "./BarraDeNavegacion";
 import { DatosEstructurados } from "./DatosEstructurados";
 import { Fotografia } from "./Fotografia";
+import { Regreso } from "./Regreso";
 
 /**
  * El marco por el que se navega todo lo demás (DU-02).
@@ -69,6 +70,9 @@ export function ArmazonPublico({
       />
 
       <main id="contenido">
+        {/* El regreso al nivel inmediato anterior, antes de la fotografía: es lo
+            primero que busca quien bajó un nivel de más (decisión del 2026-09-18). */}
+        <Regreso ruta={ruta} lang={idioma} t={t} />
         <Fotografia ruta={ruta} />
         {children}
       </main>
@@ -95,7 +99,7 @@ function PiePublico({ idioma, t }: { idioma: "es" | "en"; t: Record<string, stri
   const enlaces =
     idioma === "en"
       ? [
-          { href: "/en/start-here", etiqueta: t["footer.startHere"] },
+          { href: "/en", etiqueta: t["footer.startHere"] },
           { href: "/en/doctrine", etiqueta: t["footer.doctrine"] },
           { href: "/en/downloads", etiqueta: t["footer.downloads"] },
           { href: "/en/contact", etiqueta: t["footer.contact"] },
@@ -103,7 +107,7 @@ function PiePublico({ idioma, t }: { idioma: "es" | "en"; t: Record<string, stri
           { href: "/en/legal/privacy", etiqueta: t["footer.legalPrivacy"] },
         ]
       : [
-          { href: "/empieza-aqui", etiqueta: t["footer.startHere"] },
+          { href: "/", etiqueta: t["footer.startHere"] },
           { href: "/doctrina", etiqueta: t["footer.doctrine"] },
           { href: "/descargas", etiqueta: t["footer.downloads"] },
           { href: "/contacto", etiqueta: t["footer.contact"] },

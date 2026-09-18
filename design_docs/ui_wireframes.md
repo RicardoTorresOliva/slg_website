@@ -76,7 +76,7 @@ Cinco destinos y un botón. Ni uno más (RF-01).
 | Orden | ES | EN | Ruta ES | Ruta EN |
 |---|---|---|---|---|
 | 1 | `SLG_AI` | `SLG_AI` | `/ai` | `/en/ai` |
-| 2 | `SLG_Holdings` | `SLG_Holdings` | `/holdings` | `/en/holdings` |
+| 2 | `Holdings by SLG` | `Holdings by SLG` | `/holdings` | `/en/holdings` |
 | 3 | Doctrina | Doctrine | `/doctrina` | `/en/doctrine` |
 | 4 | Blog | Blog | `/blog` | `/en/blog` |
 | 5 | Nosotros | About | `/nosotros` | `/en/about` |
@@ -86,7 +86,7 @@ Cinco destinos y un botón. Ni uno más (RF-01).
 
 - **Etiquetas específicas. Nunca "Inicio" / "Home" como destino de menú** (A.1, RF-01). El acceso a
   la portada es **el logo**, siempre a la izquierda, siempre enlazado a `/` (o `/en` en inglés).
-- La nomenclatura **no se traduce**: `SLG_AI` y `SLG_Holdings` se escriben literales en los dos
+- La nomenclatura **no se traduce**: `SLG_AI` y `Holdings by SLG` se escriben literales en los dos
   idiomas (RF-14). Solo Doctrina→Doctrine y Nosotros→About cambian.
 - **Sin menús desplegables.** La profundidad de la oferta se navega desde el overview `/ai`, que es
   la pantalla que explica las tres ramas. Un desplegable convertiría cinco destinos en dieciséis y
@@ -101,7 +101,7 @@ Cinco destinos y un botón. Ni uno más (RF-01).
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────┐
 │  ┌───────────┐                                                                   │
-│  │SLG Agency │   SLG_AI   SLG_Holdings   Doctrina   Blog   Nosotros   ES|EN  [Acceder] │
+│  │SLG Agency │   SLG_AI   Holdings by SLG   Doctrina   Blog   Nosotros   ES|EN  [Acceder] │
 │  └───────────┘                                                                   │
 │    logo → /                                        ^ ruta activa subrayada       │
 └──────────────────────────────────────────────────────────────────────────────────┘
@@ -116,7 +116,7 @@ Cinco destinos y un botón. Ni uno más (RF-01).
 │ │SLG Agency │                [ ≡ ] │        │              ▁▁▁▁▁                 │
 │ └───────────┘                      │  ───▶  │                                    │
 └────────────────────────────────────┘        │   SLG_AI                           │
-                                              │   SLG_Holdings                     │
+                                              │   Holdings by SLG                     │
   [ ≡ ] abre el sheet; el sheet se cierra     │   Doctrina                         │
   arrastrando hacia abajo, tocando el         │   Blog                             │
   scrim o con Esc. Foco atrapado dentro       │   Nosotros                         │
@@ -148,20 +148,20 @@ slugs difieren (`/descargas/x` ↔ `/en/downloads/x`).
 ```
 /                                        Home
 ├── ai                                   SLG_AI (overview de las tres ramas)
-│   ├── academy                          SLG_Academy (overview)  → enlace externo a Phoenix Academy
+│   ├── academy                          VoltAi Academy (overview)  → enlace externo a Phoenix Academy
 │   │   ├── phoenix-peex                 Phoenix PEEx        · descarga D-01
 │   │   ├── phoenix-teax                 Phoenix TEAx        · descarga D-02
 │   │   ├── phoenix-retx                 Phoenix RETx        · descarga D-03
 │   │   ├── customize-programs           Customize Programs  · descarga D-04
 │   │   └── ai-coaching                  AI Coaching for Directors · descarga D-05
-│   ├── enterprise                       SLG_Enterprise (overview)
+│   ├── enterprise                       VoltAi Enterprise (overview)
 │   │   ├── readiness                    SLG_Readiness       · descarga D-06
 │   │   └── implement                    SLG_Implement       · descarga D-07
-│   └── factory                          SLG_Factory (overview)
+│   └── factory                          VoltAi Factory (overview)
 │       ├── app-building                 APP_Building        · descarga D-08
 │       ├── age-building                 AGE_Building        · descarga D-09
 │       └── coo-as-a-service             CoO as a Service    · descarga D-10
-├── holdings                             SLG_Holdings        · descarga D-11
+├── holdings                             Holdings by SLG        · descarga D-11
 ├── doctrina                             Doctrina (+ solicitud del documento completo = captura)
 ├── nosotros                             Nosotros
 ├── blog                                 Índice de artículos
@@ -256,14 +256,14 @@ Siete bloques, en este orden. Alterarlo es rechazar la página.
 ├──────────────────────────────────────────────────────────────────────────────┤
 │   2 · DOS PUERTAS  (las dos ramas del negocio)                               │
 │   ┌───────────────────────────────┐   ┌───────────────────────────────┐      │
-│   │ SLG_AI                        │   │ SLG_Holdings                  │      │
+│   │ SLG_AI                        │   │ Holdings by SLG                  │      │
 │   │ una frase de definición       │   │ una frase de definición       │      │
 │   │ → /ai                         │   │ → /holdings                   │      │
 │   └───────────────────────────────┘   └───────────────────────────────┘      │
 ├──────────────────────────────────────────────────────────────────────────────┤
 │   3 · TRES TARJETAS DE SLG_AI                                                │
 │   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                       │
-│   │ SLG_Academy  │  │ SLG_Enterprise│ │ SLG_Factory  │                       │
+│   │ VoltAi Academy  │  │ VoltAi Enterprise│ │ VoltAi Factory  │                       │
 │   │ una frase    │  │ una frase    │  │ una frase    │                       │
 │   │ → /ai/academy│  │ → /ai/enterp.│  │ → /ai/factory│                       │
 │   └──────────────┘  └──────────────┘  └──────────────┘                       │
@@ -299,7 +299,7 @@ Siete bloques, en este orden. Alterarlo es rechazar la página.
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
 │  SLG Agency                                                                  │
-│  SLG_AI · SLG_Holdings · Doctrina · Blog · Nosotros                          │
+│  SLG_AI · Holdings by SLG · Doctrina · Blog · Nosotros                          │
 │  Descargas · Contacto                                                        │
 │  Privacidad · Términos                                          ES | EN  RSS │
 │  © SLG Agency Inc.  ·  [PENDIENTE: datos de contacto y jurisdicción — FU-01] │
@@ -361,7 +361,7 @@ rechazada.**
   overview de la rama. Sustituye a una miga de pan completa: en móvil una miga de tres niveles ocupa
   una línea entera para decir lo que el eyebrow dice en una palabra.
 - Estado **"disponible próximamente"** de la sección ⑤: §3.5.
-- Variante `SLG_Holdings`: misma plantilla, con la particularidad de que la sección ③ lista las tres
+- Variante `Holdings by SLG`: misma plantilla, con la particularidad de que la sección ③ lista las tres
   líneas de negocio. `[PENDIENTE: si el tagline "The discipline of going global" se usa aquí —
   Anexo I-5]`.
 
@@ -375,7 +375,7 @@ Estas cuatro **no** son páginas de servicio: no tienen descarga y por tanto no 
 │  una idea: qué resuelve la rama                                              │
 │                                                                              │
 │  ┌────────────────┐ ┌────────────────┐ ┌────────────────┐                    │
-│  │ SLG_Academy    │ │ SLG_Enterprise │ │ SLG_Factory    │   ← hijos directos │
+│  │ VoltAi Academy    │ │ VoltAi Enterprise │ │ VoltAi Factory    │   ← hijos directos │
 │  │ una frase      │ │ una frase      │ │ una frase      │                    │
 │  └────────────────┘ └────────────────┘ └────────────────┘                    │
 │                                                                              │

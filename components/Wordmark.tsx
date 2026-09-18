@@ -20,7 +20,7 @@
  *   · Nunca deformado: sin `scale` no uniforme, sin `transform` de anchura.
  *
  * Nota: la marca pública es **SLG Agency** (§10-4). «Softlanding Global» solo
- * se usa en el contexto de `SLG_Holdings`.
+ * se usa en el contexto de `Holdings by SLG`.
  */
 
 type WordmarkProps = {

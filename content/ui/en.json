@@ -1,6 +1,6 @@
 {
-  "nav.ai": "SLG_VoltAi",
-  "nav.holdings": "SLG_Holdings",
+  "nav.ai": "VoltAi by SLG",
+  "nav.holdings": "Holdings by SLG",
   "nav.doctrine": "Doctrine",
   "nav.blog": "Blog",
   "nav.about": "About",
@@ -394,5 +394,13 @@
   "deliverable.type.material": "Material",
   "nav.langName": "English",
   "nav.langCurrent": "current language",
-  "footer.logoAlt": "Softlanding Global — The discipline of going global"
+  "footer.logoAlt": "Softlanding Global — The discipline of going global",
+  "nav.start": "Start here",
+  "nav.services": "Services",
+  "home.allDownloads": "See all downloads",
+  "home.seeHoldings": "Learn about Holdings by SLG",
+  "home.download": "Download",
+  "downloads.get": "Go to the document",
+  "nav.backTo": "← Back to",
+  "nav.backAria": "Back to the previous level"
 }

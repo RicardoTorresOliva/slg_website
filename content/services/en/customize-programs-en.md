@@ -1,7 +1,7 @@
 ---
 type: service
 name: "Customize Programs"
-branch: SLG_Academy
+branch: VoltAi Academy
 parent: "slg-academy-en"
 download: "d-04-en"
 lang: en
@@ -16,7 +16,7 @@ The problem with a standard programme here is not that it is bad: it is that hal
 
 ## What it is
 
-An `SLG_Academy` programme **designed on your context**, not adapted from a template.
+An `VoltAi Academy` programme **designed on your context**, not adapted from a template.
 It starts from the same doctrine and the same pillars as the rest of the line; scope, audience and depth are decided with you before it begins.
 
 ## What it includes

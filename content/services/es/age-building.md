@@ -1,7 +1,7 @@
 ---
 type: service
 name: "AGE_Building"
-branch: SLG_Factory
+branch: VoltAi Factory
 parent: "slg-factory"
 download: "d-09"
 lang: es
@@ -16,7 +16,7 @@ El problema de automatizar eso con reglas es que la primera excepción rompe el 
 
 ## Qué es
 
-La **fábrica de agentes de inteligencia artificial** de `SLG_Factory`: sistemas que ejecutan trabajo con criterio delegado, dentro de límites que tú defines.
+La **fábrica de agentes de inteligencia artificial** de `VoltAi Factory`: sistemas que ejecutan trabajo con criterio delegado, dentro de límites que tú defines.
 Se construyen igual que una aplicación —con especificación, compuertas y pruebas— y además con algo que una aplicación no necesita: límites explícitos de lo que el agente **no** puede hacer solo.
 
 ## Qué incluye

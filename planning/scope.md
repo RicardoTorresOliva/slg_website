@@ -43,10 +43,10 @@ en `page` y `service`, verificada por script — gate D4):
 |---|---|---|
 | Portada | `/` | — |
 | Overviews de rama | `/ai`, `/ai/academy`, `/ai/enterprise`, `/ai/factory` | — |
-| `SLG_Academy` | `phoenix-peex`, `phoenix-teax`, `phoenix-retx`, `customize-programs`, `ai-coaching` | D-01…D-05 |
-| `SLG_Enterprise` | `readiness`, `implement` | D-06, D-07 |
-| `SLG_Factory` | `app-building`, `age-building`, `coo-as-a-service` | D-08, D-09, D-10 |
-| `SLG_Holdings` | `/holdings` | D-11 |
+| `VoltAi Academy` | `phoenix-peex`, `phoenix-teax`, `phoenix-retx`, `customize-programs`, `ai-coaching` | D-01…D-05 |
+| `VoltAi Enterprise` | `readiness`, `implement` | D-06, D-07 |
+| `VoltAi Factory` | `app-building`, `age-building`, `coo-as-a-service` | D-08, D-09, D-10 |
+| `Holdings by SLG` | `/holdings` | D-11 |
 | Autoridad | `/doctrina`, `/nosotros` | — (Doctrina: solicitud del documento completo = captura) |
 | Blog | índice, `/blog/etiqueta/[tag]`, `/blog/[slug]`, RSS | — |
 | Conversión | `/descargas`, `/descargas/[slug]`, `/gracias`, `/contacto` | — |
@@ -188,7 +188,7 @@ camino, no una excepción en mitad de un milestone.
 | **Editor de contenido en HQ (CMS)** | D-11: el blog es Markdown en el repo. «No es un CMS de terceros» (§2). Publicar = push. | **v1.1**, sobre el esquema de contenido que la v1 ya deja montado (está en «Previsto»). |
 | **Buscador** | No aparece en §5.1 ni sirve a ninguna prueba del DoD. Con 27 rutas por idioma, la navegación es el buscador. | **spec-delta vía `/iterate`**: se construiría sobre `content/`, sin tocar el modelo de datos. |
 | **Newsletter** | El CTA de la v1 es la descarga, no la suscripción. Exigiría consentimiento propio y una categoría de correo **masivo**, distinta de la transaccional de D-15. | **v1.1** con decisión de categoría y de consentimiento. |
-| **Migración o integración de Phoenix Academy** | Decisión §10-7: fuera de alcance, solo enlace mientras siga vivo. | **Decisión de negocio previa**, no spec-delta técnico. Hasta entonces, enlace desde `SLG_Academy`. |
+| **Migración o integración de Phoenix Academy** | Decisión §10-7: fuera de alcance, solo enlace mientras siga vivo. | **Decisión de negocio previa**, no spec-delta técnico. Hasta entonces, enlace desde `VoltAi Academy`. |
 | **Sincronización automática vault→repo** | La regla de oro es que Ricardo edite un `.md` en el repo (B.4). Una sincronización automática crea una segunda fuente de verdad. | **spec-delta vía `/iterate`** como herramienta externa al activo; nunca como acoplamiento dentro de la app. |
 | **Módulo de grafo en vivo** | No sirve a ninguna prueba del DoD ni al modelo comercial. | **v1.1+**. |
 | **Página Advisory** | No está en la navegación A.1 ni en el mapa A.2; no tiene copy aprobado ni descarga asociada. | **spec-delta vía `/iterate`**: es un registro `page` más, con paridad ES/EN y copy aprobado en compuerta. |
@@ -246,7 +246,7 @@ expectativa de respuesta que el modelo «no vendemos, ayudamos a comprar» no so
 
 **(e) Phoenix Academy queda fuera: solo enlace.**
 `academy.softlandingglobal.com` no se migra, no se integra, no se consulta por API y **su registro
-DNS no se toca**. La página `SLG_Academy` enlaza a él mientras siga vivo. Razón: decisión §10-7.
+DNS no se toca**. La página `VoltAi Academy` enlaza a él mientras siga vivo. Razón: decisión §10-7.
 
 **(f) El motor del reporte `SLG_Readiness` no se construye: solo se aloja el HTML resultante.**
 El reporte llega como entregable de tipo `html`, se sirve en visor aislado y se versiona. La web no

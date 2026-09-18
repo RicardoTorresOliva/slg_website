@@ -22,10 +22,10 @@ export type CollectionName =
 
 /** Ramas de la oferta a las que puede pertenecer un servicio (A.1, A.2). */
 export const BRANCHES = [
-  "SLG_Academy",
-  "SLG_Enterprise",
-  "SLG_Factory",
-  "SLG_Holdings",
+  "VoltAi Academy",
+  "VoltAi Enterprise",
+  "VoltAi Factory",
+  "Holdings by SLG",
 ] as const;
 
 export const DOWNLOAD_STATUS = ["draft", "coming-soon", "published"] as const;

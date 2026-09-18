@@ -1,6 +1,6 @@
 ---
 type: page
-title: "SLG_Enterprise"
+title: "VoltAi Enterprise"
 description: "Diagnóstico e implementación: SLG_Readiness y SLG_Implement."
 lang: es
 pair: "slg-enterprise-en"
@@ -9,7 +9,7 @@ updated: "2026-09-12"
 copy: temporal
 ---
 
-La línea de `SLG_VoltAi` que responde a dos preguntas en este orden: **dónde estamos** y **cómo llegamos**.
+La línea de `VoltAi by SLG` que responde a dos preguntas en este orden: **dónde estamos** y **cómo llegamos**.
 
 `SLG_Readiness` es el diagnóstico: un análisis exhaustivo de preparación, en once dimensiones, con evidencia por dimensión y un orden de prioridad razonado.
 

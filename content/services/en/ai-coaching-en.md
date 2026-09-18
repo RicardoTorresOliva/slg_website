@@ -1,7 +1,7 @@
 ---
 type: service
 name: "AI Coaching for Directors"
-branch: SLG_Academy
+branch: VoltAi Academy
 parent: "slg-academy-en"
 download: "d-05-en"
 lang: en
@@ -18,7 +18,7 @@ The problem with asking inside the company is that nobody is neutral; the proble
 
 Individual, continuing support for artificial intelligence decisions at board and executive level.
 It is neither training nor implementation consulting: it is a space for judgement.
-We take no commission from any vendor, and when the conversation reaches something this firm sells — `SLG_Implement`, `SLG_Factory` — that is said at the time, and you decide with that on the table.
+We take no commission from any vendor, and when the conversation reaches something this firm sells — `SLG_Implement`, `VoltAi Factory` — that is said at the time, and you decide with that on the table.
 
 ## What it includes
 

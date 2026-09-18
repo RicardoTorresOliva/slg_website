@@ -1,6 +1,6 @@
 ---
 type: page
-title: "SLG_Academy"
+title: "VoltAi Academy"
 description: "Building judgement in the people who decide: Phoenix programmes, bespoke programmes and individual support."
 lang: en
 pair: "slg-academy"
@@ -9,7 +9,7 @@ updated: "2026-09-12"
 copy: temporal
 ---
 
-The `SLG_VoltAi` line that works on the people who decide.
+The `VoltAi by SLG` line that works on the people who decide.
 
 It does not teach you to use tools. It teaches you to decide about them: what to ask a vendor, what to demand in a proposal, what not to buy, and how to tell whether what was implemented is working.
 

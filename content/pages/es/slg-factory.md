@@ -1,6 +1,6 @@
 ---
 type: page
-title: "SLG_Factory"
+title: "VoltAi Factory"
 description: "Construir lo que no está en el catálogo: aplicaciones, agentes y dirección de operaciones."
 lang: es
 pair: "slg-factory-en"
@@ -9,7 +9,7 @@ updated: "2026-09-12"
 copy: temporal
 ---
 
-La línea de `SLG_VoltAi` que construye.
+La línea de `VoltAi by SLG` que construye.
 
 `APP_Building` para aplicaciones a medida que llegan a producción, no a demo. `AGE_Building` para agentes que ejecutan trabajo con criterio delegado y límites explícitos. `CoO as a Service` para la dirección de operaciones que una empresa en crecimiento necesita antes de poder incorporarla en plantilla.
 

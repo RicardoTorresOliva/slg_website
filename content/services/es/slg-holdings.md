@@ -1,7 +1,7 @@
 ---
 type: service
-name: "SLG_Holdings"
-branch: SLG_Holdings
+name: "Holdings by SLG"
+branch: Holdings by SLG
 parent: "home"
 download: "d-11"
 lang: es
@@ -18,11 +18,11 @@ El problema de hacerlo con asesores sueltos es que cada uno resuelve su parte y 
 
 El otro eje de la Agencia — el único contexto en el que la marca se escribe **Softlanding Global**.
 No es asesoría de internacionalización: es construcción y operación de compañías fuera de su mercado de origen, con implicación directa en el resultado.
-`SLG_Holdings` se despliega en **tres líneas**.
+`Holdings by SLG` se despliega en **tres líneas**.
 
 ## Qué incluye
 
-Las **tres líneas** de `SLG_Holdings`, cada una con su alcance y su forma de trabajar.
+Las **tres líneas** de `Holdings by SLG`, cada una con su alcance y su forma de trabajar.
 Estructura societaria y operativa en el mercado de destino, no solo el consejo de cómo hacerla.
 Operación sostenida en el tiempo, con responsabilidad sobre lo acordado.
 Un punto único de responsabilidad sobre el conjunto, que es la diferencia con contratar cinco asesorías.

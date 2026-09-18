@@ -1,7 +1,7 @@
 ---
 type: service
-name: "SLG_Holdings"
-branch: SLG_Holdings
+name: "Holdings by SLG"
+branch: Holdings by SLG
 parent: "home-en"
 download: "d-11-en"
 lang: en
@@ -18,11 +18,11 @@ The problem with doing it through separate advisers is that each solves their ow
 
 The Agency's other axis — the only context in which the brand is written **Softlanding Global**.
 It is not internationalisation advisory: it is the building and operation of companies outside their home market, with direct involvement in the outcome.
-`SLG_Holdings` runs in **three lines**.
+`Holdings by SLG` runs in **three lines**.
 
 ## What it includes
 
-The **three lines** of `SLG_Holdings`, each with its own scope and way of working.
+The **three lines** of `Holdings by SLG`, each with its own scope and way of working.
 Corporate and operational structure in the destination market, not just advice on how to set it up.
 Sustained operation over time, accountable for what was agreed.
 A single point of responsibility for the whole, which is the difference from hiring five advisory firms.

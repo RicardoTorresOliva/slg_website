@@ -34,6 +34,7 @@ const VIGILADOS = [
   "components/ArmazonPublico.tsx",
   "components/BarraDeNavegacion.tsx",
   "components/Banderas.tsx",
+  "components/Regreso.tsx",
   "components/AvisoDelFormulario.tsx",
   "components/IndiceDeBlog.tsx",
   "components/PaginaProvisional.tsx",

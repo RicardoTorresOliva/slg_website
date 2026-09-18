@@ -47,8 +47,8 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 const ENLACES = [
-  { href: "/ai", etiqueta: "SLG_VoltAi" },
-  { href: "/holdings", etiqueta: "SLG_Holdings" },
+  { href: "/ai", etiqueta: "VoltAi by SLG" },
+  { href: "/holdings", etiqueta: "Holdings by SLG" },
   { href: "/doctrina", etiqueta: "Doctrina" },
   { href: "/blog", etiqueta: "Blog" },
 ];
@@ -121,20 +121,20 @@ export default function Prototipo() {
           <HeroTipografico
             titular="Autoridad silenciosa"
             apoyo="Un titular, una línea de apoyo y nada más compitiendo por la atención."
-            accion={{ href: "/ai", etiqueta: "Ver SLG_VoltAi" }}
+            accion={{ href: "/ai", etiqueta: "Ver VoltAi by SLG" }}
           />
         </Bloque>
 
         <Bloque n={4} titulo="Tarjeta de rama / servicio">
           <div style={rejilla}>
             <Reveal>
-              <TarjetaDeServicio nombre="Phoenix PEEx" rama="SLG_Academy" href="/ai/academy/phoenix-peex" resumen="Marcador estructural. El copy definitivo es FU-01." />
+              <TarjetaDeServicio nombre="Phoenix PEEx" rama="VoltAi Academy" href="/ai/academy/phoenix-peex" resumen="Marcador estructural. El copy definitivo es FU-01." />
             </Reveal>
             <Reveal>
-              <TarjetaDeServicio nombre="SLG_Readiness" rama="SLG_Enterprise" href="/ai/enterprise/readiness" resumen="Marcador estructural. El copy definitivo es FU-01." />
+              <TarjetaDeServicio nombre="SLG_Readiness" rama="VoltAi Enterprise" href="/ai/enterprise/readiness" resumen="Marcador estructural. El copy definitivo es FU-01." />
             </Reveal>
             <Reveal>
-              <TarjetaDeServicio nombre="APP_Building" rama="SLG_Factory" href="/ai/factory/app-building" resumen="Marcador estructural. El copy definitivo es FU-01." />
+              <TarjetaDeServicio nombre="APP_Building" rama="VoltAi Factory" href="/ai/factory/app-building" resumen="Marcador estructural. El copy definitivo es FU-01." />
             </Reveal>
           </div>
         </Bloque>

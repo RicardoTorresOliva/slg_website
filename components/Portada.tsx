@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { articulos } from "@/lib/content/blog";
 import { loadCollection, loadUiStrings } from "@/lib/content/loader";
-import { DESTINOS, RAMAS, SERVICIOS } from "@/lib/content/rutas";
+import { DESCARGAS, DOCTRINA, EJES, RAMAS, SERVICIOS } from "@/lib/content/rutas";
 import { secciones } from "@/lib/content/secciones";
 
 import { Markdown, MarkdownEnLinea } from "./Markdown";
@@ -10,29 +10,33 @@ import { Reveal } from "./Reveal";
 import { HeroTipografico, TarjetaDeArticulo, TarjetaDeServicio } from "./piezas";
 
 /**
- * La portada — **los siete bloques de RF-09, en orden fijo**.
+ * Servicios — **los bloques de RF-09, en orden fijo**. Fue la portada hasta el
+ * 2026-09-18; desde entonces vive en `/servicios` y la portada es el mapa
+ * («Empieza aquí»). Decisión de Ricardo: la casa comercial es Servicios, y la
+ * entrada es un mapa poco invasivo.
  *
  *   1. Hero tipográfico, una idea
  *   2. Los dos ejes de la Agencia
- *   3. Las tres tarjetas de `SLG_VoltAi`
- *   4. Franja Doctrina con pull-quote y enlace
- *   5. Últimos artículos
- *   6. Descarga destacada
- *   7. Pie *(lo pone `ArmazonPublico`, que es de DU-02)*
+ *   3. Las tres tarjetas de `VoltAi by SLG`
+ *   4. `Holdings by SLG`, desarrollado debajo del otro eje (antes solo se nombraba)
+ *   5. Franja Doctrina con pull-quote y enlace
+ *   6. Últimos artículos
+ *   7. Descargas destacadas: tres documentos y el enlace a la biblioteca
+ *   8. Pie *(lo pone `ArmazonPublico`, que es de DU-02)*
  *
  * **El orden no lo decide este archivo: lo decide el `.md`.** Los bloques se
  * piden por POSICIÓN a `secciones()`, y esa posición es la del contenido. Si
- * alguien reordena la portada, la reordena editando el registro `home` de
+ * alguien reordena la página, la reordena editando el registro `servicios` de
  * `content/pages`, que es exactamente lo que RF-27 promete.
  *
  * Cero cadena de negocio escrita aquí (RF-16). Lo vigila `check:cadenas`.
  */
 export function Portada({ lang }: { lang: "es" | "en" }) {
   const t = loadUiStrings()[lang];
-  const home = loadCollection("page", lang).find((p) => p.slug === "home");
+  const home = loadCollection("page", lang).find((p) => p.slug === (lang === "en" ? "services" : "servicios"));
   const bloques = secciones(home?.body ?? "");
 
-  const [hero, puertas, lineas, doctrina, articulosBloque, descarga] = bloques;
+  const [hero, puertas, lineas, holdings, doctrina, articulosBloque, descarga] = bloques;
   const idx = lang === "en" ? "en" : "es";
 
   // Los dos ejes y las tres líneas traen sus propios subtítulos (`###`):
@@ -41,10 +45,13 @@ export function Portada({ lang }: { lang: "es" | "en" }) {
   const lineasSub = subsecciones(lineas?.cuerpo ?? "");
 
   const ultimos = articulos(lang).slice(0, 3);
-  const destacada = loadCollection<{ title: string; audience: string; status: string }>(
+  // Tres documentos publicados, y el enlace a la biblioteca entera.
+  const destacadas = loadCollection<{ title: string; audience: string; status: string }>(
     "download",
     lang,
-  ).find((d) => d.data.status === "published");
+  )
+    .filter((d) => d.data.status === "published")
+    .slice(0, 3);
 
   return (
     <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "0 1.25rem" }}>
@@ -69,14 +76,14 @@ export function Portada({ lang }: { lang: "es" | "en" }) {
                 key={s.titulo}
                 nombre={s.titulo}
                 resumen={s.cuerpo}
-                href={i === 0 ? DESTINOS[0][idx] : DESTINOS[1][idx]}
+                href={i === 0 ? EJES.voltai[idx] : EJES.holdings[idx]}
               />
             ))}
           </div>
         </section>
       </Reveal>
 
-      {/* 3 · Las tres líneas de SLG_VoltAi. */}
+      {/* 3 · Las tres líneas de VoltAi by SLG. */}
       <Reveal>
         <section aria-labelledby="lineas" style={seccion}>
           <h2 id="lineas" style={tituloDeSeccion}>
@@ -92,14 +99,29 @@ export function Portada({ lang }: { lang: "es" | "en" }) {
                 nombre={s.titulo}
                 resumen={s.cuerpo}
                 rama={`${SERVICIOS.filter((x) => x.rama === RAMAS[i]?.slug).length} ${t["home.services"]}`}
-                href={RAMAS[i]?.[idx] ?? DESTINOS[0][idx]}
+                href={RAMAS[i]?.[idx] ?? EJES.voltai[idx]}
               />
             ))}
           </div>
         </section>
       </Reveal>
 
-      {/* 4 · Franja Doctrina: pull-quote y enlace, no un bloque de texto. */}
+      {/* 4 · Holdings by SLG, desarrollado: el otro eje ya no es solo un nombre. */}
+      <Reveal>
+        <section aria-labelledby="holdings" style={seccion}>
+          <h2 id="holdings" style={tituloDeSeccion}>
+            {holdings?.titulo}
+          </h2>
+          <div style={{ maxWidth: "42rem" }}>
+            <Markdown texto={holdings?.cuerpo ?? ""} />
+          </div>
+          <Link href={EJES.holdings[idx]} style={enlaceDeSeccion}>
+            {t["home.seeHoldings"]}
+          </Link>
+        </section>
+      </Reveal>
+
+      {/* 5 · Franja Doctrina: pull-quote y enlace, no un bloque de texto. */}
       <Reveal>
         <section aria-labelledby="doctrina" style={franja}>
           <h2 id="doctrina" style={{ ...tituloDeSeccion, color: "var(--slg-paper)" }}>
@@ -109,13 +131,13 @@ export function Portada({ lang }: { lang: "es" | "en" }) {
           <p style={{ ...apoyoDeSeccion, color: "var(--slg-paper)", opacity: 0.9 }}>
             <MarkdownEnLinea texto={restoDeLineas(doctrina?.cuerpo ?? "")} />
           </p>
-          <Link href={DESTINOS[2][idx]} style={enlaceClaro}>
+          <Link href={DOCTRINA[idx]} style={enlaceClaro}>
             {t["home.readDoctrine"]}
           </Link>
         </section>
       </Reveal>
 
-      {/* 5 · Últimos artículos, con su estado vacío redactado (criterio 2). */}
+      {/* 6 · Últimos artículos, con su estado vacío redactado (criterio 2). */}
       <Reveal>
         <section aria-labelledby="articulos" style={seccion}>
           <h2 id="articulos" style={tituloDeSeccion}>
@@ -146,19 +168,34 @@ export function Portada({ lang }: { lang: "es" | "en" }) {
         </section>
       </Reveal>
 
-      {/* 6 · Descarga destacada, con su estado vacío redactado (criterio 2). */}
+      {/* 7 · Descargas destacadas: tres documentos y la biblioteca entera (criterio 2 para el vacío). */}
       <Reveal>
         <section aria-labelledby="descarga" style={seccion}>
           <h2 id="descarga" style={tituloDeSeccion}>
             {descarga?.titulo}
           </h2>
-          {destacada ? (
-            <>
-              <p style={apoyoDeSeccion}>{destacada.data.title}</p>
-              <p style={{ color: "var(--slg-ink-2)" }}>{destacada.data.audience}</p>
-            </>
-          ) : (
+          {destacadas.length === 0 ? (
             <Markdown texto={descarga?.cuerpo ?? ""} />
+          ) : (
+            <>
+              <p style={apoyoDeSeccion}>
+                <MarkdownEnLinea texto={descarga?.cuerpo.split("\n")[0] ?? ""} />
+              </p>
+              <div style={rejillaTres}>
+                {destacadas.map((d) => (
+                  <TarjetaDeServicio
+                    key={d.slug}
+                    nombre={d.data.title}
+                    resumen={d.data.audience}
+                    rama={t["home.download"]}
+                    href={`${DESCARGAS[idx]}/${d.slug}`}
+                  />
+                ))}
+              </div>
+              <Link href={DESCARGAS[idx]} style={enlaceDeSeccion}>
+                {t["home.allDownloads"]}
+              </Link>
+            </>
           )}
         </section>
       </Reveal>
@@ -240,6 +277,15 @@ const cita: React.CSSProperties = {
   color: "var(--slg-paper)",
   fontWeight: 600,
   maxWidth: "36rem",
+};
+
+const enlaceDeSeccion: React.CSSProperties = {
+  display: "inline-block",
+  marginTop: "1.5rem",
+  color: "var(--slg-link)",
+  fontSize: "0.9375rem",
+  textDecoration: "none",
+  borderBottom: "1px solid currentColor",
 };
 
 const enlaceClaro: React.CSSProperties = {

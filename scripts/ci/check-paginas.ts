@@ -28,7 +28,7 @@ const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 const SERVER = path.join(REPO_ROOT, ".next", "standalone", "server.js");
 
 /** Los siete bloques de la portada (RF-09), en orden. El séptimo es el pie. */
-const BLOQUES_DE_PORTADA = ["puertas", "lineas", "doctrina", "articulos", "descarga"];
+const BLOQUES_DE_PORTADA = ["puertas", "lineas", "holdings", "doctrina", "articulos", "descarga"];
 
 let fallos = 0;
 let comprobaciones = 0;
@@ -106,7 +106,8 @@ async function main() {
   try {
     /* ── DU-03 · la portada ─────────────────────────────────────────────── */
     console.log("\nDU-03 — los siete bloques de la portada, en orden (RF-09):\n");
-    for (const ruta of ["/", "/en"]) {
+    // Desde el 2026-09-18 los bloques de RF-09 viven en /servicios; la portada es el mapa.
+    for (const ruta of ["/servicios", "/en/services"]) {
       const r = await fetch(`${base}${ruta}`);
       const html = await r.text();
       const dentro = cuerpo(html);

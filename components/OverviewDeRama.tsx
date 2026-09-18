@@ -6,7 +6,7 @@ import { Markdown } from "./Markdown";
 import { HeroTipografico, TarjetaDeServicio } from "./piezas";
 
 /**
- * Overview de una línea de `SLG_VoltAi` — el índice de sus servicios (DU-04).
+ * Overview de una línea de `VoltAi by SLG` — el índice de sus servicios (DU-04).
  *
  * **Enlaza a TODOS sus servicios y a ninguno que no le corresponda** (criterio
  * 2): la lista sale de `SERVICIOS` filtrando por rama, así que añadir un

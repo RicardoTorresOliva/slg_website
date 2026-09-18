@@ -1,11 +1,11 @@
 ---
 type: page
-title: "Home"
+title: "Services"
 description: "SLG Agency helps boards and executive committees decide on artificial intelligence: what to ask, what to demand and what not to buy."
 lang: en
-pair: "home"
+pair: "servicios"
 nav_order: 1
-updated: "2026-09-17"
+updated: "2026-09-18"
 copy: temporal
 ---
 
@@ -19,29 +19,35 @@ We work with boards and executive committees that have to decide on AI and do no
 
 The agency works on two axes, and it is worth choosing before reading on.
 
-### SLG_VoltAi
+### VoltAi by SLG
 
 The artificial intelligence axis. Building judgement, diagnosing, implementing, and building what the catalogue does not have.
 
-### SLG_Holdings
+### Holdings by SLG
 
 Building and operating companies outside their home market, with direct involvement in the outcome.
 
-## SLG_VoltAi
+## VoltAi by SLG
 
-`SLG_VoltAi` runs in three lines, and they answer three different moments.
+`VoltAi by SLG` runs in three lines, and they answer three different moments.
 
-### SLG_Academy
+### VoltAi Academy
 
 Building judgement in the people who decide. What to ask a vendor, what to demand in a proposal, and what not to buy.
 
-### SLG_Enterprise
+### VoltAi Enterprise
 
 Know where you are and get where you decide to go. The diagnosis first, the implementation after.
 
-### SLG_Factory
+### VoltAi Factory
 
 Building what is not in the catalogue: applications, agents and operations leadership.
+
+## Holdings by SLG
+
+The other axis of the Agency, and the only context in which the brand is written **Softlanding Global**. It is not internationalisation advice: it is building and operating companies outside their home market, with direct involvement in the result.
+
+For the founder or leadership team who knows that the difficulty of operating abroad is not the translation but everything else: corporate structure, regulation, clients and people. A single point of responsibility for the whole, which is the difference from hiring five advisers.
 
 ## Doctrine
 
@@ -55,8 +61,8 @@ We publish judgement, not news.
 
 There are no published articles yet. When there are, they appear here.
 
-## Featured download
+## Featured downloads
 
-Every service has a document, written for a specific chair and published as it is.
+Every service has a document, written for a specific chair and published as it is. They are delivered in exchange for a corporate email, and nothing else.
 
 No document is available yet. When one is, it appears here.

@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { loadCollection, loadUiStrings } from "@/lib/content/loader";
 
+import { MarkdownEnLinea } from "./Markdown";
 import { HeroTipografico } from "./piezas";
 
 /**
@@ -45,6 +46,18 @@ export function BibliotecaDeDescargas({ lang }: { lang: "es" | "en" }) {
                   </Link>
                 </h2>
                 <p style={texto}>{d.data.audience}</p>
+                {/* El abstract: la línea de entrada del registro, que es lo que
+                    diferencia un título de otro cuando se comparan en lista. */}
+                {primeraLinea(d.body) ? (
+                  <p style={{ ...texto, color: "var(--slg-ink)" }}>
+                    <MarkdownEnLinea texto={primeraLinea(d.body)} />
+                  </p>
+                ) : null}
+                <p style={{ margin: "0.75rem 0 0" }}>
+                  <Link href={`${base}/${d.slug}`} style={enlace}>
+                    {t["downloads.get"]}
+                  </Link>
+                </p>
               </article>
             </li>
           ))}
@@ -53,6 +66,15 @@ export function BibliotecaDeDescargas({ lang }: { lang: "es" | "en" }) {
     </div>
   );
 }
+
+const primeraLinea = (cuerpo: string) => cuerpo.split("\n").map((l) => l.trim()).find(Boolean) ?? "";
+
+const enlace: React.CSSProperties = {
+  color: "var(--slg-link)",
+  fontSize: "0.9375rem",
+  textDecoration: "none",
+  borderBottom: "1px solid currentColor",
+};
 
 const rejilla: React.CSSProperties = {
   display: "grid",

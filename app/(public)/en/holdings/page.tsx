@@ -15,7 +15,7 @@ export const metadata = metadatosDe({
 });
 
 /**
- * `SLG_Holdings` — destino de menú Y página de servicio.
+ * `Holdings by SLG` — destino de menú Y página de servicio.
  *
  * El Anexo A.2 le asigna el documento D-11 y el contrato A.3, así que **la
  * sirve el registro de `service`**, no uno de `page`. Un segundo registro de

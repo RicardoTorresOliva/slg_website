@@ -1,7 +1,7 @@
 ---
 type: service
 name: "AGE_Building"
-branch: SLG_Factory
+branch: VoltAi Factory
 parent: "slg-factory-en"
 download: "d-09-en"
 lang: en
@@ -16,7 +16,7 @@ The problem with automating that with rules is that the first exception breaks t
 
 ## What it is
 
-The **artificial intelligence agent factory** of `SLG_Factory`: systems that carry out work with delegated judgement, inside limits you define.
+The **artificial intelligence agent factory** of `VoltAi Factory`: systems that carry out work with delegated judgement, inside limits you define.
 They are built like an application — with specification, gates and tests — and with something an application does not need: explicit limits on what the agent may **not** do on its own.
 
 ## What it includes

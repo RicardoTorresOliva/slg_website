@@ -1,7 +1,7 @@
 ---
 type: service
 name: "CoO as a Service"
-branch: SLG_Factory
+branch: VoltAi Factory
 parent: "slg-factory-en"
 download: "d-10-en"
 lang: en
@@ -16,7 +16,7 @@ The problem with postponing it is familiar: the chief executive ends up running 
 
 ## What it is
 
-Operations leadership as a service, from `SLG_Factory`.
+Operations leadership as a service, from `VoltAi Factory`.
 It is not consulting that recommends and leaves: it is a figure who operates, accountable for agreed results and present over time.
 
 ## What it includes

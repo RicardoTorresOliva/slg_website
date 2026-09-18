@@ -4,7 +4,7 @@ title: "El desafío del investigador y el estudiante en la era IA"
 description: "Dónde el modelo aporta a una investigación y dónde la contamina sin dejar rastro, y el registro mínimo que hace defendible el trabajo asistido."
 lang: es
 pair: "researcher-student-ai-era"
-date: 2026-09-18
+date: 2026-08-28
 tags:
   - AI Literacy
 status: published

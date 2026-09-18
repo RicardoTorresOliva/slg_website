@@ -1,6 +1,6 @@
 ---
 type: page
-title: "SLG_Academy"
+title: "VoltAi Academy"
 description: "Formar criterio en quien decide: programas Phoenix, programas a medida y acompañamiento individual."
 lang: es
 pair: "slg-academy-en"
@@ -9,7 +9,7 @@ updated: "2026-09-12"
 copy: temporal
 ---
 
-La línea de `SLG_VoltAi` que trabaja sobre las personas que deciden.
+La línea de `VoltAi by SLG` que trabaja sobre las personas que deciden.
 
 No enseña a usar herramientas. Enseña a decidir sobre ellas: qué preguntar a un proveedor, qué exigir en una propuesta, qué no comprar, y cómo saber si lo que se implementó está funcionando.
 
