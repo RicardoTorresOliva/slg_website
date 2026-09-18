@@ -379,7 +379,8 @@ async function main() {
     console.log(`\n  CONTRASEÑA   ${CONTRASENA}`);
     console.log(
       `\n  Cópiala ahora a tu gestor de contraseñas: no se guarda en ninguna parte y no\n` +
-        `  se vuelve a enseñar. Cámbiala desde /perfil en cuanto entres.`,
+        `  se vuelve a enseñar. Para cambiarla: /perfil si el portal está abierto y, si no,\n` +
+        `  /recuperar, que es público y manda el enlace a ese correo.`,
     );
   }
   console.log(`\n  Entra en /acceder con ese correo y esa contraseña.`);
