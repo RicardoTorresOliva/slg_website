@@ -71,6 +71,7 @@
     "test:capturas": "node scripts/hq/test-capturas.ts",
     "test:claves": "node scripts/hq/test-claves.ts",
     "test:entregables": "node scripts/hq/test-entregables.ts",
+    "test:conexiones": "node scripts/hq/test-conexiones.ts",
     "test:aislamiento": "node scripts/auth/test-aislamiento.ts",
     "test:aprovisionar": "node scripts/files/test-aprovisionar.ts",
     "test:visor": "node scripts/portal/test-visor.ts",
