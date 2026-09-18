@@ -702,12 +702,28 @@ normal y deja traza — teniendo presente que **esa empresa se crea en la base d
 producción**. Pasos: en Vercel cambiar `DATABASE_URL` de `:5432` a `:6543` en Production y Preview,
 luego `vercel --prod` desde `develop` y `vercel redeploy` del alias de `develop`.
 
-### 2 · La plantilla (objetivo A): la decisión, y luego el código
-Leer `docs/plantilla-de-sitios.md` —es corto y está medido— y responder **la pregunta del §4.1**:
-estructura declarada o `rutas.ts` por cliente. Después, en este orden: `site.config` → parametrizar
-los cinco frenos → playbook `crear-sitio` → repositorio plantilla en GitHub.
+### 2 · M6 · Academy y centro de mando — EN CURSO (decidido y aprobado el 18-09, D-160)
+Ricardo redefinió la intranet: HQ = centro de mando de una Company of One; portal = Academy que el
+cliente quiera abrir cada día. **Misma app, no proyecto aparte.** Plan aprobado:
+`planning/spec-delta-academy.md` (RF-149…RF-156). Estado:
+- **FU-15 hecho** (`7081b25`): migración `0018_academy.sql` —`news_item`, `milestone`,
+  `action_item` con la política de fila de 0015—, dos alcances, matriz B.3 con seis acciones
+  (`2cc6c56`). **Pendiente de correr contra PostgreSQL** (`test:isolation` +9) y de **migrar
+  producción** (`npm run db:migrate` con el rol dueño; hace copia antes).
+- **En paralelo, tres agentes en worktrees** (`.claude/worktrees/`): DU-30 (servicios `lib/academy/`
+  + API v1), DU-28 (portal «Clases»), DU-29a (HQ «Conexiones» + `content/conexiones.json`). Se
+  fusionan en `develop` al terminar; conflictos previsibles en `content/ui/*.json`,
+  `lib/app/navegacion.ts` y `docs/work_log.md` (todos por añadido al final).
+- **Después** (dependen de `lib/academy/`): DU-29 b/c/d (HQ escribe hitos, pendientes, noticias;
+  filtro «por agentes» en entregables), DU-26 «Hoy», DU-27 «Programa».
+- Orden de producción: migrar → desplegar → probar en la vista previa → Ricardo mira.
 
-### 3 · Los dos defectos de §2 y §3.2 del inventario
+### 3 · La plantilla (objetivo A): la decisión, y luego el código
+Leer `docs/plantilla-de-sitios.md` y responder **la pregunta del §4.1**: estructura declarada o
+`rutas.ts` por cliente. Después: `site.config` → parametrizar los cinco frenos → playbook
+`crear-sitio` → repositorio plantilla.
+
+### 4 · Los dos defectos de §2 y §3.2 del inventario
 Pequeños, de este sitio, y se arreglan antes de que haya dos sitios que arreglar.
 
 ### Pendientes menores

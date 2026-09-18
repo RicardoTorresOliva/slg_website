@@ -55,6 +55,7 @@ Los cinco están escritos, más un consolidado que los indexa. Se abren **por se
 | [../docs/decision_log.md](../docs/decision_log.md) | Decisiones de planificación desde `D-14`, e incidencias de seguridad |
 | [../docs/deployment.md](../docs/deployment.md) | **Runbook de operación** (FU-05): los cinco servicios, el despliegue automático, los registros DNS con la lista de «no tocar» delante y el monitor externo. Se abre al desplegar o al tocar la zona DNS, no antes |
 | [../planning/requirements.md](../planning/requirements.md) | Los requisitos `RF-*` / `RNF-*`. Se abre por sección |
+| [../planning/spec-delta-academy.md](../planning/spec-delta-academy.md) | **M6 · Academy y centro de mando** (D-160): qué pidió Ricardo, en qué se convierte, qué fronteras NO se mueven, las seis unidades FU-15 y DU-26…DU-30 con sus criterios. Se abre antes de cualquier unidad de M6 |
 | [../planning/scope.md](../planning/scope.md) · [../planning/risks.md](../planning/risks.md) | Dentro/fuera/previsto; riesgos y mitigaciones |
 | [../profiles/software-app/profile.md](../profiles/software-app/profile.md) | Perfil activo: qué es "hecho" y qué comprueba el quality gate |
 | Docs_MD (fuera del repo) | Resumen público completo de The Phoenix Doctrine y DAL OS |
