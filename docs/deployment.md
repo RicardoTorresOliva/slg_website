@@ -938,6 +938,13 @@ El tablero de HQ te dice **cuántas capturas están esperando ese paso**, para q
 invisible. El día que el CRM publique el endpoint de admisión, se cambia `CRM_MODE` a
 `lead_admission` y ya está: no hay que migrar nada ni tocar código.
 
+**El contrato real del CRM** (comprobado el 2026-09-17 contra `crm_slg/backend`): la búsqueda es
+`GET /api/v1/contacts?q=<correo>`, el alta `POST /api/v1/contacts` exige `firstName` y `lastName` y
+rechaza cualquier clave que no conozca, la nota es `POST /api/v1/notes` con `{ body, contactId }`, y
+todas las respuestas vienen envueltas en `{ data }`. Una captura de descarga solo trae el correo, así
+que el contacto nace con la parte local del correo como nombre y el dominio entre paréntesis como
+apellido: **es provisional a la vista**, y lo completa quien abre la oportunidad.
+
 ### 4septies.4 Cómo se vacía la cola en Vercel (y en cualquier plataforma de funciones)
 
 El barrendero original es un `setInterval` dentro del proceso (A-01). En un VPS el proceso vive

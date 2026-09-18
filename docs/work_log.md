@@ -2819,3 +2819,13 @@ barra conserva el isotipo con la marca pública «SLG Agency» (§10-4).
 **Verificado:** lint, `check:types`, `check:cadenas`, `check:env`, `check:content`, `check:secrets`,
 `check:alcance`, `check:archivos`, `check:fronteras`, compilación `standalone` y `check:armazon`
 contra el servidor real.
+
+
+**El CRM seguía vacío tras el rediseño de la cola: el contrato de la API no era el que el código
+suponía.** El adaptador se había escrito contra un doble complaciente (`name`, `company`, `source`,
+`contact_id`, búsqueda por `?email=`); el CRM real exige `firstName`/`lastName`, rechaza claves
+desconocidas, busca por `?q=` y envuelve todo en `{ data }`. Se vio ejecutando el adaptador desde
+local contra el CRM real: `400 validation_error`. Reescrito `lib/crm/contact-note.ts` al contrato
+real y **el doble de `test:crm` ahora rechaza lo mismo que el CRM**, para que no vuelva a pasar.
+Verificado contra el CRM real: contacto `prueba.captura` creado con su nota. Lección registrada:
+un doble que acepta lo que le mandan no prueba nada; el contrato se lee del proveedor.

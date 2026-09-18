@@ -610,9 +610,12 @@ Estado al cierre del 2026-09-17, 21:15 (hora de Lima). Los tres encargos:
 - **Resuelto en código (misma noche)**: la cola se vacía por acontecimientos
   (`lib/colas/barrer.ts`): barrido tras cada captura con `after()`, barrido de
   reintentos con cada visita de `/api/health`, y `/api/colas` + `CRON_SECRET` como
-  gancho de planificador. Ver `deployment.md` §4septies.4. **Falta desplegarlo y
-  ver el contacto en el CRM**: tras el despliegue, una captura nueva arrastra
-  también las pendientes.
+  gancho de planificador. Ver `deployment.md` §4septies.4.
+- **Segunda causa, también resuelta**: el adaptador `contact_note` hablaba el
+  contrato de un doble inventado; el CRM real exige `firstName`/`lastName`, busca
+  por `?q=` y envuelve en `{ data }` (§4septies.3). Reescrito y verificado desde
+  local contra el CRM real (contacto `prueba.captura` con nota). El doble de
+  `test:crm` ahora rechaza lo mismo que el CRM.
 - Misma sesión: banderas ES/US junto al logo (escritorio y móvil) y logotipo de
   Softlanding Global en el pie.
 

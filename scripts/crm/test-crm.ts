@@ -71,24 +71,46 @@ function crearDoble() {
         return;
       }
 
+      // El doble imita el CONTRATO REAL de crm.softlandingglobal.com
+      // (`crm_slg/backend`, comprobado el 2026-09-17): búsqueda por `q`,
+      // respuestas envueltas en `{ data }`, alta que exige `firstName` y
+      // `lastName` y rechaza claves desconocidas, nota atada por `contactId`.
+      // La primera versión del doble aceptaba lo que el adaptador mandaba, y
+      // el adaptador falló en producción con 400: un doble complaciente no
+      // prueba nada.
+      const rechazar = (mensaje: string) => {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: { code: "validation_error", message: mensaje } }));
+      };
       if (req.method === "GET" && url.pathname === "/api/v1/contacts") {
-        const email = url.searchParams.get("email") ?? "";
-        const id = contactos.get(email);
+        const q = (url.searchParams.get("q") ?? "").toLowerCase();
+        const items = [...contactos.entries()]
+          .filter(([email]) => q && email.toLowerCase().includes(q))
+          .map(([email, id]) => ({ id, email, firstName: "x", lastName: "y" }));
         res.writeHead(200, { "content-type": "application/json" });
-        res.end(JSON.stringify(id ? [{ id }] : []));
+        res.end(JSON.stringify({ data: items, meta: { page: 1, pageSize: 50, total: items.length } }));
         return;
       }
       if (req.method === "POST" && url.pathname === "/api/v1/contacts") {
-        const email = String((cuerpo as { email?: string })?.email ?? "");
+        const c = (cuerpo ?? {}) as Record<string, unknown>;
+        const admitidas = new Set(["firstName", "lastName", "email", "jobTitle", "companyId", "phone"]);
+        const extranas = Object.keys(c).filter((k) => !admitidas.has(k));
+        if (!c.firstName || !c.lastName) return rechazar("firstName: Required; lastName: Required");
+        if (extranas.length) return rechazar(`Unrecognized key(s) in object: ${extranas.join(", ")}`);
+        const email = String(c.email ?? "");
         const id = `c-${contactos.size + 1}`;
         contactos.set(email, id);
         res.writeHead(201, { "content-type": "application/json" });
-        res.end(JSON.stringify({ id }));
+        res.end(JSON.stringify({ data: { id, email, firstName: c.firstName, lastName: c.lastName } }));
         return;
       }
       if (req.method === "POST" && url.pathname === "/api/v1/notes") {
+        const n = (cuerpo ?? {}) as Record<string, unknown>;
+        const enlaces = [n.contactId, n.companyId, n.opportunityId, n.projectId].filter(Boolean).length;
+        if (!n.body) return rechazar("body: La nota no puede estar vacía");
+        if (enlaces !== 1) return rechazar("Indica exactamente una entidad (companyId, contactId, opportunityId o projectId)");
         res.writeHead(201, { "content-type": "application/json" });
-        res.end('{"id":"n-1"}');
+        res.end(JSON.stringify({ data: { id: "n-1", contactId: n.contactId ?? null } }));
         return;
       }
       if (req.method === "POST" && url.pathname === "/api/v1/leads") {
