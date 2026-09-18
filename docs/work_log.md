@@ -3261,3 +3261,25 @@ HTTP con sesión real (alta por invitación, compuerta de staging y `SUPERFICIES
 como `test-acceso`), que responde 200 con los cinco bloques y sin la noticia de B. Necesita
 PostgreSQL y `build:standalone`, que esta máquina no tiene; se corre en CI. `/portal/programa` la
 hace DU-27 en paralelo: el enlace es correcto aunque hoy dé 404 en este árbol.
+
+## M6 construido: las seis unidades en `develop` (2026-09-18, 21:30)
+
+Tres agentes en paralelo por ola, cada uno en su worktree, fusionados por el orquestador con los
+frenos en verde tras cada fusión. **Ola 1**: DU-30 (`lib/academy/` + API v1; sin `GET news` porque
+`news.read` no tiene alcance de agente y la matriz no se toca por una comodidad), DU-28 («Clases»),
+DU-29a («Conexiones», `content/conexiones.json`). **Ola 2**: DU-29 b/c/d (HQ escribe hitos,
+pendientes y noticias; material por enlace, que «Clases» necesitaba y `data_model` §3.10 ya
+prometía), DU-26 («Hoy») y DU-27 («Programa», escrita por el orquestador). Dos hallazgos que no
+estaban en el plan: (1) los worktrees de los agentes nacen de `main`, 50+ commits por detrás de
+`develop` — cada agente tuvo que fusionar `develop` antes de empezar; (2) un `html` `internal` no se
+puede abrir en el visor desde HQ porque la función de la migración 0016 solo sirve entregables
+`client` (`ui_wireframes` §6.13).
+
+**Verificado en cada fusión**: `check:types`, `lint`, `tsc`, `cadenas` (43), `shell` (55), `hq`,
+`alcance` (249), `fronteras` (266), `pairs`, `secrets`, `migrations`, `playbook`, `test:permisos`
+(354). **En CI, contra PostgreSQL real**: `test:isolation` con las tres tablas nuevas, en verde.
+**Todavía sin verde**: `test:api` (+87), `test:gestion`, `test:entregables`, `test:hoy`,
+`test:programa`, `test:materiales` — CI no llegaba a ellas porque dos frenos **anteriores a M6**
+estaban en rojo desde el 17-09 (`check:produccion` con «Liderazgo» y `test:descargas` con `d-06`
+ya publicado); arreglados en el commit siguiente. Las seis unidades quedan en `review` hasta ese
+verde.

@@ -711,13 +711,14 @@ cliente quiera abrir cada día. **Misma app, no proyecto aparte.** Plan aprobado
   (`2cc6c56`). **Migración 0018 APLICADA en producción** (Ricardo, 18-09 ~20:00: «19 de 19»). El
   código de producción (`o4bkrnmrj`, desplegado antes de FU-15) no la usa todavía y no le afecta.
   `test:isolation` (+9) sigue sin correr contra PostgreSQL: se corre en CI.
-- **En paralelo, tres agentes en worktrees** (`.claude/worktrees/`): DU-30 (servicios `lib/academy/`
-  + API v1), DU-28 (portal «Clases»), DU-29a (HQ «Conexiones» + `content/conexiones.json`). Se
-  fusionan en `develop` al terminar; conflictos previsibles en `content/ui/*.json`,
-  `lib/app/navegacion.ts` y `docs/work_log.md` (todos por añadido al final).
-- **Después** (dependen de `lib/academy/`): DU-29 b/c/d (HQ escribe hitos, pendientes, noticias;
-  filtro «por agentes» en entregables), DU-26 «Hoy», DU-27 «Programa».
-- Orden de producción: migrar → desplegar → probar en la vista previa → Ricardo mira.
+- **Las seis unidades están en `develop`** y en la vista previa. Estado `review`: falta el verde de
+  CI contra PostgreSQL (CI no llegaba a las pruebas nuevas por dos rojos anteriores a M6, ya
+  arreglados) y la revisión visual de Ricardo.
+- **Producción NO tiene M6 todavía**: el último `vercel --prod` fue antes de FU-15. Orden: CI en
+  verde → `vercel --prod` desde `develop` → Ricardo mira en producción.
+- Pendientes anotados: un `html` `internal` no abre en el visor desde HQ (función de 0016 solo
+  sirve `client`); `GET /organizations/{id}/news` no existe porque `news.read` no tiene alcance de
+  agente — si Hermes necesita leer noticias, es decisión de matriz, no de código.
 
 ### 3 · La plantilla (objetivo A): la decisión, y luego el código
 Leer `docs/plantilla-de-sitios.md` y responder **la pregunta del §4.1**: estructura declarada o
