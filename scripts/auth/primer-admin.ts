@@ -47,7 +47,16 @@
  * que además sobra —el correo lo verifica quien tiene las credenciales de la
  * base— es un arranque que no arranca.
  *
- *   node scripts/auth/primer-admin.ts --correo tu@correo --nombre "Tu Nombre"
+ *   node --env-file=<archivo.env> scripts/auth/primer-admin.ts \
+ *        --correo tu@correo --nombre "Tu Nombre"
+ *
+ * **La cadena del dueño no se escribe en la línea de comandos.** `--env-file` es
+ * de Node, no del guion: carga el archivo de variables que ya existe fuera del
+ * repositorio y así la credencial no pasa por el historial del intérprete. Sirven
+ * los nombres de los dos sitios donde viven hoy: `DATABASE_URL_OWNER` /
+ * `DATABASE_URL_APP` (los archivos de `ops/`) o `DATABASE_URL_MIGRATIONS` /
+ * `DATABASE_URL` (`.env.example`). También hace falta `BETTER_AUTH_SECRET`, que
+ * está en el mismo archivo.
  *
  * Opcionales: `--empresa` (por defecto «SLG Agency»), `--slug` (por defecto
  * `slg`), y `PRIMER_ADMIN_PASSWORD` en el entorno. Sin ella se genera una y se
@@ -57,7 +66,15 @@ import { randomUUID, randomInt } from "node:crypto";
 
 import postgres from "postgres";
 
-import { auth } from "../../lib/auth/better-auth.ts";
+/**
+ * **Por qué la librería se importa abajo y no aquí.** `lib/auth/better-auth.ts`
+ * arrastra `lib/db/scope.ts`, que abre su conexión **al importarse**: con una
+ * cadena ausente o mal escrita, el proceso moría con un volcado de pila de
+ * `node:internal/url` antes de llegar a una sola comprobación de este guion.
+ * Quien arranca una base por primera vez es exactamente quien se equivoca al
+ * pegar la cadena, y merece una frase, no una traza. Las comprobaciones van
+ * primero y la librería entra después, con `await import`.
+ */
 
 /* ── Argumentos ─────────────────────────────────────────────────────────── */
 
@@ -72,13 +89,17 @@ const EMPRESA = (argumento("empresa") ?? "SLG Agency").trim();
 const SLUG = (argumento("slug") ?? "slg").trim();
 const IDIOMA = (argumento("idioma") ?? "es").trim() === "en" ? "en" : "es";
 
-if (!CORREO.includes("@") || !NOMBRE) {
-  console.error(
-    "Uso: node scripts/auth/primer-admin.ts --correo tu@correo --nombre \"Tu Nombre\"\n" +
-      "     [--empresa \"SLG Agency\"] [--slug slg] [--idioma es|en]\n",
-  );
+function abortar(mensaje: string): never {
+  console.error(`\n✗ ${mensaje}\n`);
   process.exit(1);
 }
+
+const USO =
+  "Uso: node --env-file=<archivo.env> scripts/auth/primer-admin.ts \\\n" +
+  "       --correo tu@correo --nombre \"Tu Nombre\"\n" +
+  "     [--empresa \"SLG Agency\"] [--slug slg] [--idioma es|en]";
+
+if (!CORREO.includes("@") || !NOMBRE) abortar(`Falta --correo o --nombre.\n\n${USO}`);
 
 /**
  * La contraseña. Doce caracteres es el mínimo que exige la librería
@@ -94,18 +115,70 @@ function generarContrasena(largo = 24): string {
 
 const DADA = process.env.PRIMER_ADMIN_PASSWORD?.trim();
 if (DADA && DADA.length < 12) {
-  console.error("✗ PRIMER_ADMIN_PASSWORD tiene menos de 12 caracteres, que es el mínimo de DU-01.");
-  process.exit(1);
+  abortar("PRIMER_ADMIN_PASSWORD tiene menos de 12 caracteres, que es el mínimo de DU-01.");
 }
 const CONTRASENA = DADA || generarContrasena();
 
-/* ── La conexión del dueño ──────────────────────────────────────────────── */
+/* ── Las conexiones ─────────────────────────────────────────────────────── */
 
-const URL_DUENO = process.env.DATABASE_URL_MIGRATIONS ?? process.env.DATABASE_URL;
-if (!URL_DUENO) {
-  console.error("✗ Falta DATABASE_URL_MIGRATIONS (la del rol dueño). Ver `.env.example`.");
-  process.exit(1);
+/** Los dos nombres de cada cadena: el de `.env.example` y el de los archivos de `ops/`. */
+function cadena(nombres: readonly string[]): string | undefined {
+  for (const n of nombres) {
+    const v = process.env[n]?.trim();
+    if (v) return v;
+  }
+  return undefined;
 }
+
+/**
+ * Que la cadena **parezca** una cadena, antes de que la abra nadie. Un `…` o un
+ * marcador de posición sin sustituir es el error de pegado más común, y sin esto
+ * lo cuenta `node:internal/url` con un volcado de pila.
+ */
+function exigirCadena(valor: string | undefined, nombres: readonly string[], para: string): string {
+  if (!valor) {
+    abortar(
+      `Falta la cadena de conexión ${para}.\n  Se busca, por este orden: ${nombres.join(", ")}.\n` +
+        `  Cárgala con --env-file en vez de escribirla: ` +
+        `node --env-file=<archivo.env> scripts/auth/primer-admin.ts …`,
+    );
+  }
+  try {
+    const u = new URL(valor);
+    if (!u.protocol.startsWith("postgres")) throw new Error("protocolo");
+  } catch {
+    abortar(
+      `La cadena ${para} no es una URL de PostgreSQL: «${valor.slice(0, 24)}…».\n` +
+        `  Si ves puntos suspensivos, el marcador de posición se pegó tal cual.`,
+    );
+  }
+  return valor;
+}
+
+const NOMBRES_DUENO = ["DATABASE_URL_MIGRATIONS", "DATABASE_URL_OWNER"] as const;
+const NOMBRES_APP = ["DATABASE_URL", "DATABASE_URL_APP"] as const;
+
+const URL_DUENO = exigirCadena(cadena(NOMBRES_DUENO), NOMBRES_DUENO, "del rol DUEÑO");
+
+/**
+ * `DATABASE_URL` no la usa este guion: la exige `lib/db/scope.ts` al importarse,
+ * y sin ella la librería de identidad no se puede cargar ni para picar una
+ * contraseña. Se le da la del rol de aplicación si está, y si no la del dueño —
+ * esa conexión **no se llega a abrir**, porque aquí sólo se llama al hasheador.
+ */
+process.env.DATABASE_URL = exigirCadena(
+  cadena(NOMBRES_APP) ?? URL_DUENO,
+  NOMBRES_APP,
+  "del rol de aplicación",
+);
+
+if (!process.env.BETTER_AUTH_SECRET?.trim()) {
+  abortar(
+    "Falta BETTER_AUTH_SECRET. Está en el mismo archivo de variables que la cadena del dueño;\n" +
+      "  la librería lo exige para inicializarse, aunque aquí sólo se le pida picar la contraseña.",
+  );
+}
+
 const sql = postgres(URL_DUENO, { max: 2, onnotice: () => {} });
 
 async function main() {
@@ -137,7 +210,9 @@ async function main() {
     );
   }
 
-  // El hasheador de la librería, no uno propio. Ver la cabecera.
+  // El hasheador de la librería, no uno propio. Ver la cabecera: se importa
+  // AQUÍ, con las comprobaciones ya hechas, porque importarla abre conexiones.
+  const { auth } = await import("../../lib/auth/better-auth.ts");
   const contexto = await auth.$context;
   const hash = await contexto.password.hash(CONTRASENA);
 

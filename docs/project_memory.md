@@ -600,12 +600,17 @@ correría con la conexión de la aplicación, que es justo la que no puede.
 real. Para Ricardo, con la cadena del **rol dueño** (la de las migraciones, host directo):
 
 ```
-DATABASE_URL_MIGRATIONS="…" DATABASE_URL="…" BETTER_AUTH_SECRET="…" \
-  npm run auth:primer-admin -- --correo <tu@correo> --nombre "Ricardo Torres Oliva"
+node --env-file=$HOME/Dev/SLG_Overhauling/ops/supabase-slg-website.env \
+  scripts/auth/primer-admin.ts --correo <tu@correo> --nombre "Ricardo Torres Oliva"
 ```
 
-Imprime la contraseña **una sola vez**. `DATABASE_URL` hace falta porque la librería se inicializa al
-importarla; la escritura va por la del dueño.
+**La cadena no se escribe en la línea de comandos**: `--env-file` es de Node y carga el archivo de
+`ops/` que ya existe, así que la credencial no pasa por el historial del intérprete. El guion acepta
+los nombres de los dos sitios (`DATABASE_URL_OWNER`/`DATABASE_URL_APP` de `ops/`, o
+`DATABASE_URL_MIGRATIONS`/`DATABASE_URL` de `.env.example`). Imprime la contraseña **una sola vez**.
+
+Si la cadena del dueño apunta al host directo y tu red no tiene IPv6, fallará la conexión, no el
+guion: el mensaje lo dirá. En ese caso, la del *pooler* en modo sesión con el usuario dueño.
 
 **Y aun con la cuenta creada, HQ contesta 404, y no es la cuenta.** `SUPERFICIES_ABIERTAS` está en
 `false` para `hq` y `portal` (`lib/auth/roles.ts`). La única apertura es `SUPERFICIES_EN_REVISION`, y

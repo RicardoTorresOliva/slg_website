@@ -3071,3 +3071,14 @@ CLI de Vercel 54 → 59.23.1.
 **Frenos que no se pueden correr aquí**: los cinco de `check:brakes` que fallan piden navegador
 (Playwright sin Chromium instalado) o PostgreSQL, y esta máquina no tiene ni Docker ni Postgres. No
 son defectos del código.
+
+**Corrección del mismo día.** Ricardo lanzó el comando con los marcadores de posición puestos y no
+recibió un aviso: recibió un volcado de pila de `node:internal/url` desde `lib/db/scope.ts`, porque
+importar la librería de identidad **abre conexiones al importarse**, antes de que el guion compruebe
+nada. Arreglado invirtiendo el orden —comprobaciones primero, `await import` después— y añadiendo tres
+mensajes: falta el argumento, falta la cadena (con los nombres que se buscan), y la cadena no parece
+una URL de PostgreSQL («si ves puntos suspensivos, el marcador se pegó tal cual»). Además, el guion
+acepta ahora `DATABASE_URL_OWNER`/`DATABASE_URL_APP`, que son los nombres reales de
+`ops/supabase-slg-website.env`, para poder invocarlo con `node --env-file=…` y **no escribir la
+credencial en la línea de comandos**. Las cuatro salidas probadas; comprobado también que `npm run …
+-- --nombre "A B C"` conserva el argumento entero, que era la otra sospecha.
