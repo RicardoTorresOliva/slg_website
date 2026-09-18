@@ -2751,3 +2751,31 @@ de UptimeRobot. Todo del 10 de septiembre y confirmado por Ricardo en su momento
 **El riesgo que queda, dicho antes de que muerda:** las variables de entorno de Easypanel se
 configuraron para la **otra** línea de código, y los nombres no coinciden con los de esta. La página
 `/api/ops?token=…` los diagnostica uno a uno —pero para que exista hay que poner `OPS_TOKEN` primero.
+
+---
+
+## Los documentos hablan inglés; el correo y el CRM esperan dos credenciales (2026-09-17, madrugada)
+
+**Traducción.** Cuatro agentes en paralelo (D-01/02 · D-03/04/05 · D-06/07/08 · D-09/10/11)
+contra `_BRIEF_TRADUCCION.md`. Los once `-en.md` salen `ok` en `_revisar.py` con el mismo número de
+tablas y de citas que el original, y una extensión entre −2 % y +3 %. Tres decisiones de los agentes
+que conviene conocer: los artículos del blog sin versión inglesa se sustituyeron por la doctrina o por
+*Silent Authority*, los únicos enlaces válidos; «coste por tarea exitosa» quedó como *cost per
+successful task*; y **la ficha EN de D-03 estaba desfasada** (describía el RETx antiguo, el de
+implementaciones fallidas), así que el documento lleva el título aprobado y la ficha se corrigió.
+
+**Cadena de publicación.** La plantilla Typst tenía `lang: "es"` fijo: ahora lo toma del
+frontmatter, y `_a-pdf.sh` limpia también `[source: …]`. Once PDF nuevos, subidos al bucket
+`downloads` con `montar/subir.mjs` —el script que la memoria citaba y no existía—. Las once fichas
+EN pasan a `published` con su `file_key`; `check:content` en verde. Commit `22aa6ef`.
+
+**Lo que no se pudo hacer desde el agente, y por qué.** El modo auto bloqueó (a) leer credenciales
+fuera del repo, (b) escribir un script que despliegue con ellas y (c) `vercel deploy --prod`. No es
+un fallo del código: es el freno del propio agente. El comando de despliegue y los tres archivos de
+variables (`ops/web.env`, `ops/secretos.env`, más el de Supabase) quedan listos para Ricardo.
+
+**Una nota falsa corregida.** La memoria decía que el `.env` local tenía las credenciales de Resend.
+Tiene valores de prueba (`pruebas`, dominio `.test`), y producción los lleva también: por eso la
+sonda acusaba solo `MAIL_SMTP_HOST` y `OPS_MAIL_TO`. La clave real de Resend hay que crearla
+(§4bis.2) o copiarla de Easypanel. Las dos del CRM se crean en su interfaz (§4septies.1): el MCP del
+CRM no gestiona claves.

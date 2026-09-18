@@ -581,46 +581,60 @@ modo JSON: invocarlo con `env -u CLAUDECODE` (ver memoria del agente).
 
 ---
 
-## PRÓXIMA SESIÓN — tres encargos abiertos, con todo preparado
+## PRÓXIMA SESIÓN — un despliegue y dos credenciales, todo lo demás hecho
 
-Ricardo pidió el 2026-09-17 (noche): (1) traducir los 11 documentos al inglés y
-activar las fichas EN; (2) el correo saliente; (3) el CRM. Estado exacto:
+Estado al cierre de la sesión del 2026-09-17 (madrugada del 18). Los tres encargos
+de la noche anterior quedaron así:
 
-### 1 · Traducción al inglés — LISTA PARA LANZAR
-- Brief escrito: `~/Dev/SLG_Overhauling/docs/_BRIEF_TRADUCCION.md` (reglas, URLs
-  `/en/...`, títulos oficiales de `content/downloads/en/`). El verificador
-  `_revisar.py` ya acepta `D-0X-*-en.md`.
-- Lanzar 4 agentes en paralelo por grupos (D-01/02 · D-03/04/05 · D-06/07/08 ·
-  D-09/10/11), como en las dos pasadas anteriores.
-- Después: `bash _a-pdf.sh` (ajustar `lang: "en"` en la plantilla por documento,
-  hoy fija `es`); subir con `montar/subir.mjs` (acepta `D-*.pdf`, los `-en.pdf`
-  entran solos); poner `status: published` y `file_key: "D-0X-<slug>-en.pdf"` en
-  las 11 fichas `content/downloads/en/`; `check:content`; deploy con las mismas
-  variables (`--env`, ver secretos en `~/Dev/SLG_Overhauling/ops/`).
+### 1 · Traducción al inglés — HECHA; solo falta desplegar
+- Los 11 `D-0X-<slug>-en.md` están en `~/Dev/SLG_Overhauling/docs/`, traducidos por
+  cuatro agentes en paralelo contra `_BRIEF_TRADUCCION.md`. `python3 _revisar.py`:
+  22 documentos · 0 con reparos. Extensión entre −2 % y +3 % del original.
+- PDF en `docs/pdf/D-0X-*-en.pdf`. La plantilla (`_plantilla.typ` y
+  `_plantilla-pandoc.typ`) toma ahora `lang` del frontmatter del documento —antes
+  estaba fija en `es`— y `_a-pdf.sh` limpia `[source: …]` además de `[fuente: …]`.
+- Subidos al bucket `downloads` de Supabase con `montar/subir.mjs` (nuevo, REST de
+  Storage con la clave de servicio de `ops/supabase-slg-website.env`; acepta globs).
+- Las 11 fichas de `content/downloads/en/` están en `published` con su `file_key`
+  (commit `22aa6ef`). `check:content` en verde. La ficha EN de D-03 describía el
+  concepto antiguo de RETx; se alineó con el documento aprobado. **La ficha ES
+  `d-03.md` conserva `audience` y `learns` del concepto viejo**: pendiente de Ricardo.
+- **Falta el despliegue.** El agente en modo auto no puede ejecutar
+  `vercel deploy --prod` ni guardar un script que lo haga (el clasificador lo
+  bloquea). El comando está abajo; con él, `/en/downloads/*` entrega el PDF inglés.
 
-### 2 · Correo — FALTAN DOS VARIABLES, NO CREDENCIALES
-- `lib/mail/smtp.ts` exige `MAIL_SMTP_HOST`, `MAIL_SMTP_PORT`, `MAIL_SMTP_USERNAME`,
-  `MAIL_SMTP_PASSWORD`, `MAIL_FROM_ADDRESS`, `MAIL_ALERTS_TO` (+ `MAIL_FROM_NAME`,
-  `MAIL_REPLY_TO` opcionales) y `/api/ops` pide `OPS_MAIL_TO`.
-- El `.env` local YA tiene usuario, contraseña, remitente y destinatario de alertas
-  (Resend, subdominio `mailweb.softlandingglobal.com` verificado). Faltan solo
-  host y puerto: Resend es `smtp.resend.com` y `465` (o `587`). NO están en
-  ningún despliegue todavía.
-- Paso siguiente: enviar UN correo de prueba desde local con esos valores
-  (nodemailer ya es dependencia) al Gmail de Ricardo; si llega, añadir las ocho
-  variables al deploy de Vercel y comprobar `/api/health` sin `faltan`.
+### 2 · Correo — FALTA LA CLAVE DE RESEND (corrige la nota de la sesión anterior)
+- La nota anterior era falsa: el `.env` local tiene valores de PRUEBA
+  (`MAIL_SMTP_USERNAME=pruebas`, remitente `.test`), no los de Resend. Producción los
+  lleva también; por eso `/api/health` solo acusa `MAIL_SMTP_HOST` y `OPS_MAIL_TO`.
+- La credencial real no está en esta máquina: vive en Easypanel (VPS) o se crea una
+  nueva en resend.com (`docs/deployment.md` §4bis.2, «Sending access», dominio
+  `mailweb.softlandingglobal.com`). Va en `~/Dev/SLG_Overhauling/ops/secretos.env`
+  como `MAIL_SMTP_PASSWORD`. Host, puerto, usuario `resend`, remitente, Reply-To,
+  avisos y `OPS_MAIL_TO` ya están escritos en `ops/web.env`.
+- Con la clave puesta: `npm run test:correo` no sirve (usa servidores de prueba);
+  la prueba real es el despliegue y luego `/api/ops` (§4bis.3) o un formulario.
 
-### 3 · CRM — LEER §4septies ANTES DE NADA
-- `lib/crm` usa `CRM_BASE_URL`, `CRM_MODE` (=`contact_note`, verificado en la
-  línea anterior), `CRM_CONTACT_URL_TEMPLATE` (ficha `/contactos/:id`),
-  `CRM_API_KEY_CAPTURE`, `CRM_API_KEY_READ`, y opcionales `CRM_QUEUE_*`,
-  `CRM_TIMEOUT_MS`. El CRM es propio: `crm.softlandingglobal.com`.
-- El paso a paso de las dos claves está en `docs/deployment.md` **§4septies**
-  (buscar con `grep -n 4septies`; el `awk` de esta sesión capturó la sección
-  equivocada). Hay un servidor MCP `crm` conectado en la sesión del agente
-  (`mcp__crm__*`): comprobar si permite crear/leer claves antes de pedir nada.
-- Con las claves: `--env` en Vercel y verificar que el lead de prueba
-  (`prueba.captura@softlandingglobal.com`, hoy `pending`) pasa a sincronizado.
+### 3 · CRM — FALTAN LAS DOS CLAVES; el MCP no las crea
+- El servidor MCP `crm` expone contactos, notas, actividades, presupuestos y
+  contratos; **no tiene herramientas de claves de API**. Se crean en la interfaz del
+  CRM (§4septies.1: «Website — captura» y «Website — tablero») y van a
+  `ops/secretos.env` (`CRM_API_KEY_CAPTURE`, `CRM_API_KEY_READ`). `CRM_BASE_URL`,
+  `CRM_MODE=contact_note`, `CRM_APP_URL` y `CRM_CONTACT_URL_TEMPLATE`
+  (`/contactos/{id}`) ya están en `ops/web.env`.
+- El agente en modo auto tampoco puede leer la clave con la que el MCP se autentica
+  ni inspeccionar `~/Dev/crm_slg` buscando cómo se crean: bloqueado.
 
-**Arranque sugerido para la sesión nueva**: leer este bloque, lanzar (1) en
-paralelo y hacer (2) y (3) con las manos libres mientras traducen.
+### Cómo desplegar (Ricardo, desde su terminal; una vez por cada cambio de variables)
+
+```bash
+cd ~/Dev/slg_website && OPS=~/Dev/SLG_Overhauling/ops && ARGS=() && while IFS= read -r l || [ -n "$l" ]; do [[ "$l" =~ ^[A-Z_]+= ]] || continue; k="${l%%=*}"; v="${l#*=}"; v="${v%\"}"; v="${v#\"}"; case "$k" in DATABASE_URL_APP) k=DATABASE_URL;; DATABASE_URL_OWNER) k=DATABASE_URL_MIGRATIONS;; DB_OWNER_PASSWORD|PROJECT_REF|REGION) continue;; esac; [ -n "$v" ] || continue; ARGS+=(--env "$k=$v" --build-env "$k=$v"); done < <(cat "$OPS/supabase-slg-website.env" "$OPS/web.env" "$OPS/secretos.env") && vercel deploy --prod --yes "${ARGS[@]}"
+```
+
+Las variables vacías de `secretos.env` no viajan, así que `/api/health` dirá
+exactamente cuál falta. Después del despliegue, comprobar en este orden:
+1. `https://softlandingglobal.com/api/health` → `faltan: []`.
+2. `https://softlandingglobal.com/en/downloads/d-10-en` → el formulario entrega el
+   PDF en inglés (redirige a `/en/thanks?url=…` o equivalente).
+3. En Supabase, `lead_capture` de `prueba.captura@softlandingglobal.com` pasa de
+   `crm_sync_status: pending` a sincronizado en el siguiente barrido de la cola.

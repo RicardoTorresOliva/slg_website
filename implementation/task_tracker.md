@@ -123,7 +123,7 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
 | F.2-4 | Dominio de correo verificado (SPF/DKIM/DMARC) sobre subdominio de envío dedicado | FU-08 → FU-07, DU-01, DU-09 | `pending` |
 | F.2-5 | Dos claves de API del CRM + ruta de la ficha de contacto | DU-09, DU-13, DU-16 | `pending` |
 | F.2-6 | URL del calendario de «Agenda tu Sesión Cero» | DU-21 (degrada a «próximamente» si falta) | `pending` — **el hueco ya existe**: la clave `portal.sesion0.url` está declarada y vacía en los dos idiomas. Ricardo solo tiene que **mandar el enlace**; ponerlo es un cambio de una línea |
-| EXT-1 | 11 documentos de descarga (D-01…D-11) y copy maestro, producidos en SLG_Overhauling | FU-01 · DU-08 (no bloquea go-live: publica «disponible próximamente») | `pending` |
+| EXT-1 | 11 documentos de descarga (D-01…D-11) y copy maestro, producidos en SLG_Overhauling | FU-01 · DU-08 (no bloquea go-live: publica «disponible próximamente») | `in_progress` — **los 22 documentos existen y están publicados** (ES el 17, EN traducidos y con ficha `published` la madrugada del 18, commit `22aa6ef`); falta el despliegue con las variables y la firma del copy |
 | EXT-2 | Logo de SLG Agency (SVG + PNG), favicon e imagen Open Graph | FU-02 (wordmark provisional) · DU-07 (Open Graph) | `pending` |
 | EXT-3 | Elección de producto en la categoría de correo transaccional | FU-08 | `done` — **Resend** (D-22), dentro de la categoría de D-15. El adaptador sigue hablando SMTP estándar |
 | EXT-4 | Elección de producto en la categoría de object storage externo de backups | FU-14 | `done` — **Cloudflare R2** (D-21), dentro de la categoría de D-20. El script sigue escrito contra API S3 genérica |
