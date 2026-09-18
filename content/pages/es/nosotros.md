@@ -15,7 +15,7 @@ Trabajamos con directores y comités de dirección que tienen que decidir sobre 
 
 ## Por qué existimos
 
-Las instituciones que tradicionalmente formaban criterio ejecutivo —universidades, escuelas de negocio, consultoras de larga data— actualizan sus programas en ciclos de tres, cinco y siete años. La inteligencia artificial cambia cada tres meses. Ese desfase no es temporal, es estructural, y deja al director solo frente a decisiones que no puede posponer y no está preparado.
+Las instituciones que tradicionalmente formaban criterio ejecutivo —universidades, escuelas de negocio, consultoras de larga data— actualizan sus programas en ciclos de tres, cinco y siete años. La inteligencia artificial cambia cada tres meses. Ese desfase no es temporal, es estructural, y deja al director solo frente a decisiones que no puede posponer y para las que no está preparado.
 
 No lo resolvemos con un programa enlatado que llega tarde. Lo resolvemos con doctrina, fundamentos Lindy y garantías reales, y con trabajo hecho sobre el caso concreto de cada empresa, sin imposiciones ni adaptaciones absurdas.
 
@@ -23,7 +23,7 @@ No lo resolvemos con un programa enlatado que llega tarde. Lo resolvemos con doc
 
 **Sin lock-in.** Nada de lo que construimos te ata a nosotros ni a un proveedor.
 
-**Somos agnósticos tecnológicos.** Trabajamos con ella tecnología que ya tienes o implementados la que más convenga.
+**Somos agnósticos tecnológicos.** Trabajamos con la tecnología que ya tienes o implementamos la que más convenga.
 
 **Compuertas de aprobación.** Cada fase pasa por decisiones complejas antes de que empiece la siguiente.
 

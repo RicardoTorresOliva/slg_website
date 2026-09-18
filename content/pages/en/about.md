@@ -9,23 +9,23 @@ updated: "2026-09-18"
 copy: temporal
 ---
 
-Has whoever advises you on artificial intelligence implemented it in their own operation? We have, and before anywhere else. **We are our own Client Zero.** SLG Agency has the structure of a CoO (Company of One): one person in charge, agents and systems doing the work that used to take a team, and every process written down before it is automated. Everything we build for others — the doctrine, the programmes, the application and agent factory, the CoO (Company of One) service itself — we built first for ourselves and by ourselves. This website, its contact capture and its CRM came out of that same factory.
+**We are our own Client Zero.** SLG Agency has the structure of a CoO (Company of One): one person in charge, agents and systems doing the work that used to take a team, and every process written down before it is automated. We rely on expert third-party support, but the core is a CoO. Everything we build for others — the doctrine, the programmes, the application and agent factory, the CoO (Company of One) service itself — we built first for ourselves and by ourselves.
 
-We work with boards and executive committees that have to decide on artificial intelligence and do not want to do it on the information supplied by whoever is selling. Our model is informational: we publish the criteria, we deliver the document, and the conversation comes later if you want it.
+We work with directors and executive committees that have to decide on artificial intelligence and do not want to do it on the information supplied by whoever sells it. Our model is transparent: we build judgement (AI Literacy), we deliver actionable assets specific to each case, and we transfer the knowledge.
 
 ## Why we exist
 
-The institutions that traditionally shaped executive judgement — universities, business schools, long-established consultancies — update their programmes on cycles of five to seven years. Artificial intelligence changes every six months. That gap is not temporary, it is structural, and it leaves the executive alone in front of decisions that cannot be postponed.
+The institutions that traditionally shaped executive judgement — universities, business schools, long-established consultancies — update their programmes on cycles of three, five and seven years. Artificial intelligence changes every three months. That gap is not temporary, it is structural, and it leaves the director alone in front of decisions that cannot be postponed and that they are not prepared for.
 
-We do not solve it with a canned programme that arrives late. We solve it with doctrine that is written, published and arguable, and with work done on each company's specific case. And we test it at home before proposing it outside: if a practice does not hold up our own operation, we do not recommend it.
+We do not solve it with a canned programme that arrives late. We solve it with doctrine, Lindy foundations and real guarantees, and with work done on each company's specific case, without impositions or absurd adaptations.
 
 ## How we work, in four rules we do not negotiate
 
 **No lock-in.** Nothing we build ties you to us or to a vendor.
 
-**You choose the stack.** And if you already have one, we work with the one you have.
+**We are technology-agnostic.** We work with the technology you already have, or we implement whichever suits best.
 
-**Approval gates.** Every phase passes through a decision of yours before the next one starts.
+**Approval gates.** Every phase passes through complex decisions before the next one starts.
 
 **The capability stays inside.** If you still depend on us when we finish, the work is not done.
 
