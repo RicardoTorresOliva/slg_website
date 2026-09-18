@@ -544,3 +544,37 @@ verificar el «12× de capacidad» de D-10 (medición interna con supuestos sin
 confirmar); los 69 pendientes de los documentos, casi todos precios, duraciones
 y casos reales; y qué son ACP y SelectUSA/SGWIT para poder escribirlos en
 Nosotros.
+
+---
+
+## Sesión 2026-09-17 (noche) — la captura de correo funciona en producción
+
+**Base de datos y archivos en Supabase, tramo gratuito.** Proyecto `slg-website`
+(ref `jadrwpbgtshwqanrhjxp`, `us-east-1`, Postgres 17). Las 17 migraciones
+aplicadas con el rol dueño; `slg_app` con contraseña y LOGIN; 21 tablas, 11 con
+RLS forzada. Bucket privado `downloads` con los 11 PDF (uno por ficha, clave =
+`file_key` del frontmatter).
+
+- **Vercel conecta por el pooler** `aws-0-us-east-1.pooler.supabase.com:5432`
+  (sesión, porque el código usa `prepare: true`), usuario `slg_app.<ref>`.
+  Las migraciones van por el host directo, que es IPv6.
+- **Archivos por `FILES_DRIVER=supabase`**: la API de gestión no crea claves S3,
+  así que existe `lib/files/supabase.ts` (REST de Storage, clave de servicio) y
+  `adaptadorDeArchivos()` elige proveedor en un solo sitio. El adaptador S3 y el
+  diseño del VPS no cambian.
+- **Secretos** en `~/Dev/SLG_Overhauling/ops/supabase-slg-website.env` (fuera del
+  repo) y cargados en el despliegue de Vercel con `--env`.
+- **Verificado de punta a punta contra producción**: POST al formulario → 303 a
+  `/gracias?url=…` → GET de la URL firmada devuelve el PDF (142 KB) →
+  `lead_capture` con `crm_sync_status: pending` y `download_event` con su firma.
+
+**Bug corregido por el camino**: cinco componentes comparaban el estado de la
+descarga con `"available"`, valor que el esquema no admite; unificado en
+`published`. Las 11 fichas ES están `published`; las EN siguen `coming-soon`
+porque los documentos existen solo en español.
+
+**Lo que sigue faltando y por qué**: `MAIL_SMTP_HOST`/`OPS_MAIL_TO` (correo:
+las credenciales de Resend viven en Easypanel, no aquí) — no bloquean la
+descarga; `CRM_*` (la cola queda en `pending` hasta que existan); los documentos
+en inglés (traducción, otro encargo). El CLI de Supabase bajo Claude Code fuerza
+modo JSON: invocarlo con `env -u CLAUDECODE` (ver memoria del agente).
