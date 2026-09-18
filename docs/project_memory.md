@@ -697,6 +697,11 @@ claves, auditoría— y por `/portal`, y cerrar la «revisión visual» pendient
 portal hace falta un usuario de empresa cliente: se invita desde `/hq/usuarios`, que es el camino
 normal y deja traza — teniendo presente que **esa empresa se crea en la base de producción**.
 
+### 1bis · Producción lleva el mismo fallo de conexiones — pendiente de Ricardo
+`4c57b7e` (pools de 3 + 2, `prepare: false`) está en `develop` y en la vista previa, **no en
+producción**. Pasos: en Vercel cambiar `DATABASE_URL` de `:5432` a `:6543` en Production y Preview,
+luego `vercel --prod` desde `develop` y `vercel redeploy` del alias de `develop`.
+
 ### 2 · La plantilla (objetivo A): la decisión, y luego el código
 Leer `docs/plantilla-de-sitios.md` —es corto y está medido— y responder **la pregunta del §4.1**:
 estructura declarada o `rutas.ts` por cliente. Después, en este orden: `site.config` → parametrizar
