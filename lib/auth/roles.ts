@@ -128,7 +128,14 @@ export const MATRIZ_B3: Readonly<Record<Accion, ReglaB3>> = {
   "project.write": {
     filaB3: "Crear/editar empresas, proyectos",
     porRol: { slg_admin: "si", slg_operator: "asignados", client_admin: "no", client_member: "no" },
-    alcanceDeAgente: null,
+    /**
+     * Era `null` hasta D-162: el CRM es donde nace un proyecto y este sitio lo
+     * recibe, así que una clave de agente tiene que poder crear aquí la carpeta
+     * del cliente y cerrarla o reabrirla. Es UN alcance propio, no `orgs:read`
+     * ampliado: leer empresas no implica escribir proyectos (RF-147). Sigue sin
+     * habilitar `org.write`: las empresas se dan de alta en HQ.
+     */
+    alcanceDeAgente: "projects:write",
   },
   "user.invite.slg": {
     filaB3: "Invitar usuarios SLG / crear claves de API",

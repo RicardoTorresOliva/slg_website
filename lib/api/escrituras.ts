@@ -1,7 +1,7 @@
 /**
- * escrituras.ts — Las **nueve escrituras** de `/api/v1`: cuatro de DU-23
- * (RF-102 · RF-104 · RF-105 · RF-111 · RF-146) y cinco de la Academy, DU-30
- * (RF-153 · RF-156).
+ * escrituras.ts — Las **once escrituras** de `/api/v1`: cuatro de DU-23
+ * (RF-102 · RF-104 · RF-105 · RF-111 · RF-146), cinco de la Academy, DU-30
+ * (RF-153 · RF-156), y dos del proyecto que nace en el CRM (D-162).
  *
  * **CREAR Y PUBLICAR SON DOS ACTOS, Y ESA ES LA UNIDAD.** El ciclo es
  * crear → subir → publicar, y no un `POST` que hace las tres cosas. La razón no
@@ -21,7 +21,7 @@
  * acotada, una empresa ajena sencillamente no existe, y la ruta responde 404 con
  * el mismo cuerpo que si no existiera (§2.6, RF-71).
  */
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 import {
   actualizarHito,
@@ -37,7 +37,7 @@ import {
   type QuienCierra,
 } from "../academy/index.ts";
 import type { AuthContext } from "../db/context.ts";
-import { agentEvent, announcement, deliverable, organization, project } from "../db/schema.ts";
+import { agentEvent, announcement, deliverable, organization, project, user } from "../db/schema.ts";
 import { withScope } from "../db/scope.ts";
 import { adaptadorDeArchivos, validarSubida } from "../files/index.ts";
 import { DatoInvalido } from "../hq/empresas.ts";
@@ -45,7 +45,7 @@ import { destinoDe } from "../hq/entregables.ts";
 import { anunciarAviso, anunciarEntregable } from "../webhooks/index.ts";
 
 import { ErrorDeApi } from "./errores.ts";
-import { empresaVisible } from "./lecturas.ts";
+import { empresaVisible, proyectoDelContrato } from "./lecturas.ts";
 
 /**
  * **AQUÍ NO SE AUDITA, Y NO ES UN OLVIDO** (D-140).
@@ -692,4 +692,182 @@ export async function cerrarPendientePorApi(ctx: AuthContext, id: string) {
   const pendiente = await porLaPuerta(() => cerrarPendiente(ctx, id));
   if (!pendiente) throw new ErrorDeApi(404, `pendiente ${id} fuera del universo de la clave`);
   return { organizationId: pendiente.organizationId, cuerpo: { data: pendienteDelContrato(pendiente) } };
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * D-162 · El proyecto nace en el CRM; este sitio lo recibe — lo común a las dos
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * **NO PASA POR `lib/hq/proyectos.ts`, Y NO ES UN OLVIDO.** Esa puerta es la de
+ * las personas: resuelve «asignados» contra `owner_user_id` y apunta la
+ * auditoría con `conAuditoria`, que aquí escribiría la segunda fila que D-140
+ * prohíbe (el manejador ya apunta toda llamada). Lo que sí se comparte es la
+ * forma del proyecto en el contrato (`proyectoDelContrato`, de las lecturas) y
+ * la lista de servicios (`PROJECT_SERVICES`, que el catálogo ya validó).
+ *
+ * `owner_user_id` queda nulo a propósito: el responsable es una persona de
+ * SLG y se asigna en HQ, no lo decide el CRM.
+ */
+
+/** Un proyecto con su responsable, **bajo el contexto de la clave**. */
+async function proyectoConDueno(ctx: AuthContext, projectId: string) {
+  const filas = await withScope(ctx, (db) =>
+    db
+      .select({ p: project, duenoId: user.id, duenoNombre: user.name })
+      .from(project)
+      .leftJoin(user, eq(user.id, project.ownerUserId))
+      .where(eq(project.id, projectId))
+      .limit(1),
+  );
+  const fila = filas[0];
+  if (!fila) return null;
+  return {
+    organizationId: fila.p.organizationId,
+    cuerpo: {
+      data: proyectoDelContrato(fila.p, fila.duenoId ? { id: fila.duenoId, name: fila.duenoNombre } : null),
+    },
+  };
+}
+
+/**
+ * ¿Chocó con `uq_project_crm_id`? Drizzle deja el error del driver en `cause`
+ * (y el driver, a veces, directamente en `code`): se miran los dos sitios.
+ */
+function chocaConElIndiceDelCrm(e: unknown): boolean {
+  const mira = (x: unknown) =>
+    typeof x === "object" &&
+    x !== null &&
+    (x as { code?: unknown }).code === "23505" &&
+    String((x as { constraint_name?: unknown }).constraint_name ?? "") === "uq_project_crm_id";
+  return mira(e) || mira((e as { cause?: unknown })?.cause);
+}
+
+const CRM_ID_TOMADO = () =>
+  new ErrorDeApi(422, "crm_project_id ya pertenece a un proyecto de otra empresa", [
+    { field: "crm_project_id", code: "already_taken" },
+  ]);
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * 10 · POST /organizations/{id}/projects
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * **IDEMPOTENTE POR `crm_project_id`.** Un reintento del CRM tras una llamada
+ * cortada no puede duplicar la carpeta del cliente: si esa empresa ya tiene un
+ * proyecto con ese identificador, se devuelve **200 con el existente**, ni se
+ * crea otro ni se responde 409. El índice único parcial de 0019 sostiene la
+ * promesa aunque dos reintentos lleguen a la vez: el segundo choca, se relee y
+ * devuelve el mismo proyecto.
+ *
+ * El mismo `crm_project_id` en **otra** empresa es un dato mal enviado, no un
+ * reintento: 422 sobre el campo. Un proyecto del CRM pertenece a una sola.
+ */
+export async function crearProyectoPorApi(
+  ctx: AuthContext,
+  datos: {
+    organizationId: string;
+    nombre: string;
+    servicio: string;
+    crmProjectId: string;
+    estado: string;
+    empiezaEn: Date | null;
+    terminaEn: Date | null;
+  },
+) {
+  if (!(await empresaVisible(ctx, datos.organizationId))) {
+    throw new ErrorDeApi(404, `empresa ${datos.organizationId} fuera del universo de la clave`);
+  }
+  // El catálogo midió la longitud; que no sea solo espacios lo mira HQ
+  // (`validar`) y aquí también: un proyecto sin nombre no se elige en el portal.
+  if (datos.nombre.trim().length === 0) {
+    throw new ErrorDeApi(422, "name en blanco", [{ field: "name", code: "invalid" }]);
+  }
+  // Como en HQ: un proyecto que termina antes de empezar es un error de teclado
+  // que se descubre en pantalla meses después.
+  if (datos.empiezaEn && datos.terminaEn && datos.terminaEn < datos.empiezaEn) {
+    throw new ErrorDeApi(422, "ends_at anterior a starts_at", [{ field: "ends_at", code: "before_starts_at" }]);
+  }
+
+  const yaExiste = async () => {
+    const filas = await withScope(ctx, (db) =>
+      db
+        .select({ id: project.id, organizationId: project.organizationId })
+        .from(project)
+        .where(eq(project.crmProjectId, datos.crmProjectId))
+        .limit(1),
+    );
+    return filas[0] ?? null;
+  };
+
+  const previo = await yaExiste();
+  if (previo) {
+    if (previo.organizationId !== datos.organizationId) throw CRM_ID_TOMADO();
+    const existente = await proyectoConDueno(ctx, previo.id);
+    if (!existente) throw new ErrorDeApi(404, `proyecto ${previo.id} fuera del universo de la clave`);
+    return { ...existente, creado: false };
+  }
+
+  const id = crypto.randomUUID();
+  try {
+    await withScope(ctx, (db) =>
+      db.insert(project).values({
+        id,
+        organizationId: datos.organizationId,
+        name: datos.nombre.trim(),
+        service: datos.servicio,
+        status: datos.estado,
+        ownerUserId: null,
+        startsAt: datos.empiezaEn,
+        endsAt: datos.terminaEn,
+        crmProjectId: datos.crmProjectId,
+      }),
+    );
+  } catch (e) {
+    if (!chocaConElIndiceDelCrm(e)) throw e;
+    // La carrera: otro reintento entró primero. Si es de esta empresa, es el
+    // mismo proyecto; si no se ve —de otra empresa, o fuera del universo de una
+    // clave acotada—, el identificador está tomado.
+    const ganador = await yaExiste();
+    if (ganador && ganador.organizationId === datos.organizationId) {
+      const existente = await proyectoConDueno(ctx, ganador.id);
+      if (existente) return { ...existente, creado: false };
+    }
+    throw CRM_ID_TOMADO();
+  }
+
+  const creado = await proyectoConDueno(ctx, id);
+  if (!creado) throw new ErrorDeApi(404, `proyecto ${id} fuera del universo de la clave`);
+  return { ...creado, creado: true };
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * 11 · POST /projects/{id}/close · POST /projects/{id}/reopen
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Como los hitos: un acto con nombre, no un campo que se parchea. Idempotente
+ * —cerrar lo cerrado o reabrir lo activo responde 200 sin tocar la fila— y con
+ * el 404 decidido antes de escribir: ajeno o inexistente, el mismo cuerpo.
+ * `paused` solo se pone desde HQ; el CRM sabe si un proyecto está o no.
+ */
+export async function cambiarEstadoDeProyectoPorApi(ctx: AuthContext, id: string, estado: "active" | "closed") {
+  const filas = await withScope(ctx, (db) =>
+    db.select({ status: project.status }).from(project).where(eq(project.id, id)).limit(1),
+  );
+  const actual = filas[0];
+  if (!actual) throw new ErrorDeApi(404, `proyecto ${id} fuera del universo de la clave`);
+
+  if (actual.status !== estado) {
+    await withScope(ctx, (db) =>
+      db
+        .update(project)
+        .set({ status: estado })
+        .where(and(eq(project.id, id), eq(project.status, actual.status))),
+    );
+  }
+
+  const proyecto = await proyectoConDueno(ctx, id);
+  if (!proyecto) throw new ErrorDeApi(404, `proyecto ${id} fuera del universo de la clave`);
+  return proyecto;
 }

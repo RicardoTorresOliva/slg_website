@@ -73,6 +73,8 @@ const VALORES = {
   escribeNoticias: "valor-de-prueba-du30-noticias-wr",
   escribeHitos: "valor-de-prueba-du30-hitos-write",
   academyAcotada: "valor-de-prueba-du30-acotada-wr",
+  escribeProyectos: "valor-de-prueba-d162-proyectos-w",
+  proyectosAcotada: "valor-de-prueba-d162-acotada-wr",
   revocada: "valor-de-prueba-du22-revocada-0000",
   caducada: "valor-de-prueba-du22-caducada-0000",
   estrecha: "valor-de-prueba-du22-estrecha-0000",
@@ -86,7 +88,8 @@ type Alcance =
   | "announcements:write"
   | "events:write"
   | "news:write"
-  | "milestones:write";
+  | "milestones:write"
+  | "projects:write";
 
 async function crearClave(
   id: string,
@@ -106,7 +109,7 @@ async function crearClave(
 const CAPTURA = "cap-du22";
 
 async function limpiar() {
-  await dueno`delete from api_key where id like 'k-du22-%' or id like 'k-du23-%' or id like 'k-du30-%'`;
+  await dueno`delete from api_key where id like 'k-du22-%' or id like 'k-du23-%' or id like 'k-du30-%' or id like 'k-d162-%'`;
   await dueno`delete from agent_event where organization_id in (${A.org}, ${B.org}) or api_key_id like 'k-du23-%'`;
   await dueno`delete from announcement where organization_id in (${A.org}, ${B.org})`;
   // Las tres de la Academy cuelgan del proyecto y de la empresa (ON DELETE RESTRICT): van antes.
@@ -189,6 +192,9 @@ async function sembrar() {
   await crearClave("k-du30-new", VALORES.escribeNoticias, ["news:write"]);
   await crearClave("k-du30-hit", VALORES.escribeHitos, ["milestones:write"]);
   await crearClave("k-du30-aco", VALORES.academyAcotada, ["news:write", "milestones:write"], { org: A.org });
+  // D-162: la clave con la que el CRM crea aquí la carpeta del cliente, y una acotada a A.
+  await crearClave("k-d162-prj", VALORES.escribeProyectos, ["projects:write"]);
+  await crearClave("k-d162-aco", VALORES.proyectosAcotada, ["projects:write"], { org: A.org });
 }
 
 /* ── Servidor real ────────────────────────────────────────────────────────── */
@@ -1119,6 +1125,189 @@ async function main() {
     check("cerrar uno inexistente → 404", (await postJson("/api/v1/action-items/pendiente-que-no-existe/done", VALORES.escribeHitos, {})).status === 404);
     check("cerrar sin `milestones:write` → 403", (await postJson(`/api/v1/action-items/${pendienteId}/done`, VALORES.escribeNoticias, {})).status === 403);
 
+    console.log("\nD-162 · el proyecto nace en el CRM; este sitio lo recibe:\n");
+
+    /**
+     * Lo que D-162 promete y solo se ve por el puerto: que el alcance es propio
+     * (`orgs:read` no lo implica), que la empresa de la ruta se verifica y no
+     * se cree, que **repetir el mismo `crm_project_id` devuelve 200 con el que
+     * ya existe y deja UNA fila**, que nada comercial entra por el cuerpo, y que
+     * cerrar y reabrir son actos con nombre e idempotentes.
+     */
+    const RUTA_PROYECTOS_A = `/api/v1/organizations/${A.org}/projects`;
+    const PROYECTO = {
+      name: "Implementación Phoenix PEEx — Cohorte 1",
+      service: "Phoenix PEEx",
+      crm_project_id: "crm-d162-0001",
+      starts_at: "2026-10-01T00:00:00Z",
+      ends_at: "2026-12-15T00:00:00Z",
+    };
+
+    const proyectoSinAlcance = await postJson(RUTA_PROYECTOS_A, VALORES.escribeNoticias, PROYECTO);
+    check("una clave sin `projects:write` → 403", proyectoSinAlcance.status === 403, String(proyectoSinAlcance.status));
+    check(
+      "y es el MISMO 403 de siempre: no nombra el alcance que faltaba",
+      proyectoSinAlcance.cuerpo?.error?.code === "insufficient_scope" &&
+        proyectoSinAlcance.cuerpo?.error?.message === sinAlcance.cuerpo?.error?.message,
+    );
+    check(
+      "`orgs:read` NO implica `projects:write`: leer empresas no es crear proyectos (RF-147)",
+      (await postJson(RUTA_PROYECTOS_A, VALORES.slg, PROYECTO)).status === 403,
+    );
+
+    const proyecto = await postJson(RUTA_PROYECTOS_A, VALORES.escribeProyectos, PROYECTO);
+    check("con `projects:write` → 201", proyecto.status === 201, JSON.stringify(proyecto.cuerpo?.error));
+    const idProyecto = proyecto.cuerpo?.data?.id as string;
+    check(
+      "la respuesta lleva la empresa de la RUTA, el servicio literal y el `crm_project_id` al lado",
+      proyecto.cuerpo?.data?.organization_id === A.org &&
+        proyecto.cuerpo?.data?.service === "Phoenix PEEx" &&
+        proyecto.cuerpo?.data?.crm_project_id === PROYECTO.crm_project_id,
+      JSON.stringify(proyecto.cuerpo?.data),
+    );
+    check(
+      "nace `active`, sin responsable —se asigna en HQ— y con fechas de calendario, sin hora",
+      proyecto.cuerpo?.data?.status === "active" &&
+        proyecto.cuerpo?.data?.owner === null &&
+        proyecto.cuerpo?.data?.starts_at === "2026-10-01" &&
+        proyecto.cuerpo?.data?.ends_at === "2026-12-15",
+      JSON.stringify(proyecto.cuerpo?.data),
+    );
+    const filaProyecto = (await dueno`
+      select organization_id, crm_project_id, owner_user_id, status from project where id = ${idProyecto ?? ""}
+    `) as unknown as { organization_id: string; crm_project_id: string | null; owner_user_id: string | null; status: string }[];
+    check(
+      "la fila lleva `crm_project_id`, es de A y `owner_user_id` es nulo",
+      filaProyecto[0]?.organization_id === A.org && filaProyecto[0]?.crm_project_id === PROYECTO.crm_project_id && filaProyecto[0]?.owner_user_id === null,
+      JSON.stringify(filaProyecto[0]),
+    );
+
+    const repetido = await postJson(RUTA_PROYECTOS_A, VALORES.escribeProyectos, PROYECTO);
+    check(
+      "el MISMO `crm_project_id` otra vez → 200 con el existente, ni 201 ni 409: un reintento no duplica la carpeta",
+      repetido.status === 200 && repetido.cuerpo?.data?.id === idProyecto,
+      `${repetido.status} ${JSON.stringify(repetido.cuerpo?.data?.id)}`,
+    );
+    const repetidoConOtroNombre = await postJson(RUTA_PROYECTOS_A, VALORES.escribeProyectos, { ...PROYECTO, name: "Otro nombre para el mismo" });
+    check(
+      "y con otro nombre también 200 con el existente, sin renombrarlo: manda el que ya está",
+      repetidoConOtroNombre.status === 200 && repetidoConOtroNombre.cuerpo?.data?.name === PROYECTO.name,
+      JSON.stringify(repetidoConOtroNombre.cuerpo?.data?.name),
+    );
+    const cuantos = (await dueno`select count(*)::text as n from project where crm_project_id = ${PROYECTO.crm_project_id}`) as unknown as { n: string }[];
+    check("en la base hay UN solo proyecto con ese `crm_project_id` (índice único parcial de 0019)", cuantos[0]?.n === "1", cuantos[0]?.n);
+
+    const enOtraEmpresa = await postJson(`/api/v1/organizations/${B.org}/projects`, VALORES.escribeProyectos, PROYECTO);
+    check(
+      "el mismo `crm_project_id` en OTRA empresa → 422 `already_taken`: un proyecto del CRM es de una sola",
+      enOtraEmpresa.status === 422 &&
+        enOtraEmpresa.cuerpo?.error?.details?.some((d: Json) => d.field === "crm_project_id" && d.code === "already_taken"),
+      JSON.stringify(enOtraEmpresa.cuerpo?.error),
+    );
+
+    const proyectoAjeno = await postJson(`/api/v1/organizations/${B.org}/projects`, VALORES.proyectosAcotada, { ...PROYECTO, crm_project_id: "crm-d162-ajeno" });
+    check("una clave acotada a A no crea en B → 404, nunca 403 (§2.6)", proyectoAjeno.status === 404, String(proyectoAjeno.status));
+    const proyectoInexistente = await postJson("/api/v1/organizations/org-que-no-existe/projects", VALORES.escribeProyectos, { ...PROYECTO, crm_project_id: "crm-d162-nadie" });
+    check(
+      "y el 404 de lo ajeno es IDÉNTICO al de lo inexistente",
+      proyectoInexistente.status === 404 &&
+        JSON.stringify({ ...proyectoAjeno.cuerpo?.error, request_id: "" }) === JSON.stringify({ ...proyectoInexistente.cuerpo?.error, request_id: "" }),
+      `${JSON.stringify(proyectoAjeno.cuerpo?.error)} vs ${JSON.stringify(proyectoInexistente.cuerpo?.error)}`,
+    );
+    check(
+      "ni lo ajeno ni lo inexistente dejaron fila: el 404 se decide antes de escribir",
+      ((await dueno`select count(*)::text as n from project where crm_project_id in ('crm-d162-ajeno', 'crm-d162-nadie')`) as unknown as { n: string }[])[0]?.n === "0",
+    );
+    const enSuCasaProyecto = await postJson(RUTA_PROYECTOS_A, VALORES.proyectosAcotada, {
+      ...PROYECTO,
+      name: "Desde la acotada",
+      crm_project_id: "crm-d162-0002",
+      status: "paused",
+    });
+    check(
+      "la misma clave acotada SÍ crea en la suya → 201, y respeta el `status` enviado",
+      enSuCasaProyecto.status === 201 && enSuCasaProyecto.cuerpo?.data?.status === "paused",
+      JSON.stringify(enSuCasaProyecto.cuerpo?.data ?? enSuCasaProyecto.cuerpo?.error),
+    );
+
+    const servicioInventado = await postJson(RUTA_PROYECTOS_A, VALORES.escribeProyectos, { ...PROYECTO, crm_project_id: "crm-d162-0003", service: "SLG Readiness" });
+    check(
+      "`service` fuera de los once literales —sin guion bajo— → 422 `not_in_vocabulary` en `service` (RF-14)",
+      servicioInventado.status === 422 &&
+        servicioInventado.cuerpo?.error?.details?.some((d: Json) => d.field === "service" && d.code === "not_in_vocabulary"),
+      JSON.stringify(servicioInventado.cuerpo?.error?.details),
+    );
+    const crmVacio = await postJson(RUTA_PROYECTOS_A, VALORES.escribeProyectos, { ...PROYECTO, crm_project_id: "" });
+    check(
+      "`crm_project_id` vacío → 422 `required`: si el CRM manda, dice cuál es",
+      crmVacio.status === 422 && crmVacio.cuerpo?.error?.details?.some((d: Json) => d.field === "crm_project_id" && d.code === "required"),
+      JSON.stringify(crmVacio.cuerpo?.error?.details),
+    );
+    const { crm_project_id: _sinCrm, ...PROYECTO_SIN_CRM } = PROYECTO;
+    void _sinCrm;
+    const crmAusente = await postJson(RUTA_PROYECTOS_A, VALORES.escribeProyectos, PROYECTO_SIN_CRM);
+    check("y ausente, también 422 `required`", crmAusente.status === 422 && crmAusente.cuerpo?.error?.details?.some((d: Json) => d.field === "crm_project_id" && d.code === "required"));
+    const nombreEnBlanco = await postJson(RUTA_PROYECTOS_A, VALORES.escribeProyectos, { ...PROYECTO, crm_project_id: "crm-d162-0003", name: "   " });
+    check("`name` de solo espacios → 422 en `name`", nombreEnBlanco.status === 422 && nombreEnBlanco.cuerpo?.error?.details?.some((d: Json) => d.field === "name"), JSON.stringify(nombreEnBlanco.cuerpo?.error?.details));
+    const fechasAlReves = await postJson(RUTA_PROYECTOS_A, VALORES.escribeProyectos, { ...PROYECTO, crm_project_id: "crm-d162-0003", starts_at: "2026-12-15T00:00:00Z", ends_at: "2026-10-01T00:00:00Z" });
+    check(
+      "`ends_at` anterior a `starts_at` → 422 `before_starts_at`",
+      fechasAlReves.status === 422 && fechasAlReves.cuerpo?.error?.details?.some((d: Json) => d.field === "ends_at" && d.code === "before_starts_at"),
+      JSON.stringify(fechasAlReves.cuerpo?.error?.details),
+    );
+    check("`starts_at` ilegible → 422", (await postJson(RUTA_PROYECTOS_A, VALORES.escribeProyectos, { ...PROYECTO, crm_project_id: "crm-d162-0003", starts_at: "el mes que viene" })).status === 422);
+    check("`status` fuera de vocabulario → 422", (await postJson(RUTA_PROYECTOS_A, VALORES.escribeProyectos, { ...PROYECTO, crm_project_id: "crm-d162-0003", status: "won" })).status === 422);
+    const conCampoComercial = await postJson(RUTA_PROYECTOS_A, VALORES.escribeProyectos, { ...PROYECTO, crm_project_id: "crm-d162-0003", stage: "negotiation" });
+    check(
+      "un campo comercial de más → 422 `unknown_parameter`: la frontera (a) tampoco entra por el cuerpo",
+      conCampoComercial.status === 422 && conCampoComercial.cuerpo?.error?.details?.some((d: Json) => d.code === "unknown_parameter"),
+      JSON.stringify(conCampoComercial.cuerpo?.error?.details),
+    );
+    check(
+      "ninguno de los rechazos dejó fila con ese `crm_project_id`",
+      ((await dueno`select count(*)::text as n from project where crm_project_id = 'crm-d162-0003'`) as unknown as { n: string }[])[0]?.n === "0",
+    );
+    const sinFechas = await postJson(RUTA_PROYECTOS_A, VALORES.escribeProyectos, { name: "Sin fechas", service: "CoO as a Service", crm_project_id: "crm-d162-0004" });
+    check(
+      "las fechas son opcionales: sin ellas, 201 con `starts_at` y `ends_at` nulos y `status: active` por defecto",
+      sinFechas.status === 201 && sinFechas.cuerpo?.data?.starts_at === null && sinFechas.cuerpo?.data?.ends_at === null && sinFechas.cuerpo?.data?.status === "active",
+      JSON.stringify(sinFechas.cuerpo?.data ?? sinFechas.cuerpo?.error),
+    );
+
+    const listado = await P(`${RUTA_PROYECTOS_A}?limit=50`, VALORES.slg);
+    check(
+      "el proyecto creado aparece en `GET .../projects` con su `crm_project_id`",
+      listado.status === 200 && listado.cuerpo?.data?.some((p: Json) => p.id === idProyecto && p.crm_project_id === PROYECTO.crm_project_id),
+      JSON.stringify(listado.cuerpo?.data?.map((p: Json) => [p.id, p.crm_project_id])),
+    );
+    check(
+      "y el sembrado a mano se lista con `crm_project_id: null`: los anteriores a D-162 no lo tienen",
+      listado.cuerpo?.data?.some((p: Json) => p.id === A.proyecto && p.crm_project_id === null),
+    );
+
+    const proyectoCerrado = await postJson(`/api/v1/projects/${idProyecto}/close`, VALORES.escribeProyectos, {});
+    check("`POST /projects/{id}/close` → 200 con `status: closed`", proyectoCerrado.status === 200 && proyectoCerrado.cuerpo?.data?.status === "closed", JSON.stringify(proyectoCerrado.cuerpo));
+    const filaCerrada = (await dueno`select status from project where id = ${idProyecto ?? ""}`) as unknown as { status: string }[];
+    check("en la base: `status = closed`", filaCerrada[0]?.status === "closed", JSON.stringify(filaCerrada[0]));
+    const otraVezCerradoProyecto = await postJson(`/api/v1/projects/${idProyecto}/close`, VALORES.escribeProyectos, {});
+    check("cerrarlo otra vez → 200, idempotente", otraVezCerradoProyecto.status === 200 && otraVezCerradoProyecto.cuerpo?.data?.status === "closed");
+    check(
+      "`GET .../projects?status=closed` lo devuelve: el filtro lee el estado que puso `/close`",
+      (await P(`${RUTA_PROYECTOS_A}?status=closed`, VALORES.slg)).cuerpo?.data?.some((p: Json) => p.id === idProyecto),
+    );
+    const proyectoReabierto = await postJson(`/api/v1/projects/${idProyecto}/reopen`, VALORES.escribeProyectos, {});
+    check("`POST /projects/{id}/reopen` → 200, vuelve a `active`", proyectoReabierto.status === 200 && proyectoReabierto.cuerpo?.data?.status === "active", JSON.stringify(proyectoReabierto.cuerpo));
+    check("reabrir uno ya activo → 200, idempotente", (await postJson(`/api/v1/projects/${idProyecto}/reopen`, VALORES.escribeProyectos, {})).status === 200);
+    check("cerrar un proyecto de OTRA empresa con la clave acotada → 404", (await postJson(`/api/v1/projects/${B.proyecto}/close`, VALORES.proyectosAcotada, {})).status === 404);
+    check("cerrar uno inexistente → 404", (await postJson("/api/v1/projects/p-que-no-existe/close", VALORES.escribeProyectos, {})).status === 404);
+    check("cerrar sin `projects:write` → 403", (await postJson(`/api/v1/projects/${idProyecto}/close`, VALORES.escribeHitos, {})).status === 403);
+    check("`close` con un cuerpo que intenta parchear campos → 422: el estado no se escribe a mano", (await postJson(`/api/v1/projects/${idProyecto}/close`, VALORES.escribeProyectos, { status: "closed" })).status === 422);
+    check("`reopen` con un `Content-Type` que no es JSON → 415", (await postJson(`/api/v1/projects/${idProyecto}/reopen`, VALORES.escribeProyectos, "x", "text/plain")).status === 415);
+    check(
+      "el proyecto de B sigue `active`: el 404 de la acotada no escribió",
+      ((await dueno`select status from project where id = ${B.proyecto}`) as unknown as { status: string }[])[0]?.status === "active",
+    );
+
     console.log("\nDU-30 · Academy — la puerta `lib/academy` con PERSONAS (B.3 por rol; criterio 1 de DU-27):\n");
 
     /**
@@ -1260,10 +1449,30 @@ async function main() {
       "/api/v1/projects/{id}/action-items",
       "/api/v1/action-items/{id}/done",
     ];
+    // D-162: `POST /organizations/{id}/projects` comparte ruta con el `GET`, así
+    // que dieciocho operaciones son diecisiete rutas en `paths`.
+    const TRES_DEL_CRM = ["/api/v1/organizations/{id}/projects", "/api/v1/projects/{id}/close", "/api/v1/projects/{id}/reopen"];
     check(
-      "describe LAS QUINCE rutas —nueve de DU-22/23 y seis de la Academy—, ni una más",
-      [...NUEVE, ...SEIS_ACADEMY].every((r) => r in (spec.cuerpo?.paths ?? {})) && Object.keys(spec.cuerpo.paths).length === 15,
+      "describe LAS DIECIOCHO operaciones —nueve de DU-22/23, seis de la Academy y tres de D-162— en diecisiete rutas, ni una más",
+      [...NUEVE, ...SEIS_ACADEMY, ...TRES_DEL_CRM].every((r) => r in (spec.cuerpo?.paths ?? {})) && Object.keys(spec.cuerpo.paths).length === 17,
       Object.keys(spec.cuerpo?.paths ?? {}).join(" "),
+    );
+    const proyectosEnLaSpec = spec.cuerpo.paths["/api/v1/organizations/{id}/projects"];
+    check(
+      "la misma ruta lleva `orgs:read` en el GET y `projects:write` en el POST, leídos de B.3 (D-162)",
+      proyectosEnLaSpec?.get?.["x-alcance-exigido"] === "orgs:read" &&
+        proyectosEnLaSpec?.post?.["x-alcance-exigido"] === "projects:write" &&
+        TRES_DEL_CRM.slice(1).every((r) => spec.cuerpo.paths[r]?.post?.["x-alcance-exigido"] === "projects:write"),
+      JSON.stringify([proyectosEnLaSpec?.get?.["x-alcance-exigido"], proyectosEnLaSpec?.post?.["x-alcance-exigido"]]),
+    );
+    const esquemaProyecto = proyectosEnLaSpec?.post?.requestBody?.content?.["application/json"]?.schema;
+    check(
+      "la especificación anuncia `service` como enumerado de once literales y `crm_project_id` obligatorio",
+      esquemaProyecto?.properties?.service?.enum?.length === 11 &&
+        esquemaProyecto?.properties?.service?.enum?.includes("SLG_Readiness") &&
+        esquemaProyecto?.required?.includes("crm_project_id") &&
+        esquemaProyecto?.required?.includes("service"),
+      JSON.stringify(esquemaProyecto?.properties?.service),
     );
     const alcancesAcademy = SEIS_ACADEMY.map((r) => spec.cuerpo.paths[r]?.post?.["x-alcance-exigido"]);
     check(
@@ -1357,7 +1566,7 @@ async function main() {
         from audit_log
        where actor_id in ('k-du22-slg','k-du22-cap','k-du22-emp','k-du22-lim','k-du22-ent','k-du22-eve',
                           'k-du22-rev','k-du22-cad','k-du23-ent','k-du23-avi','k-du23-eve','k-du23-aco','k-rev-cap',
-                          'k-du30-new','k-du30-hit','k-du30-aco','unknown')
+                          'k-du30-new','k-du30-hit','k-du30-aco','k-d162-prj','k-d162-aco','unknown')
          and created_at >= ${INICIO}
        order by created_at desc limit 600
     `) as unknown as { action: string; actor_type: string; actor_id: string; actor_label: string | null; entity: string; ip: string | null; metadata: Json }[];
@@ -1455,6 +1664,25 @@ async function main() {
       (
         (await dueno`select count(*)::text as n from audit_log where id = ${importanciaFuera.cuerpo?.error?.request_id ?? ""}`) as unknown as { n: string }[]
       )[0]?.n === "1",
+    );
+
+    console.log("\nD-162 · la carpeta del cliente queda auditada, también el 200 del reintento:\n");
+
+    const delCrm = apuntes.filter((a) => a.actor_id.startsWith("k-d162-"));
+    check(
+      "`project.create` apunta el 201, el 200 del reintento y los rechazos 404 y 422, una fila por llamada",
+      [201, 200, 404, 422].every((s) => delCrm.some((a) => a.action === "project.create" && a.metadata?.status === s)) &&
+        delCrm.every((a) => typeof a.metadata?.path === "string"),
+      JSON.stringify(delCrm.filter((a) => a.action === "project.create").map((a) => a.metadata?.status)),
+    );
+    check(
+      "el 403 sin `projects:write` también es una fila `project.create`",
+      apuntes.some((a) => a.action === "project.create" && a.metadata?.status === 403),
+    );
+    check(
+      "`project.update` apunta `/close` y `/reopen`, cada uno con su ruta y con 200",
+      delCrm.some((a) => a.action === "project.update" && /\/close$/.test(a.metadata?.path ?? "") && a.metadata?.status === 200) &&
+        delCrm.some((a) => a.action === "project.update" && /\/reopen$/.test(a.metadata?.path ?? "") && a.metadata?.status === 200),
     );
   } finally {
     servidor.parar();
