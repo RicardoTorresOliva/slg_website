@@ -2779,3 +2779,11 @@ Tiene valores de prueba (`pruebas`, dominio `.test`), y producción los lleva ta
 sonda acusaba solo `MAIL_SMTP_HOST` y `OPS_MAIL_TO`. La clave real de Resend hay que crearla
 (§4bis.2) o copiarla de Easypanel. Las dos del CRM se crean en su interfaz (§4septies.1): el MCP del
 CRM no gestiona claves.
+
+**Continuación (21:00–21:15).** Ricardo creó las tres credenciales y desplegó dos veces desde su
+terminal. El primer despliegue dejó `/api/health` limpio pero la descarga devolvía `error_de_firma`:
+el filtro de nombres del comando (`[A-Z_]`) no dejaba pasar `S3_BUCKET_DOWNLOADS`, con dígito, y sin
+bucket no hay firma. Corregido a `[A-Z0-9_]`; el segundo despliegue entrega el PDF en inglés
+(`/en/thank-you` con la URL firmada). SMTP de Resend autenticado sin enviar nada. **Queda por ver el
+lead en el CRM**: el barrendero es un `setInterval` pensado para el VPS y en Vercel solo corre
+mientras hay peticiones; si no aparece, la salida es `after()` tras cada captura (decisión pendiente).

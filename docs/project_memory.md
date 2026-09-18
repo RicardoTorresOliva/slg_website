@@ -581,60 +581,46 @@ modo JSON: invocarlo con `env -u CLAUDECODE` (ver memoria del agente).
 
 ---
 
-## PRÓXIMA SESIÓN — un despliegue y dos credenciales, todo lo demás hecho
+## PRÓXIMA SESIÓN — todo desplegado; queda confirmar la cola del CRM en Vercel
 
-Estado al cierre de la sesión del 2026-09-17 (madrugada del 18). Los tres encargos
-de la noche anterior quedaron así:
+Estado al cierre del 2026-09-17, 21:15 (hora de Lima). Los tres encargos:
 
-### 1 · Traducción al inglés — HECHA; solo falta desplegar
-- Los 11 `D-0X-<slug>-en.md` están en `~/Dev/SLG_Overhauling/docs/`, traducidos por
-  cuatro agentes en paralelo contra `_BRIEF_TRADUCCION.md`. `python3 _revisar.py`:
-  22 documentos · 0 con reparos. Extensión entre −2 % y +3 % del original.
-- PDF en `docs/pdf/D-0X-*-en.pdf`. La plantilla (`_plantilla.typ` y
-  `_plantilla-pandoc.typ`) toma ahora `lang` del frontmatter del documento —antes
-  estaba fija en `es`— y `_a-pdf.sh` limpia `[source: …]` además de `[fuente: …]`.
-- Subidos al bucket `downloads` de Supabase con `montar/subir.mjs` (nuevo, REST de
-  Storage con la clave de servicio de `ops/supabase-slg-website.env`; acepta globs).
-- Las 11 fichas de `content/downloads/en/` están en `published` con su `file_key`
-  (commit `22aa6ef`). `check:content` en verde. La ficha EN de D-03 describía el
-  concepto antiguo de RETx; se alineó con el documento aprobado. **La ficha ES
-  `d-03.md` conserva `audience` y `learns` del concepto viejo**: pendiente de Ricardo.
-- **Falta el despliegue.** El agente en modo auto no puede ejecutar
-  `vercel deploy --prod` ni guardar un script que lo haga (el clasificador lo
-  bloquea). El comando está abajo; con él, `/en/downloads/*` entrega el PDF inglés.
+### 1 · Traducción — HECHA Y EN PRODUCCIÓN
+- 11 `D-0X-*-en.md` en `~/Dev/SLG_Overhauling/docs/` (`_revisar.py`: 22 documentos, 0 reparos),
+  PDF con la plantilla en su idioma, subidos al bucket `downloads` con `montar/subir.mjs`,
+  fichas EN `published` (commit `22aa6ef`).
+- **Verificado en producción**: `/en/downloads/d-10-en` → POST → 303 → `/en/thank-you?url=…`
+  con la URL firmada de `D-10-coo-as-a-service-en.pdf`.
+- Pendiente de Ricardo: la ficha ES `d-03.md` conserva `audience`/`learns` del RETx antiguo.
 
-### 2 · Correo — FALTA LA CLAVE DE RESEND (corrige la nota de la sesión anterior)
-- La nota anterior era falsa: el `.env` local tiene valores de PRUEBA
-  (`MAIL_SMTP_USERNAME=pruebas`, remitente `.test`), no los de Resend. Producción los
-  lleva también; por eso `/api/health` solo acusa `MAIL_SMTP_HOST` y `OPS_MAIL_TO`.
-- La credencial real no está en esta máquina: vive en Easypanel (VPS) o se crea una
-  nueva en resend.com (`docs/deployment.md` §4bis.2, «Sending access», dominio
-  `mailweb.softlandingglobal.com`). Va en `~/Dev/SLG_Overhauling/ops/secretos.env`
-  como `MAIL_SMTP_PASSWORD`. Host, puerto, usuario `resend`, remitente, Reply-To,
-  avisos y `OPS_MAIL_TO` ya están escritos en `ops/web.env`.
-- Con la clave puesta: `npm run test:correo` no sirve (usa servidores de prueba);
-  la prueba real es el despliegue y luego `/api/ops` (§4bis.3) o un formulario.
+### 2 · Correo — CONFIGURADO
+- Clave nueva de Resend (`slg-web`, Sending access, `mailweb.softlandingglobal.com`) en
+  `ops/secretos.env`. Autenticación SMTP comprobada con `transporter.verify()` sin enviar nada.
+- `/api/health` → `faltan: []`. Las ocho variables de correo y `OPS_MAIL_TO` viajan en cada
+  despliegue. No hay correo de prueba enviado: la captura no manda correo si el CRM responde
+  bien (solo `capture_failed_alert`); la prueba de bandeja es §4bis.3 con `OPS_TOKEN`.
 
-### 3 · CRM — FALTAN LAS DOS CLAVES; el MCP no las crea
-- El servidor MCP `crm` expone contactos, notas, actividades, presupuestos y
-  contratos; **no tiene herramientas de claves de API**. Se crean en la interfaz del
-  CRM (§4septies.1: «Website — captura» y «Website — tablero») y van a
-  `ops/secretos.env` (`CRM_API_KEY_CAPTURE`, `CRM_API_KEY_READ`). `CRM_BASE_URL`,
-  `CRM_MODE=contact_note`, `CRM_APP_URL` y `CRM_CONTACT_URL_TEMPLATE`
-  (`/contactos/{id}`) ya están en `ops/web.env`.
-- El agente en modo auto tampoco puede leer la clave con la que el MCP se autentica
-  ni inspeccionar `~/Dev/crm_slg` buscando cómo se crean: bloqueado.
+### 3 · CRM — CLAVES PUESTAS; falta ver el lead en el CRM
+- Dos claves nuevas creadas en `crm.softlandingglobal.com/ajustes/api` (`slgweb-captura`
+  con contacts:write · activities:write · crm:read; `slgweb-tablero` con crm:read) y en
+  `ops/secretos.env`. Las seis `CRM_*` viajan en el despliegue.
+- **No se pudo comprobar la entrega**: el modo auto del agente bloqueó la lectura de la base
+  y del MCP del CRM al final de la sesión. Comprobar a mano: CRM → Contactos → buscar
+  `prueba.captura@softlandingglobal.com`; debe tener una nota «Captura web · download».
+- **Riesgo real a vigilar**: el barrendero de la cola es un `setInterval` de 20 s dentro del
+  proceso (`instrumentation.ts` → `lib/crm/cola.ts`), diseñado para el VPS (A-01). En
+  Vercel una función solo ejecuta temporizadores mientras está atendiendo peticiones, así
+  que la cola puede tardar o no vaciarse. Si el contacto no aparece tras unos minutos de
+  tráfico, la corrección es de código: barrer una vez tras cada captura con `after()` de
+  `next/server` en `app/api/descargas/route.ts` (o un cron de Vercel que llame a un
+  endpoint protegido). Es una decisión de arquitectura: consultarla antes de hacerla.
 
-### Cómo desplegar (Ricardo, desde su terminal; una vez por cada cambio de variables)
+### Despliegue (Ricardo, desde su terminal; cada vez que cambie una variable)
+El comando de abajo ya está corregido: el filtro de nombres admite dígitos
+(`S3_BUCKET_DOWNLOADS`), que fue la causa del `error_de_firma` del primer intento.
 
 ```bash
 cd ~/Dev/slg_website && OPS=~/Dev/SLG_Overhauling/ops && ARGS=() && while IFS= read -r l || [ -n "$l" ]; do [[ "$l" =~ ^[A-Z0-9_]+= ]] || continue; k="${l%%=*}"; v="${l#*=}"; v="${v%\"}"; v="${v#\"}"; case "$k" in DATABASE_URL_APP) k=DATABASE_URL;; DATABASE_URL_OWNER) k=DATABASE_URL_MIGRATIONS;; DB_OWNER_PASSWORD|PROJECT_REF|REGION) continue;; esac; [ -n "$v" ] || continue; ARGS+=(--env "$k=$v" --build-env "$k=$v"); done < <(cat "$OPS/supabase-slg-website.env" "$OPS/web.env" "$OPS/secretos.env") && vercel deploy --prod --yes "${ARGS[@]}"
 ```
 
-Las variables vacías de `secretos.env` no viajan, así que `/api/health` dirá
-exactamente cuál falta. Después del despliegue, comprobar en este orden:
-1. `https://softlandingglobal.com/api/health` → `faltan: []`.
-2. `https://softlandingglobal.com/en/downloads/d-10-en` → el formulario entrega el
-   PDF en inglés (redirige a `/en/thanks?url=…` o equivalente).
-3. En Supabase, `lead_capture` de `prueba.captura@softlandingglobal.com` pasa de
-   `crm_sync_status: pending` a sincronizado en el siguiente barrido de la cola.
+Producción actual: `slg-website-jtlktoxz4` (21:13), alias `softlandingglobal.com`.
