@@ -379,3 +379,4 @@ Los valores se ponen en **Easypanel → proyecto `slg_website` → el servicio �
 | Qué se está construyendo ahora | [`implementation/task_tracker.md`](implementation/task_tracker.md) |
 | Cómo trabaja el equipo que construye esto | [`AGENTS.md`](AGENTS.md) |
 | El conocimiento del proyecto, por dónde entrar | [`knowledge/index.md`](knowledge/index.md) |
+| Añadir una conexión a HQ | editar [`content/conexiones.json`](content/conexiones.json) |

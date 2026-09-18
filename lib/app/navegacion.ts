@@ -50,6 +50,13 @@ export type Seccion = {
 export const SECCIONES: readonly Seccion[] = [
   // ── HQ ──────────────────────────────────────────────────────────────────
   { clave: "dashboard", href: "/hq/tablero", superficie: "hq", accion: "hq.dashboard.read" },
+  /**
+   * El lanzador de productos externos (DU-29(a) · RF-154). Misma acción que el
+   * tablero **a propósito**: no es un dato nuevo que gobernar, es otra vista de
+   * «puede entrar a HQ» — inventar una acción propia obligaría a tocar la
+   * matriz B.3 por una pantalla que no decide nada, solo abre pestañas.
+   */
+  { clave: "connections", href: "/hq/conexiones", superficie: "hq", accion: "hq.dashboard.read" },
   { clave: "captures", href: "/hq/capturas", superficie: "hq", accion: "capture.read" },
   { clave: "orgs", href: "/hq/empresas", superficie: "hq", accion: "org.read" },
   { clave: "projects", href: "/hq/proyectos", superficie: "hq", accion: "org.read" },

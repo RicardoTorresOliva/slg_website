@@ -1,0 +1,72 @@
+[
+  {
+    "clave": "crm",
+    "nombre": { "es": "CRM", "en": "CRM" },
+    "descripcion": {
+      "es": "Contactos, empresas y actividad comercial de SLG.",
+      "en": "SLG's contacts, companies, and commercial activity."
+    },
+    "url": "https://crm.softlandingglobal.com",
+    "grupo": "operacion"
+  },
+  {
+    "clave": "n8n",
+    "nombre": { "es": "n8n", "en": "n8n" },
+    "descripcion": {
+      "es": "Automatizaciones y flujos de trabajo entre los sistemas de SLG.",
+      "en": "Automations and workflows across SLG's systems."
+    },
+    "url": "https://n8n.softlandingglobal.com",
+    "grupo": "operacion"
+  },
+  {
+    "clave": "evolution",
+    "nombre": { "es": "Evolution (WhatsApp)", "en": "Evolution (WhatsApp)" },
+    "descripcion": {
+      "es": "Puerta de enlace de WhatsApp para mensajería con clientes y leads.",
+      "en": "WhatsApp gateway for messaging clients and leads."
+    },
+    "url": "https://evolution.softlandingglobal.com",
+    "grupo": "operacion"
+  },
+  {
+    "clave": "hermes",
+    "nombre": { "es": "Hermes", "en": "Hermes" },
+    "descripcion": {
+      "es": "Asistente personal de Ricardo.",
+      "en": "Ricardo's personal assistant."
+    },
+    "url": null,
+    "grupo": "agentes"
+  },
+  {
+    "clave": "superchatbot",
+    "nombre": { "es": "Superchatbot", "en": "Superchatbot" },
+    "descripcion": {
+      "es": "El chatbot que atiende a los visitantes y clientes de SLG.",
+      "en": "The chatbot that serves SLG's visitors and clients."
+    },
+    "url": null,
+    "grupo": "agentes"
+  },
+  {
+    "clave": "fabrica-contenidos",
+    "nombre": { "es": "Fábrica de contenidos", "en": "Content factory" },
+    "descripcion": {
+      "es": "Generación de artículos, publicaciones y materiales de marketing.",
+      "en": "Generates articles, posts, and marketing materials."
+    },
+    "url": null,
+    "grupo": "creacion"
+  },
+  {
+    "clave": "estudio-creativo",
+    "nombre": { "es": "Estudio creativo", "en": "Creative studio" },
+    "descripcion": {
+      "es": "Generación y edición de imagen y vídeo de marca.",
+      "en": "Generates and edits brand image and video."
+    },
+    "url": null,
+    "grupo": "creacion"
+  }
+]

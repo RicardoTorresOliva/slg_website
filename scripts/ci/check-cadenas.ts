@@ -60,6 +60,10 @@ const VIGILADOS = [
   "app/(hq)/hq/auditoria/page.tsx",
   "app/(hq)/hq/entregables/page.tsx",
   "app/(hq)/hq/avisos/page.tsx",
+  // DU-29(a): el lanzador de Conexiones también pinta texto fijo (título,
+  // subtítulos, «Abrir», «pendiente»), y tiene que salir de content/ui igual
+  // que cualquier otra pantalla de HQ.
+  "app/(hq)/hq/conexiones/page.tsx",
   "app/(portal)/portal/page.tsx",
   "app/(portal)/portal/proyectos/page.tsx",
   "app/(portal)/portal/proyectos/[id]/page.tsx",

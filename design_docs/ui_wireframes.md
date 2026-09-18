@@ -994,6 +994,15 @@ Tabla filtrable por actor (usuario o clave), acción, entidad y fecha. **Solo le
 acción de editar ni borrar en la pantalla, porque `audit_log` es inmutable (RNF-29). Ausencia de
 botones aquí es una decisión de seguridad, no un olvido.
 
+### 6.10 Conexiones (`/hq/conexiones`) — RF-154 · DU-29(a)
+
+El lanzador de los productos externos de SLG (CRM, n8n, Evolution/WhatsApp, el asistente, el
+superchatbot, la fábrica de contenidos, el estudio creativo), agrupados en tres subtítulos:
+operación, agentes y creación. Cada ficha abre su producto en pestaña nueva con **Abrir**; el que
+todavía no tiene URL conocida se marca **pendiente de conectar** en vez de esconderse. Los datos
+salen de `content/conexiones.json` (D-11): añadir un producto es añadir un objeto, sin pantalla de
+administración.
+
 ---
 
 ## 7. Portal de clientes (`/portal`)
