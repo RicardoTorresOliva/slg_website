@@ -175,3 +175,64 @@ export async function editarProyecto(
     },
   );
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * Cerrar y reabrir (RF-79 · data_model §2.5)
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/** Lo que devuelve un cambio de estado: bastante para la pantalla y la prueba. */
+export type EstadoDeProyectoCambiado = {
+  readonly id: string;
+  readonly organizationId: string;
+  readonly estado: string;
+};
+
+/**
+ * Cerrar es `status = 'closed'` **y nada más**: los entregables siguen ahí
+ * —el cliente los sigue viendo en `/portal/proyectos`, porque son lo que se le
+ * entregó— y reabrir lo devuelve a `active`. Lo que sí cambia para el cliente
+ * es que un proyecto cerrado deja de tener «qué sigue» en `/portal` y en
+ * `/portal/programa`, que ya filtran por `active`.
+ *
+ * Misma forma que `actualizarHito` (DU-29): la fila se lee antes —para el
+ * apunte, que necesita la empresa, y para devolver `null` si no existe para
+ * este actor— y la asignación se resuelve **contra la base**, no la trae quien
+ * llama. Es la fila «asignados» de B.3: `slg_operator` cierra los suyos y solo
+ * los suyos, y el intento sobre uno ajeno queda auditado como rechazo.
+ */
+async function cambiarEstadoDeProyecto(
+  ctx: AuthContext,
+  id: string,
+  estado: (typeof PROJECT_STATUS)[number],
+  accion: "project.close" | "project.reopen",
+): Promise<EstadoDeProyectoCambiado | null> {
+  const [actual] = await withScope(ctx, (db) =>
+    db.select({ organizationId: project.organizationId }).from(project).where(eq(project.id, id)).limit(1),
+  );
+  if (!actual) return null;
+  const asignado = await estaAsignado(ctx, id);
+  return conAuditoria(
+    ctx,
+    { accion, entidad: "project", entidadId: id, organizationId: actual.organizationId },
+    async () => {
+      exigir(ctx, "project.write", { asignado });
+
+      const [fila] = await withScope(ctx, (db) =>
+        db
+          .update(project)
+          .set({ status: estado })
+          .where(eq(project.id, id))
+          .returning({ id: project.id, organizationId: project.organizationId, estado: project.status }),
+      );
+      return fila ?? null;
+    },
+  );
+}
+
+export async function archivarProyecto(ctx: AuthContext, id: string): Promise<EstadoDeProyectoCambiado | null> {
+  return cambiarEstadoDeProyecto(ctx, id, "closed", "project.close");
+}
+
+export async function reabrirProyecto(ctx: AuthContext, id: string): Promise<EstadoDeProyectoCambiado | null> {
+  return cambiarEstadoDeProyecto(ctx, id, "active", "project.reopen");
+}

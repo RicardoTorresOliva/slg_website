@@ -878,6 +878,12 @@ Ficha de empresa: datos + pestañas *Proyectos* · *Usuarios* · *Avisos*, y acc
 Crear/editar en panel lateral. Sin borrado en v1: una empresa se archiva cambiando su `status`
 (borrar arrastra proyectos, entregables y capturas).
 
+Acción por fila **«Archivar»** (o **«Reactivar»** si ya lo está). Confirmación en dos pasos por URL,
+sin JavaScript: el enlace lleva a `?archivar=<id>` y la fila pasa a «¿Seguro? [Sí, archivar]
+[Cancelar]». Las archivadas no desaparecen: bajan al final, atenuadas y con su estado escrito
+(data_model §2.5 y §4.3). Solo `slg_admin`: archivar una empresa entera no es «operar sobre un
+proyecto asignado».
+
 ### 6.3 Usuarios e invitaciones (`/hq/usuarios`) — RF-78
 
 ```
@@ -902,6 +908,12 @@ Tabla: nombre · empresa · servicio (nomenclatura literal) · estado · respons
 Ficha: datos + *Entregables* + *Avisos* + actividad. El campo servicio se elige de la lista literal
 (`Phoenix PEEx`, `SLG_Readiness`, `APP_Building`…), no se escribe libre: así el script de
 nomenclatura (RF-14) no tiene nada que corregir.
+
+Acción por fila **«Cerrar proyecto»** (o **«Reabrir»**), con el mismo dos pasos por URL que la
+empresa (`?cerrar=<id>`). Los cerrados bajan al final, atenuados; sus entregables siguen siendo del
+cliente y se ven en `/portal/proyectos`, pero dejan de tener «qué sigue» en `/portal` y en
+`/portal/programa`. `slg_operator` cierra solo los que tiene asignados (RF-86). El desplegable de
+empresa de «Nuevo proyecto» solo ofrece empresas activas.
 
 ### 6.5 Entregables (`/hq/entregables`) — RF-80
 
