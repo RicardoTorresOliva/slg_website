@@ -9,7 +9,7 @@
 import { sql } from "drizzle-orm";
 
 import { withSystemScope } from "../db/scope.ts";
-import { adaptadorS3 } from "../files/index.ts";
+import { adaptadorDeArchivos } from "../files/index.ts";
 
 export type DocumentoDelVisor = {
   readonly id: string;
@@ -58,7 +58,7 @@ export async function documentoParaElVisor(id: string): Promise<DocumentoDelViso
  * cabeceras— y el control se habría perdido justo en el último paso.
  */
 export async function urlFirmadaDelObjeto(clave: string): Promise<string> {
-  const firmada = await adaptadorS3().firmarDescarga({
+  const firmada = await adaptadorDeArchivos().firmarDescarga({
     bucket: "deliverables",
     clave,
     uso: "deliverable",

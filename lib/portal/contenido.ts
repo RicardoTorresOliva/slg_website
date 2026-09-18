@@ -13,7 +13,7 @@ import { and, eq } from "drizzle-orm";
 import type { AuthContext } from "../db/context.ts";
 import { deliverable } from "../db/schema.ts";
 import { withScope } from "../db/scope.ts";
-import { adaptadorS3 } from "../files/index.ts";
+import { adaptadorDeArchivos } from "../files/index.ts";
 
 /** Tope: un entregable Markdown es un documento, no un volcado. */
 const MAXIMO = 2 * 1024 * 1024;
@@ -42,7 +42,7 @@ export async function textoDeMarkdown(ctx: AuthContext, id: string): Promise<str
   if (!fila?.clave) return null;
 
   try {
-    const firmada = await adaptadorS3().firmarDescarga({
+    const firmada = await adaptadorDeArchivos().firmarDescarga({
       bucket: "deliverables",
       clave: fila.clave,
       uso: "deliverable",

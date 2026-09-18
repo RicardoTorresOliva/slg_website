@@ -19,7 +19,7 @@
 import { verificarEnvio, type Veredicto } from "../antiabuso/index.ts";
 import { downloadEvent, leadCapture } from "../db/schema.ts";
 import { withSystemScope } from "../db/scope.ts";
-import { adaptadorS3 } from "../files/index.ts";
+import { adaptadorDeArchivos } from "../files/index.ts";
 import { emitir } from "../webhooks/index.ts";
 
 export type Documento = {
@@ -168,9 +168,9 @@ export async function registrarCaptura(entrada: {
   }
 
   try {
-    // `adaptadorS3()` DENTRO del try: si faltan sus variables lanza, y esto
+    // `adaptadorDeArchivos()` DENTRO del try: si faltan sus variables lanza, y esto
     // tiene que contarlo, no romperse.
-    const firmada = await adaptadorS3().firmarDescarga({
+    const firmada = await adaptadorDeArchivos().firmarDescarga({
       bucket: "downloads",
       clave: claveDeArchivo,
       uso: "download",

@@ -27,7 +27,7 @@ import { conAuditoria } from "../auditoria/index.ts";
 import type { AuthContext } from "../db/context.ts";
 import { DELIVERABLE_TYPES, VISIBILITY, deliverable } from "../db/schema.ts";
 import { withScope } from "../db/scope.ts";
-import { adaptadorS3, validarSubida, type Destino } from "../files/index.ts";
+import { adaptadorDeArchivos, validarSubida, type Destino } from "../files/index.ts";
 import { anunciarEntregable } from "../webhooks/index.ts";
 
 import { DatoInvalido } from "./empresas.ts";
@@ -212,7 +212,7 @@ export async function publicarEntregable(
         });
         if (!veredicto.ok) throw new DatoInvalido(`archivo:${veredicto.motivo}`);
 
-        const firmada = await adaptadorS3().firmarSubida({
+        const firmada = await adaptadorDeArchivos().firmarSubida({
           destino,
           clave: fileKey,
           mime: datos.archivo.mime,
@@ -285,7 +285,7 @@ export async function enlaceDeDescarga(
   );
   const fila = filas[0];
   if (!fila?.fileKey) return null;
-  const firmada = await adaptadorS3().firmarDescarga({
+  const firmada = await adaptadorDeArchivos().firmarDescarga({
     bucket: "deliverables",
     clave: fila.fileKey,
     uso: "deliverable",

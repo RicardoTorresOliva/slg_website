@@ -3,7 +3,7 @@ import { timingSafeEqual } from "node:crypto";
 import { VARIABLES } from "@/lib/ops/variables";
 import { Resolver } from "node:dns/promises";
 
-import { asegurarBuckets, cerrarAccesoPublico, adaptadorS3, ttlEnSegundos } from "@/lib/files";
+import { asegurarBuckets, cerrarAccesoPublico, adaptadorDeArchivos, ttlEnSegundos } from "@/lib/files";
 import { enviarCorreo } from "@/lib/mail";
 import {
   estadoDeMigraciones,
@@ -156,10 +156,10 @@ async function probarAlmacenamiento(): Promise<Resultado[]> {
   const cuerpo = Buffer.from("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n");
 
   try {
-    // DENTRO del try: si faltan las variables de S3, `adaptadorS3()` lanza, y
+    // DENTRO del try: si faltan las variables de S3, `adaptadorDeArchivos()` lanza, y
     // esta página tiene que CONTARLO, no romperse. Una comprobación que se cae
     // cuando encuentra el problema no comprueba nada.
-    const adaptador = adaptadorS3();
+    const adaptador = adaptadorDeArchivos();
     const subida = await adaptador.firmarSubida({
       destino: "downloads:pdf",
       clave,

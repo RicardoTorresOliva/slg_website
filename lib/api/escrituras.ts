@@ -25,7 +25,7 @@ import { eq, sql } from "drizzle-orm";
 import type { AuthContext } from "../db/context.ts";
 import { agentEvent, announcement, deliverable, organization, project } from "../db/schema.ts";
 import { withScope } from "../db/scope.ts";
-import { adaptadorS3, validarSubida } from "../files/index.ts";
+import { adaptadorDeArchivos, validarSubida } from "../files/index.ts";
 import { destinoDe } from "../hq/entregables.ts";
 import { anunciarAviso, anunciarEntregable } from "../webhooks/index.ts";
 
@@ -181,7 +181,7 @@ export async function crearEntregable(ctx: AuthContext, datos: DatosDeCreacion) 
             { field: "file", code: "upload_rejected" },
           ]);
         }
-        const firmada = await adaptadorS3().firmarSubida({
+        const firmada = await adaptadorDeArchivos().firmarSubida({
           destino,
           clave: fileKey,
           mime: datos.archivo.mime,
@@ -276,7 +276,7 @@ export async function publicarEntregablePorApi(ctx: AuthContext, id: string) {
        * estaba — creado y sin publicar, que es el estado seguro.
        */
       if (fila.fileKey) {
-        const esta = await adaptadorS3().existe({ bucket: "deliverables", clave: fila.fileKey });
+        const esta = await adaptadorDeArchivos().existe({ bucket: "deliverables", clave: fila.fileKey });
         if (!esta) throw new ErrorDeApi(409, `entregable ${id} sin archivo subido`);
       }
 
