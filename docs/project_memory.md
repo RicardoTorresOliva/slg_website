@@ -583,8 +583,8 @@ modo JSON: invocarlo con `env -u CLAUDECODE` (ver memoria del agente).
 
 ## PRÓXIMA SESIÓN — nueva arquitectura lista en `develop`; fotos en curso
 
-Estado al 2026-09-18, 01:30 (Lima). Producción = `slg-website-79i3i8406` (formularios, Empieza
-aquí en /empieza-aqui, Phoenix, blog). **Lo de abajo está en `develop`, verificado, sin desplegar.**
+Estado al 2026-09-18, 01:45 (Lima). Producción = `slg-website-79i3i8406` (formularios, Empieza
+aquí en /empieza-aqui, Phoenix, blog). **Lo de abajo está en `develop` (hasta `519ebc1`), verificado, sin desplegar.**
 Desplegar: `vercel deploy --prod --yes` (Ricardo).
 
 ### En `develop`, pendiente de despliegue (commit `0354c08`)
@@ -602,14 +602,12 @@ Desplegar: `vercel deploy --prod --yes` (Ricardo).
 - Doctrina ES/EN con las ediciones de Ricardo (Nobel 2025, Taleb, letrados) y fuente declarada.
 - `SLG_Overhauling` → repositorio privado `RicardoTorresOliva/SLG_Overhauling`, `ops/` ignorado.
 
-### Fotografías (agente en curso al cierre)
-Encargo: sustituir `home` (Servicios: más piezas colaborando), `ai` (fichas), `doctrina` (libro
-protagonista), `nosotros` (balcón, sillones, horizonte con vegetación y mar), `enterprise` (lápices
-con puntas de colores, azul al centro); y crear una por servicio (`phoenix-peex`, `phoenix-teax`,
-`phoenix-retx`, `customize-programs`, `ai-coaching`, `readiness`, `implement`, `app-building`,
-`age-building`, `coo-as-a-service`) en `public/fotos/`. Cuando existan: mapear las rutas de servicio
-en `components/Fotografia.tsx` (`POR_RUTA`), comprobar peso (30–60 KB) y estilo, commit, deploy.
-Si el agente no terminó, relanzar con el mismo encargo (está en el transcript y en `work_log`).
+### Fotografías — HECHAS (commit `519ebc1`)
+Quince escenas nuevas (`z_image`, 3,6 créditos), con el isotipo como sello y mapeadas en
+`Fotografia.tsx`: `home` (Servicios), `ai`, `doctrina`, `nosotros`, `enterprise` sustituidas y una por
+servicio. Las anteriores están en el scratchpad de la sesión (se pierde al cerrar); si hay que volver
+atrás, `git show 0354c08:public/fotos/<nombre>.webp`. Notas del agente: en `phoenix-peex` salen dos
+sillas azules; `readiness` es una regla lisa (el nivel de burbuja salía fuera de paleta).
 
 ### Decisiones pendientes de Ricardo
 - Easypanel: parar el proyecto `slg_website`; pegar el «Show Error» de los compose de `clientes`.
