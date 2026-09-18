@@ -25,6 +25,7 @@
  * Necesita `bash scripts/db/local-pg.sh up` y `npm run build:standalone`.
  */
 import { spawn, type ChildProcess } from "node:child_process";
+import fs from "node:fs";
 import net from "node:net";
 import path from "node:path";
 
@@ -97,6 +98,20 @@ async function arrancar(env: Record<string, string>) {
 }
 
 /** Envía el formulario como lo haría un navegador, sin seguir la redirección. */
+/**
+ * El primer documento en `coming-soon` del contenido en español, o `null`.
+ * Lee el frontmatter a pelo: la prueba corre contra el servidor construido y
+ * no puede importar el cargador de contenido sin arrastrar Next.
+ */
+function documentoProximamente(): string | null {
+  const carpeta = path.join(REPO_ROOT, "content", "downloads", "es");
+  for (const archivo of fs.readdirSync(carpeta).filter((f) => f.endsWith(".md")).sort()) {
+    const texto = fs.readFileSync(path.join(carpeta, archivo), "utf8");
+    if (/^status:\s*coming-soon\s*$/m.test(texto)) return archivo.replace(/\.md$/, "");
+  }
+  return null;
+}
+
 async function enviar(
   base: string,
   campos: Record<string, string>,
@@ -205,13 +220,32 @@ async function main() {
 
     await reiniciarLimite();
     console.log("\nDocumento SIN archivo — captura igual, y no emite firma (RF-40):\n");
-    const sinArchivo = await enviar(base, {
-      documento: "d-06",
-      idioma: "es",
-      email: "director@empresa-real-slg.test",
-      nombre: "Director",
-      apellido: "Real",
-    });
+    /**
+     * El caso exige un documento en `coming-soon`, y eso es un ESTADO DEL
+     * CONTENIDO, no de esta prueba: hasta el 2026-09-17 lo era `d-06`, y el
+     * día que los once documentos pasaron a `published` (con sus PDF) la prueba
+     * se puso roja por un motivo que no era un defecto. Ahora busca uno en el
+     * contenido; si no hay ninguno, lo dice y no lo finge: un caso omitido con
+     * su motivo escrito es verdad, y una comprobación que se acomoda para pasar
+     * no comprueba nada.
+     */
+    const proximamente = documentoProximamente();
+    if (!proximamente) {
+      console.log(
+        "  (omitido: no hay ningún documento `coming-soon` en content/downloads/es —\n" +
+          "   RF-40 no se puede ejercer contra este contenido; vuelve a ejercerse solo con que exista uno)",
+      );
+    }
+    const sinArchivo = proximamente
+      ? await enviar(base, {
+          documento: proximamente,
+          idioma: "es",
+          email: "director@empresa-real-slg.test",
+          nombre: "Director",
+          apellido: "Real",
+        })
+      : null;
+    if (sinArchivo) {
     check(
       "el envío redirige a gracias con «próximamente»",
       sinArchivo.destino.includes("estado=proximamente"),
@@ -222,7 +256,7 @@ async function main() {
     check(
       "la captura guarda el dominio, el documento y la versión de la política",
       leads[0]?.email_domain === "empresa-real-slg.test" &&
-        leads[0]?.download_slug === "d-06" &&
+        leads[0]?.download_slug === proximamente &&
         Boolean(leads[0]?.privacy_version),
       JSON.stringify(leads[0] ?? {}),
     );
@@ -242,6 +276,7 @@ async function main() {
       guardado[0]?.name === "Director" && guardado[0]?.last_name === "Real",
       JSON.stringify(guardado[0] ?? {}),
     );
+    }
 
     await reiniciarLimite();
     console.log("\nSin nombre o sin apellido — motivo explícito, y sin captura:\n");
