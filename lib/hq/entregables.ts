@@ -19,6 +19,14 @@
  *
  * **LA ATRIBUCIÓN DISTINGUE PERSONA DE CLAVE** (RF-111). Sale de `AuthContext`,
  * no de un parámetro: quien publica no elige cómo se le atribuye.
+ *
+ * **EL ORIGEN ES ORTOGONAL AL TIPO** (`data_model.md` §3.10, `source`). Un
+ * `link` va siempre por enlace y `pdf`/`html`/`md` siempre por archivo, pero un
+ * `material` puede ser **un archivo subido O un enlace** —una clase grabada en
+ * un host de vídeo (RF-155)—: con enlace, `file_key` queda nulo y `url` lleno;
+ * con archivo, al revés. Nunca los dos: un material con archivo y enlace es
+ * ambiguo, y se rechaza en vez de adivinar cuál manda. Sin esto, «Clases» no
+ * encontraba nunca un vídeo: el formulario solo guardaba la URL de un `link`.
  */
 import { and, desc, eq, sql } from "drizzle-orm";
 
@@ -54,7 +62,7 @@ export type DatosDeEntregable = {
   readonly titulo: string;
   readonly tipo: string;
   readonly visibilidad: string;
-  /** Para un entregable por enlace. Excluyente con el archivo. */
+  /** Para un entregable por enlace: `link`, o `material` sin archivo. Excluyente con el archivo. */
   readonly url?: string | null;
   /** Para un entregable por archivo: lo que hace falta para validar y firmar. */
   readonly archivo?: { readonly nombre: string; readonly mime: string; readonly bytes: number } | null;
@@ -86,26 +94,47 @@ function claveDe(familyId: string, version: number, nombre: string): string {
   return `${familyId}/v${version}/${limpio}`;
 }
 
+/**
+ * De dónde sale el contenido (`source`, §3.10): `link` siempre por enlace;
+ * `material` por enlace cuando no trae archivo y sí URL; todo lo demás, por
+ * archivo. Es la única función que lo decide, y `validar` y la inserción la
+ * leen las dos: dos criterios distintos son el sitio exacto donde un material
+ * queda con la URL guardada y el `file_key` también.
+ */
+function origenDe(datos: DatosDeEntregable): "file" | "link" {
+  if (datos.tipo === "link") return "link";
+  if (datos.tipo === "material" && !datos.archivo && datos.url?.trim()) return "link";
+  return "file";
+}
+
+/**
+ * Solo http(s): un `javascript:` o un `file:` en un entregable es un enlace
+ * que se abre en el navegador de un cliente.
+ */
+function esUrlHttp(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 function validar(datos: DatosDeEntregable): string | null {
   if (!datos.projectId) return "proyecto";
   if (!datos.titulo.trim()) return "titulo";
   if (!(DELIVERABLE_TYPES as readonly string[]).includes(datos.tipo)) return "tipo";
   if (!(VISIBILITY as readonly string[]).includes(datos.visibilidad)) return "visibilidad";
 
-  if (datos.tipo === "link") {
-    if (!datos.url?.trim()) return "url";
-    try {
-      const u = new URL(datos.url);
-      // Solo http(s): un `javascript:` o un `file:` en un entregable es un
-      // enlace que se abre en el navegador de un cliente.
-      if (u.protocol !== "http:" && u.protocol !== "https:") return "url";
-    } catch {
-      return "url";
-    }
+  if (origenDe(datos) === "link") {
+    const url = datos.url?.trim() ?? "";
+    if (!url || !esUrlHttp(url)) return "url";
     return null;
   }
 
   if (!datos.archivo) return "archivo";
+  // Un material con archivo Y enlace es ambiguo: no se adivina cuál manda.
+  if (datos.tipo === "material" && datos.url?.trim()) return "url";
   return null;
 }
 
@@ -191,10 +220,11 @@ export async function publicarEntregable(
         return Number(filas[0]?.siguiente ?? 1);
       });
 
+      const origen = origenDe(datos);
       let fileKey: string | null = null;
       let subida: ResultadoDePublicacion["subida"] = null;
 
-      if (datos.tipo !== "link" && datos.archivo) {
+      if (origen === "file" && datos.archivo) {
         const destino = destinoDe(datos.tipo);
         if (!destino) throw new DatoInvalido("tipo");
         fileKey = claveDe(familyId, version, datos.archivo.nombre);
@@ -229,7 +259,9 @@ export async function publicarEntregable(
           title: datos.titulo.trim(),
           type: datos.tipo,
           fileKey,
-          url: datos.tipo === "link" ? (datos.url ?? null) : null,
+          // `source` en dos columnas (§3.10): por enlace, `url` y `file_key`
+          // nulo; por archivo, al revés. Lo decide `origenDe`, no el tipo.
+          url: origen === "link" ? (datos.url ?? "").trim() : null,
           version,
           familyId,
           visibility: datos.visibilidad,

@@ -64,6 +64,10 @@ const VIGILADOS = [
   // subtítulos, «Abrir», «pendiente»), y tiene que salir de content/ui igual
   // que cualquier otra pantalla de HQ.
   "app/(hq)/hq/conexiones/page.tsx",
+  // DU-29(b)(c): la ficha de proyecto (hitos y pendientes) y las noticias
+  // pintan formularios, estados y etiquetas; todo sale de content/ui.
+  "app/(hq)/hq/proyectos/[id]/page.tsx",
+  "app/(hq)/hq/noticias/page.tsx",
   "app/(portal)/portal/page.tsx",
   "app/(portal)/portal/proyectos/page.tsx",
   "app/(portal)/portal/proyectos/[id]/page.tsx",

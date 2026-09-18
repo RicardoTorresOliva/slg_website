@@ -16,6 +16,9 @@
  *     ni pidiéndolo (RF-89).
  *   · **6** — la atribución distingue **persona** de **clave de API** (RF-111).
  *   · **7** — proyecto sin entregables · empresa sin avisos · enlace inválido.
+ *   · **§3.10** (DU-29) — un `material` puede ser **archivo O enlace**: por
+ *     enlace guarda `url` con `file_key` nulo, y «Clases» lo reconoce como
+ *     vídeo por esa URL (RF-155). Con los dos a la vez es ambiguo y se rechaza.
  *
  * Necesita `bash scripts/db/local-pg.sh up`.
  */
@@ -173,6 +176,44 @@ async function main() {
     check(
       "ninguno de los rechazados llegó a escribirse",
       (await entregables(admin(), PROYECTO)).every((e) => e.titulo !== "Roto"),
+    );
+
+    /* ── §3.10 · `material` por enlace ──────────────────────────────────── */
+    console.log("\n`material` puede ser un archivo O un enlace: `source` es ortogonal a `type` (§3.10, RF-155):\n");
+    const clase = await publicarEntregable(admin(), {
+      ...base,
+      titulo: "Clase grabada",
+      tipo: "material",
+      url: "https://www.youtube.com/watch?v=du15",
+    });
+    check("un `material` por enlace se publica y NO pide subida", clase.subida === null);
+    const filaClase = (await entregables(admin(), PROYECTO)).find((e) => e.id === clase.id);
+    check(
+      "guarda la URL y deja `file_key` nulo",
+      filaClase?.url === "https://www.youtube.com/watch?v=du15" && filaClase?.claveDeArchivo === null,
+      JSON.stringify({ url: filaClase?.url, clave: filaClase?.claveDeArchivo }),
+    );
+    const { esVideo } = await import("../../lib/portal/clases.ts");
+    check("y «Clases» lo reconoce como vídeo por esa URL", esVideo(filaClase?.url));
+    check(
+      "un `material` con enlace que no es http(s) se rechaza",
+      (await intentar({ tipo: "material", archivo: null, url: "javascript:alert(1)" })) === "url",
+    );
+    check(
+      "un `material` sin archivo y sin enlace se rechaza por el archivo",
+      (await intentar({ tipo: "material", archivo: null, url: "" })) === "archivo",
+    );
+    check(
+      "un `material` con archivo Y enlace es ambiguo y se rechaza",
+      (await intentar({
+        tipo: "material",
+        archivo: { nombre: "anexo.png", mime: "image/png", bytes: 10 },
+        url: "https://ejemplo.test/clase.mp4",
+      })) === "url",
+    );
+    check(
+      "un `material` por archivo sigue publicándose como antes, con subida y sin URL",
+      Boolean((await porArchivo("material", "guia.pdf", "application/pdf")).subida?.url),
     );
 
     /* ── Criterio 2 · versiones ─────────────────────────────────────────── */

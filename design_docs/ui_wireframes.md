@@ -1003,6 +1003,35 @@ todavía no tiene URL conocida se marca **pendiente de conectar** en vez de esco
 salen de `content/conexiones.json` (D-11): añadir un producto es añadir un objeto, sin pantalla de
 administración.
 
+### 6.11 Ficha de proyecto: hitos y pendientes (`/hq/proyectos/[id]`) — RF-151 · RF-152 · DU-29(b)
+
+Se llega desde el nombre del proyecto en la lista de §6.4. Cabecera con nombre, empresa, servicio y
+estado, y dos bloques iguales en forma: **Hitos** (título · fecha · orden · estado, con «Marcar como
+hecho» / «Reabrir») y **Pendientes** (título · fecha límite · quién lo cierra · estado y, cerrado,
+quién y cuándo, con «Cerrar» / «Reabrir»). Cada bloque lleva su formulario de alta encima de la lista
+y su estado vacío redactado. Los botones no autorizan nada: `slg_operator` los ve en cualquier
+proyecto que lea, y es `lib/academy` quien rechaza —y audita como `.denied`— el intento sobre uno no
+asignado. Un hito es una fecha de entrega y un pendiente una obligación con plazo: nada mide a nadie
+(frontera (b)).
+
+### 6.12 Noticias (`/hq/noticias`) — RF-150 · RF-152 · DU-29(c)
+
+Misma forma que §6.6: formulario para **una** empresa (empresa · título · fuente opcional · resumen y
+comentario en Markdown · importancia 1–3 · publicar sí/no, explícito) y debajo las últimas noticias
+**renderizadas como las verá el cliente**, con el borrador marcado. Sección `newsHq` (`news.write`):
+el operador la ve solo con prueba de asignación, como entregables y avisos. En esta unidad no hay
+edición ni publicación posterior de un borrador, y la pista del formulario lo dice.
+
+### 6.13 Entregables: filtro de agentes y visor (`/hq/entregables?agentes=1`) — DU-29(d) · mod. §6.5
+
+Dos enlaces sobre la lista, «Todos» y «Publicados por agentes» (`published_by_type = 'api_key'`), con
+estado vacío por filtro. Cada `html` lleva «Abrir en el visor»: **la misma URL firmada** que usa el
+portal (D-45), en pestaña nueva. El visor solo sirve `client` + `html` + publicado (función de la
+migración 0016), así que un `internal` muestra el aviso en vez de un enlace roto; abrirlo desde HQ es
+una decisión sobre esa función, fuera de esta unidad. El campo «Enlace» del formulario vale también
+para un `material` por enlace (data_model §3.10): un vídeo alojado fuera se publica sin archivo y
+«Clases» (§7.8) lo encuentra.
+
 ---
 
 ## 7. Portal de clientes (`/portal`)

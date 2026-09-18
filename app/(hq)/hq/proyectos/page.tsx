@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { Estado } from "@/components/app/EstadosCanonicos";
 import { Boton, Campo, Formulario, Lista, Texto } from "@/components/app/Campos";
 import { TablaDeApp } from "@/components/app/TablaDeApp";
@@ -110,7 +112,10 @@ export default async function Proyectos({
             t["hq.projects.endsAt"],
           ]}
           filas={lista.map((p) => [
-            p.nombre,
+            // El nombre lleva a la ficha del proyecto (DU-29): hitos y pendientes.
+            <Link key={p.id} href={`/hq/proyectos/${encodeURIComponent(p.id)}`} style={{ color: "var(--slg-link)" }}>
+              {p.nombre}
+            </Link>,
             p.empresa,
             p.servicio,
             p.estado,
