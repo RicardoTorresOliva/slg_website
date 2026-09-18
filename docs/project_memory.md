@@ -581,43 +581,37 @@ modo JSON: invocarlo con `env -u CLAUDECODE` (ver memoria del agente).
 
 ---
 
-## PRÓXIMA SESIÓN — todo fusionado en `develop`; falta desplegar y verificar
+## PRÓXIMA SESIÓN — nueva arquitectura lista en `develop`; fotos en curso
 
-Estado al 2026-09-18 por la mañana. Producción = `slg-website-79i3i8406`, con TODO lo de abajo
-desplegado y verificado (`/api/health` → 18 migraciones, `faltan: []`; `/empieza-aqui` con
-conmutador; captura de contacto con nombre y apellido entregada). Las variables viven en el proyecto
-de Vercel (Production y Preview): desplegar es `vercel deploy --prod --yes` (lo lanza Ricardo).
+Estado al 2026-09-18, 01:30 (Lima). Producción = `slg-website-79i3i8406` (formularios, Empieza
+aquí en /empieza-aqui, Phoenix, blog). **Lo de abajo está en `develop`, verificado, sin desplegar.**
+Desplegar: `vercel deploy --prod --yes` (Ricardo).
 
-### En producción desde `79i3i8406`
-- **Phoenix**: las fichas de D-01/02/03 (ES y EN) entregan los folletos `Programa-Phoenix-PEEx/TEAx/
-  RETx.pdf` (de `SLG_Overhauling/docs/phoenix/`, en español; subidos al bucket con `montar/subir.mjs`,
-  que ahora acepta rutas). D-04 y D-05 siguen con sus documentos.
-- **Blog**: los tres documentos de Academy son seis artículos publicados (ES/EN emparejados) con sus
-  extractos para redes. El Markdown del sitio pinta ahora tablas, listas numeradas y citas
-  (`markdown-seguro.ts` + `Markdown.tsx`, con pruebas en `test-entregables`).
-- **Formularios**: descarga, contacto y doctrina piden nombre, apellido y correo, obligatorios;
-  columna `last_name` (migración `0017`, **ya aplicada en producción** con el rol dueño), veredicto
-  `datos_incompletos`, CRM con `firstName`/`lastName` reales, HQ y `GET /api/v1/captures` con apellido.
-- **«Empieza aquí» / «Start here»**: `/empieza-aqui` y `/en/start-here`, mapa del sitio generado
-  desde `rutas.ts`, enlazado desde el pie y desde «Dónde empezar» de Nosotros/About.
-- Nosotros/About con el Cliente Cero; `docs/blog-editor.md` para el Editor de Hermes.
+### En `develop`, pendiente de despliegue (commit `0354c08`)
+- **Menú de cuatro destinos**: Empieza aquí (`/`, el mapa) · Servicios (`/servicios`, la portada
+  anterior con RF-09) · Blog · Nosotros. `/empieza-aqui` y `/en/start-here` redirigen a la portada.
+  Doctrina, Holdings y Descargas se llegan desde Servicios, el mapa y el pie. `check:armazon` mide
+  cuatro destinos; `check:paginas` mide los bloques en `/servicios`.
+- **Renombre**: `SLG_VoltAi` → VoltAi by SLG, `SLG_Holdings` → Holdings by SLG, líneas VoltAi
+  Academy / Enterprise / Factory (servicios sin cambio). Nombres viejos = variantes prohibidas.
+  PDF de D-04…D-11 regenerados y subidos. Las URL no cambian (`/ai`, `/holdings`, `/ai/academy`…).
+- Servicios desarrolla Holdings by SLG (bloque `holdings`) y «Descargas destacadas» enseña tres
+  documentos + enlace a `/descargas`, que ahora lista título, audiencia, abstract y enlace.
+- `components/Regreso.tsx`: «← Volver a …» en toda página salvo la portada.
+- Fechas del blog: agosto y septiembre (ver frontmatter).
+- Doctrina ES/EN con las ediciones de Ricardo (Nobel 2025, Taleb, letrados) y fuente declarada.
+- `SLG_Overhauling` → repositorio privado `RicardoTorresOliva/SLG_Overhauling`, `ops/` ignorado.
 
-### Comprobado tras el despliegue (2026-09-18)
-1. `/api/health` → `migraciones: 18`, `faltan: []`.
-2. `/descargas/d-06` y `/en/contact`: tres campos obligatorios; una captura de prueba con
-   `prueba.captura@softlandingglobal.com` llega al CRM con nombre y apellido reales.
-3. `/empieza-aqui` y `/en/start-here` responden y el conmutador cruza.
-4. `/blog/director-implementacion-ia` pinta la tabla; `/descargas/lo-que-un-director-debe-saber`
-   entrega el folleto PEEx.
+### Fotografías (agente en curso al cierre)
+Encargo: sustituir `home` (Servicios: más piezas colaborando), `ai` (fichas), `doctrina` (libro
+protagonista), `nosotros` (balcón, sillones, horizonte con vegetación y mar), `enterprise` (lápices
+con puntas de colores, azul al centro); y crear una por servicio (`phoenix-peex`, `phoenix-teax`,
+`phoenix-retx`, `customize-programs`, `ai-coaching`, `readiness`, `implement`, `app-building`,
+`age-building`, `coo-as-a-service`) en `public/fotos/`. Cuando existan: mapear las rutas de servicio
+en `components/Fotografia.tsx` (`POR_RUTA`), comprobar peso (30–60 KB) y estilo, commit, deploy.
+Si el agente no terminó, relanzar con el mismo encargo (está en el transcript y en `work_log`).
 
-### Pendientes de decisión de Ricardo
-- Easypanel: parar el proyecto `slg_website` entero; pegar el «Show Error» de los compose de `clientes`.
-- `SLG_Overhauling` como repositorio privado con `ops/` ignorado.
-- Ficha ES `d-03.md` ya no aplica (ahora describe el programa RETx). Copys en `temporal`: 82 registros.
-- Blog → redes: flujo en n8n y variables `WEBHOOK_*` (§4 de `docs/blog-editor.md`).
-- `test:descargas` y `test:webhooks` tienen fallos previos al encargo de formularios (dependen de S3
-  local): la premisa de esas pruebas hay que rehacerla sobre Supabase.
-
-### Worktrees
-Los dos worktrees de agentes (`.claude/worktrees/agent-ac740ab034128d2db`, `agent-a369b5b91bb616d04`)
-están fusionados en `develop` y se pueden borrar.
+### Decisiones pendientes de Ricardo
+- Easypanel: parar el proyecto `slg_website`; pegar el «Show Error» de los compose de `clientes`.
+- Blog → redes: flujo n8n y `WEBHOOK_*` (§4 de `docs/blog-editor.md`).
+- Copys en `temporal`: 84 registros. `test:descargas`/`test:webhooks`: premisa S3 por rehacer sobre Supabase.
