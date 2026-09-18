@@ -2836,3 +2836,16 @@ en los logs de Vercel → dos notas nuevas en el contacto del CRM (la captura y 
 Lección operativa: el despliegue anterior «hecho» no existía en `vercel ls --prod`; desde ahora se
 comprueba antes de probar. Propuesta pendiente: variables en el proyecto de Vercel y despliegue por
 `git push`, en vez de viajar en cada comando.
+
+
+---
+
+## Variables en Vercel, Nosotros reescrito, contrato del blog; dos encargos interrumpidos (2026-09-18, madrugada)
+
+Las 26 variables del despliegue viven ahora en el proyecto de Vercel (Production); Preview quedó
+vacío y hay que repetir la carga. Nosotros/About abren con el Cliente Cero y la estructura de CoO
+(Company of One). `docs/blog-editor.md` fija cómo entra un artículo del Editor (Hermes) y cómo sale a
+redes con lo que la web ya tiene (`post.published` firmado → n8n). Dos agentes empezaron los
+formularios con apellido y la página «Empieza aquí» en worktrees aislados y se detuvieron por el
+límite de uso de la API; el trabajo parcial está en sus ramas y los briefs en
+`SLG_Overhauling/docs/_BRIEF_FORMULARIOS.md` y `_BRIEF_EMPIEZA_AQUI.md`.

@@ -581,48 +581,42 @@ modo JSON: invocarlo con `env -u CLAUDECODE` (ver memoria del agente).
 
 ---
 
-## PRÓXIMA SESIÓN — todo verificado en producción; queda una decisión de despliegue
+## PRÓXIMA SESIÓN — dos encargos a medio camino en sus worktrees, y un despliegue
 
-Estado al cierre del 2026-09-17, 22:10 (hora de Lima). Producción =
-`slg-website-66ub5svqp`, alias `softlandingglobal.com`.
+Estado al 2026-09-18, 00:10 (hora de Lima). La sesión anterior terminó por el **límite de uso de
+la API** (se reinicia a las 00:00 de Lima) con dos agentes trabajando; su trabajo está guardado
+sin confirmar en sus worktrees. Producción = `slg-website-66ub5svqp`, alias `softlandingglobal.com`.
 
-### Verificado en producción esta noche
-- `/api/health` → `faltan: []`.
-- Descarga EN de punta a punta (`/en/downloads/d-08-en` → `/en/thank-you` con URL firmada).
-- **CRM**: la captura llega sola. Log `[colas] barrido tras-captura`; contacto
-  `prueba.captura (softlandingglobal.com)` con notas en `crm.softlandingglobal.com`.
-  Las capturas anteriores se van drenando con cada barrido; las que agotaron
-  cinco intentos con el adaptador viejo quedaron en `failed` y se reintentan a
-  mano desde HQ (DU-16) o esperando: no se pierden.
-- SMTP de Resend autenticado. No hay correo de prueba enviado: el flujo solo
-  manda `capture_failed_alert` cuando una entrega agota los intentos.
-- Banderas ES/US junto al logo (escritorio y móvil) y logotipo en el pie.
+### Lo que quedó HECHO y empujado a `develop` (no desplegado aún)
+- Nosotros/About reescritos: Cliente Cero, estructura de CoO (Company of One), «Trabajamos con
+  directorios…», y la entidad legal al final (commit `5ca2178`). Frenos de copy en verde.
+- `docs/blog-editor.md`: el contrato del artículo para el perfil Editor de Hermes y la salida a
+  redes por `post.published` → n8n. Nada que construir en la web; falta el flujo en n8n y las
+  variables `WEBHOOK_*`.
+- **Las 26 variables viven ya en el proyecto de Vercel, entorno Production** (`vercel env ls
+  production`). El despliegue es ahora `vercel deploy --prod --yes` a secas, sin `--env`.
+  **Preview quedó vacío**: la carga a `preview` falló en silencio; repetir el bucle solo para
+  `preview` (mismo comando, `for env in preview`) para que los previews de `git push` funcionen.
 
-### Lo que se aprendió y quedó escrito
-- Dos causas del CRM vacío, ambas resueltas: el barrendero por `setInterval` no
-  corre en Vercel (→ `lib/colas`, §4septies.4) y el adaptador hablaba el contrato
-  de un doble inventado (→ `contact-note.ts` al contrato real, doble estricto).
-- **Comprobar `vercel ls --prod` antes de dar un despliegue por hecho**: un
-  «desplegado» de palabra no lo era, y costó una vuelta entera.
-- `CRON_SECRET` existe en `ops/secretos.env` y viaja en el despliegue:
-  `POST https://softlandingglobal.com/api/colas` con `Authorization: Bearer …`
-  barre las colas a demanda.
+### Lo que quedó A MEDIAS (retomar, no rehacer)
+1. **Formularios con nombre, apellido y correo** — worktree
+   `.claude/worktrees/agent-ac740ab034128d2db`, rama `worktree-agent-ac740ab034128d2db`, base
+   `5ca2178`: 16 archivos modificados + `drizzle/0017_apellido_en_la_captura.sql` +
+   `components/AvisoDelFormulario.tsx`, sin confirmar. Se detuvo «en el servicio y las dos rutas».
+   Brief completo: `~/Dev/SLG_Overhauling/docs/_BRIEF_FORMULARIOS.md`.
+2. **«Empieza aquí / Start here»** — worktree `.claude/worktrees/agent-a369b5b91bb616d04`, rama
+   `worktree-agent-a369b5b91bb616d04`: solo los dos `.md` de contenido, sin confirmar. Brief:
+   `~/Dev/SLG_Overhauling/docs/_BRIEF_EMPIEZA_AQUI.md`.
+   Al fusionar, añadir la frase de enlace en «Dónde empezar» de `nosotros.md`/`about.md` (el agente
+   tenía orden de no tocarlos).
 
-### Decisión pendiente de Ricardo (propuesta del agente)
-Las variables viajan en cada `vercel deploy` desde `ops/*.env`. Es frágil (un
-despliegue a mano sin ellas deja el sitio sin base) y hace que cada `git push`
-genere un preview que falla por falta de `DATABASE_URL`. La alternativa limpia:
-cargar las variables una vez en el proyecto de Vercel (`vercel env add` para
-Production y Preview, desde los mismos archivos) y dejar que `git push` a
-`develop`/`main` despliegue solo. Es una sesión corta; requiere que Ricardo
-ejecute los `vercel env add` (el agente en modo auto no puede tocar secretos).
+**Arranque sugerido**: lanzar dos agentes con esos dos briefs sobre los worktrees existentes;
+mientras trabajan, `vercel deploy --prod --yes` para publicar Nosotros/About (lo hace Ricardo);
+al terminar, fusionar las dos ramas en `develop`, pasar `check:ci` parcial y desplegar.
 
-### Pendientes menores
-- Ficha ES `d-03.md`: `audience`/`learns` del RETx antiguo.
-- Copy de los 76 registros en `temporal`, a la espera de firma.
-
-### Cómo desplegar mientras tanto (Ricardo, desde su terminal)
-
-```bash
-cd ~/Dev/slg_website && OPS=~/Dev/SLG_Overhauling/ops && ARGS=() && while IFS= read -r l || [ -n "$l" ]; do [[ "$l" =~ ^[A-Z0-9_]+= ]] || continue; k="${l%%=*}"; v="${l#*=}"; v="${v%\"}"; v="${v#\"}"; case "$k" in DATABASE_URL_APP) k=DATABASE_URL;; DATABASE_URL_OWNER) k=DATABASE_URL_MIGRATIONS;; DB_OWNER_PASSWORD|PROJECT_REF|REGION) continue;; esac; [ -n "$v" ] || continue; ARGS+=(--env "$k=$v" --build-env "$k=$v"); done < <(cat "$OPS/supabase-slg-website.env" "$OPS/web.env" "$OPS/secretos.env") && vercel deploy --prod --yes "${ARGS[@]}"
-```
+### Decisiones de Ricardo pendientes
+- Easypanel: parar el proyecto `slg_website` entero (slg-web, web, slgweb-staging, slgwebpostgres,
+  minio; umami solo si quiere analítica propia). Los `clientes` con «Something went wrong» es la
+  interfaz de Easypanel, no los contenedores: pedir el texto de «Show Error».
+- `SLG_Overhauling` sin historial: convertirla en repositorio privado con `ops/` ignorado.
+- Ficha ES `d-03.md` (audiencia/aprendizajes del RETx antiguo) y los 76 copys en `temporal`.
