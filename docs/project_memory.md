@@ -585,7 +585,8 @@ modo JSON: invocarlo con `env -u CLAUDECODE` (ver memoria del agente).
 
 Estado al 2026-09-18, 00:10 (hora de Lima). La sesión anterior terminó por el **límite de uso de
 la API** (se reinicia a las 00:00 de Lima) con dos agentes trabajando; su trabajo está guardado
-sin confirmar en sus worktrees. Producción = `slg-website-66ub5svqp`, alias `softlandingglobal.com`.
+sin confirmar en sus worktrees. Producción = `slg-website-dduhpx56f` (2026-09-18, 00:40), alias
+`softlandingglobal.com`, desplegada YA con las variables del proyecto y con Nosotros/About nuevos.
 
 ### Lo que quedó HECHO y empujado a `develop` (no desplegado aún)
 - Nosotros/About reescritos: Cliente Cero, estructura de CoO (Company of One), «Trabajamos con
@@ -593,10 +594,12 @@ sin confirmar en sus worktrees. Producción = `slg-website-66ub5svqp`, alias `so
 - `docs/blog-editor.md`: el contrato del artículo para el perfil Editor de Hermes y la salida a
   redes por `post.published` → n8n. Nada que construir en la web; falta el flujo en n8n y las
   variables `WEBHOOK_*`.
-- **Las 26 variables viven ya en el proyecto de Vercel, entorno Production** (`vercel env ls
-  production`). El despliegue es ahora `vercel deploy --prod --yes` a secas, sin `--env`.
-  **Preview quedó vacío**: la carga a `preview` falló en silencio; repetir el bucle solo para
-  `preview` (mismo comando, `for env in preview`) para que los previews de `git push` funcionen.
+- **Las 26 variables viven en el proyecto de Vercel, en Production y en Preview** (mismos
+  nombres, comprobado con `diff`). El despliegue es `vercel deploy --prod --yes`, sin `--env`, y
+  los previews de `git push` a `develop` ya pueden compilar. Lección: `vercel env add … --force`
+  sobre un nombre existente sobrescribe el registro en vez de añadir el entorno, y en un terminal
+  interactivo la confirmación se traga el valor; cargar desde una shell no interactiva y sin
+  `--force`. El comando largo con `--env` ya no hace falta.
 
 ### Lo que quedó A MEDIAS (retomar, no rehacer)
 1. **Formularios con nombre, apellido y correo** — worktree
@@ -611,8 +614,7 @@ sin confirmar en sus worktrees. Producción = `slg-website-66ub5svqp`, alias `so
    tenía orden de no tocarlos).
 
 **Arranque sugerido**: lanzar dos agentes con esos dos briefs sobre los worktrees existentes;
-mientras trabajan, `vercel deploy --prod --yes` para publicar Nosotros/About (lo hace Ricardo);
-al terminar, fusionar las dos ramas en `develop`, pasar `check:ci` parcial y desplegar.
+al terminar, fusionar las dos ramas en `develop`, pasar los frenos y `vercel deploy --prod --yes`.
 
 ### Decisiones de Ricardo pendientes
 - Easypanel: parar el proyecto `slg_website` entero (slg-web, web, slgweb-staging, slgwebpostgres,
