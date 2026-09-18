@@ -625,13 +625,32 @@ los nombres de los dos sitios (`DATABASE_URL_OWNER`/`DATABASE_URL_APP` de `ops/`
 Si la cadena del dueño apunta al host directo y tu red no tiene IPv6, fallará la conexión, no el
 guion: el mensaje lo dirá. En ese caso, la del *pooler* en modo sesión con el usuario dueño.
 
-**Y aun con la cuenta creada, HQ contesta 404, y no es la cuenta.** `SUPERFICIES_ABIERTAS` está en
-`false` para `hq` y `portal` (`lib/auth/roles.ts`). La única apertura es `SUPERFICIES_EN_REVISION`, y
-**solo actúa si delante hay compuerta de staging** (`STAGING_BASIC_AUTH_USER`/`_PASSWORD`), que
-producción no lleva a propósito. Para verlas hay que **desplegar una vista previa** con esas tres
-variables además de las de siempre. Decidir con Ricardo: vista previa con compuerta (el andamio
-previsto) o cerrar M3/M4 y poner `true` (retirar el andamio). Lo segundo es una decisión de proyecto,
-no de sesión.
+**HQ y el portal ya se pueden mirar — en la vista previa de `develop`, hecho y comprobado.**
+
+| | |
+|---|---|
+| Dirección | `https://slg-website-git-develop-ricardotorresolivas-projects.vercel.app` |
+| Compuerta | usuario `slg`; la contraseña la guarda Vercel → *Settings* → *Environment Variables* →
+  `STAGING_BASIC_AUTH_PASSWORD` (Preview · rama `develop`), y se enseñó una vez en la sesión.
+  **Aquí no se escribe: el repositorio es público** (Regla 2). |
+| Dentro | `/acceder` con `ricardo.torres@softlandingglobal.com` |
+
+Corrección a esta memoria: **las variables SÍ están en el almacén del proyecto de Vercel** (26 en
+Production y 26 en Preview desde el 17-09 de madrugada), así que no hubo que componer nada con
+`--env`. Se añadieron cuatro, acotadas a **Preview + rama `develop`**: `SUPERFICIES_EN_REVISION`,
+`STAGING_BASIC_AUTH_USER`/`_PASSWORD` —sin compuerta la apertura no ocurre, y eso es el diseño— y
+`BETTER_AUTH_URL` con el **alias de rama**, porque con la URL de producción el acceso se haría contra
+un origen que no sirve la página.
+
+Verificado por HTTP: sin credencial, 401 en todo; con ella, `/` y `/acceder` dan 200 y `/hq/tablero`
+y `/portal/entregables` dan **307 → `/acceder?volver=…`**, que es «existe y te falta sesión» donde
+antes había 404. Producción sigue en 404, que es lo que RF-87 protege.
+
+**Cuidado al usarla: la vista previa escribe en la base de PRODUCCIÓN** — las variables de Preview
+apuntan al mismo Supabase. Una empresa de prueba creada desde HQ se crea de verdad.
+
+**Andamio con fecha**: al cerrar M3 y M4 se pone `SUPERFICIES_ABIERTAS` en `true` y se retiran las
+cuatro variables.
 
 **Objetivo A, primer paso hecho: `docs/plantilla-de-sitios.md`.** El inventario mecánico, con una
 decisión por línea. El recuento cambia el tamaño del trabajo: de **1.388 líneas en 128 archivos** que
@@ -669,12 +688,12 @@ Cierre del 2026-09-18, tarde. Producción sigue siendo **`slg-website-56kh73gri`
 esta sesión llega al sitio público. `develop` con un commit nuevo (guion de arranque, inventario de
 plantilla, `README`, `.gitignore`).
 
-### 1 · Terminar la entrada a la intranet (corto, y desbloquea a Ricardo)
-1. Ricardo corre `npm run auth:primer-admin` con la cadena del rol dueño (comando arriba).
-2. Decidir cómo se abren HQ y portal: **vista previa con `STAGING_BASIC_AUTH_*` +
-   `SUPERFICIES_EN_REVISION=hq,portal`**, o cerrar M3/M4 y poner `SUPERFICIES_ABIERTAS` en `true`.
-3. Con eso, la revisión visual pendiente de DU-13/DU-16 y el paseo por `/hq` y `/portal` con un
-   usuario de empresa de prueba.
+### 1 · La revisión visual de HQ y del portal — **ya no hay nada que preparar**
+La cuenta existe y la vista previa está abierta (dirección y credenciales, en la sesión del 18-09).
+Queda lo que sólo se puede hacer mirando: el paseo por `/hq` —tablero, capturas, empresas, usuarios,
+claves, auditoría— y por `/portal`, y cerrar la «revisión visual» pendiente de DU-13 y DU-16. Para el
+portal hace falta un usuario de empresa cliente: se invita desde `/hq/usuarios`, que es el camino
+normal y deja traza — teniendo presente que **esa empresa se crea en la base de producción**.
 
 ### 2 · La plantilla (objetivo A): la decisión, y luego el código
 Leer `docs/plantilla-de-sitios.md` —es corto y está medido— y responder **la pregunta del §4.1**:

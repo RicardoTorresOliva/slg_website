@@ -3101,3 +3101,43 @@ operación que sólo se puede hacer una vez tiene que admitir que esa vez salga 
    añade el suyo (`auth.primer-admin.rehecho`, con el correo anterior y el nuevo).
 
 La contraseña del arranque fallido queda quemada: salió por pantalla y se sustituye al rehacer.
+
+**La vista previa con HQ y portal abiertos, hecha y comprobada (2026-09-18, 16:55).** La memoria
+estaba desactualizada en un punto que cambia el trabajo: **las variables YA están en el almacén del
+proyecto de Vercel**, 26 en Production y 26 en Preview, puestas la madrugada anterior. Así que no
+hacía falta componer un despliegue con `--env`: bastaba añadir cuatro variables al alcance
+**Preview + rama `develop`** y volver a desplegar.
+
+- `SUPERFICIES_EN_REVISION=hq,portal` y el par `STAGING_BASIC_AUTH_USER`/`_PASSWORD` — sin la
+  compuerta, `hayCompuertaDeStaging()` devuelve `false` y la apertura no ocurre; ése es el diseño.
+- `BETTER_AUTH_URL` apuntando al **alias de rama** (`…-git-develop-…vercel.app`) y no a la URL de cada
+  despliegue: la instancia de Better Auth toma su origen de ahí, y con la URL de producción puesta el
+  acceso se haría contra un origen que no es el que sirve la página.
+
+Acotadas a la rama `develop`: cualquier otra vista previa sigue sin compuerta y, por tanto, con las
+superficies cerradas. Producción no se toca — y sigue devolviendo 404 en `/hq`, que es lo que RF-87
+protege.
+
+Comprobado por HTTP, sin abrir un navegador: sin credencial, `/`, `/acceder` y `/hq/tablero`
+responden **401** con `WWW-Authenticate: Basic realm="slg staging"`. Con ella, `/` y `/acceder` dan
+**200**, y `/hq/tablero` y `/portal/entregables` dan **307 → /acceder?volver=…**. Ese 307 es el
+resultado: donde antes había un 404 de «tu milestone sigue abierto», ahora hay la redirección normal
+de «esto existe y te falta sesión».
+
+**Lo que hay que tener presente al usarla: la vista previa escribe en la base de PRODUCCIÓN.** Las
+variables de Preview apuntan al mismo proyecto de Supabase. Crear una empresa de prueba desde HQ la
+crea de verdad. Es lo que permite revisar con datos reales, y también lo que obliga a no inventarse
+datos para probar.
+
+**Es un andamio con fecha**: cuando M3 y M4 cierren, se pone `SUPERFICIES_ABIERTAS` en `true` y se
+retiran las cuatro variables.
+
+**Y un hallazgo sobre un freno propio, encontrado por equivocarse.** Al escribir la sesión en la
+memoria puse la contraseña de la compuerta en `docs/project_memory.md` — en un repositorio **público**,
+que es justo lo que prohíbe la Regla 2. Lo paró el clasificador del agente, no el freno del proyecto:
+`check:secrets` pasa esa línea en verde. Comprobado aislando el caso con `SECRETS_SCAN_ROOT`: una
+tabla con «contraseña: `<veinte caracteres al azar>`» da «1 archivos, sin coincidencias». El escáner
+busca **formas conocidas** —claves de proveedor, cabeceras de clave privada, cadenas de conexión—, y
+una contraseña generada no tiene forma de nada. No es un fallo del escáner: es su límite, y conviene
+saberlo antes de confiarle una revisión. Lo que sí cabría añadirle es la pareja «palabra que anuncia
+un secreto + valor pegado al lado», que es como se escapan de verdad. Queda anotado, no hecho.
