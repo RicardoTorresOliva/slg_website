@@ -286,6 +286,46 @@ async function main() {
       check(`«${bueno}» sí se pinta`, enlaceSeguro(bueno));
     }
 
+    /**
+     * Los bloques que entraron el 2026-09-18 (lista numerada, cita, tabla) se
+     * prueban por la misma razón que los enlaces: `bloquesDe` devuelve datos,
+     * y una celda de tabla con un `<script>` dentro sigue siendo texto.
+     */
+    console.log("\nLos bloques de Markdown se clasifican sin producir HTML:\n");
+    const { bloquesDe } = await import("../../lib/content/markdown-seguro.ts");
+    const bloques = bloquesDe(
+      [
+        "## Título",
+        "",
+        "> La tesis, en una línea.",
+        "",
+        "1. Primero",
+        "2. Segundo",
+        "",
+        "| Col A | Col B |",
+        "|---|---|",
+        "| uno | <script>alert(1)</script> |",
+        "| dos |",
+        "",
+        "Párrafo final.",
+      ].join("\n"),
+    );
+    check("cinco bloques, en orden", bloques.map((b) => b.tipo).join(",") === "h2,cita,lista-numerada,tabla,parrafo", bloques.map((b) => b.tipo).join(","));
+    const cita = bloques[1];
+    check("la cita pierde el «> » y conserva el texto", cita?.tipo === "cita" && cita.texto === "La tesis, en una línea.");
+    const numerada = bloques[2];
+    check("la lista numerada pierde los números", numerada?.tipo === "lista-numerada" && numerada.items.join("|") === "Primero|Segundo");
+    const tabla = bloques[3];
+    check(
+      "la tabla tiene cabecera y filas cuadradas a la cabecera",
+      tabla?.tipo === "tabla" && tabla.cabecera.length === 2 && tabla.filas.length === 2 && tabla.filas.every((f) => f.length === 2),
+      JSON.stringify(tabla),
+    );
+    check(
+      "un `<script>` dentro de una celda sigue siendo texto",
+      tabla?.tipo === "tabla" && trozosDeLinea(tabla.filas[0]?.[1] ?? "").every((t) => t.tipo === "texto"),
+    );
+
     let campoAviso = "";
     try {
       await publicarAviso(admin(), { organizationId: "", titulo: "Sin empresa", cuerpoMd: "x", idioma: "es" });

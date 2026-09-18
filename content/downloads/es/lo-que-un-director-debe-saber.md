@@ -1,18 +1,17 @@
 ---
 type: download
 service: phoenix-peex
-title: "Lo que un Director debe saber sobre Implementación IA"
-audience: "Miembros de directorio y comités de dirección que tienen que aprobar o rechazar una iniciativa de inteligencia artificial."
+title: "Programa Phoenix PEEx — Liderazgo, estrategia y gobernanza de la IA agéntica"
+audience: "Directorios y alta dirección que tienen que gobernar la transformación agéntica en vez de sufrirla."
 learns:
-  - "Qué preguntar a un proveedor antes de firmar, y qué respuestas descalifican una propuesta"
-  - "Cómo distinguir un problema de tecnología de uno de operación, que es donde falla la mayoría"
-  - "Qué señales indican que una implementación va a quedarse en piloto"
-  - "Cómo se mide el resultado de una iniciativa de IA sin recurrir a la anécdota"
-file_key: "D-01-phoenix-peex.pdf"
+  - "Qué es la IA en la sombra y por qué es hoy el mayor problema de gobernanza de un directorio"
+  - "Los cuatro módulos del programa: doctrina y contexto, anatomía del gobierno agéntico, riesgo y gobernanza, economía y organización"
+  - "Cómo se estructura la versión Alta Dirección y qué se lleva el directorio al terminar"
+file_key: "Programa-Phoenix-PEEx.pdf"
 status: published
 lang: es
 pair: what-a-director-should-know
 copy: temporal
 ---
 
-El documento con el que empieza casi todo el mundo. Está escrito desde la silla del que decide, no desde la del que implementa.
+El programa completo en su versión Alta Dirección: la doctrina, la estructura por módulos y sesiones, la modalidad y el modelo de inversión y valor.

@@ -72,3 +72,57 @@ export function trozosDeLinea(texto: string): Trozo[] {
   if (ultimo < texto.length) trozos.push({ tipo: "texto", texto: texto.slice(ultimo) });
   return trozos;
 }
+
+/* ── Bloques ─────────────────────────────────────────────────────────────── */
+
+/**
+ * Los bloques que el contenido usa. Se amplió el 2026-09-18 con lista numerada,
+ * cita y tabla porque los documentos de autoridad que pasan al blog los traen;
+ * antes una tabla salía como texto con barras. Sigue sin haber HTML: una tabla
+ * es un array de celdas, y cada celda pasa por `trozosDeLinea` al pintarse.
+ */
+export type Bloque =
+  | { tipo: "h2" | "h3" | "parrafo" | "cita"; texto: string }
+  | { tipo: "lista" | "lista-numerada"; items: string[] }
+  | { tipo: "tabla"; cabecera: string[]; filas: string[][] };
+
+const FILA_DE_TABLA = /^\s*\|.*\|\s*$/;
+const SEPARADOR_DE_TABLA = /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$/;
+
+function celdasDe(fila: string): string[] {
+  return fila
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((c) => c.trim());
+}
+
+/** Parte un texto Markdown en bloques. Devuelve datos, nunca HTML. */
+export function bloquesDe(texto: string): Bloque[] {
+  return texto
+    .trim()
+    .split(/\n{2,}/)
+    .map((bloque): Bloque => {
+      const lineas = bloque.split("\n");
+      if (bloque.startsWith("### ")) return { tipo: "h3", texto: bloque.slice(4) };
+      if (bloque.startsWith("## ")) return { tipo: "h2", texto: bloque.slice(3) };
+      if (lineas.every((l) => l.startsWith("- "))) return { tipo: "lista", items: lineas.map((l) => l.slice(2)) };
+      if (lineas.every((l) => /^\d+\.\s/.test(l))) {
+        return { tipo: "lista-numerada", items: lineas.map((l) => l.replace(/^\d+\.\s+/, "")) };
+      }
+      if (lineas.every((l) => l.startsWith(">"))) {
+        return { tipo: "cita", texto: lineas.map((l) => l.replace(/^>\s?/, "")).join(" ").trim() };
+      }
+      if (lineas.length >= 2 && lineas.every((l) => FILA_DE_TABLA.test(l)) && SEPARADOR_DE_TABLA.test(lineas[1] ?? "")) {
+        const cabecera = celdasDe(lineas[0] ?? "");
+        const filas = lineas.slice(2).map(celdasDe).map((f) => {
+          // Toda fila tiene tantas celdas como la cabecera: ni una de más, ni una de menos.
+          while (f.length < cabecera.length) f.push("");
+          return f.slice(0, cabecera.length);
+        });
+        return { tipo: "tabla", cabecera, filas };
+      }
+      return { tipo: "parrafo", texto: bloque.replace(/\n/g, " ") };
+    });
+}

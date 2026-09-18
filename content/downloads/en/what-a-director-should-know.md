@@ -1,18 +1,17 @@
 ---
 type: download
 service: phoenix-peex
-title: "What a Director needs to know about AI Implementation"
-audience: "Board members and executive committees who have to approve or reject an artificial intelligence initiative."
+title: "Phoenix PEEx Programme — Leadership, strategy and governance of agentic AI"
+audience: "Boards and senior executives who have to govern the agentic transformation rather than suffer it."
 learns:
-  - "What to ask a vendor before signing, and which answers disqualify a proposal"
-  - "How to tell a technology problem from an operations problem, which is where most fail"
-  - "The signals that an implementation is going to stay a pilot"
-  - "How the result of an AI initiative is measured without resorting to anecdote"
-file_key: "D-01-phoenix-peex-en.pdf"
+  - "What shadow AI is and why it is today the biggest governance problem a board faces"
+  - "The programme's four modules: doctrine and context, the anatomy of agentic governance, risk and governance, economics and organisation"
+  - "How the senior-leadership edition is structured and what the board takes away at the end"
+file_key: "Programa-Phoenix-PEEx.pdf"
 status: published
 lang: en
 pair: lo-que-un-director-debe-saber
 copy: temporal
 ---
 
-The document most people start with. It is written from the chair of the person deciding, not the one implementing.
+The full programme brochure, senior-leadership edition, in Spanish: the doctrine, the structure by modules and sessions, the format, and the investment and value model.

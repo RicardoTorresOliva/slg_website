@@ -1,17 +1,17 @@
 ---
 type: download
 service: "phoenix-teax-en"
-title: "A leadership team that decides by the same criteria"
-audience: "Executive committees that have already decided to move on AI and do not share a common language."
+title: "Phoenix TEAx Programme — AI systems for executives: reporting, control and resolution"
+audience: "Managers and executives who report, control and execute, and want to do it with systems of their own on any platform."
 learns:
-  - "Why every meeting about AI starts again from zero, and how to break that cycle"
-  - "The minimum vocabulary a committee needs to share in order to decide in a single session"
-  - "How to write an evaluation agreement that survives the next proposal"
-file_key: "D-02-phoenix-teax-en.pdf"
+  - "Shadow AI inside your own area: reporting risk, data risk and budget risk"
+  - "The five modules: doctrine and starting point, anatomy and prompts, coordination and evals, security and debt, economics and deployment"
+  - "What you take away: your prompt library, your agents and the recordings of your sessions"
+file_key: "Programa-Phoenix-TEAx.pdf"
 status: published
 lang: en
 pair: "d-02"
 copy: temporal
 ---
 
-Written for the team, not the individual: the problem it addresses only exists when several people decide.
+The full programme brochure, management edition, in Spanish: why the manager who presents a system-produced report already stands apart from the one who builds it by hand, and how to build and control those systems.

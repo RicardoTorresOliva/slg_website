@@ -1,17 +1,17 @@
 ---
 type: download
 service: "phoenix-retx-en"
-title: "The researcher's and the student's challenge in the AI era"
-audience: "Researchers and undergraduate and postgraduate students who already use artificial intelligence in their academic work."
+title: "Phoenix RETx Programme — Rigour as method: agentic AI for researchers and students"
+audience: "Researchers and undergraduate and postgraduate students competing with peers who already produce with artificial intelligence."
 learns:
-  - "Where a language model contributes to a piece of research and where it contaminates it without leaving a trace"
-  - "A matrix of uses in academic work, with the epistemic risk of each and what must be disclosed"
-  - "The five-field log that makes assisted work defensible before a committee, a board of examiners or an editor"
-file_key: "D-03-phoenix-retx-en.pdf"
+  - "Why copy-and-paste is plagiarism 2.0: hallucinated citations, zero traceability and industrialised error"
+  - "The four modules: the epistemic contract, building the assets, trusting the system, shielding and closing"
+  - "How the programme runs in team cohorts and what remains as the researcher's own asset"
+file_key: "Programa-Phoenix-RETx.pdf"
 status: published
 lang: en
 pair: "d-03"
 copy: temporal
 ---
 
-Written for those who must answer for what they produce: the disclosure is drafted while the work is being done, not once it is finished.
+The full programme brochure, researchers edition, in Spanish: your generation competes with agents, and the programme teaches you to make them yours, with rigour as method.

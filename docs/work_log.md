@@ -2849,3 +2849,20 @@ redes con lo que la web ya tiene (`post.published` firmado → n8n). Dos agentes
 formularios con apellido y la página «Empieza aquí» en worktrees aislados y se detuvieron por el
 límite de uso de la API; el trabajo parcial está en sus ramas y los briefs en
 `SLG_Overhauling/docs/_BRIEF_FORMULARIOS.md` y `_BRIEF_EMPIEZA_AQUI.md`.
+
+---
+
+## Los programas Phoenix como descarga y los documentos de Academy como artículos (2026-09-18, mañana)
+
+**Corrección de origen.** Los PDF de la familia Phoenix salen de `SLG_Overhauling/docs/phoenix/`
+(los programas PEEx, TEAx y RETx, versiones Alta Dirección, Gerencial y Researchers, en español), no
+de los documentos escritos en `docs/pdf/`. Subidos al bucket como `Programa-Phoenix-*.pdf`; las seis
+fichas de D-01, D-02 y D-03 (ES y EN) describen ahora el programa que entregan. Las fichas EN avisan
+de que el folleto está en español.
+
+**Los tres documentos de Academy pasan al blog**, en español e inglés, emparejados: seis artículos
+publicados con sus extractos para redes. Para que se lean enteros, el renderizador de Markdown
+—propio, sin librería, sin HTML— aprende **lista numerada, cita en bloque y tabla**; el troceado en
+bloques vive en `markdown-seguro.ts` y se prueba sin navegador (un `<script>` en una celda sigue
+siendo texto). Frenos: `check:content`, `lint`, `check:types`, `build:standalone`, `check:blog` (51),
+`check:js-budget`, `test-entregables` (48).
