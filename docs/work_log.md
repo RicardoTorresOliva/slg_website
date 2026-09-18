@@ -3184,3 +3184,36 @@ anota, no se arregla aquí.
 y `test:isolation` contra PostgreSQL — esta máquina no tiene. Se corren en CI y al migrar.
 
 `data_model.md` §1.1 pasa a **24 tablas** y reconoce las dos de antiabuso (0010) que no contaba.
+
+## DU-28 · Portal «Clases» (2026-09-18)
+
+**Qué hay.** `/portal/clases` (`app/(portal)/portal/clases/page.tsx`): los materiales de programa
+agrupados por proyecto, **por la misma puerta que «Materiales»** — `materialesPorProyecto()`, sin
+tocarla — con los de vídeo distinguidos (insignia) y abiertos en pestaña nueva
+(`target="_blank" rel="noopener"`). Sin cambio de CSP ni de visor: nada se incrusta; lo que no es
+vídeo sigue yendo a `/portal/entregables/[id]`.
+
+**Decisión de forma.** «Es de vídeo» no es un campo nuevo del modelo — la frontera (b) prohíbe
+vocabulario de LMS y un campo así es el primer paso hacia ahí aunque el nombre sea inocente. Se decide
+por la URL, en una función pura: `esVideo(url)` en `lib/portal/clases.ts`, host de vídeo conocido
+(YouTube, Vimeo, Wistia, Loom) o ruta que termina en `.mp4/.webm/.mov` — la extensión sobrevive en la
+ruta de una URL firmada, antes de la cadena de consulta con la firma. Con el `deliverable.url` de hoy
+(siempre `null` para `type = 'material'`, porque `publicarEntregable` en `lib/hq/entregables.ts` solo
+lo rellena para `type = 'link'`) la función no encuentra ningún vídeo todavía; queda lista para cuando
+esa puerta —fuera de alcance de esta unidad, que no toca `lib/hq/`— admita un material por enlace.
+
+**Navegación.** Sección `classes` en `lib/app/navegacion.ts`, justo después de `materials` y con su
+misma acción (`deliverable.read`): son los mismos datos vistos de otra manera, no un permiso nuevo —
+igual razón que ya defendía `materials`. Claves `app.nav.classes` y `portal.classes.*` en `content/ui`
+(ES/EN), al final del bloque del portal. Vacío inicial redactado: «Todavía no hay clases».
+
+**Verificado**: `check:types`, `lint`, `tsc --noEmit` de la app, `check:alcance` (230 archivos, la
+página nunca selecciona por `type = 'material'`), `check:cadenas` (38 archivos, `clases/page.tsx`
+añadido a la lista vigilada), `check:shell` (47 comprobaciones — la sección declara su acción y las
+dos etiquetas existen en los dos idiomas), `check:fronteras`, `check:secrets`, `check:pairs`.
+`scripts/app/test-shell.ts` y `scripts/ci/check-shell.ts` no enumeran las secciones a mano —leen
+`SECCIONES`— así que no necesitaron cambio. **No verificado**: `esVideo()` gana ocho comprobaciones en
+`scripts/portal/test-materiales.ts`, pero el archivo entero necesita PostgreSQL para arrancar
+(`DATABASE_URL_MIGRATIONS`) y esta máquina no lo tiene; se corre en CI. `design_docs/ui_wireframes.md`
+§7.8 documenta la pantalla sin renumerar §7.5-§7.7 (`§7.6` y `§7.7` los cita `docs/design_summary.md`
+y esta misma página, y renumerar habría roto esas referencias sin necesidad).

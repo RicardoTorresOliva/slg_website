@@ -64,6 +64,8 @@ const VIGILADOS = [
   "app/(portal)/portal/proyectos/page.tsx",
   "app/(portal)/portal/proyectos/[id]/page.tsx",
   "app/(portal)/portal/materiales/page.tsx",
+  // DU-28 · RF-155: pantalla nueva, mismo armazón que "materiales".
+  "app/(portal)/portal/clases/page.tsx",
   "app/(portal)/portal/miembros/page.tsx",
   "app/(portal)/portal/perfil/page.tsx",
   "app/(portal)/portal/PasoDeSesionCero.tsx",

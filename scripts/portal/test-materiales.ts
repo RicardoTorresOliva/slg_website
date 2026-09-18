@@ -261,6 +261,24 @@ async function main() {
   const proyectosAjenos = desdeA.filter((g) => g.proyecto.id === B.p1);
   check("ni su proyecto: la política de fila no lo devuelve, así que la pantalla es un 404", proyectosAjenos.length === 0);
 
+  console.log("\nDU-28 · RF-155 — `esVideo()` distingue por host o por extensión, no por adivinar:\n");
+
+  const { esVideo } = await import("../../lib/portal/clases.ts");
+  check("un enlace de YouTube es vídeo", esVideo("https://www.youtube.com/watch?v=abc123"));
+  check("un enlace corto de YouTube también", esVideo("https://youtu.be/abc123"));
+  check("un enlace de Vimeo es vídeo", esVideo("https://vimeo.com/12345"));
+  check(
+    "un archivo `.mp4` es vídeo aunque el host no lo diga",
+    esVideo("https://cdn.ejemplo.com/clase-1.mp4"),
+  );
+  check(
+    "una URL firmada conserva la extensión en la RUTA, antes de la firma",
+    esVideo("https://bucket.s3.amazonaws.com/fam/v1/clase.webm?X-Amz-Signature=abc"),
+  );
+  check("un PDF no es vídeo", !esVideo("https://cdn.ejemplo.com/manual.pdf"));
+  check("sin URL no hay nada que distinguir", !esVideo(null) && !esVideo(undefined) && !esVideo(""));
+  check("una cadena que no analiza como URL no revienta la pantalla", !esVideo("no-es-una-url"));
+
   await limpiar();
   await dueno.end({ timeout: 5 });
 

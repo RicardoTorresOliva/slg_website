@@ -113,7 +113,7 @@ Ricardo): la ejecución está en marcha y el estado real de cada unidad vive en 
 | DU-29 | DU | HQ: Conexiones, y escritura de hitos, pendientes y noticias | M6 | FU-15, DU-14, DU-15 | `pending` |
 | DU-26 | DU | Portal «Hoy» | M6 | FU-15, DU-18, DU-29 | `pending` |
 | DU-27 | DU | Portal «Programa» | M6 | FU-15, DU-19, DU-29 | `pending` |
-| DU-28 | DU | Portal «Clases» | M6 | DU-20 | `pending` |
+| DU-28 | DU | Portal «Clases» | M6 | DU-20 | `done` — `/portal/clases` reusa `materialesPorProyecto()` sin tocarla; `esVideo(url)` (`lib/portal/clases.ts`) distingue por host de vídeo o extensión, nunca por un campo nuevo del modelo. Sección `classes` en `lib/app/navegacion.ts` con la misma acción que `materials`. Frenos en verde: `check:types`, `lint`, `tsc` de la app, `check:alcance` (230 archivos), `check:cadenas` (38), `check:shell` (47), `check:fronteras`, `check:secrets`, `check:pairs`. Prueba pura de `esVideo()` añadida a `test:materiales`; **no corrida** — necesita PostgreSQL, que esta máquina no tiene |
 
 ---
 
