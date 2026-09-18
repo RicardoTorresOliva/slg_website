@@ -3152,3 +3152,11 @@ y `DATABASE_URL` pasa al puerto **6543** (transacción), que quita el límite. E
 el código, después la variable; `prepare: false` funciona en los dos modos, así que no hay ventana
 rota. Nada usa `LISTEN`, `NOTIFY` ni bloqueos consultivos; todo el trabajo con alcance va dentro de
 `db.transaction`, que en modo transacción es exactamente la unidad que conserva `set_config(…, true)`.
+
+**Spec Delta — Academy y centro de mando (2026-09-18, 18:10).** Ricardo redefine la intranet: HQ como
+centro de mando de una Company of One (CRM, agentes, chatbots, fábrica de contenidos, estudio,
+asistente) y el portal como una Academy que el cliente quiera abrir cada día (noticias con comentario
+para su caso, programación, hitos y pendientes con cero incertidumbre, biblioteca, clases). Decidido
+con él: **misma app, no un proyecto aparte** (D-160). El delta completo —RF-149…RF-156, milestone M6
+con FU-15 y DU-26…DU-30, qué se modifica, qué fronteras se mantienen (no LMS, no chat, sin incrustar
+vídeo), riesgo de regresión— está en `planning/spec-delta-academy.md`. **Espera aprobación** (Regla 1).
