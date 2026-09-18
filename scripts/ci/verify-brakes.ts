@@ -391,7 +391,10 @@ console.log("\nFreno del armazón público — contra un armazón roto a propós
   fixture.kill("SIGTERM");
   const salida = `${res.stdout ?? ""}${res.stderr ?? ""}`;
   const esperados = [
-    "la barra en español enlaza /holdings",
+    // Desde el 2026-09-18 el menú tiene cuatro destinos (D de la sesión: Empieza
+    // aquí · Servicios · Blog · Nosotros); el fixture roto no enlaza /servicios.
+    // Decía «/holdings», que ya no es destino: la expectativa vivía en el pasado.
+    "la barra en español enlaza /servicios",
     "ninguna etiqueta genérica",
     "cero enlaces a superficies cerradas",
     "el conmutador manda a la portada",
