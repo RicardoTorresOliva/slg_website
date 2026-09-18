@@ -139,12 +139,13 @@ function crearDoble() {
 
 /* ── Una captura de prueba ────────────────────────────────────────────────── */
 
-async function crearCaptura(email: string): Promise<string> {
+/** `apellido: null` imita una captura anterior a la columna `last_name`. */
+async function crearCaptura(email: string, apellido: string | null = "De Prueba"): Promise<string> {
   const id = crypto.randomUUID();
   await dueno`
-    insert into lead_capture (id, email, email_domain, name, company, job_title, source,
+    insert into lead_capture (id, email, email_domain, name, last_name, company, job_title, source,
                               download_slug, page_path, locale, utm, consent_at, privacy_version)
-    values (${id}, ${email}, ${email.split("@")[1]}, 'Persona de prueba', 'Empresa', 'Directora',
+    values (${id}, ${email}, ${email.split("@")[1]}, 'Persona de prueba', ${apellido}, 'Empresa', 'Directora',
             'download', 'd-06', '/descargas/d-06', 'es',
             ${dueno.json({ utm_source: "prueba" })}, now(), '2026-09-13')`;
   return id;
@@ -199,6 +200,16 @@ async function main() {
         rutas.includes("POST /api/v1/notes"),
       rutas.join(" · "),
     );
+    const altaDeContacto = (email: string) =>
+      (doble.recibido.find(
+        (r) => r.metodo === "POST" && r.ruta === "/api/v1/contacts" && (r.cuerpo as { email?: string })?.email === email,
+      )?.cuerpo ?? {}) as { firstName?: string; lastName?: string };
+    const alta1 = altaDeContacto("uno@crm-prueba.test");
+    check(
+      "el contacto nace con nombre y apellido tal como los escribió la persona, sin repliegue",
+      alta1.firstName === "Persona de prueba" && alta1.lastName === "De Prueba",
+      JSON.stringify(alta1),
+    );
     const nota = doble.recibido.find((r) => r.ruta === "/api/v1/notes");
     const texto = String((nota?.cuerpo as { body?: string })?.body ?? "");
     check(
@@ -214,6 +225,19 @@ async function main() {
 
     const traza = await intentosDe(id1);
     check("cada intento deja su fila en crm_delivery (criterio 8)", traza.length >= 1, `${traza.length} filas`);
+
+    // Una captura ANTERIOR a la columna `last_name`: el repliegue provisional
+    // sigue existiendo solo para ellas (RF-57), y se ve a simple vista.
+    const idVieja = await crearCaptura("vieja@crm-prueba.test", null);
+    await barrerUnaVez();
+    const altaVieja = altaDeContacto("vieja@crm-prueba.test");
+    check(
+      "una captura sin apellido (anterior a la columna) entra por el repliegue: el nombre se parte",
+      (await estadoDe(idVieja))?.crm_sync_status === "delivered" &&
+        altaVieja.firstName === "Persona" &&
+        altaVieja.lastName === "de prueba",
+      JSON.stringify(altaVieja),
+    );
 
     /* ── Criterio 6 · el CRM apagado ────────────────────────────────────── */
     console.log("\nCriterio 6 — con el CRM apagado la captura espera, y al volver entra:\n");

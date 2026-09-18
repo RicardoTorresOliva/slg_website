@@ -306,7 +306,10 @@ export const leadCapture = pgTable(
     id: id(),
     email: text("email").notNull(),
     emailDomain: text("email_domain").notNull(),
+    /** Solo el nombre. El apellido va aparte: el CRM los exige por separado. */
     name: text("name"),
+    /** Obligatorio en los formularios públicos; `NULL` solo en capturas anteriores a la columna. */
+    lastName: text("last_name"),
     company: text("company"),
     jobTitle: text("job_title"),
     /**

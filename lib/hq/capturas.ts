@@ -43,6 +43,8 @@ export type CapturaDeHq = {
   readonly id: string;
   readonly email: string;
   readonly nombre: string | null;
+  /** `null` en capturas anteriores a la columna `last_name`. */
+  readonly apellido: string | null;
   readonly empresa: string | null;
   readonly origen: string;
   readonly documento: string | null;
@@ -110,6 +112,7 @@ export async function capturasDeHq(ctx: AuthContext, filtro: Filtro = {}): Promi
     id: f.id,
     email: f.email,
     nombre: f.name,
+    apellido: f.lastName,
     empresa: f.company,
     origen: f.source,
     documento: f.downloadSlug,

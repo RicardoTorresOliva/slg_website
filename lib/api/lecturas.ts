@@ -142,6 +142,7 @@ export async function capturas(
         email: c.email,
         email_domain: c.emailDomain,
         name: c.name,
+        last_name: c.lastName,
         company: c.company,
         job_title: c.jobTitle,
         locale: c.locale,

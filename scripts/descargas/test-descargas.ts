@@ -10,6 +10,10 @@
  *   · **Trampa rellena** ⇒ responde como un éxito y **no crea lead** (RF-33).
  *     Si creara uno, el bot habría conseguido lo que venía a buscar.
  *   · **Dominio gratuito** ⇒ mensaje explícito, y **tampoco crea lead**.
+ *   · **Sin nombre o sin apellido** ⇒ `datos_incompletos`, y **tampoco crea
+ *     lead**. Los tres campos son obligatorios en todo formulario público, y
+ *     el `required` del HTML no cuenta: la comprobación que vale es la del
+ *     servidor. Se comprueba DESPUÉS de la trampa y del dominio a propósito.
  *   · **Documento sin archivo** ⇒ **sí crea lead**, no emite firma y no crea
  *     `download_event` (RF-40). Es el caso que más se rompe al implementarlo
  *     «cuando haya PDFs».
@@ -122,6 +126,9 @@ async function main() {
   });
 
   try {
+    // Los hijos primero: desde que la cola se vacía tras cada captura
+    // (`barrerDespues`), toda captura deja su fila en `crm_delivery`.
+    await dueno`delete from crm_delivery where lead_capture_id in (select id from lead_capture where email like '%@prueba-slg.com' or email like '%@gmail.com')`;
     await dueno`delete from download_event where lead_capture_id in (select id from lead_capture where email like '%@prueba-slg.com' or email like '%@gmail.com')`;
     await dueno`delete from lead_capture where email like '%@prueba-slg.com' or email like '%@gmail.com'`;
 
@@ -137,6 +144,8 @@ async function main() {
 
     await reiniciarLimite();
     console.log("\nCampo trampa — se descarta EN SILENCIO y no deja rastro (RF-33):\n");
+    // Sin nombre ni apellido A PROPÓSITO: la trampa tiene que responder antes
+    // que la comprobación de datos, o el bot recibiría una pista de qué le faltó.
     const conTrampa = await enviar(base, {
       documento: "d-06",
       idioma: "es",
@@ -160,6 +169,8 @@ async function main() {
       documento: "d-06",
       idioma: "es",
       email: "persona@gmail.com",
+      nombre: "Persona",
+      apellido: "Gratuita",
     });
     check(
       "el correo de dominio gratuito se rechaza con motivo explícito",
@@ -182,6 +193,8 @@ async function main() {
       documento: "d-06",
       idioma: "es",
       email: "alguien@prueba-slg.com",
+      nombre: "Alguien",
+      apellido: "Ampliado",
     });
     check(
       "un dominio añadido por INSERT se rechaza sin reconstruir ni reiniciar",
@@ -196,6 +209,8 @@ async function main() {
       documento: "d-06",
       idioma: "es",
       email: "director@empresa-real-slg.test",
+      nombre: "Director",
+      apellido: "Real",
     });
     check(
       "el envío redirige a gracias con «próximamente»",
@@ -221,6 +236,42 @@ async function main() {
       (await eventosDe(String(leads[0]?.id))).length === 0,
       "un documento sin archivo no puede haber entregado nada",
     );
+    const guardado = await dueno`select name, last_name from lead_capture where id = ${String(leads[0]?.id)}`;
+    check(
+      "guarda nombre y apellido en columnas separadas, tal como se escribieron",
+      guardado[0]?.name === "Director" && guardado[0]?.last_name === "Real",
+      JSON.stringify(guardado[0] ?? {}),
+    );
+
+    await reiniciarLimite();
+    console.log("\nSin nombre o sin apellido — motivo explícito, y sin captura:\n");
+    const sinApellido = await enviar(base, {
+      documento: "d-06",
+      idioma: "es",
+      email: "incompleta@empresa-real-slg.test",
+      nombre: "Persona",
+    });
+    check(
+      "sin apellido se rechaza con motivo `datos_incompletos`",
+      sinApellido.destino.includes("error=datos_incompletos"),
+      `destino: ${sinApellido.destino}`,
+    );
+    const sinNombre = await enviar(base, {
+      documento: "d-06",
+      idioma: "es",
+      email: "incompleta@empresa-real-slg.test",
+      apellido: "Apellido",
+    });
+    check(
+      "sin nombre, lo mismo",
+      sinNombre.destino.includes("error=datos_incompletos"),
+      `destino: ${sinNombre.destino}`,
+    );
+    check(
+      "y NO crea captura en ninguno de los dos casos",
+      (await leadsDe("incompleta@empresa-real-slg.test")).length === 0,
+      "una captura sin apellido llega al CRM como «parte local del correo»",
+    );
 
     await reiniciarLimite();
     console.log("\nLímite de peticiones — 429 sin revelar el umbral (RF-34):\n");
@@ -230,6 +281,8 @@ async function main() {
         documento: "d-06",
         idioma: "es",
         email: `tope${i}@empresa-real-slg.test`,
+        nombre: "Tope",
+        apellido: String(i),
         // La misma IP en los seis: es lo que el límite por IP tiene que ver.
       });
       if (r.destino.includes("error=limite")) {
@@ -264,6 +317,7 @@ async function main() {
       idioma: "es",
       email: "contacto@empresa-real-slg.test",
       nombre: "Persona",
+      apellido: "De Contacto",
       mensaje: "Queremos hablar de SLG_Readiness.",
     });
     check(
@@ -271,10 +325,15 @@ async function main() {
       contacto.destino.includes("estado=contact"),
       `destino: ${contacto.destino}`,
     );
-    const leadContacto = await dueno`select source, message from lead_capture where email = 'contacto@empresa-real-slg.test'`;
+    const leadContacto = await dueno`select source, message, name, last_name from lead_capture where email = 'contacto@empresa-real-slg.test'`;
     check(
       "crea una captura con source `contact` y guarda el mensaje",
       leadContacto[0]?.source === "contact" && String(leadContacto[0]?.message).includes("SLG_Readiness"),
+      JSON.stringify(leadContacto[0] ?? {}),
+    );
+    check(
+      "y el nombre y el apellido por separado, como la descarga",
+      leadContacto[0]?.name === "Persona" && leadContacto[0]?.last_name === "De Contacto",
       JSON.stringify(leadContacto[0] ?? {}),
     );
 
@@ -282,6 +341,8 @@ async function main() {
       origen: "doctrine-request",
       idioma: "es",
       email: "doctrina@empresa-real-slg.test",
+      nombre: "Persona",
+      apellido: "De Doctrina",
     });
     check(
       "la solicitud de doctrina redirige con SU variante, no con la de contacto",
@@ -312,13 +373,29 @@ async function main() {
       origen: "contact",
       idioma: "es",
       email: "alguien@gmail.com",
+      nombre: "Alguien",
+      apellido: "Gratuito",
     });
     check(
       "y rechaza los dominios de correo gratuito igual que la descarga",
       gratuitoContacto.destino.includes("error=dominio_gratuito"),
       `destino: ${gratuitoContacto.destino}`,
     );
+    await reiniciarLimite();
+    const incompletoContacto = await enviarA("/api/contacto", {
+      origen: "contact",
+      idioma: "es",
+      email: "incompleto-contacto@empresa-real-slg.test",
+      nombre: "Persona",
+    });
+    check(
+      "y exige nombre y apellido igual que la descarga: sin apellido, `datos_incompletos` y sin captura",
+      incompletoContacto.destino.includes("error=datos_incompletos") &&
+        (await leadsDe("incompleto-contacto@empresa-real-slg.test")).length === 0,
+      `destino: ${incompletoContacto.destino}`,
+    );
 
+    await dueno`delete from crm_delivery where lead_capture_id in (select id from lead_capture where email like '%empresa-real-slg.test' or email = 'alguien@gmail.com')`;
     await dueno`delete from download_event where lead_capture_id in (select id from lead_capture where email like '%empresa-real-slg.test')`;
     await dueno`delete from lead_capture where email like '%empresa-real-slg.test' or email = 'alguien@gmail.com'`;
   } finally {

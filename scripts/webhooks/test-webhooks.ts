@@ -364,6 +364,8 @@ async function main() {
       origen: "download",
       datos: formulario("director@du12-cableado.test"),
       email: "director@du12-cableado.test",
+      nombre: "Director",
+      apellido: "Cableado",
       pagina: "/descargas/du12",
       locale: "es",
     });
@@ -380,6 +382,8 @@ async function main() {
       origen: "download",
       datos: formulario("otra@du12-cableado.test"),
       email: "otra@du12-cableado.test",
+      nombre: "Otra",
+      apellido: "Cableado",
       pagina: "/descargas/du12",
       locale: "es",
     });
@@ -389,6 +393,8 @@ async function main() {
       origen: "contact",
       datos: formulario("tercera@du12-cableado.test"),
       email: "tercera@du12-cableado.test",
+      nombre: "Tercera",
+      apellido: "Cableado",
       mensaje: "un mensaje de prueba",
       pagina: "/contacto",
       locale: "es",

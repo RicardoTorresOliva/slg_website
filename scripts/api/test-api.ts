@@ -147,11 +147,11 @@ async function sembrar() {
               values ('d-du22-4', ${A.proyecto}, ${A.org}, 'Borrador', 'link', 'https://ejemplo.test/x',
                       1, 'fam-du22-bor', 'client', null)`;
 
-  await dueno`insert into lead_capture (id, email, email_domain, name, source, download_slug,
+  await dueno`insert into lead_capture (id, email, email_domain, name, last_name, source, download_slug,
                                         page_path, locale, consent_at, privacy_version,
                                         crm_mode, crm_contact_id, crm_sync_status, crm_attempts,
                                         crm_delivered_at)
-              values (${CAPTURA}, 'director@empresa.test', 'empresa.test', 'Director', 'download',
+              values (${CAPTURA}, 'director@empresa.test', 'empresa.test', 'Director', 'Apellido', 'download',
                       'd-01', '/ai/academy', 'es', now(), '2026-09-01', 'contact_note', '3412',
                       'delivered', 1, now())`;
   await dueno`insert into download_event (id, lead_capture_id, download_slug, signed_url_issued_at,
