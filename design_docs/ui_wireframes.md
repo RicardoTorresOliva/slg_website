@@ -1112,6 +1112,26 @@ método es contraseña** · "Cerrar sesión en todos los dispositivos" (con conf
 
 Es el **único** lugar del producto donde aparece la Sesión Cero (RF-96).
 
+### 7.8 Clases (`/portal/clases`) — RF-155
+
+Los mismos materiales de programa de §7.4, **agrupados por proyecto** y por la misma puerta
+(`materialesPorProyecto()`); lo único que añade es cómo se abre cada fila:
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  Proyecto A · SLG_Readiness                                                  │
+│  ┌────────────────────────────────────────────────────────────────────────┐  │
+│  │ Manual del programa          v1                          [ Abrir ]     │  │
+│  │ Sesión 1 — introducción  🎬 Vídeo   v1                    [ Ver ↗ ]    │  │
+│  └────────────────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+Un material es «vídeo» por su URL —host de vídeo conocido o extensión `.mp4/.webm/.mov`—, nunca por
+un campo nuevo del modelo. Un vídeo se abre en **pestaña nueva** (`target="_blank" rel="noopener"`);
+lo demás sigue abriendo en el visor de `/portal/entregables/[id]` de siempre. **Sin cambio de CSP ni
+de visor: nada se incrusta.** Vacío inicial redactado: "Todavía no hay clases".
+
 ---
 
 ## 8. Estados: catálogo y aplicación
@@ -1206,7 +1226,7 @@ columnas a un desplazamiento horizontal no es responsive.
 | §4 Identidad | RF-58 a RF-66, RF-119, RNF-24, RNF-37 |
 | §5 Shell | RF-72, RF-68, C.5 (componente 8), RNF-34 |
 | §6 HQ | RF-25, RF-51, RF-52, RF-54, RF-73 a RF-86, RF-111, RF-143, RF-147, RNF-25, RNF-29 |
-| §7 Portal | RF-88 a RF-96, RF-142, RF-144, RNF-21, RNF-31 |
+| §7 Portal | RF-88 a RF-96, RF-142, RF-144, RF-155, RNF-21, RNF-31 |
 | §8 Estados | RNF-34, perfil `deliverable_unit_completeness`, RF-71, RF-95 |
 | §9 Wayfinding | RNF-43, C.6 |
 | §10 Responsive | RNF-01 (coste de render), C.6 (Flexibilidad) |

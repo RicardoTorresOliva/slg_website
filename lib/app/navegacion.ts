@@ -83,6 +83,13 @@ export const SECCIONES: readonly Seccion[] = [
    */
   { clave: "materials", href: "/portal/materiales", superficie: "portal", accion: "deliverable.read" },
   /**
+   * «Clases» (DU-28 · RF-155): los mismos materiales de programa, vistos de
+   * otra manera — con los de vídeo distinguidos y abiertos aparte. Misma acción
+   * que `materials` **por la misma razón** que explica su comentario: son los
+   * mismos datos, no un permiso nuevo.
+   */
+  { clave: "classes", href: "/portal/clases", superficie: "portal", accion: "deliverable.read" },
+  /**
    * `member.read` y **no** `member.invite` (DU-21, criterio 2). El criterio dice
    * que `client_member` **ve la lista y no puede invitar**: con la acción de
    * invitar, la sección se le escondería entera a quien el criterio manda
