@@ -2997,3 +2997,9 @@ con su fuente declarada en la línea, para que `check:copy` las acepte, y reflej
 Frenos: content, cadenas, secretos, env, motion, migraciones, compilación, páginas (142), blog (51),
 armazón (60), SEO (226), presupuesto de JS. Pendiente al cierre: las fotografías nuevas (agente en
 curso) y su mapeo en `Fotografia.tsx`.
+
+**Fotografías (2026-09-18).** Quince escenas nuevas de la misma sesión (`z_image`, 3,6 créditos):
+cinco sustituidas —Servicios con piezas que unen los dos bloques, VoltAi con fichas, Doctrina con el
+libro protagonista, Nosotros en un balcón con horizonte y mar, Enterprise con lápices de puntas de
+colores y el azul al centro— y una por servicio. Todas con el isotipo como sello en la esquina, como
+las anteriores, y mapeadas en `Fotografia.tsx`. Peso: 24–47 KB.
