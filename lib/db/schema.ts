@@ -35,6 +35,25 @@ export const USER_ROLES = ["slg_admin", "slg_operator", "client_admin", "client_
 export const ORG_TYPES = ["slg", "client"] as const;
 export const ORG_STATUS = ["active", "archived"] as const;
 export const PROJECT_STATUS = ["active", "paused", "closed"] as const;
+/**
+ * Los once servicios de A.2, tal como los admite `project_service_literal`
+ * (0001). **Espejo del CHECK, no de la colección de contenido**: es lo que la
+ * base acepta en la inserción, y un valor que la API anunciara y la base
+ * rechazara sería un 500 donde el contrato promete un 422 (D-162).
+ */
+export const PROJECT_SERVICES = [
+  "Phoenix PEEx",
+  "Phoenix TEAx",
+  "Phoenix RETx",
+  "Customize Programs",
+  "AI Coaching for Directors",
+  "SLG_Readiness",
+  "SLG_Implement",
+  "APP_Building",
+  "AGE_Building",
+  "CoO as a Service",
+  "SLG_Holdings",
+] as const;
 export const LEAD_SOURCES = ["download", "contact", "doctrine-request"] as const;
 export const QUEUE_STATUS = ["pending", "delivered", "failed"] as const;
 export const CRM_MODES = ["contact_note", "lead_admission"] as const;
@@ -58,6 +77,9 @@ export const API_SCOPES = [
   // permite tocar hitos ni al revés (RF-147).
   "news:write",
   "milestones:write",
+  // D-162: el CRM crea aquí la carpeta del cliente. Solo el proyecto —nombre,
+  // servicio, fechas, estado— y su `crm_project_id`; nada comercial cruza.
+  "projects:write",
 ] as const;
 
 export type UserRole = (typeof USER_ROLES)[number];
@@ -420,9 +442,21 @@ export const project = pgTable(
     ownerUserId: text("owner_user_id").references(() => user.id, { onDelete: "set null" }),
     startsAt: timestamp("starts_at", { withTimezone: true }),
     endsAt: timestamp("ends_at", { withTimezone: true }),
+    /**
+     * El identificador del proyecto EN EL CRM (D-162): el CRM es donde nace un
+     * proyecto y este sitio lo recibe. Nulo en los que ya existían. Aquí no
+     * entra nada comercial —ni etapa, ni importe, ni propietario—: la
+     * frontera (a) de `scope.md` no se mueve con esta columna.
+     */
+    crmProjectId: text("crm_project_id"),
     createdAt: createdAt(),
   },
-  (t) => [index("idx_project_org").on(t.organizationId)],
+  (t) => [
+    index("idx_project_org").on(t.organizationId),
+    // Único y parcial: el mismo proyecto del CRM no entra dos veces, y eso es
+    // lo que hace seguro reintentar la creación.
+    uniqueIndex("uq_project_crm_id").on(t.crmProjectId).where(sql`crm_project_id IS NOT NULL`),
+  ],
 );
 
 export const deliverable = pgTable(

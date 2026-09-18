@@ -1,6 +1,6 @@
 /**
- * catalogo.ts — **Las quince rutas de `/api/v1`, como DATOS** (DU-22 · DU-23 ·
- * DU-30 · `api_contracts` §2, §3 y §4).
+ * catalogo.ts — **Las dieciocho rutas de `/api/v1`, como DATOS** (DU-22 · DU-23 ·
+ * DU-30 · D-162 · `api_contracts` §2, §3 y §4).
  *
  * ESTE ARCHIVO EXISTE PARA QUE LA ESPECIFICACIÓN NO PUEDA MENTIR. El criterio 5
  * de DU-23 pide que `GET /openapi.json` se genere **a partir de los mismos
@@ -24,6 +24,7 @@ import {
   LEAD_SOURCES,
   ORG_STATUS,
   ORG_TYPES,
+  PROJECT_SERVICES,
   PROJECT_STATUS,
   QUEUE_STATUS,
   VISIBILITY,
@@ -63,7 +64,8 @@ const CURSOR: Declaracion = {
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
- * Las quince rutas: nueve de DU-22/DU-23 y seis de la Academy (DU-30)
+ * Las dieciocho rutas: nueve de DU-22/DU-23, seis de la Academy (DU-30) y
+ * tres del proyecto que nace en el CRM (D-162)
  * ══════════════════════════════════════════════════════════════════════════ */
 
 export type RutaDeApi = {
@@ -339,6 +341,68 @@ export const RUTAS: readonly RutaDeApi[] = [
     ruta: "/api/v1/action-items/{id}/done",
     accion: "action_item.write",
     resumen: "Cierra un pendiente, sea de quien sea, con el actor de la clave. Repetirlo no cambia nada.",
+    cuerpo: [],
+    codigos: [200, 400, 404, 415, 422],
+  },
+
+  /* ── D-162 · El proyecto nace en el CRM; este sitio lo recibe ─────────────
+   *
+   * El CRM (o Hermes por él) crea aquí la carpeta del cliente y deja al lado
+   * su identificador. **Idempotente por `crm_project_id`**: un reintento tras
+   * una llamada cortada devuelve 200 con el proyecto que ya existe, ni crea
+   * otro ni responde 409 — un agente no tiene que preguntar antes de repetir.
+   * Cerrar y reabrir son sub-acciones `POST`, como los hitos: el catálogo no
+   * conoce `PATCH`, y un acto con nombre se lee en `audit_log` sin abrir el
+   * cuerpo. Nada comercial viaja en el cuerpo: frontera (a) de `scope.md`.
+   */
+  {
+    metodo: "POST",
+    ruta: "/api/v1/organizations/{id}/projects",
+    accion: "project.write",
+    resumen:
+      "Crea la carpeta del cliente que el CRM acaba de abrir. Mismo `crm_project_id`: 200 con la existente. Ajena o inexistente, 404.",
+    cuerpo: [
+      { nombre: "name", tipo: "string", minimo: 1, maximo: 200, obligatorio: true, descripcion: "Nombre del proyecto." },
+      {
+        nombre: "service",
+        tipo: "enum",
+        valores: PROJECT_SERVICES,
+        obligatorio: true,
+        descripcion: "Servicio, literal e intraducible (RF-14). Fuera de la lista, 422.",
+      },
+      {
+        nombre: "crm_project_id",
+        tipo: "string",
+        minimo: 1,
+        maximo: 200,
+        obligatorio: true,
+        descripcion: "Identificador del proyecto en el CRM. Si el CRM manda, dice cuál es. Repetirlo devuelve 200 con el existente.",
+      },
+      { nombre: "starts_at", tipo: "datetime", descripcion: "Fecha de inicio, opcional." },
+      { nombre: "ends_at", tipo: "datetime", descripcion: "Fecha de fin prevista, opcional." },
+      {
+        nombre: "status",
+        tipo: "enum",
+        valores: PROJECT_STATUS,
+        defecto: "active",
+        descripcion: "Estado inicial. Ausente: `active`.",
+      },
+    ],
+    codigos: [200, 201, 400, 404, 413, 415, 422],
+  },
+  {
+    metodo: "POST",
+    ruta: "/api/v1/projects/{id}/close",
+    accion: "project.write",
+    resumen: "Cierra un proyecto (`status: closed`). Repetirlo no cambia nada.",
+    cuerpo: [],
+    codigos: [200, 400, 404, 415, 422],
+  },
+  {
+    metodo: "POST",
+    ruta: "/api/v1/projects/{id}/reopen",
+    accion: "project.write",
+    resumen: "Devuelve un proyecto a `active`. Idempotente sobre uno ya activo.",
     cuerpo: [],
     codigos: [200, 400, 404, 415, 422],
   },

@@ -3283,3 +3283,29 @@ puede abrir en el visor desde HQ porque la función de la migración 0016 solo s
 estaban en rojo desde el 17-09 (`check:produccion` con «Liderazgo» y `test:descargas` con `d-06`
 ya publicado); arreglados en el commit siguiente. Las seis unidades quedan en `review` hasta ese
 verde.
+
+## D-162: el proyecto nace en el CRM; este sitio lo recibe (2026-09-18, 23:45)
+
+Decisión de Ricardo (`docs/decision_log.md` D-162): hasta hoy un proyecto se creaba a mano aquí y
+otra vez en el CRM, y nada los relacionaba. Ahora el CRM (o Hermes por él) crea aquí la «carpeta
+del cliente» por `POST /api/v1/organizations/{id}/projects` y deja al lado su identificador. **Nada
+comercial cruza**: la frontera (a) de `scope.md` no se mueve.
+
+**Hecho**: migración `0019_proyecto_del_crm` (`project.crm_project_id` nulo, índice único parcial
+`uq_project_crm_id`, `COMMENT`, y el `CHECK` de `api_key.scopes` reescrito de ocho a nueve);
+alcance `projects:write` en `API_SCOPES`, en `data_model` §3.6 y §5.13, y en la fila `project.write`
+de B.3 (`lib/auth/roles.ts`), que pasa de `null` a ese alcance; tres rutas en el catálogo
+(`POST …/projects`, `POST /projects/{id}/close`, `/reopen`) con sus escrituras en
+`lib/api/escrituras.ts` (10 y 11) y sus manejadores; `GET …/projects` devuelve `crm_project_id`;
+`api_contracts` §2.3, §3.16–§3.18 y §4.1. **La ruta es idempotente por `crm_project_id`**: repetir
+devuelve 200 con el existente, y el índice sostiene la promesa aunque dos reintentos lleguen a la
+vez. Los once servicios del cuerpo son los del `CHECK` de 0001 (`PROJECT_SERVICES` en el esquema),
+que es lo que la base acepta —y ahí hay un hallazgo: 0001 dice `SLG_Holdings` donde `data_model`
+§3.13 y el contenido dicen `Holdings by SLG`; queda apuntado, no resuelto.
+
+**No verificado**: `scripts/api/test-api.ts` (+40 comprobaciones: 403 sin alcance, `orgs:read` no
+implica, 201, el mismo `crm_project_id` dos veces → 200 y una sola fila, en otra empresa → 422,
+ajena → 404 idéntico al inexistente, `service` inventado, `crm_project_id` vacío y ausente, campo
+comercial de más, `close`/`reopen` idempotentes, el listado con `crm_project_id`, la
+especificación y la auditoría). Necesita PostgreSQL y `build:standalone`, que esta máquina no tiene;
+se corre en CI.

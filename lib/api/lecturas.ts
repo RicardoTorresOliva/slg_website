@@ -305,21 +305,37 @@ export async function proyectosDeEmpresa(
 
   return {
     page,
-    data: data.map(({ p, duenoId, duenoNombre }) => ({
-      id: p.id,
-      organization_id: p.organizationId,
-      name: p.name,
-      // Literal e intraducible (RF-14). Un agente que reciba `SLG Readiness`
-      // sin guion bajo está leyendo un dato corrupto — y la base lo habría
-      // rechazado antes, con `project_service_literal`.
-      service: p.service,
-      status: p.status,
-      owner: duenoId ? { id: duenoId, name: duenoNombre } : null,
-      // Fechas de calendario, sin hora y sin huso (§3.3).
-      starts_at: p.startsAt ? p.startsAt.toISOString().slice(0, 10) : null,
-      ends_at: p.endsAt ? p.endsAt.toISOString().slice(0, 10) : null,
-      created_at: p.createdAt.toISOString(),
-    })),
+    data: data.map(({ p, duenoId, duenoNombre }) =>
+      proyectoDelContrato(p, duenoId ? { id: duenoId, name: duenoNombre } : null),
+    ),
+  };
+}
+
+/**
+ * La forma de un proyecto en el contrato (§3.3). **Una sola**, para la lectura
+ * y para la escritura de D-162: lo que el CRM recibe al crear es exactamente
+ * lo que después lista. `crm_project_id` viaja para que el CRM pueda
+ * reconciliar sin adivinar por el nombre; nulo en los proyectos anteriores.
+ */
+export function proyectoDelContrato(
+  p: typeof project.$inferSelect,
+  owner: { id: string; name: string | null } | null,
+) {
+  return {
+    id: p.id,
+    organization_id: p.organizationId,
+    name: p.name,
+    // Literal e intraducible (RF-14). Un agente que reciba `SLG Readiness`
+    // sin guion bajo está leyendo un dato corrupto — y la base lo habría
+    // rechazado antes, con `project_service_literal`.
+    service: p.service,
+    status: p.status,
+    owner,
+    crm_project_id: p.crmProjectId,
+    // Fechas de calendario, sin hora y sin huso (§3.3).
+    starts_at: p.startsAt ? p.startsAt.toISOString().slice(0, 10) : null,
+    ends_at: p.endsAt ? p.endsAt.toISOString().slice(0, 10) : null,
+    created_at: p.createdAt.toISOString(),
   };
 }
 

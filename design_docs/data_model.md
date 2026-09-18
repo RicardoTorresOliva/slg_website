@@ -334,9 +334,9 @@ actualice, y ese proceso es exactamente lo que falla en silencio.
 
 ### 3.6 Alcances de `api_key.scopes`
 
-**Ocho** alcances, granulares y **sin implicación entre ellos** (RF-147: que una clave con
+**Nueve** alcances, granulares y **sin implicación entre ellos** (RF-147: que una clave con
 `events:write` consiga crear un entregable es un defecto de seguridad, no una comodidad). Los seis de
-B.3 y B.5, más los dos de la Academy (FU-15, RF-153).
+B.3 y B.5, los dos de la Academy (FU-15, RF-153) y el del proyecto que nace en el CRM (D-162).
 
 | Alcance | Qué habilita | Origen |
 |---|---|---|
@@ -348,11 +348,12 @@ B.3 y B.5, más los dos de la Academy (FU-15, RF-153).
 | `events:write` | `POST /api/v1/events` | B.5, RF-105 |
 | `news:write` | `POST /api/v1/organizations/{id}/news` — una noticia con comentario para esa empresa | RF-153 (FU-15) |
 | `milestones:write` | `POST/PATCH` de hitos y pendientes de un proyecto | RF-153 (FU-15) |
+| `projects:write` | `POST /api/v1/organizations/{id}/projects` (la carpeta del cliente que el CRM acaba de abrir, idempotente por `crm_project_id`) · `POST /api/v1/projects/{id}/close` · `/reopen`. **No** habilita `orgs:read` ni crear empresas: leer no implica escribir y las empresas se dan de alta en HQ | D-162 |
 
 `GET /api/v1/openapi.json` responde a **cualquier** clave válida (RF-106) y por eso no consume
 alcance: no es una laguna, es el requisito.
 
-`CHECK api_key_scopes_valid: scopes <@ '["captures:read","orgs:read","deliverables:read","deliverables:write","announcements:write","events:write","news:write","milestones:write"]'::jsonb` (reescrito entero en 0018)
+`CHECK api_key_scopes_valid: scopes <@ '["captures:read","orgs:read","deliverables:read","deliverables:write","announcements:write","events:write","news:write","milestones:write","projects:write"]'::jsonb` (reescrito entero en 0019)
 — el operador de contención hace que un alcance inventado no llegue a guardarse.
 `CHECK api_key_scopes_not_empty: cardinality(scopes) > 0` — una clave sin alcance no puede hacer nada
 y solo sirve para confundir en HQ.
@@ -1090,6 +1091,7 @@ la señal temprana de R-04 y R-07 («el CRM está devolviendo 403 en empresas y 
 | `owner_user_id` | `text` | NO | — | `FK → user.id`. Responsable. **Ancla del permiso «asignados» de `slg_operator`** (B.3) |
 | `starts_at` | `date` | SÍ | `NULL` | Fecha de inicio (B.2) |
 | `ends_at` | `date` | SÍ | `NULL` | Fecha de fin prevista |
+| `crm_project_id` | `text` | SÍ | `NULL` | **Identificador del proyecto en el CRM** (D-162): el CRM es donde nace un proyecto y este sitio lo recibe por `POST /api/v1/organizations/{id}/projects`. Nulo en los anteriores. **Aquí no entra nada comercial** —ni etapa, ni importe, ni propietario comercial—: la frontera (a) de `scope.md` no se mueve. Índice único parcial `uq_project_crm_id … WHERE crm_project_id IS NOT NULL` (0019): el mismo proyecto del CRM no entra dos veces, y eso es lo que hace seguro reintentar la creación |
 | `created_at` · `updated_at` | `timestamptz` | NO | `now()` | — |
 
 `starts_at` y `ends_at` son `date`, no `timestamptz`: son fechas de calendario acordadas con un
