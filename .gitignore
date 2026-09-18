@@ -35,3 +35,7 @@ deliverables/*
 # ─── Varios ──────────────────────────────────────────────────────────────────
 .DS_Store
 npm-debug.log*
+# Enlace local con el proyecto de Vercel: lleva los ids de proyecto y de cuenta.
+.vercel
+# Restos del CLI de Supabase: el enlace con el proyecto y la versión descargada.
+supabase/.temp/

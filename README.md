@@ -359,6 +359,9 @@ Los valores se ponen en **Easypanel → proyecto `slg_website` → el servicio �
 | `BACKUP_FIRST_DATE` | La fecha de tu primera copia (`AAAA-MM-DD`). Va **en la tarea de purga**. Es lo que permite detectar que alguien ha borrado el histórico | Tú, el día que hagas la primera copia |
 | `BACKUP_DATE_OVERRIDE` | **Solo para el simulacro de restauración.** Producción no la define | — |
 | `PG_DUMP_BIN` · `PG_RESTORE_BIN` | Solo si esos programas no están donde el sistema los busca | — |
+| `FILES_DRIVER` | Qué guarda los archivos. Vacía: S3/MinIO, el diseño del VPS. `supabase`: Supabase Storage por su REST, y entonces las `S3_*` no hacen falta —los nombres de bucket sí | Tú, según dónde esté el sitio |
+| `SUPABASE_URL` · `SUPABASE_SERVICE_ROLE_KEY` | Solo con `FILES_DRIVER=supabase`. Supabase → *Project Settings* → *API*. La clave de servicio **salta las políticas de fila**: no toca nunca al navegador | Tú, en Supabase |
+| `CRON_SECRET` | Testigo de `/api/colas`, la ruta que vacía las colas cuando la llama un planificador externo. **Opcional**: sin ella la ruta responde 404 y las colas se vacían igual tras cada captura | Tú. Larga y al azar |
 
 > **Lo que se pierde para siempre si se pierde:** `BACKUP_PRIVATE_KEY`. Todo lo demás se regenera
 > donde lo creaste. Esa no.

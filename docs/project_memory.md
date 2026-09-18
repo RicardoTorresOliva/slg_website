@@ -581,63 +581,94 @@ modo JSON: invocarlo con `env -u CLAUDECODE` (ver memoria del agente).
 
 ---
 
-## PRÓXIMA SESIÓN — dos objetivos: la plantilla para sitios de clientes y la entrada a la intranet
+## Sesión 2026-09-18 (tarde) — la primera cuenta existe como mecanismo; la plantilla, medida
 
-Cierre del 2026-09-18, 02:30 (Lima). **Producción = `slg-website-56kh73gri`, completa y verificada**
-(menú de cuatro destinos, mapa de portada, Servicios, renombres, regreso, fotos, formularios con
-apellido, CRM, correo, Nosotros corregido). `develop` = `origin/develop`, árbol limpio salvo una
-línea de `.gitignore` de sesiones anteriores. Decisión de Ricardo: `SLG_Readiness` y `SLG_Implement`
-se quedan como están.
+**Objetivo B, resuelto en lo que dependía del código.** `scripts/auth/primer-admin.ts` (`npm run
+auth:primer-admin`) crea la empresa de SLG, el usuario `slg_admin` con contraseña y su pertenencia, y
+deja fila en `audit_log`. **Se niega a correr si `"user"` tiene una sola fila**: es arranque, no una
+puerta trasera.
 
-### Objetivo A · Convertir este proyecto en la base para montar sitios de clientes en dos días
-Lo que Ricardo quiere: la misma estructura y arquitectura, replicable, sin volver a tardar dos
-semanas. Punto de partida para la sesión (no decidido todavía; decidirlo con él al arrancar):
+La disyuntiva «guion o acción en `/api/ops`» **no era una preferencia: la cierra el diseño**.
+`membership` lleva `FORCE ROW LEVEL SECURITY` y su política (0001 + 0015) solo deja escribir al actor
+cuya empresa coincide o a `slg_admin`/`slg_operator`/`agent_slg`. `withSystemScope` pone `system`, que
+no está en la lista y la 0015 explica por qué no puede estarlo; `withScope` exige un `AuthContext`,
+imposible de fabricar. **La aplicación no puede crear su primera pertenencia**, así que el actor tiene
+que ser el dueño de la base y el sitio, un guion —como `migrar.ts` y `seed.ts`—. Una acción HTTP
+correría con la conexión de la aplicación, que es justo la que no puede.
 
-- **Qué es motor y qué es piel.** Motor (se reutiliza tal cual): `app/` (rutas, armazón, auth, HQ,
-  portal, API v1), `lib/` (contenido, colas, CRM, correo, archivos, auth), `components/`, `drizzle/`,
-  `scripts/ci` (27 frenos) y `scripts/*/test-*`, `AGENTS.md` + `profiles/software-app`. Piel y
-  contenido (cambia por cliente): `content/**` (92 registros), `content/ui/*.json`, `public/marca`,
-  `public/fotos`, `app/tokens.css`, `components/Wordmark.tsx`, `lib/content/seo.ts` (JSON-LD de la
-  organización), y las **tablas escritas a mano que hoy son de SLG**: `lib/content/rutas.ts`
-  (`DESTINOS`, `RAMAS`, `SERVICIOS`, pares), `lib/content/nomenclature.ts`, `knowledge/naming-rules.md`,
-  `components/Fotografia.tsx` (`POR_RUTA`), `scripts/ci/check-armazon.ts` (destinos) y
-  `check-paginas.ts` (bloques de portada). Esas tablas son el trabajo real de la plantilla: pasar de
-  «escritas para SLG» a «derivadas de un `site.config`» o a un archivo de estructura por cliente.
-- **Mecanismo recomendado** (a discutir): repositorio plantilla en GitHub («Use this template») +
-  un archivo de configuración del sitio (marca, idiomas, destinos, ejes/líneas/servicios, dominio de
-  correo, CRM sí/no) + un playbook `crear-sitio` que genere los esqueletos de `content/`, ajuste las
-  tablas y deje la lista de variables de entorno. Infra por cliente: proyecto Supabase (migraciones
-  + bucket con `montar/subir.mjs`), proyecto Vercel con variables en Production/Preview (la receta
-  de `ops/*.env` ya existe), Resend con subdominio de envío, CRM opcional. Todo lo que hoy es
-  «SLG» en los frenos (`PUBLIC_BRAND`, textos prohibidos, nomenclatura) tiene que salir del config.
-- **Primer paso concreto**: inventario mecánico de todo lo que nombra a SLG fuera de `content/`
-  (`git grep -n "SLG\|Softlanding\|softlandingglobal" -- app lib components scripts knowledge`) y
-  decidir para cada línea si es motor con parámetro o piel. Después, el `site.config` y el playbook.
-- Lo que ya está pensado para reutilizar y conviene no rehacer: `docs/blog-editor.md` (contrato del
-  blog), `lib/colas` (colas por acontecimientos, válidas en cualquier plataforma), el sistema de
-  regreso (`Regreso.tsx`, derivado de la tabla), el mapa (`MapaDelSitio.tsx`, derivado de la tabla).
+**No se ejecutó contra producción**: el modo auto del agente bloquea leer credenciales y tocar la base
+real. Para Ricardo, con la cadena del **rol dueño** (la de las migraciones, host directo):
 
-### Objetivo B · La entrada a la intranet (HQ y portal), que Ricardo no ha podido ver
-Hallazgo de esta noche: **no existe camino para crear el primer administrador en producción.**
-`/acceder` es correo + contraseña (Better Auth); Google y Microsoft no están configurados (sin
-`GOOGLE_*`/`MICROSOFT_*` en Vercel). Las invitaciones (`lib/invitations`) exigen un actor con rol
-de SLG, y el `seed` es de datos de ejemplo para local. La base de producción no tiene usuarios.
-- **Hacer primero**: un aprovisionamiento de arranque, una sola vez y solo si la tabla de usuarios
-  está vacía: o un script `scripts/auth/primer-admin.ts` (rol dueño, crea la organización SLG y un
-  `slg_admin` con contraseña por el API de Better Auth, respetando el `withSystemScope`), o una
-  acción más en `/api/ops` con la misma guarda. Elegir la que deje traza en `audit`.
-- Después: entrar con Ricardo en `/acceder` → `/hq` (tablero, capturas, empresas, usuarios, claves,
-  auditoría) y `/portal` con un usuario de empresa cliente de prueba, y revisar visualmente las dos
-  superficies (DU-13/DU-16 tienen pendiente «revisión visual»). Nota: `SUPERFICIES_EN_REVISION=hq`
-  era el interruptor para enseñar HQ en staging; con los previews de Vercel ya funcionando, el
-  preview de `develop` sirve para eso.
+```
+DATABASE_URL_MIGRATIONS="…" DATABASE_URL="…" BETTER_AUTH_SECRET="…" \
+  npm run auth:primer-admin -- --correo <tu@correo> --nombre "Ricardo Torres Oliva"
+```
 
-### Orden sugerido para mañana
-1. Intranet (B): es corto, desbloquea a Ricardo y no depende de nada.
-2. Plantilla (A): inventario → decisión de mecanismo con Ricardo → `site.config` → playbook.
+Imprime la contraseña **una sola vez**. `DATABASE_URL` hace falta porque la librería se inicializa al
+importarla; la escritura va por la del dueño.
+
+**Y aun con la cuenta creada, HQ contesta 404, y no es la cuenta.** `SUPERFICIES_ABIERTAS` está en
+`false` para `hq` y `portal` (`lib/auth/roles.ts`). La única apertura es `SUPERFICIES_EN_REVISION`, y
+**solo actúa si delante hay compuerta de staging** (`STAGING_BASIC_AUTH_USER`/`_PASSWORD`), que
+producción no lleva a propósito. Para verlas hay que **desplegar una vista previa** con esas tres
+variables además de las de siempre. Decidir con Ricardo: vista previa con compuerta (el andamio
+previsto) o cerrar M3/M4 y poner `true` (retirar el andamio). Lo segundo es una decisión de proyecto,
+no de sesión.
+
+**Objetivo A, primer paso hecho: `docs/plantilla-de-sitios.md`.** El inventario mecánico, con una
+decisión por línea. El recuento cambia el tamaño del trabajo: de **1.388 líneas en 128 archivos** que
+nombran a SLG, 761 son prefijo técnico, 347 son «SLG» = **la casa** (frente a la empresa cliente), 133
+el vocabulario de roles, y **solo 147 son marca y oferta**. La marca son 26 sitios concretos (media
+tarde). Lo caro es la **estructura** —`rutas.ts`, `schema.ts`, los 30 patrones de `nomenclature.ts`,
+`POR_RUTA` de `Fotografia.tsx`— y, con ella, los **cinco frenos que validan contra la oferta de SLG**:
+si no se parametrizan, un sitio de cliente arranca con cinco frenos en rojo y alguien los apaga.
+
+**La decisión que falta, y es de Ricardo**: si la estructura de ejes/líneas/servicios se **declara en
+un archivo** (cuesta un generador, paga desde el segundo cliente) o cada cliente tiene **su
+`rutas.ts`** (cuesta cero, paga hasta el tercero). Sin esa respuesta no tiene sentido escribir el
+`site.config` ni el playbook `crear-sitio`.
+
+**Dos defectos encontrados de paso, no arreglados** (son cambio de alcance):
+- Texto visible con la marca **dentro de `lib/`**: `lib/auth/acceso.ts:23` y
+  `lib/invitations/service.ts:362`. Debe salir de `content/ui/*.json`, como el resto.
+- El respaldo `?? "https://softlandingglobal.com"` en `lib/content/seo.ts:21`, `lib/content/rss.ts:75`
+  y `app/api/ops/route.ts:126`. Un sitio de cliente al que se le olvide `NEXT_PUBLIC_SITE_URL` **no
+  falla: publica el dominio de SLG** en sus etiquetas sociales.
+
+**Menores cerrados.** `check:literacy` llevaba en rojo desde la sesión de Supabase —cuatro variables
+sin explicar en `README.md`: `FILES_DRIVER`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
+`CRON_SECRET`—; documentadas, en verde. Los tres worktrees `agent-*` quitados: **3,0 GB → 2,0 MB**,
+ramas intactas — y ojo: `worktree-agent-a361ac28e2e6b40e1` **no está fusionada** en `develop`, al
+contrario de lo que decía esta memoria; es la línea vieja, y por eso se quitó el directorio y no la
+rama. `.gitignore`: el `.env*` del final **anulaba el `!.env.example`** de arriba; retirado, y añadido
+`supabase/.temp/`. CLI de Vercel 54 → 59.23.1.
+
+---
+
+## PRÓXIMA SESIÓN
+
+Cierre del 2026-09-18, tarde. Producción sigue siendo **`slg-website-56kh73gri`**, sin tocar: nada de
+esta sesión llega al sitio público. `develop` con un commit nuevo (guion de arranque, inventario de
+plantilla, `README`, `.gitignore`).
+
+### 1 · Terminar la entrada a la intranet (corto, y desbloquea a Ricardo)
+1. Ricardo corre `npm run auth:primer-admin` con la cadena del rol dueño (comando arriba).
+2. Decidir cómo se abren HQ y portal: **vista previa con `STAGING_BASIC_AUTH_*` +
+   `SUPERFICIES_EN_REVISION=hq,portal`**, o cerrar M3/M4 y poner `SUPERFICIES_ABIERTAS` en `true`.
+3. Con eso, la revisión visual pendiente de DU-13/DU-16 y el paseo por `/hq` y `/portal` con un
+   usuario de empresa de prueba.
+
+### 2 · La plantilla (objetivo A): la decisión, y luego el código
+Leer `docs/plantilla-de-sitios.md` —es corto y está medido— y responder **la pregunta del §4.1**:
+estructura declarada o `rutas.ts` por cliente. Después, en este orden: `site.config` → parametrizar
+los cinco frenos → playbook `crear-sitio` → repositorio plantilla en GitHub.
+
+### 3 · Los dos defectos de §2 y §3.2 del inventario
+Pequeños, de este sitio, y se arreglan antes de que haya dos sitios que arreglar.
 
 ### Pendientes menores
 - Easypanel: parar el proyecto `slg_website`; «Show Error» de los compose de `clientes`.
-- Blog → redes: flujo n8n y `WEBHOOK_*`. Copys en `temporal`: 84. Fotos: dos sillas en
-  `phoenix-peex`, regla lisa en `readiness`. `test:descargas`/`test:webhooks` sobre S3 por rehacer.
-- Worktrees `.claude/worktrees/agent-*`: fusionados, se pueden borrar. Vercel CLI 54 → 59.
+- Blog → redes: flujo n8n y `WEBHOOK_*`. Copys en `temporal`: 84. `test:descargas`/`test:webhooks`
+  sobre S3 por rehacer.
+- `check:brakes` tiene cinco frenos que **no se pueden correr en el portátil**: piden navegador
+  (Playwright sin Chromium) o PostgreSQL. No son defectos del código; se corren en CI.

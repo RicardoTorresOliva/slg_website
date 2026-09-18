@@ -48,6 +48,7 @@
     "backup:purge": "node scripts/backup/purgar.ts",
     "test:respaldos": "node scripts/backup/test-respaldos.ts",
     "db:seed": "node scripts/db/seed.ts",
+    "auth:primer-admin": "node scripts/auth/primer-admin.ts",
     "test:isolation": "node scripts/db/test-isolation.ts",
     "test:contracts": "node scripts/db/test-contratos.ts",
     "test:nocompile": "node scripts/db/test-no-compila.ts",

@@ -3010,3 +3010,64 @@ las anteriores, y mapeadas en `Fotografia.tsx`. Peso: 24–47 KB.
 proyecto en la base para montar sitios de clientes en dos días (motor vs. piel, `site.config`,
 playbook) y la entrada a la intranet, que hoy no tiene camino para crear el primer administrador en
 producción. Detalle y orden sugerido en `project_memory.md`.
+
+---
+
+## La primera cuenta de la intranet, y el inventario de lo que nombra a SLG (2026-09-18, tarde)
+
+**El agujero de arranque, tapado: `scripts/auth/primer-admin.ts`.** En producción **no existía camino
+para crear la primera cuenta**. `/acceder` es correo + contraseña; el alta pública está cerrada en el
+middleware y solo se crea cuenta canjeando una invitación; e invitar exige un actor con rol de SLG.
+Sin usuarios no hay quien invite: un punto muerto perfecto, y la base de producción no tiene ninguno.
+
+La decisión que pedía la memoria —guion o acción en `/api/ops`— **la resolvió el propio diseño, no una
+preferencia**. `membership` lleva `FORCE ROW LEVEL SECURITY`, y su política (migraciones 0001 y 0015)
+solo deja escribir al actor cuya empresa coincide o a `slg_admin`/`slg_operator`/`agent_slg`.
+`withSystemScope` pone `app.actor_role = 'system'`, que **no está en esa lista y no puede estarlo** —la
+0015 lo escribe con todas las letras—; y `withScope` exige un `AuthContext`, que solo se construye
+desde una sesión o una clave verificadas y no se puede fabricar. Es decir: **la aplicación no puede
+crear su primera pertenencia, por diseño.** Una acción HTTP correría con la conexión de la aplicación,
+que es justo la que no puede. Así que es un guion con el rol dueño, como `migrar.ts` y `seed.ts`, y
+**se niega a hacer nada si `"user"` tiene una sola fila**: eso es lo único que separa «arrancar la
+casa» de una puerta trasera. Deja fila en `audit_log` (`auth.primer-admin`, actor `system`), que es de
+solo inserción.
+
+Dos detalles que no son de estilo: la contraseña se pica con **`auth.$context.password.hash`**, el
+mismo hasheador que usa `signUpEmail` —uno propio «equivalente» produce una cuenta que el login no
+reconoce—, y **no se usa `signUpEmail`** porque con `sendOnSignUp: true` el alta manda un correo de
+verificación, y el arranque ocurre antes de que el correo esté garantizado. Verificado el ida y vuelta
+del hasheador contra la librería instalada (1.7.4): `verify` acepta la buena y rechaza la mala.
+`check:types`, `lint`, `check:fronteras`, `check:env` y `check:secrets` en verde. **Sin correr contra
+producción**: el modo auto del agente bloquea leer credenciales y tocar la base real; el comando queda
+listo para Ricardo.
+
+**Lo que sigue faltando para ver HQ, y no es la cuenta.** `SUPERFICIES_ABIERTAS` está en `false` para
+`hq` y `portal` (`lib/auth/roles.ts`): con sesión válida y rol correcto, producción devuelve **404**. La
+única apertura es `SUPERFICIES_EN_REVISION`, y solo actúa **si delante hay compuerta de staging**
+(`STAGING_BASIC_AUTH_*`), que producción no lleva. Entrar a mirarlas es, por construcción, un
+despliegue de vista previa con esas tres variables.
+
+**Inventario de la plantilla (objetivo A, primer paso): `docs/plantilla-de-sitios.md`.** 1.388 líneas
+en 128 archivos nombran a SLG, y el recuento cambia el tamaño del trabajo: 761 son el prefijo técnico
+(`--slg-*`, `data-slg-*`), 347 son «SLG» como **la casa** frente a la empresa cliente, 133 el
+vocabulario de roles — **y solo 147 son marca y oferta**, que es lo único que un `site.config` tiene
+que dar. Lo caro no es la marca (26 sitios, media tarde): es la **estructura** —`rutas.ts`,
+`schema.ts`, los 30 patrones de `nomenclature.ts`, `POR_RUTA` de `Fotografia.tsx` y los destinos y
+bloques que miden `check:armazon` y `check:paginas`—, y con ella los cinco frenos que validan contra
+la oferta de SLG. Dos defectos encontrados de paso, **de hoy y no de la plantilla**: texto visible con
+la marca dentro de `lib/` (`lib/auth/acceso.ts:23`, `lib/invitations/service.ts:362`) y el respaldo
+`?? "https://softlandingglobal.com"` en tres sitios, que hace que un sitio de cliente sin variable no
+falle: publique el dominio de SLG. Ninguno arreglado: son cambio de alcance y los decide Ricardo.
+
+**Menores cerrados.** Un freno estaba en rojo desde la sesión de Supabase y nadie lo había mirado:
+`check:literacy` acusaba cuatro variables de `.env.example` sin explicar en el manual (`FILES_DRIVER`,
+`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`); documentadas, gate en verde. Los tres
+worktrees `agent-*` quitados: **3,0 GB → 2,0 MB**, y las ramas intactas —una de ellas,
+`worktree-agent-a361ac28e2e6b40e1`, **no está fusionada** en `develop` pese a lo que decía la memoria;
+por eso se quitó el directorio y no la rama. `.gitignore`: el `.env*` suelto del final **volvía a
+ignorar `.env.example`** anulando el `!.env.example` de arriba; retirado, y añadido `supabase/.temp/`.
+CLI de Vercel 54 → 59.23.1.
+
+**Frenos que no se pueden correr aquí**: los cinco de `check:brakes` que fallan piden navegador
+(Playwright sin Chromium instalado) o PostgreSQL, y esta máquina no tiene ni Docker ni Postgres. No
+son defectos del código.
