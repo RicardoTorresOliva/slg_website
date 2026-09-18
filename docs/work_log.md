@@ -3082,3 +3082,22 @@ acepta ahora `DATABASE_URL_OWNER`/`DATABASE_URL_APP`, que son los nombres reales
 `ops/supabase-slg-website.env`, para poder invocarlo con `node --env-file=…` y **no escribir la
 credencial en la línea de comandos**. Las cuatro salidas probadas; comprobado también que `npm run …
 -- --nombre "A B C"` conserva el argumento entero, que era la otra sospecha.
+
+**Y el arranque salió mal, que es el hallazgo que valía la ejecución.** Ricardo lanzó el comando con
+el marcador de posición del ejemplo y el guion **creó la cuenta**: un `slg_admin` con el correo
+`tu@correo`, que no existe —así que no se le puede mandar el enlace de recuperación— y, peor, la
+guarda de «sólo si la tabla está vacía» cerró la única puerta que había para arreglarlo. **Una
+operación que sólo se puede hacer una vez tiene que admitir que esa vez salga mal.** Dos arreglos:
+
+1. **El correo se valida.** `tu@correo` no tiene dominio de primer nivel y ahora se rechaza antes de
+   tocar la base. El ejemplo de la cabecera y del uso sigue siendo `tu@correo` **a propósito**: un
+   ejemplo que parece una dirección se pega tal cual.
+2. **`--rehacer`**, con tres condiciones a la vez y ninguna negociable: hay exactamente un usuario,
+   **lo creó este guion** (apunte `auth.primer-admin` con su `entity_id`) y **nadie ha abierto sesión
+   jamás** (cero filas en `session`). La tercera es la que manda: separa «el arranque no llegó a
+   usarse» de «esta cuenta ya es de alguien», y en cuanto se entra una vez `--rehacer` muere. Borra el
+   usuario —`account` y `membership` se van por CASCADE—, conserva la empresa y **no borra el apunte**:
+   `audit_log` es de solo inserción, así que el arranque fallido queda en la historia y el rehecho
+   añade el suyo (`auth.primer-admin.rehecho`, con el correo anterior y el nuevo).
+
+La contraseña del arranque fallido queda quemada: salió por pantalla y se sustituye al rehacer.

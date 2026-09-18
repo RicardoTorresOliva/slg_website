@@ -601,8 +601,14 @@ real. Para Ricardo, con la cadena del **rol dueño** (la de las migraciones, hos
 
 ```
 node --env-file=$HOME/Dev/SLG_Overhauling/ops/supabase-slg-website.env \
-  scripts/auth/primer-admin.ts --correo <tu@correo> --nombre "Ricardo Torres Oliva"
+  scripts/auth/primer-admin.ts --correo TU-CORREO-REAL --nombre "Ricardo Torres Oliva" --rehacer
 ```
+
+**`--rehacer` hace falta porque el arranque del 2026-09-18 salió mal**: se lanzó con el marcador de
+posición del ejemplo y creó un `slg_admin` con el correo `tu@correo`, que no existe. Esa contraseña
+está quemada (salió por pantalla en la sesión). `--rehacer` sustituye el arranque **sólo si** hay un
+único usuario, lo creó este guion y **nadie ha abierto sesión jamás**; en cuanto se entre una vez,
+deja de funcionar. Y el correo ya se valida: `tu@correo` no pasa.
 
 **La cadena no se escribe en la línea de comandos**: `--env-file` es de Node y carga el archivo de
 `ops/` que ya existe, así que la credencial no pasa por el historial del intérprete. El guion acepta

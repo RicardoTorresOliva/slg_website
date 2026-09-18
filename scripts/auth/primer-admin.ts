@@ -58,9 +58,14 @@
  * `DATABASE_URL` (`.env.example`). También hace falta `BETTER_AUTH_SECRET`, que
  * está en el mismo archivo.
  *
+ * El `tu@correo` de los ejemplos **está mal a propósito**: no tiene dominio de
+ * primer nivel, así que pegarlo tal cual no crea nada y lo dice. Un ejemplo que
+ * parece una dirección se pega, y esto sólo se puede hacer una vez.
+ *
  * Opcionales: `--empresa` (por defecto «SLG Agency»), `--slug` (por defecto
- * `slg`), y `PRIMER_ADMIN_PASSWORD` en el entorno. Sin ella se genera una y se
- * enseña **una sola vez**.
+ * `slg`), `--rehacer` (ver `exigirArranqueSinConsumir`), y
+ * `PRIMER_ADMIN_PASSWORD` en el entorno. Sin ella se genera una y se enseña
+ * **una sola vez**.
  */
 import { randomUUID, randomInt } from "node:crypto";
 
@@ -88,6 +93,8 @@ const NOMBRE = (argumento("nombre") ?? "").trim();
 const EMPRESA = (argumento("empresa") ?? "SLG Agency").trim();
 const SLUG = (argumento("slug") ?? "slg").trim();
 const IDIOMA = (argumento("idioma") ?? "es").trim() === "en" ? "en" : "es";
+/** Ver §«El arranque que salió mal» en la cabecera de `main`. */
+const REHACER = process.argv.includes("--rehacer");
 
 function abortar(mensaje: string): never {
   console.error(`\n✗ ${mensaje}\n`);
@@ -97,9 +104,25 @@ function abortar(mensaje: string): never {
 const USO =
   "Uso: node --env-file=<archivo.env> scripts/auth/primer-admin.ts \\\n" +
   "       --correo tu@correo --nombre \"Tu Nombre\"\n" +
-  "     [--empresa \"SLG Agency\"] [--slug slg] [--idioma es|en]";
+  "     [--empresa \"SLG Agency\"] [--slug slg] [--idioma es|en] [--rehacer]";
 
 if (!CORREO.includes("@") || !NOMBRE) abortar(`Falta --correo o --nombre.\n\n${USO}`);
+
+/**
+ * **El correo se comprueba de verdad, y no por pedantería.** La cuenta se crea
+ * una sola vez: un correo que no existe deja un administrador al que no se le
+ * puede mandar el enlace de recuperación, y el guion ya no se deja repetir. La
+ * forma que se exige es la mínima que descarta el error real —un marcador de
+ * posición pegado tal cual, `TU@CORREO` o `tu@correo`, que no tiene dominio de
+ * primer nivel— sin ponerse a validar direcciones, que no se puede.
+ */
+if (!/^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$/.test(CORREO)) {
+  abortar(
+    `«${CORREO}» no es una dirección de correo: le falta el dominio.\n` +
+      `  Si eso es lo que pegaste del ejemplo, escribe tu correo real: la cuenta se crea una vez\n` +
+      `  y el enlace de recuperación va a esa dirección.`,
+  );
+}
 
 /**
  * La contraseña. Doce caracteres es el mínimo que exige la librería
@@ -181,6 +204,89 @@ if (!process.env.BETTER_AUTH_SECRET?.trim()) {
 
 const sql = postgres(URL_DUENO, { max: 2, onnotice: () => {} });
 
+/**
+ * ── EL ARRANQUE QUE SALIÓ MAL ────────────────────────────────────────────────
+ *
+ * Con la base ya poblada, este guion no hace nada: a partir del primer usuario
+ * las cuentas se crean invitando desde `/hq/usuarios`, que deja traza del actor
+ * que invita. Ésa es la regla y no se toca.
+ *
+ * `--rehacer` es la excepción, y existe porque el fallo ocurrió: el 2026-09-18 el
+ * arranque se lanzó con el marcador de posición del ejemplo (`TU@CORREO`) y creó
+ * un administrador con un correo inexistente — al que no se le puede mandar el
+ * enlace de recuperación— y, de paso, cerró la única puerta que había para
+ * arreglarlo. **Una operación que sólo se puede hacer una vez tiene que admitir
+ * que esa vez salga mal.**
+ *
+ * Las tres condiciones son lo que impide que esto sea una puerta trasera, y se
+ * exigen las tres a la vez:
+ *
+ *   1. hay **exactamente un** usuario;
+ *   2. lo creó **este guion** — hay un apunte `auth.primer-admin` en `audit_log`
+ *      cuyo `entity_id` es ese usuario. No basta con que haya uno solo: uno
+ *      creado por otro camino no se borra desde aquí;
+ *   3. **nadie ha entrado jamás**: cero filas en `session`. Es la condición que
+ *      de verdad manda, porque separa «el arranque no llegó a usarse» de «esta
+ *      cuenta ya es de alguien». En cuanto se abre sesión una vez, `--rehacer`
+ *      deja de funcionar para siempre.
+ *
+ * El borrado arrastra `account` y `membership` (las dos con `ON DELETE CASCADE`),
+ * deja la empresa —que se reaprovecha por `slug`— y **no borra el apunte de
+ * auditoría**: `audit_log` es de solo inserción, así que el arranque fallido
+ * queda en la historia y encima se le añade el suyo al rehacerlo.
+ */
+async function exigirArranqueSinConsumir(cuantos: number): Promise<void> {
+  const negarse = (motivo: string): never => {
+    throw new Error(
+      `${motivo}\n  Esto es el arranque de una base vacía y nada más: a partir del primer usuario, ` +
+        `las cuentas\n  se crean invitando desde /hq/usuarios, que deja traza del actor que invita. ` +
+        `Si hace falta\n  otra cuenta de SLG y no hay con quién entrar, se restablece la contraseña ` +
+        `de una existente.`,
+    );
+  };
+
+  if (!REHACER) {
+    negarse(
+      `La base ya tiene ${cuantos} usuario(s).` +
+        (cuantos === 1
+          ? `\n  Si ese usuario es un arranque que salió mal y nadie ha entrado todavía, ` +
+            `--rehacer lo sustituye.`
+          : ""),
+    );
+  }
+  if (cuantos !== 1) negarse(`--rehacer sustituye UN arranque, y la base tiene ${cuantos} usuarios.`);
+
+  const [{ n: sesiones }] = await sql<{ n: number }[]>`select count(*)::int as n from session`;
+  if (sesiones > 0) {
+    negarse(
+      `Ya se ha abierto sesión con esa cuenta (${sesiones} en «session»): el arranque está consumido ` +
+        `y la cuenta es de alguien.`,
+    );
+  }
+
+  const [victima] = await sql<{ id: string; email: string }[]>`
+    select u.id, u.email
+      from "user" u
+      join audit_log a on a.entity_id = u.id and a.action = 'auth.primer-admin'
+     limit 1
+  `;
+  if (!victima) {
+    negarse("El único usuario de la base NO lo creó este guion: no hay apunte «auth.primer-admin».");
+  }
+
+  await sql.begin(async (tx) => {
+    // `account` y `membership` se van con él por CASCADE; el apunte, no.
+    await tx`delete from "user" where id = ${victima.id}`;
+    await tx`
+      insert into audit_log (id, actor_type, actor_id, actor_label, action, entity, entity_id, metadata)
+      values (${randomUUID()}, 'system', null, 'scripts/auth/primer-admin.ts',
+              'auth.primer-admin.rehecho', 'user', ${victima.id},
+              ${sql.json({ correoAnterior: victima.email, correoNuevo: CORREO })})
+    `;
+  });
+  console.log(`  Arranque anterior retirado: <${victima.email}>. El apunte de auditoría se queda.`);
+}
+
 async function main() {
   /**
    * La comprobación inversa a la de `lib/auth/db.ts`: allí el proceso se niega a
@@ -201,14 +307,7 @@ async function main() {
   }
 
   const [{ n: cuantos }] = await sql<{ n: number }[]>`select count(*)::int as n from "user"`;
-  if (cuantos > 0) {
-    throw new Error(
-      `La base ya tiene ${cuantos} usuario(s). Esto es el arranque de una base vacía y nada más: ` +
-        `a partir del primero, las cuentas se crean invitando desde /hq/usuarios, que deja traza ` +
-        `del actor que invita. Si de verdad hace falta otra cuenta de SLG y no hay con quién ` +
-        `entrar, se restablece la contraseña de una existente, no se crea una por la puerta de atrás.`,
-    );
-  }
+  if (cuantos > 0) await exigirArranqueSinConsumir(cuantos);
 
   // El hasheador de la librería, no uno propio. Ver la cabecera: se importa
   // AQUÍ, con las comprobaciones ya hechas, porque importarla abre conexiones.
