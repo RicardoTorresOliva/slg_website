@@ -8,7 +8,8 @@ learns:
   - "How an agent's limits are defined before building it"
   - "What must be recorded about every action for the system to be auditable"
   - "What work should not be delegated to an agent even when it technically could be"
-status: coming-soon
+file_key: "D-09-age-building-en.pdf"
+status: published
 lang: en
 pair: "d-09"
 copy: temporal

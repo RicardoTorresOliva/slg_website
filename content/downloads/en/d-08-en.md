@@ -7,7 +7,8 @@ learns:
   - "The criteria that tip the decision towards building or towards buying"
   - "What it takes for an application to reach production rather than demo"
   - "What it takes to sustain it for two years, which is where it is decided whether it was worth it"
-status: coming-soon
+file_key: "D-08-app-building-en.pdf"
+status: published
 lang: en
 pair: "d-08"
 copy: temporal

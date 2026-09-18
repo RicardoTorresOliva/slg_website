@@ -7,7 +7,8 @@ learns:
   - "What changes between a pilot and a rollout, and why almost nobody budgets for it"
   - "How to define verifiable exit criteria per phase"
   - "What transferring capability means, and how you check that it happened"
-status: coming-soon
+file_key: "D-07-slg-implement-en.pdf"
+status: published
 lang: en
 pair: "d-07"
 copy: temporal

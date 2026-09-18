@@ -7,7 +7,8 @@ learns:
   - "The three criteria that separate a bespoke case from a standard one"
   - "Which parts of a programme can be adjusted without breaking it"
   - "How scope is agreed before starting so that it does not grow afterwards"
-status: coming-soon
+file_key: "D-04-customize-programs-en.pdf"
+status: published
 lang: en
 pair: "d-04"
 copy: temporal

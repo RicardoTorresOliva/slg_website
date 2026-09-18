@@ -7,7 +7,8 @@ learns:
   - "Why every meeting about AI starts again from zero, and how to break that cycle"
   - "The minimum vocabulary a committee needs to share in order to decide in a single session"
   - "How to write an evaluation agreement that survives the next proposal"
-status: coming-soon
+file_key: "D-02-phoenix-teax-en.pdf"
+status: published
 lang: en
 pair: "d-02"
 copy: temporal

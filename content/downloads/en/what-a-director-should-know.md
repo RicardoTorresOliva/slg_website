@@ -8,7 +8,8 @@ learns:
   - "How to tell a technology problem from an operations problem, which is where most fail"
   - "The signals that an implementation is going to stay a pilot"
   - "How the result of an AI initiative is measured without resorting to anecdote"
-status: coming-soon
+file_key: "D-01-phoenix-peex-en.pdf"
+status: published
 lang: en
 pair: lo-que-un-director-debe-saber
 copy: temporal
