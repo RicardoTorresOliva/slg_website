@@ -2836,3 +2836,69 @@ en los logs de Vercel → dos notas nuevas en el contacto del CRM (la captura y 
 Lección operativa: el despliegue anterior «hecho» no existía en `vercel ls --prod`; desde ahora se
 comprueba antes de probar. Propuesta pendiente: variables en el proyecto de Vercel y despliegue por
 `git push`, en vez de viajar en cada comando.
+
+
+---
+
+## Los formularios públicos piden nombre, apellido y correo corporativo (2026-09-18, madrugada)
+
+**Encargo.** Todos los formularios públicos —descarga, contacto y solicitud de Doctrina— piden
+**nombre, apellido y correo corporativo, los tres obligatorios**. Hasta ahora la descarga pedía solo
+el correo y el contacto un «nombre» opcional en texto libre; el CRM exige nombre y apellido por
+separado al crear el contacto, y el adaptador los inventaba partiendo el texto por el primer espacio
+o, sin nada, con la parte local del correo y el dominio entre paréntesis. Lo retomó un segundo agente
+sobre el trabajo sin confirmar del primero (modelo, servicio, rutas, formularios, CRM y HQ) y lo cerró
+por las pruebas y la verificación.
+
+**Modelo.** Columna `last_name` en `lead_capture` (migración `0017_apellido_en_la_captura`, en el
+journal y en `lib/db/schema.ts`). Es una columna y no un corte de `name` porque «Ana María Ruiz» y
+«Juan Pérez de la Cruz» se parten mal en los dos sentidos. `name` pasa a significar **solo el
+nombre**. Nullable: las capturas anteriores no lo traen. `data_model` §5.9 lo recoge.
+
+**Servicio.** `registrarCaptura` recibe `nombre` y `apellido`; si falta cualquiera, veredicto nuevo
+`datos_incompletos` (`Veredicto`, en `lib/antiabuso/service.ts`), que las dos rutas responden como
+los demás motivos: `303` a la misma página con `?error=datos_incompletos`. La comprobación va
+**después** de las tres capas de FU-11 a propósito: la trampa sigue respondiendo como la trampa, y
+un bot con la trampa rellena no recibe ninguna pista de qué campo le faltó. El `required` del HTML es
+cortesía; la comprobación que vale es la del servidor, y `test:descargas` lo prueba sin el HTML.
+
+**Formularios.** Nombre, Apellido, Correo corporativo, en ese orden, `required`, `autoComplete`
+`given-name` / `family-name` / `email`, etiquetas desde `content/ui` (`form.name`, `form.lastName`,
+`download.emailLabel`, en ES y EN). Campo trampa intacto. La descarga sigue siendo el CTA único de la
+página de servicio (RF-07). El aviso del motivo —`dominio_gratuito` y `datos_incompletos`, textos
+`download.freeEmailRejected` y `download.incompleteData`— lo pinta `components/AvisoDelFormulario.tsx`,
+un componente de cliente dentro de `Suspense` que lee `?error=` con `useSearchParams`: leerlo en el
+servidor volvería dinámica la página del documento, que se prerrenderiza (RF-29), por un aviso que
+solo ve quien se equivocó. Un motivo sin texto (`limite`, `correo_invalido`) no pinta nada, como
+hasta ahora. `check:cadenas` vigila también el componente nuevo.
+
+**CRM.** `CapturaParaCrm` lleva `apellido`; `reclamar` devuelve `l.last_name`; el contacto se crea
+con `firstName = nombre` y `lastName = apellido` tal como los escribió la persona. El repliegue
+(partir el nombre, o parte local + dominio) queda **solo** para las capturas anteriores a la columna,
+y `test:crm` lo comprueba con una captura con `last_name` nulo. `lead_admission` manda `last_name`.
+
+**HQ y API.** La lista de capturas de HQ muestra nombre y apellido debajo del correo.
+`GET /api/v1/captures` añade `last_name` junto a `name` (campo aditivo; `api_contracts` actualizado):
+sin él, un consumidor de la API recibiría solo el nombre de pila y no lo sabría.
+
+**Pruebas.** Todas las que crean capturas (`test-crm`, `test-descargas`, `test-capturas`,
+`test-tablero`, `test-api`, `test-webhooks`, `seed`) envían nombre y apellido. Nuevas en
+`test:descargas`: sin apellido → `datos_incompletos` y nada guardado; sin nombre, lo mismo; el
+contacto exige lo mismo que la descarga; la captura guarda `name` y `last_name` por separado. Su
+limpieza borra `crm_delivery` antes que `lead_capture`: desde que la cola se vacía tras cada captura,
+toda captura deja su fila ahí y el `DELETE` final chocaba con la clave foránea.
+
+**Verificado:** lint, `check:types`, `check:cadenas` (35 archivos), `check:env`, `check:migrations`
+(18/18), `check:content`, `check:secrets`; con base local migrada y sembrada: `test:crm` (21/21),
+`test:capturas` (23/23), `test:nocompile`, `test:contracts`, `test:hq` (28/28), `test:api` (130/130);
+compilación `standalone`, `check:paginas` (142/142) y `check:armazon` (60/60); en el servidor
+compilado, `/descargas/d-06`, `/contacto`, `/doctrina`, `/en/downloads/d-06-en`, `/en/contact` y
+`/en/doctrine` sirven los tres campos con `required` y los `autoComplete` correctos.
+`test:descargas`: 23 de 24; la que falla («el envío redirige a gracias con próximamente») es anterior
+al encargo: D-06 es `published` con `file_key` desde el 17 y el `.env` local no tiene S3, así que
+responde `error_de_firma`. `test:webhooks`: 2 de 32 fallan igual en la base `5ca2178`
+(`download.completed` no se dispara con las credenciales S3 falsas de la prueba); no es de aquí.
+
+**Desviaciones.** El `node_modules` enlazado al repositorio principal, como decía el brief, lo
+rechaza Turbopack («Symlink … points out of the filesystem root»): en el worktree se sustituyó por
+un clon APFS (`cp -c -R`) y se enlazó el `.env`, los dos ignorados por git.
