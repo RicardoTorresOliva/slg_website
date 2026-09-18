@@ -20,6 +20,20 @@ import {
  *      recuperación.
  *   3. **Funcionar sin JavaScript**: un formulario nativo que redirige.
  */
+/**
+ * El motivo, **con su causa**. Drizzle envuelve el error de PostgreSQL en uno
+ * suyo cuya `message` es «Failed query: select …» y deja el fallo real en
+ * `cause`: sin bajar un nivel, el registro dice qué consulta falló y no dice por
+ * qué, que es justo lo que hace falta para distinguir «no hay conexiones» de
+ * «no hay permiso» de «no existe la columna».
+ */
+function motivo(e: unknown): string {
+  const err = e as { message?: string; cause?: { message?: string; code?: string } };
+  const causa = err?.cause;
+  const raiz = causa?.message ? `${causa.code ? `[${causa.code}] ` : ""}${causa.message}` : "";
+  return `${(err?.message ?? String(e)).slice(0, 120)}${raiz ? ` · causa: ${raiz.slice(0, 200)}` : ""}`;
+}
+
 export async function POST(request: NextRequest) {
   const formulario = await request.formData();
   const email = String(formulario.get("email") ?? "").trim().toLowerCase();
@@ -62,7 +76,7 @@ export async function POST(request: NextRequest) {
      * Va el motivo, nunca el correo ni la contraseña (RNF-26): quién lo
      * intentó ya lo cuenta el antiabuso, y aquí lo que falta es el QUÉ.
      */
-    console.error(`[acceso] signInEmail lanzó: ${(e as Error).message?.slice(0, 200) ?? e}`);
+    console.error(`[acceso] signInEmail lanzó: ${motivo(e)}`);
     return conError("credenciales");
   }
 
