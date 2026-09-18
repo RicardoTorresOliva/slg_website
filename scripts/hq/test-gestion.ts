@@ -21,6 +21,12 @@
  *     **y auditado como `.denied`**; título vacío o fecha imposible → dato
  *     inválido con su campo; crear → aparece; hecho/reabrir y cerrar/reabrir
  *     dejan el estado y las fechas coherentes (RF-151, RF-152, RF-156).
+ *   · **Archivar y cerrar (data_model §2.5, §4.3)** — archivar una empresa y
+ *     cerrar un proyecto **cambian `status` y no borran nada**: proyectos,
+ *     entregables y pertenencias se cuentan antes y después. Solo `slg_admin`
+ *     archiva empresas; `slg_operator` cierra solo los proyectos que tiene
+ *     asignados, y cada rechazo queda auditado como `.denied`. Reactivar y
+ *     reabrir lo devuelven todo tal como estaba.
  *
  * Necesita `bash scripts/db/local-pg.sh up`.
  */
@@ -76,6 +82,9 @@ async function limpiar() {
    */
   await dueno`delete from invitation where organization_id in (select id from organization where slug in (${SLUG_CLIENTE}, 'slg-du14'))`;
   await dueno`delete from membership where organization_id in (select id from organization where slug in (${SLUG_CLIENTE}, 'slg-du14'))`;
+  // El entregable de la prueba de archivado cuelga del proyecto con `RESTRICT`
+  // (§4.3): si se borrara el proyecto antes, la limpieza moriría aquí.
+  await dueno`delete from deliverable where organization_id in (select id from organization where slug in (${SLUG_CLIENTE}, 'slg-du14'))`;
   // Las tres tablas de la Academy cuelgan del proyecto (DU-29): antes que él.
   await dueno`delete from milestone where organization_id in (select id from organization where slug in (${SLUG_CLIENTE}, 'slg-du14'))`;
   await dueno`delete from action_item where organization_id in (select id from organization where slug in (${SLUG_CLIENTE}, 'slg-du14'))`;
@@ -129,8 +138,10 @@ async function main() {
   // el criterio 6: la invitación tiene que quedar creada y reenviable igual.
   delete process.env.MAIL_SMTP_HOST;
 
-  const { crearEmpresa, empresas, editarEmpresa } = await import("../../lib/hq/empresas.ts");
-  const { crearProyecto, editarProyecto, estaAsignado, proyectos } = await import("../../lib/hq/proyectos.ts");
+  const { archivarEmpresa, crearEmpresa, empresas, editarEmpresa, reactivarEmpresa } = await import("../../lib/hq/empresas.ts");
+  const { archivarProyecto, crearProyecto, editarProyecto, estaAsignado, proyectos, reabrirProyecto } = await import(
+    "../../lib/hq/proyectos.ts"
+  );
   const { invitarASlg, invitarACliente, invitacionesPendientes, revocar } = await import("../../lib/hq/usuarios.ts");
   const { esServicioLiteral, serviciosLiterales } = await import("../../lib/hq/servicios.ts");
   const { consultarTestigo } = await import("../../lib/invitations/index.ts");
@@ -550,6 +561,96 @@ async function main() {
                  where id = ${caducable.invitacion.id}`;
     const caducado = await consultarTestigo(otro.enClaro);
     check("un testigo caducado no vale", caducado.valido === false, JSON.stringify(caducado));
+
+    /* ── Archivar y cerrar · nada se borra (data_model §2.5 y §4.3) ────── */
+    console.log("\nArchivar una empresa — cambia el estado, queda auditado y NO borra nada (§2.5, §4.3):\n");
+
+    /**
+     * Un entregable de verdad colgando del proyecto: es lo que §4.3 promete que
+     * se conserva, y se **cuenta** antes y después en vez de suponerlo. Se
+     * siembra con el dueño porque publicarlo por el servicio pediría un
+     * archivo, y aquí lo que se prueba es que sobrevive, no que se publica.
+     */
+    await dueno`insert into deliverable (id, project_id, organization_id, title, type, version, family_id, visibility, published_at)
+                values (${crypto.randomUUID()}, ${proyectoId}, ${ORG_CLIENTE}, 'Informe final', 'pdf', 1, ${crypto.randomUUID()}, 'client', now())`;
+    const cuenta = async () => {
+      const [p] = await dueno<{ n: number }[]>`select count(*)::int as n from project where organization_id = ${ORG_CLIENTE}`;
+      const [d] = await dueno<{ n: number }[]>`select count(*)::int as n from deliverable where organization_id = ${ORG_CLIENTE}`;
+      const [m] = await dueno<{ n: number }[]>`select count(*)::int as n from membership where organization_id = ${ORG_CLIENTE}`;
+      return { proyectos: Number(p?.n ?? -1), entregables: Number(d?.n ?? -1), pertenencias: Number(m?.n ?? -1) };
+    };
+    const antesDeArchivar = await cuenta();
+    check(
+      "hay algo que perder: dos proyectos y un entregable",
+      antesDeArchivar.proyectos === 2 && antesDeArchivar.entregables === 1,
+      JSON.stringify(antesDeArchivar),
+    );
+
+    const estadoArchivoAjeno = await estadoDe(() => archivarEmpresa(operador(), ORG_SLG));
+    check(
+      "el operador NO archiva una empresa que no tiene asignada",
+      estadoArchivoAjeno === 403 || estadoArchivoAjeno === 404,
+      `estado ${estadoArchivoAjeno}`,
+    );
+    check("y el intento queda auditado como rechazo", (await apuntes("org.archive.denied", OPERADOR)).length === 1);
+    // Ni la empresa donde SÍ tiene un proyecto: archivar una empresa entera
+    // —con los proyectos de otros y el acceso de todos sus miembros— no es
+    // «operar sobre un proyecto asignado». Es una decisión de administrador.
+    const estadoArchivoPropio = await estadoDe(() => archivarEmpresa(operador(), ORG_CLIENTE));
+    check(
+      "ni una donde tiene proyecto: archivar una empresa es de administrador",
+      estadoArchivoPropio === 403 || estadoArchivoPropio === 404,
+      `estado ${estadoArchivoPropio}`,
+    );
+    check("y la empresa sigue activa", (await empresas(admin())).find((e) => e.id === ORG_CLIENTE)?.estado === "active");
+
+    const archivada = await archivarEmpresa(admin(), ORG_CLIENTE);
+    check("el administrador la archiva y vuelve archivada", archivada?.estado === "archived", JSON.stringify(archivada));
+    check(
+      "y sigue en la lista de HQ, con su estado escrito",
+      (await empresas(admin())).some((e) => e.id === ORG_CLIENTE && e.estado === "archived"),
+    );
+    check("el archivado queda auditado", (await apuntes("org.archive", ADMIN)).length === 1);
+    const despuesDeArchivar = await cuenta();
+    check(
+      "NO se borra ningún proyecto, entregable ni pertenencia",
+      JSON.stringify(despuesDeArchivar) === JSON.stringify(antesDeArchivar),
+      `${JSON.stringify(antesDeArchivar)} → ${JSON.stringify(despuesDeArchivar)}`,
+    );
+    check(
+      "y HQ sigue viendo sus proyectos",
+      (await proyectos(admin())).filter((p) => p.organizationId === ORG_CLIENTE).length === antesDeArchivar.proyectos,
+    );
+    check("una empresa que no existe es `null`, no un error", (await archivarEmpresa(admin(), "no-existe")) === null);
+
+    console.log("\nReactivar — la devuelve, con todo lo suyo y sin volver a invitar a nadie:\n");
+    const reactivada = await reactivarEmpresa(admin(), ORG_CLIENTE);
+    check("vuelve activa", reactivada?.estado === "active", JSON.stringify(reactivada));
+    check("y queda auditado", (await apuntes("org.reactivate", ADMIN)).length === 1);
+    check("con todo lo suyo intacto", JSON.stringify(await cuenta()) === JSON.stringify(antesDeArchivar));
+
+    console.log("\nCerrar un proyecto — solo los asignados, y sus entregables se quedan (RF-86, §2.5):\n");
+    const estadoCierreAjeno = await estadoDe(() => archivarProyecto(operador(), ajeno));
+    check(
+      "el operador NO cierra un proyecto que no es suyo",
+      estadoCierreAjeno === 403 || estadoCierreAjeno === 404,
+      `estado ${estadoCierreAjeno}`,
+    );
+    check("y el intento queda auditado como rechazo", (await apuntes("project.close.denied", OPERADOR)).length === 1);
+    const cerradoProyecto = await archivarProyecto(operador(), proyectoId);
+    check(
+      "el suyo sí, y vuelve cerrado con su empresa",
+      cerradoProyecto?.estado === "closed" && cerradoProyecto.organizationId === ORG_CLIENTE,
+      JSON.stringify(cerradoProyecto),
+    );
+    check("el cierre queda auditado", (await apuntes("project.close", OPERADOR)).length === 1);
+    check("sus entregables siguen ahí", (await cuenta()).entregables === antesDeArchivar.entregables);
+    check("y HQ lo lista como cerrado", (await proyectos(admin())).some((p) => p.id === proyectoId && p.estado === "closed"));
+    check("un proyecto que no existe es `null`, no un error", (await archivarProyecto(admin(), "no-existe")) === null);
+
+    const reabiertoProyecto = await reabrirProyecto(admin(), proyectoId);
+    check("reabrirlo lo devuelve a activo", reabiertoProyecto?.estado === "active", JSON.stringify(reabiertoProyecto));
+    check("y queda auditado", (await apuntes("project.reopen", ADMIN)).length === 1);
 
     await limpiar();
   } finally {

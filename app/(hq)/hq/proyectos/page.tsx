@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { CSSProperties, ReactNode } from "react";
 
 import { Estado } from "@/components/app/EstadosCanonicos";
 import { Boton, Campo, Formulario, Lista, Texto } from "@/components/app/Campos";
@@ -8,10 +9,10 @@ import { exigirSeccion } from "@/lib/app/navegacion";
 import { exigirSuperficie } from "@/lib/auth";
 import { loadUiStrings } from "@/lib/content/loader";
 import { empresas } from "@/lib/hq/empresas";
-import { ESTADOS_DE_PROYECTO, proyectos } from "@/lib/hq/proyectos";
+import { ESTADOS_DE_PROYECTO, proyectos, type Proyecto } from "@/lib/hq/proyectos";
 import { serviciosLiterales } from "@/lib/hq/servicios";
 
-import { accionCrearProyecto } from "../_acciones";
+import { accionCerrarProyecto, accionCrearProyecto, accionReabrirProyecto } from "../_acciones";
 
 /**
  * `/hq/proyectos` — proyectos ligados a una empresa (DU-14 · RF-79).
@@ -27,21 +28,29 @@ import { accionCrearProyecto } from "../_acciones";
  *
  * **Sin empresas no hay formulario**, y el estado vacío lo dice: un proyecto
  * cuelga siempre de una empresa, así que ofrecer el formulario con el
- * desplegable vacío es ofrecer un callejón.
+ * desplegable vacío es ofrecer un callejón. Y «empresas» aquí son las
+ * **activas**: una archivada no recibe proyectos nuevos, por la misma razón
+ * por la que no recibe invitaciones (`empresasParaInvitar`).
+ *
+ * **Cerrar es dos pasos por URL**, como archivar una empresa: `?cerrar=<id>`
+ * enseña la pregunta en la fila. Los cerrados bajan al final, atenuados y con
+ * su estado escrito; sus entregables siguen siendo del cliente.
  */
 export const dynamic = "force-dynamic";
 
 export default async function Proyectos({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; cerrar?: string }>;
 }) {
   const sesion = await exigirSuperficie("hq");
   exigirSeccion(sesion.ctx, "projects");
 
   const t = loadUiStrings()[idiomaDeInterfaz(sesion.locale)];
-  const { error } = await searchParams;
-  const [lista, lasEmpresas] = await Promise.all([proyectos(sesion.ctx), empresas(sesion.ctx)]);
+  const { error, cerrar } = await searchParams;
+  const [todos, todasLasEmpresas] = await Promise.all([proyectos(sesion.ctx), empresas(sesion.ctx)]);
+  const lista = cerradosAlFinal(todos);
+  const lasEmpresas = todasLasEmpresas.filter((e) => e.estado === "active");
   const err = (campo: string) => (error === campo ? t["hq.form.error"] : null);
 
   return (
@@ -110,20 +119,99 @@ export default async function Proyectos({
             t["hq.projects.status"],
             t["hq.projects.startsAt"],
             t["hq.projects.endsAt"],
+            t["hq.projects.actions"],
           ]}
-          filas={lista.map((p) => [
-            // El nombre lleva a la ficha del proyecto (DU-29): hitos y pendientes.
-            <Link key={p.id} href={`/hq/proyectos/${encodeURIComponent(p.id)}`} style={{ color: "var(--slg-link)" }}>
-              {p.nombre}
-            </Link>,
-            p.empresa,
-            p.servicio,
-            p.estado,
-            p.empiezaEn ?? "—",
-            p.terminaEn ?? "—",
-          ])}
+          filas={lista.map((p) => {
+            const cerrado = p.estado === "closed";
+            const celda = (v: ReactNode) => (cerrado ? <span style={atenuado}>{v}</span> : v);
+            return [
+              // El nombre lleva a la ficha del proyecto (DU-29): hitos y pendientes.
+              celda(
+                <Link href={`/hq/proyectos/${encodeURIComponent(p.id)}`} style={{ color: "var(--slg-link)" }}>
+                  {p.nombre}
+                </Link>,
+              ),
+              celda(p.empresa),
+              celda(p.servicio),
+              celda(p.estado),
+              celda(p.empiezaEn ?? "—"),
+              celda(p.terminaEn ?? "—"),
+              <AccionesDeProyecto key={p.id} proyecto={p} pendiente={cerrar} t={t} />,
+            ];
+          })}
         />
       )}
     </div>
   );
 }
+
+/** Los abiertos (activos y pausados) primero, en su orden; los cerrados después. */
+function cerradosAlFinal(lista: readonly Proyecto[]): Proyecto[] {
+  return [...lista].sort((a, b) => Number(a.estado === "closed") - Number(b.estado === "closed"));
+}
+
+/**
+ * La celda de acciones: «Cerrar proyecto» → pregunta → «Sí, cerrar» |
+ * «Cancelar»; o «Reabrir» si ya está cerrado. Quién puede lo decide el
+ * servidor con la regla «asignados», no la presencia del botón.
+ */
+function AccionesDeProyecto({
+  proyecto,
+  pendiente,
+  t,
+}: {
+  proyecto: Proyecto;
+  pendiente: string | undefined;
+  t: Record<string, string>;
+}) {
+  if (proyecto.estado === "closed") {
+    return (
+      <form action={accionReabrirProyecto}>
+        <input type="hidden" name="id" value={proyecto.id} />
+        <button type="submit" style={enlaceComoBoton}>
+          {t["hq.projects.reopen"]}
+        </button>
+      </form>
+    );
+  }
+  if (pendiente === proyecto.id) {
+    return (
+      <div style={pregunta}>
+        <span>{t["hq.projects.closeConfirm"]}</span>
+        <form action={accionCerrarProyecto} style={{ display: "inline" }}>
+          <input type="hidden" name="id" value={proyecto.id} />
+          <button type="submit" style={{ ...enlaceComoBoton, fontWeight: 600 }}>
+            {t["hq.projects.closeYes"]}
+          </button>
+        </form>
+        <Link href="/hq/proyectos" style={enlace}>
+          {t["hq.projects.closeCancel"]}
+        </Link>
+      </div>
+    );
+  }
+  return (
+    <Link href={`/hq/proyectos?cerrar=${encodeURIComponent(proyecto.id)}`} style={enlace}>
+      {t["hq.projects.close"]}
+    </Link>
+  );
+}
+
+const atenuado: CSSProperties = { opacity: 0.55 };
+const enlace: CSSProperties = { color: "var(--slg-link)", fontSize: "0.875rem" };
+const enlaceComoBoton: CSSProperties = {
+  background: "none",
+  border: "none",
+  padding: 0,
+  color: "var(--slg-red)",
+  font: "inherit",
+  fontSize: "0.875rem",
+  cursor: "pointer",
+};
+const pregunta: CSSProperties = {
+  display: "flex",
+  gap: "0.75rem",
+  alignItems: "baseline",
+  flexWrap: "wrap",
+  fontSize: "0.875rem",
+};

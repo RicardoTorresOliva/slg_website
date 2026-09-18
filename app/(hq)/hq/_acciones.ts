@@ -14,8 +14,8 @@ import {
 } from "@/lib/academy";
 import { ErrorDeAutorizacion, exigirSuperficie } from "@/lib/auth";
 import { exigirSeccion } from "@/lib/app/navegacion";
-import { crearEmpresa, DatoInvalido, editarEmpresa } from "@/lib/hq/empresas";
-import { crearProyecto, editarProyecto } from "@/lib/hq/proyectos";
+import { archivarEmpresa, crearEmpresa, DatoInvalido, editarEmpresa, reactivarEmpresa } from "@/lib/hq/empresas";
+import { archivarProyecto, crearProyecto, editarProyecto, reabrirProyecto } from "@/lib/hq/proyectos";
 import { publicarAviso } from "@/lib/hq/avisos";
 import { crearClave, guardarParaMostrar, revocarClave } from "@/lib/hq/claves";
 import { publicarEntregable } from "@/lib/hq/entregables";
@@ -105,6 +105,37 @@ export async function accionEditarEmpresa(datos: FormData) {
   redirect("/hq/empresas");
 }
 
+/**
+ * Archivar y reactivar (data_model §2.5): nada se borra, cambia `status`.
+ *
+ * La confirmación vive en la URL (`?archivar=<id>`), no en un `confirm()` de
+ * cliente: la pantalla enseña la pregunta y este es el segundo paso. Un
+ * `null` del servicio —la empresa no existe para este actor— se trata como el
+ * rechazo: se vuelve sin decir nada. Reactivar no pide confirmación porque es
+ * el deshacer, y el deshacer de un deshacer es el propio «Archivar».
+ */
+export async function accionArchivarEmpresa(datos: FormData) {
+  const sesion = await sesionDeHq("orgs");
+  try {
+    await archivarEmpresa(sesion.ctx, texto(datos, "id"));
+  } catch (e) {
+    salida("/hq/empresas", e);
+  }
+  revalidatePath("/hq/empresas");
+  redirect("/hq/empresas");
+}
+
+export async function accionReactivarEmpresa(datos: FormData) {
+  const sesion = await sesionDeHq("orgs");
+  try {
+    await reactivarEmpresa(sesion.ctx, texto(datos, "id"));
+  } catch (e) {
+    salida("/hq/empresas", e);
+  }
+  revalidatePath("/hq/empresas");
+  redirect("/hq/empresas");
+}
+
 /* ── Proyectos ────────────────────────────────────────────────────────────── */
 
 export async function accionCrearProyecto(datos: FormData) {
@@ -143,6 +174,38 @@ export async function accionEditarProyecto(datos: FormData) {
     salida("/hq/proyectos", e);
   }
   revalidatePath("/hq/proyectos");
+  redirect("/hq/proyectos");
+}
+
+/**
+ * Cerrar y reabrir un proyecto: el mismo dos pasos por URL que la empresa
+ * (`?cerrar=<id>`). La regla «asignados» la resuelve el servicio contra la
+ * base; aquí solo se vuelve a la lista. Se revalida también la ficha, que
+ * enseña el estado.
+ */
+export async function accionCerrarProyecto(datos: FormData) {
+  const sesion = await sesionDeHq("projects");
+  const id = texto(datos, "id");
+  try {
+    await archivarProyecto(sesion.ctx, id);
+  } catch (e) {
+    salida("/hq/proyectos", e);
+  }
+  revalidatePath("/hq/proyectos");
+  revalidatePath(`/hq/proyectos/${encodeURIComponent(id)}`);
+  redirect("/hq/proyectos");
+}
+
+export async function accionReabrirProyecto(datos: FormData) {
+  const sesion = await sesionDeHq("projects");
+  const id = texto(datos, "id");
+  try {
+    await reabrirProyecto(sesion.ctx, id);
+  } catch (e) {
+    salida("/hq/proyectos", e);
+  }
+  revalidatePath("/hq/proyectos");
+  revalidatePath(`/hq/proyectos/${encodeURIComponent(id)}`);
   redirect("/hq/proyectos");
 }
 

@@ -183,3 +183,58 @@ export async function editarEmpresa(
     },
   );
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * Archivar y reactivar (RF-77 · data_model §2.5 y §4.3)
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Archivar es `UPDATE organization SET status = 'archived'` **y nada más**.
+ * Los proyectos, los entregables y las pertenencias se quedan donde están:
+ * son la prueba de lo que se entregó, y la pertenencia es lo que permite
+ * reactivar sin volver a invitar. El acceso de sus miembros al portal lo corta
+ * la capa de sesión —`app_memberships_de_usuario` solo devuelve empresas
+ * `active`—, no esta función. Lo pidió el uso real: se creó una empresa de
+ * prueba y no había forma de quitarla desde la pantalla, aunque el modelo
+ * llevaba el estado desde el primer día.
+ *
+ * **Sin prueba de asignación, a propósito.** Archivar una empresa entera
+ * —con los proyectos de otros operadores y el acceso de todos sus miembros—
+ * no es «operar sobre un proyecto asignado», que es lo único que la fila
+ * «asignados» de B.3 le concede a `slg_operator`. Se pasa `asignado: false`
+ * explícitamente, como en `crearEmpresa`, para que se lea la decisión.
+ *
+ * Devuelve `null` si la empresa no existe para este actor: la política de fila
+ * deja el `UPDATE` en cero filas, y cero filas no es una avería.
+ */
+async function cambiarEstadoDeEmpresa(
+  ctx: AuthContext,
+  id: string,
+  estado: (typeof ORG_STATUS)[number],
+  accion: "org.archive" | "org.reactivate",
+): Promise<Empresa | null> {
+  return conAuditoria(ctx, { accion, entidad: "organization", entidadId: id, organizationId: id }, async () => {
+    exigir(ctx, "org.write", { asignado: false });
+
+    const [fila] = await withScope(ctx, (db) =>
+      db.update(organization).set({ status: estado }).where(eq(organization.id, id)).returning(),
+    );
+    if (!fila) return null;
+    return {
+      id: fila.id,
+      nombre: fila.name,
+      slug: fila.slug,
+      tipo: fila.type,
+      estado: fila.status,
+      contactoPrincipal: fila.metadata,
+    };
+  });
+}
+
+export async function archivarEmpresa(ctx: AuthContext, id: string): Promise<Empresa | null> {
+  return cambiarEstadoDeEmpresa(ctx, id, "archived", "org.archive");
+}
+
+export async function reactivarEmpresa(ctx: AuthContext, id: string): Promise<Empresa | null> {
+  return cambiarEstadoDeEmpresa(ctx, id, "active", "org.reactivate");
+}

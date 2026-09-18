@@ -380,3 +380,4 @@ Los valores se ponen en **Easypanel → proyecto `slg_website` → el servicio �
 | Cómo trabaja el equipo que construye esto | [`AGENTS.md`](AGENTS.md) |
 | El conocimiento del proyecto, por dónde entrar | [`knowledge/index.md`](knowledge/index.md) |
 | Añadir una conexión a HQ | editar [`content/conexiones.json`](content/conexiones.json) |
+| Archivar una empresa o cerrar un proyecto | HQ → **Empresas** / **Proyectos** → **Archivar** / **Cerrar proyecto** → confirmar. No se borra nada: la fila baja al final, atenuada, y **Reactivar** / **Reabrir** lo deshace |
