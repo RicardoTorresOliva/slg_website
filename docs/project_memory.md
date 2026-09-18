@@ -628,7 +628,7 @@ de la noche anterior quedaron así:
 ### Cómo desplegar (Ricardo, desde su terminal; una vez por cada cambio de variables)
 
 ```bash
-cd ~/Dev/slg_website && OPS=~/Dev/SLG_Overhauling/ops && ARGS=() && while IFS= read -r l || [ -n "$l" ]; do [[ "$l" =~ ^[A-Z_]+= ]] || continue; k="${l%%=*}"; v="${l#*=}"; v="${v%\"}"; v="${v#\"}"; case "$k" in DATABASE_URL_APP) k=DATABASE_URL;; DATABASE_URL_OWNER) k=DATABASE_URL_MIGRATIONS;; DB_OWNER_PASSWORD|PROJECT_REF|REGION) continue;; esac; [ -n "$v" ] || continue; ARGS+=(--env "$k=$v" --build-env "$k=$v"); done < <(cat "$OPS/supabase-slg-website.env" "$OPS/web.env" "$OPS/secretos.env") && vercel deploy --prod --yes "${ARGS[@]}"
+cd ~/Dev/slg_website && OPS=~/Dev/SLG_Overhauling/ops && ARGS=() && while IFS= read -r l || [ -n "$l" ]; do [[ "$l" =~ ^[A-Z0-9_]+= ]] || continue; k="${l%%=*}"; v="${l#*=}"; v="${v%\"}"; v="${v#\"}"; case "$k" in DATABASE_URL_APP) k=DATABASE_URL;; DATABASE_URL_OWNER) k=DATABASE_URL_MIGRATIONS;; DB_OWNER_PASSWORD|PROJECT_REF|REGION) continue;; esac; [ -n "$v" ] || continue; ARGS+=(--env "$k=$v" --build-env "$k=$v"); done < <(cat "$OPS/supabase-slg-website.env" "$OPS/web.env" "$OPS/secretos.env") && vercel deploy --prod --yes "${ARGS[@]}"
 ```
 
 Las variables vacías de `secretos.env` no viajan, así que `/api/health` dirá
