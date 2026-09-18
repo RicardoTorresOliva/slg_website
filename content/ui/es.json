@@ -385,5 +385,8 @@
   "deliverable.type.html": "Informe",
   "deliverable.type.md": "Documento",
   "deliverable.type.link": "Enlace",
-  "deliverable.type.material": "Material"
+  "deliverable.type.material": "Material",
+  "nav.langName": "Español",
+  "nav.langCurrent": "idioma actual",
+  "footer.logoAlt": "Softlanding Global — The discipline of going global"
 }

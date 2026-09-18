@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { BanderasDeIdioma } from "./Banderas";
 import { SheetMovil } from "./SheetMovil";
 import { Wordmark } from "./Wordmark";
 
@@ -34,6 +35,11 @@ export type Conmutador = {
   etiquetaNoDisponible: string;
   /** El idioma AL QUE lleva, para el atributo `hreflang`. */
   idiomaDestino: string;
+  /** El idioma de ESTA página y cómo se llama en sí mismo («Español»). */
+  idiomaActual: "es" | "en";
+  nombreActual: string;
+  /** Lo que se lee tras el nombre del idioma actual («idioma actual»). */
+  textoActual: string;
 };
 
 export function BarraDeNavegacion({
@@ -58,9 +64,21 @@ export function BarraDeNavegacion({
     <>
       <header className="slg-material" style={barra}>
         <nav style={fila} aria-label={textos.navegacion}>
-          <Link href={inicio} style={{ display: "flex", alignItems: "center" }} aria-label={textos.inicio}>
-            <Wordmark />
-          </Link>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", minWidth: 0 }}>
+            <Link href={inicio} style={{ display: "flex", alignItems: "center" }} aria-label={textos.inicio}>
+              <Wordmark />
+            </Link>
+            {/* El idioma se elige con dos banderas pegadas al logo, en escritorio
+                y en móvil (decisión del 2026-09-17). Fuera del sheet a propósito:
+                es lo primero que busca quien llega al idioma equivocado. */}
+            <BanderasDeIdioma
+              actual={conmutador.idiomaActual}
+              href={conmutador.href}
+              nombres={{ actual: conmutador.nombreActual, otro: conmutador.etiqueta }}
+              textoActual={conmutador.textoActual}
+              textoNoDisponible={conmutador.etiquetaNoDisponible}
+            />
+          </div>
 
           {/* Escritorio: los cinco destinos a la vista. Móvil = rápido,
               escritorio = profundo (C.6, principio 5). */}
@@ -80,9 +98,6 @@ export function BarraDeNavegacion({
                 </Link>
               </li>
             ))}
-            <li>
-              <ConmutadorDeIdioma conmutador={conmutador} />
-            </li>
             <li>
               {/* Secundario a propósito: el CTA de la capa pública es la
                   descarga, no el login (§10-8). Nunca rojo. */}
@@ -124,39 +139,9 @@ export function BarraDeNavegacion({
               {acceso.etiqueta}
             </Link>
           </li>
-          <li style={{ paddingTop: "0.5rem", borderTop: "1px solid var(--slg-line)" }}>
-            <ConmutadorDeIdioma conmutador={conmutador} bloque />
-          </li>
         </ul>
       </SheetMovil>
     </>
-  );
-}
-
-/**
- * El conmutador lleva a **la misma página** en el otro idioma (RF-04, DoD #2).
- *
- * Cuando esa página no existe todavía, **no se enlaza a la portada**: se dibuja
- * desactivado y se dice por qué. Mandar al visitante a la portada porque su
- * página no está traducida le hace perder dónde estaba, y encima sin avisar.
- */
-function ConmutadorDeIdioma({ conmutador, bloque }: { conmutador: Conmutador; bloque?: boolean }) {
-  const base = bloque ? enlaceDeSheet : enlaceEstilo;
-  if (!conmutador.href) {
-    return (
-      <span
-        aria-disabled="true"
-        title={conmutador.etiquetaNoDisponible}
-        style={{ ...base, color: "var(--slg-ink-3, var(--slg-ink-2))", opacity: 0.55, cursor: "not-allowed" }}
-      >
-        {conmutador.etiqueta}
-      </span>
-    );
-  }
-  return (
-    <Link href={conmutador.href} hrefLang={conmutador.idiomaDestino} lang={conmutador.idiomaDestino} style={base}>
-      {conmutador.etiqueta}
-    </Link>
   );
 }
 

@@ -61,6 +61,9 @@ export function ArmazonPublico({
           etiqueta: t["nav.lang"],
           etiquetaNoDisponible: t["nav.langUnavailable"],
           idiomaDestino: idioma === "es" ? "en" : "es",
+          idiomaActual: idioma,
+          nombreActual: t["nav.langName"],
+          textoActual: t["nav.langCurrent"],
         }}
         textos={{ menu: t["nav.menu"], navegacion: t["nav.aria"], inicio: t["nav.home"] }}
       />
@@ -107,9 +110,24 @@ function PiePublico({ idioma, t }: { idioma: "es" | "en"; t: Record<string, stri
   return (
     <footer style={pie} aria-label={t["footer.aria"]}>
       <div style={pieFila}>
-        <p style={{ margin: 0, color: "var(--slg-ink-2)", fontSize: "0.875rem" }}>
-          © {new Date().getFullYear()} {t["footer.rights"]}
-        </p>
+        <div style={{ display: "grid", gap: "0.75rem" }}>
+          {/* El logotipo corporativo completo, con lema, va en el pie por decisión
+              de Ricardo (2026-09-17). La barra sigue llevando el isotipo con la
+              marca pública «SLG Agency» (§10-4); aquí abajo firma la matriz.
+              `<img>` y no `next/image`: un WebP de 35 KB servido tal cual, sin
+              el optimizador ni un componente cliente para una imagen estática. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/marca/logo-softlanding-global.webp"
+            alt={t["footer.logoAlt"]}
+            width={600}
+            height={163}
+            style={{ height: "2.75rem", width: "auto", display: "block" }}
+          />
+          <p style={{ margin: 0, color: "var(--slg-ink-2)", fontSize: "0.875rem" }}>
+            © {new Date().getFullYear()} {t["footer.rights"]}
+          </p>
+        </div>
         <ul style={pieLista}>
           {enlaces.map((e) => (
             <li key={e.href}>
@@ -137,7 +155,7 @@ const pieFila: React.CSSProperties = {
   display: "flex",
   flexWrap: "wrap",
   gap: "1rem",
-  alignItems: "center",
+  alignItems: "flex-end",
   justifyContent: "space-between",
 };
 

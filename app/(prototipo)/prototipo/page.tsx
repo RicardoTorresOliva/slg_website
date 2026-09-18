@@ -47,7 +47,7 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 const ENLACES = [
-  { href: "/ai", etiqueta: "SLG_AI" },
+  { href: "/ai", etiqueta: "SLG_VoltAi" },
   { href: "/holdings", etiqueta: "SLG_Holdings" },
   { href: "/doctrina", etiqueta: "Doctrina" },
   { href: "/blog", etiqueta: "Blog" },
@@ -79,6 +79,9 @@ export default function Prototipo() {
           etiqueta: t["nav.lang"],
           etiquetaNoDisponible: t["nav.langUnavailable"],
           idiomaDestino: "en",
+          idiomaActual: "es",
+          nombreActual: "Español",
+          textoActual: "idioma actual",
         }}
         textos={{ menu: t["nav.menu"], navegacion: t["nav.aria"], inicio: t["nav.home"] }}
       />
@@ -118,7 +121,7 @@ export default function Prototipo() {
           <HeroTipografico
             titular="Autoridad silenciosa"
             apoyo="Un titular, una línea de apoyo y nada más compitiendo por la atención."
-            accion={{ href: "/ai", etiqueta: "Ver SLG_AI" }}
+            accion={{ href: "/ai", etiqueta: "Ver SLG_VoltAi" }}
           />
         </Bloque>
 

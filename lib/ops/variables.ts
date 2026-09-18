@@ -44,6 +44,7 @@ export const VARIABLES: readonly Variable[] = [
   { nombre: "MAIL_SMTP_PASSWORD", para: "Contraseña SMTP", secreta: true, obligatoria: true },
   { nombre: "MAIL_FROM_ADDRESS", para: "Desde qué dirección se manda", secreta: false, obligatoria: true },
   { nombre: "OPS_MAIL_TO", para: "A quién va el correo de prueba de esta página", secreta: false, obligatoria: true },
+  { nombre: "CRON_SECRET", para: "Testigo de /api/colas: barre las colas desde un planificador externo (opcional)", secreta: true, obligatoria: false },
   { nombre: "CRM_BASE_URL", para: "La API del CRM", secreta: false, obligatoria: false },
   { nombre: "CRM_API_KEY_CAPTURE", para: "Clave del CRM que escribe", secreta: true, obligatoria: false },
   { nombre: "CRM_API_KEY_READ", para: "Clave del CRM que solo lee", secreta: true, obligatoria: false },

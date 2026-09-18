@@ -2787,3 +2787,35 @@ bucket no hay firma. Corregido a `[A-Z0-9_]`; el segundo despliegue entrega el P
 (`/en/thank-you` con la URL firmada). SMTP de Resend autenticado sin enviar nada. **Queda por ver el
 lead en el CRM**: el barrendero es un `setInterval` pensado para el VPS y en Vercel solo corre
 mientras hay peticiones; si no aparece, la salida es `after()` tras cada captura (decisión pendiente).
+
+
+---
+
+## La cola se vacía por acontecimientos; banderas junto al logo; logo en el pie (2026-09-17, noche)
+
+**El CRM seguía vacío con las claves bien puestas.** Causa: el barrendero es un `setInterval` en el
+proceso, y en Vercel el proceso solo vive mientras atiende una petición. Ricardo pidió la solución
+arquitectónicamente superior aunque hubiera que retroceder, porque este sitio se va a replicar.
+
+**Decisión: la cola se vacía por acontecimientos, no por reloj** (`lib/colas/barrer.ts`). Tras cada
+captura, el manejador barre una vez **después de responder** con `after()` de Next —el visitante
+sigue sin esperar al CRM, criterio 1 de DU-09—; cada visita de la sonda `/api/health` recoge los
+reintentos vencidos, también después de responder y con un freno de 30 s; y `/api/colas` con
+`CRON_SECRET` queda como gancho para un planificador donde se quiera cadencia garantizada. El
+`setInterval` del VPS sigue: es un acontecimiento más. Coincidir es seguro porque los barrenderos
+reclaman con `FOR UPDATE SKIP LOCKED`. La sonda no cambia su respuesta: sigue siendo tonta.
+Documentado en `docs/deployment.md` §4septies.4 y en `.env.example`.
+
+**Banderas.** El conmutador de idioma pasa de un enlace de texto al final del menú a dos banderas
+(España, Estados Unidos) pegadas al logo, en escritorio y en móvil, fuera del sheet. SVG en línea,
+cero peticiones. Sigue siendo el único enlace con `hreflang` de la página y sigue dibujándose
+desactivado cuando no hay pareja, que es lo que `check:armazon` mide. Nombres de idioma desde
+`content/ui` (`nav.langName`, `nav.langCurrent`); `check:cadenas` vigila también `Banderas.tsx`.
+
+**Pie.** El logotipo horizontal con lema de Softlanding Global (WebP, 35 KB, desde
+`SLG_Overhauling/Logos/SLG-Horizontal-Tagline-2023.png`) firma el pie por decisión de Ricardo. La
+barra conserva el isotipo con la marca pública «SLG Agency» (§10-4).
+
+**Verificado:** lint, `check:types`, `check:cadenas`, `check:env`, `check:content`, `check:secrets`,
+`check:alcance`, `check:archivos`, `check:fronteras`, compilación `standalone` y `check:armazon`
+contra el servidor real.

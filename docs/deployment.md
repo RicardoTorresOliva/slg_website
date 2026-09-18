@@ -938,6 +938,27 @@ El tablero de HQ te dice **cuántas capturas están esperando ese paso**, para q
 invisible. El día que el CRM publique el endpoint de admisión, se cambia `CRM_MODE` a
 `lead_admission` y ya está: no hay que migrar nada ni tocar código.
 
+### 4septies.4 Cómo se vacía la cola en Vercel (y en cualquier plataforma de funciones)
+
+El barrendero original es un `setInterval` dentro del proceso (A-01). En un VPS el proceso vive
+siempre y eso basta. **En Vercel no**: la función solo existe mientras atiende una petición, así que
+el temporizador no dispara y las capturas se quedan `pending` con las claves bien puestas. Se vio la
+noche del 2026-09-17 con el CRM vacío.
+
+Desde entonces **la cola se vacía por acontecimientos** (`lib/colas/barrer.ts`):
+
+1. **Tras cada captura**, el manejador barre una vez después de responder. El visitante no espera;
+   el contacto y la nota aparecen en el CRM segundos después.
+2. **Cada visita de la sonda `/api/health`** recoge los reintentos vencidos, también después de
+   responder. El monitor externo la visita cada cinco minutos (D-49): esa es la cadencia de reintento
+   sin configurar nada.
+3. **`/api/colas`** con `CRON_SECRET` (opcional, ≥ 32 caracteres) es el gancho para un planificador
+   que quiera una cadencia garantizada: un cron de Vercel en el plan Pro, un temporizador del sistema
+   en un VPS, o un monitor que envíe `Authorization: Bearer <CRON_SECRET>`. Sin la variable, 404.
+
+No hay nada que hacer en el despliegue para que funcione lo 1 y lo 2. Para lo 3, poner `CRON_SECRET`
+y programar la llamada.
+
 ---
 
 ## 4octies. El subdominio del visor de entregables (DU-19) — **dos clics y un registro DNS**

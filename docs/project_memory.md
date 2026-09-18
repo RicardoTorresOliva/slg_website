@@ -607,13 +607,14 @@ Estado al cierre del 2026-09-17, 21:15 (hora de Lima). Los tres encargos:
 - **No se pudo comprobar la entrega**: el modo auto del agente bloqueó la lectura de la base
   y del MCP del CRM al final de la sesión. Comprobar a mano: CRM → Contactos → buscar
   `prueba.captura@softlandingglobal.com`; debe tener una nota «Captura web · download».
-- **Riesgo real a vigilar**: el barrendero de la cola es un `setInterval` de 20 s dentro del
-  proceso (`instrumentation.ts` → `lib/crm/cola.ts`), diseñado para el VPS (A-01). En
-  Vercel una función solo ejecuta temporizadores mientras está atendiendo peticiones, así
-  que la cola puede tardar o no vaciarse. Si el contacto no aparece tras unos minutos de
-  tráfico, la corrección es de código: barrer una vez tras cada captura con `after()` de
-  `next/server` en `app/api/descargas/route.ts` (o un cron de Vercel que llame a un
-  endpoint protegido). Es una decisión de arquitectura: consultarla antes de hacerla.
+- **Resuelto en código (misma noche)**: la cola se vacía por acontecimientos
+  (`lib/colas/barrer.ts`): barrido tras cada captura con `after()`, barrido de
+  reintentos con cada visita de `/api/health`, y `/api/colas` + `CRON_SECRET` como
+  gancho de planificador. Ver `deployment.md` §4septies.4. **Falta desplegarlo y
+  ver el contacto en el CRM**: tras el despliegue, una captura nueva arrastra
+  también las pendientes.
+- Misma sesión: banderas ES/US junto al logo (escritorio y móvil) y logotipo de
+  Softlanding Global en el pie.
 
 ### Despliegue (Ricardo, desde su terminal; cada vez que cambie una variable)
 El comando de abajo ya está corregido: el filtro de nombres admite dígitos

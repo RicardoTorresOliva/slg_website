@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { barrerDespues } from "@/lib/colas/barrer";
 import { registrarCaptura, type Origen } from "@/lib/descargas/service";
 
 /**
@@ -50,6 +51,10 @@ export async function POST(request: Request) {
     locale: lang,
     ip: ipDe(request),
   });
+
+  // La entrega al CRM y los webhooks salen DESPUÉS de responder: el visitante no
+  // espera, y no depende de que un temporizador viva en esta plataforma (`lib/colas`).
+  if (resultado.ok) barrerDespues({ inmediato: true });
 
   if (!resultado.ok) {
     // La trampa responde como un éxito y no ha guardado nada (RF-33).
