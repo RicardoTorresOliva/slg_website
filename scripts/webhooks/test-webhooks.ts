@@ -358,7 +358,9 @@ async function main() {
         titulo: "Documento con archivo",
         audiencia: "prueba",
         aprende: [],
-        estado: "available",
+        // `published`, el único valor con el que el servicio emite la firma (el 17-09
+        // se unificó `available` → `published` en cinco componentes; este fixture no).
+        estado: "published",
         claveDeArchivo: "du12/con-archivo.pdf",
       },
       origen: "download",
@@ -377,7 +379,7 @@ async function main() {
         titulo: "Documento sin archivo",
         audiencia: "prueba",
         aprende: [],
-        estado: "coming_soon",
+        estado: "coming-soon",
       },
       origen: "download",
       datos: formulario("otra@du12-cableado.test"),
