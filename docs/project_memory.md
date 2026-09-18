@@ -583,11 +583,12 @@ modo JSON: invocarlo con `env -u CLAUDECODE` (ver memoria del agente).
 
 ## PRÓXIMA SESIÓN — todo fusionado en `develop`; falta desplegar y verificar
 
-Estado al 2026-09-18 por la mañana. Producción = `slg-website-dduhpx56f` (00:40), **anterior** a
-todo lo de abajo. Las variables viven en el proyecto de Vercel (Production y Preview): desplegar es
-`vercel deploy --prod --yes` (lo lanza Ricardo; el agente en modo auto no puede).
+Estado al 2026-09-18 por la mañana. Producción = `slg-website-79i3i8406`, con TODO lo de abajo
+desplegado y verificado (`/api/health` → 18 migraciones, `faltan: []`; `/empieza-aqui` con
+conmutador; captura de contacto con nombre y apellido entregada). Las variables viven en el proyecto
+de Vercel (Production y Preview): desplegar es `vercel deploy --prod --yes` (lo lanza Ricardo).
 
-### En `develop`, verificado con todos los frenos, pendiente de despliegue
+### En producción desde `79i3i8406`
 - **Phoenix**: las fichas de D-01/02/03 (ES y EN) entregan los folletos `Programa-Phoenix-PEEx/TEAx/
   RETx.pdf` (de `SLG_Overhauling/docs/phoenix/`, en español; subidos al bucket con `montar/subir.mjs`,
   que ahora acepta rutas). D-04 y D-05 siguen con sus documentos.
@@ -601,7 +602,7 @@ todo lo de abajo. Las variables viven en el proyecto de Vercel (Production y Pre
   desde `rutas.ts`, enlazado desde el pie y desde «Dónde empezar» de Nosotros/About.
 - Nosotros/About con el Cliente Cero; `docs/blog-editor.md` para el Editor de Hermes.
 
-### Tras el despliegue, comprobar
+### Comprobado tras el despliegue (2026-09-18)
 1. `/api/health` → `migraciones: 18`, `faltan: []`.
 2. `/descargas/d-06` y `/en/contact`: tres campos obligatorios; una captura de prueba con
    `prueba.captura@softlandingglobal.com` llega al CRM con nombre y apellido reales.
