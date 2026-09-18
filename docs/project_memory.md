@@ -581,44 +581,42 @@ modo JSON: invocarlo con `env -u CLAUDECODE` (ver memoria del agente).
 
 ---
 
-## PRÓXIMA SESIÓN — dos encargos a medio camino en sus worktrees, y un despliegue
+## PRÓXIMA SESIÓN — todo fusionado en `develop`; falta desplegar y verificar
 
-Estado al 2026-09-18, 00:10 (hora de Lima). La sesión anterior terminó por el **límite de uso de
-la API** (se reinicia a las 00:00 de Lima) con dos agentes trabajando; su trabajo está guardado
-sin confirmar en sus worktrees. Producción = `slg-website-dduhpx56f` (2026-09-18, 00:40), alias
-`softlandingglobal.com`, desplegada YA con las variables del proyecto y con Nosotros/About nuevos.
+Estado al 2026-09-18 por la mañana. Producción = `slg-website-dduhpx56f` (00:40), **anterior** a
+todo lo de abajo. Las variables viven en el proyecto de Vercel (Production y Preview): desplegar es
+`vercel deploy --prod --yes` (lo lanza Ricardo; el agente en modo auto no puede).
 
-### Lo que quedó HECHO y empujado a `develop` (no desplegado aún)
-- Nosotros/About reescritos: Cliente Cero, estructura de CoO (Company of One), «Trabajamos con
-  directorios…», y la entidad legal al final (commit `5ca2178`). Frenos de copy en verde.
-- `docs/blog-editor.md`: el contrato del artículo para el perfil Editor de Hermes y la salida a
-  redes por `post.published` → n8n. Nada que construir en la web; falta el flujo en n8n y las
-  variables `WEBHOOK_*`.
-- **Las 26 variables viven en el proyecto de Vercel, en Production y en Preview** (mismos
-  nombres, comprobado con `diff`). El despliegue es `vercel deploy --prod --yes`, sin `--env`, y
-  los previews de `git push` a `develop` ya pueden compilar. Lección: `vercel env add … --force`
-  sobre un nombre existente sobrescribe el registro en vez de añadir el entorno, y en un terminal
-  interactivo la confirmación se traga el valor; cargar desde una shell no interactiva y sin
-  `--force`. El comando largo con `--env` ya no hace falta.
+### En `develop`, verificado con todos los frenos, pendiente de despliegue
+- **Phoenix**: las fichas de D-01/02/03 (ES y EN) entregan los folletos `Programa-Phoenix-PEEx/TEAx/
+  RETx.pdf` (de `SLG_Overhauling/docs/phoenix/`, en español; subidos al bucket con `montar/subir.mjs`,
+  que ahora acepta rutas). D-04 y D-05 siguen con sus documentos.
+- **Blog**: los tres documentos de Academy son seis artículos publicados (ES/EN emparejados) con sus
+  extractos para redes. El Markdown del sitio pinta ahora tablas, listas numeradas y citas
+  (`markdown-seguro.ts` + `Markdown.tsx`, con pruebas en `test-entregables`).
+- **Formularios**: descarga, contacto y doctrina piden nombre, apellido y correo, obligatorios;
+  columna `last_name` (migración `0017`, **ya aplicada en producción** con el rol dueño), veredicto
+  `datos_incompletos`, CRM con `firstName`/`lastName` reales, HQ y `GET /api/v1/captures` con apellido.
+- **«Empieza aquí» / «Start here»**: `/empieza-aqui` y `/en/start-here`, mapa del sitio generado
+  desde `rutas.ts`, enlazado desde el pie y desde «Dónde empezar» de Nosotros/About.
+- Nosotros/About con el Cliente Cero; `docs/blog-editor.md` para el Editor de Hermes.
 
-### Lo que quedó A MEDIAS (retomar, no rehacer)
-1. **Formularios con nombre, apellido y correo** — worktree
-   `.claude/worktrees/agent-ac740ab034128d2db`, rama `worktree-agent-ac740ab034128d2db`, base
-   `5ca2178`: 16 archivos modificados + `drizzle/0017_apellido_en_la_captura.sql` +
-   `components/AvisoDelFormulario.tsx`, sin confirmar. Se detuvo «en el servicio y las dos rutas».
-   Brief completo: `~/Dev/SLG_Overhauling/docs/_BRIEF_FORMULARIOS.md`.
-2. **«Empieza aquí / Start here»** — worktree `.claude/worktrees/agent-a369b5b91bb616d04`, rama
-   `worktree-agent-a369b5b91bb616d04`: solo los dos `.md` de contenido, sin confirmar. Brief:
-   `~/Dev/SLG_Overhauling/docs/_BRIEF_EMPIEZA_AQUI.md`.
-   Al fusionar, añadir la frase de enlace en «Dónde empezar» de `nosotros.md`/`about.md` (el agente
-   tenía orden de no tocarlos).
+### Tras el despliegue, comprobar
+1. `/api/health` → `migraciones: 18`, `faltan: []`.
+2. `/descargas/d-06` y `/en/contact`: tres campos obligatorios; una captura de prueba con
+   `prueba.captura@softlandingglobal.com` llega al CRM con nombre y apellido reales.
+3. `/empieza-aqui` y `/en/start-here` responden y el conmutador cruza.
+4. `/blog/director-implementacion-ia` pinta la tabla; `/descargas/lo-que-un-director-debe-saber`
+   entrega el folleto PEEx.
 
-**Arranque sugerido**: lanzar dos agentes con esos dos briefs sobre los worktrees existentes;
-al terminar, fusionar las dos ramas en `develop`, pasar los frenos y `vercel deploy --prod --yes`.
+### Pendientes de decisión de Ricardo
+- Easypanel: parar el proyecto `slg_website` entero; pegar el «Show Error» de los compose de `clientes`.
+- `SLG_Overhauling` como repositorio privado con `ops/` ignorado.
+- Ficha ES `d-03.md` ya no aplica (ahora describe el programa RETx). Copys en `temporal`: 82 registros.
+- Blog → redes: flujo en n8n y variables `WEBHOOK_*` (§4 de `docs/blog-editor.md`).
+- `test:descargas` y `test:webhooks` tienen fallos previos al encargo de formularios (dependen de S3
+  local): la premisa de esas pruebas hay que rehacerla sobre Supabase.
 
-### Decisiones de Ricardo pendientes
-- Easypanel: parar el proyecto `slg_website` entero (slg-web, web, slgweb-staging, slgwebpostgres,
-  minio; umami solo si quiere analítica propia). Los `clientes` con «Something went wrong» es la
-  interfaz de Easypanel, no los contenedores: pedir el texto de «Show Error».
-- `SLG_Overhauling` sin historial: convertirla en repositorio privado con `ops/` ignorado.
-- Ficha ES `d-03.md` (audiencia/aprendizajes del RETx antiguo) y los 76 copys en `temporal`.
+### Worktrees
+Los dos worktrees de agentes (`.claude/worktrees/agent-ac740ab034128d2db`, `agent-a369b5b91bb616d04`)
+están fusionados en `develop` y se pueden borrar.
