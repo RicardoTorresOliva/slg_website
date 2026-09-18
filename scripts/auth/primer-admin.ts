@@ -106,7 +106,7 @@ const USO =
   "       --correo tu@correo --nombre \"Tu Nombre\"\n" +
   "     [--empresa \"SLG Agency\"] [--slug slg] [--idioma es|en] [--rehacer]";
 
-if (!CORREO.includes("@") || !NOMBRE) abortar(`Falta --correo o --nombre.\n\n${USO}`);
+if (!CORREO || !NOMBRE) abortar(`Falta --correo o --nombre.\n\n${USO}`);
 
 /**
  * **El correo se comprueba de verdad, y no por pedantería.** La cuenta se crea
@@ -118,9 +118,9 @@ if (!CORREO.includes("@") || !NOMBRE) abortar(`Falta --correo o --nombre.\n\n${U
  */
 if (!/^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$/.test(CORREO)) {
   abortar(
-    `«${CORREO}» no es una dirección de correo: le falta el dominio.\n` +
-      `  Si eso es lo que pegaste del ejemplo, escribe tu correo real: la cuenta se crea una vez\n` +
-      `  y el enlace de recuperación va a esa dirección.`,
+    `«${CORREO}» no es una dirección de correo: ${CORREO.includes("@") ? "le falta el dominio" : "no tiene arroba"}.\n` +
+      `  Parece el hueco del ejemplo sin rellenar. Escribe tu correo real —el tuyo, el que lees—:\n` +
+      `  la cuenta se crea una sola vez y el enlace de recuperación va a esa dirección.`,
   );
 }
 
