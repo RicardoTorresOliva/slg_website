@@ -581,35 +581,30 @@ modo JSON: invocarlo con `env -u CLAUDECODE` (ver memoria del agente).
 
 ---
 
-## PRÓXIMA SESIÓN — nueva arquitectura lista en `develop`; fotos en curso
+## PRÓXIMA SESIÓN — la nueva arquitectura está en producción
 
-Estado al 2026-09-18, 01:45 (Lima). Producción = `slg-website-79i3i8406` (formularios, Empieza
-aquí en /empieza-aqui, Phoenix, blog). **Lo de abajo está en `develop` (hasta `519ebc1`), verificado, sin desplegar.**
-Desplegar: `vercel deploy --prod --yes` (Ricardo).
+Estado al 2026-09-18, 02:15 (Lima). Producción = `slg-website-5pdaggp6h`: menú de cuatro destinos
+con el mapa de portada, Servicios en `/servicios` con Holdings desarrollado y descargas destacadas,
+renombre VoltAi by SLG / Holdings by SLG / VoltAi Academy·Enterprise·Factory, regreso al nivel
+anterior, quince fotos nuevas, fechas del blog repartidas, formularios con apellido, CRM, correo.
+Verificado tras el despliegue: sonda (18 migraciones), portada, Readiness con foto y regreso,
+`/empieza-aqui` → `/`.
 
-### En `develop`, pendiente de despliegue (commit `0354c08`)
-- **Menú de cuatro destinos**: Empieza aquí (`/`, el mapa) · Servicios (`/servicios`, la portada
-  anterior con RF-09) · Blog · Nosotros. `/empieza-aqui` y `/en/start-here` redirigen a la portada.
-  Doctrina, Holdings y Descargas se llegan desde Servicios, el mapa y el pie. `check:armazon` mide
-  cuatro destinos; `check:paginas` mide los bloques en `/servicios`.
-- **Renombre**: `SLG_VoltAi` → VoltAi by SLG, `SLG_Holdings` → Holdings by SLG, líneas VoltAi
-  Academy / Enterprise / Factory (servicios sin cambio). Nombres viejos = variantes prohibidas.
-  PDF de D-04…D-11 regenerados y subidos. Las URL no cambian (`/ai`, `/holdings`, `/ai/academy`…).
-- Servicios desarrolla Holdings by SLG (bloque `holdings`) y «Descargas destacadas» enseña tres
-  documentos + enlace a `/descargas`, que ahora lista título, audiencia, abstract y enlace.
-- `components/Regreso.tsx`: «← Volver a …» en toda página salvo la portada.
-- Fechas del blog: agosto y septiembre (ver frontmatter).
-- Doctrina ES/EN con las ediciones de Ricardo (Nobel 2025, Taleb, letrados) y fuente declarada.
-- `SLG_Overhauling` → repositorio privado `RicardoTorresOliva/SLG_Overhauling`, `ops/` ignorado.
+**Pendiente de un despliegue pequeño** (`2d8edd6`, en `develop`): dos erratas de la edición manual
+de Ricardo en Nosotros («con ella tecnología… implementados», «y no está preparado») corregidas y
+About reflejado en inglés. La edición manual entró en el commit `0354c08` sin revisar: lección,
+mirar `git status` de `content/` antes de un `git add -A`.
 
-### Fotografías — HECHAS (commit `519ebc1`)
-Quince escenas nuevas (`z_image`, 3,6 créditos), con el isotipo como sello y mapeadas en
-`Fotografia.tsx`: `home` (Servicios), `ai`, `doctrina`, `nosotros`, `enterprise` sustituidas y una por
-servicio. Las anteriores están en el scratchpad de la sesión (se pierde al cerrar); si hay que volver
-atrás, `git show 0354c08:public/fotos/<nombre>.webp`. Notas del agente: en `phoenix-peex` salen dos
-sillas azules; `readiness` es una regla lisa (el nivel de burbuja salía fuera de paleta).
+### Pregunta abierta para Ricardo
+Los servicios `SLG_Readiness` y `SLG_Implement` conservan el prefijo `SLG_` (el renombre del 18
+fue de ejes y líneas; «los servicios no cambian»). Dentro de «VoltAi Enterprise» desentonan. Si
+decide renombrarlos (¿`VoltAi Readiness` / `VoltAi Implement`? ¿`Readiness` / `Implement` a secas?),
+son `name` en `content/services/{es,en}/readiness*.md` e `implement*.md`, la tabla de
+`nomenclature.ts` y `naming-rules.md`; las URL no cambian.
 
 ### Decisiones pendientes de Ricardo
 - Easypanel: parar el proyecto `slg_website`; pegar el «Show Error» de los compose de `clientes`.
 - Blog → redes: flujo n8n y `WEBHOOK_*` (§4 de `docs/blog-editor.md`).
+- Fotos: en `phoenix-peex` salen dos sillas azules; `readiness` es una regla lisa. Regenerar si quiere.
 - Copys en `temporal`: 84 registros. `test:descargas`/`test:webhooks`: premisa S3 por rehacer sobre Supabase.
+- Vercel CLI 54 → 59 (`npm i -g vercel@latest`), sin urgencia.
