@@ -1012,25 +1012,40 @@ contexto autenticado (RF-71, R-10).
 
 ```
 ┌───────────────────┬──────────────────────────────────────────────────────────┐
-│  Cliente Demo     │  Inicio                                                  │
+│  Cliente Demo     │  Hoy                                                     │
 │  ───────────────  ├──────────────────────────────────────────────────────────┤
-│  ▸ Inicio         │  AVISOS DE SLG                                           │
+│  ▸ Hoy            │  NOTICIAS DE HOY                                         │
 │  ▸ Proyectos      │  ┌────────────────────────────────────────────────────┐  │
-│  ▸ Materiales     │  │ fecha · Título del aviso                           │  │
-│  ▸ Miembros       │  │ cuerpo en Markdown (saneado — RNF-31)              │  │
-│  ▸ Perfil         │  └────────────────────────────────────────────────────┘  │
-│  ───────────────  │                                                          │
-│  Sesión Cero      │  TUS PROYECTOS            ÚLTIMOS ENTREGABLES            │
-│  Nombre ▾         │  · Proyecto A (3)         · Informe final · v2 · pdf     │
+│  ▸ Materiales     │  │ Título · fecha · Fuente ↗                          │  │
+│  ▸ Avisos         │  │ resumen en Markdown (saneado — RNF-31)             │  │
+│  ▸ Clases         │  │ ┃ QUÉ SIGNIFICA PARA TU EMPRESA — el comentario    │  │
+│  ▸ Miembros       │  └────────────────────────────────────────────────────┘  │
+│  ▸ Perfil         │  QUÉ SIGUE                            [ Ver el programa ]│
+│  ───────────────  │  · Proyecto A → Hito próximo · fecha                     │
+│  Sesión Cero      │  PENDIENTES                  [ Ver todos los pendientes ]│
+│  Nombre ▾         │  · Envíanos el organigrama  [Te toca a ti]  límite fecha │
+│                   │  ÚLTIMOS ENTREGABLES        [ Ver todos los proyectos ]  │
+│                   │  · Informe final · v2 · fecha                  [ Abrir ] │
+│                   │  AVISOS                        [ Ver todos los avisos ]  │
+│                   │  · fecha · Título · cuerpo en Markdown                   │
 └───────────────────┴──────────────────────────────────────────────────────────┘
    ^ el nombre de la empresa es el marcador de "dónde estoy": el cliente
      debe ver siempre de qué empresa está viendo datos
 ```
 
-### 7.1 Inicio (`/portal`) — RF-88
+### 7.1 Inicio «Hoy» (`/portal`) — RF-149, RF-150, RF-88 · DU-26
 
-Avisos + accesos a proyectos y últimos entregables. Vacío inicial redactado (RF-88): "Todavía no
-hay avisos" + "aquí aparecerán las comunicaciones de SLG". Nunca una tarjeta vacía sin texto.
+Cinco bloques, en este orden y ninguno en hueco: **noticias de hoy** por importancia (1 primero),
+cada una con título, fuente (enlace externo, `rel="noopener"`), resumen y **el comentario para esta
+empresa destacado** —es el producto (D-161)—; **qué sigue**: el próximo hito de cada proyecto activo
+con su fecha; **pendientes** abiertos, los que cierra el cliente primero, con fecha límite; los tres
+**últimos entregables**; los tres últimos **avisos** (RF-88, mismo render que §7.9). Resumen,
+comentario y aviso pasan por `Markdown` dentro de `ContenidoEntregado` (RNF-31). Sin noticias de
+hoy, **las últimas tres con su fecha**, nunca un hueco. Cada bloque enlaza a su pantalla completa
+(RNF-43): «Qué sigue» y «Pendientes» a `/portal/programa`, entregables a `/portal/proyectos`, avisos a
+`/portal/avisos`; las noticias no tienen otra pantalla — «Hoy» es la suya. Los cinco vacíos están
+redactados en `content/ui` (`portal.today.*`). El paso «Agenda tu Sesión Cero» (§7.7) sigue arriba.
+Ningún `organization_id` viaja: lo acota la política de fila (criterio 1).
 
 ### 7.2 Proyectos y entregables (`/portal/proyectos`, `/portal/proyectos/[id]`) — RF-89
 
@@ -1132,6 +1147,14 @@ un campo nuevo del modelo. Un vídeo se abre en **pestaña nueva** (`target="_bl
 lo demás sigue abriendo en el visor de `/portal/entregables/[id]` de siempre. **Sin cambio de CSP ni
 de visor: nada se incrusta.** Vacío inicial redactado: "Todavía no hay clases".
 
+### 7.9 Avisos (`/portal/avisos`) — RF-88 · DU-26
+
+La lista completa de avisos de la empresa, **movida tal cual desde la antigua portada** (DU-18): fecha
+· título · autor · cuerpo en Markdown dentro de `ContenidoEntregado` con el `lang` en que se escribió
+(RF-72, RNF-31). «Hoy» enseña los tres últimos y enlaza aquí. Vacío inicial redactado: "No hay avisos
+por ahora" + "no hace falta que vuelvas a mirar: te llegará por correo". Sección `announcements` en la
+navegación; `/portal` pasa a la clave `today` con la misma acción (`announcement.read`).
+
 ---
 
 ## 8. Estados: catálogo y aplicación
@@ -1166,7 +1189,8 @@ de visor: nada se incrusta.** Vacío inicial redactado: "Todavía no hay clases"
 | **HQ Capturas web** | "Todavía no hay capturas" | Filtro sin resultados | Reintentar · ← Tablero | Reintento manual falla → fila en `failed`, nuevo intento registrado y visible | 404 |
 | **HQ Claves de API** | "No hay claves creadas" + `[+ Nueva clave]` | — | Reintentar · ← Tablero | Crear/revocar falla → estado sin cambio + aviso | `slg_operator` → 404 en la ruta (RF-86) |
 | **HQ Auditoría** | "Sin eventos registrados" | Filtro por actor/acción/fecha | Reintentar · ← Tablero | — (solo lectura) | `slg_operator` → 404 en la ruta |
-| **Portal Inicio** | "Todavía no hay avisos" + qué aparecerá | — | Reintentar · sin salir de la superficie | — | — |
+| **Portal Hoy** | Un vacío redactado por bloque: "Todavía no hay noticias" · "Sin hitos programados" · "Nada pendiente" · "Todavía no hay entregables" · "No hay avisos por ahora" | — | Reintentar · sin salir de la superficie | — | — |
+| **Portal Avisos** | "No hay avisos por ahora" + qué aparecerá | — | Reintentar · sin salir de la superficie | — | — |
 | **Portal Proyectos** | "Todavía no hay proyectos" + "tu contacto en SLG los publicará aquí" | — | Reintentar · ← Inicio | — | Proyecto de otra empresa → 404 |
 | **Portal Ficha de proyecto** | "Este proyecto aún no tiene entregables" | — | Reintentar · ← Proyectos | — | 404 |
 | **Portal Visor** | — | — | Archivo no disponible → aviso + contacto, sin traza | Enlace firmado caducado → `[Volver a abrir]` | Entregable `internal` o ajeno → 404 |
@@ -1226,7 +1250,7 @@ columnas a un desplazamiento horizontal no es responsive.
 | §4 Identidad | RF-58 a RF-66, RF-119, RNF-24, RNF-37 |
 | §5 Shell | RF-72, RF-68, C.5 (componente 8), RNF-34 |
 | §6 HQ | RF-25, RF-51, RF-52, RF-54, RF-73 a RF-86, RF-111, RF-143, RF-147, RNF-25, RNF-29 |
-| §7 Portal | RF-88 a RF-96, RF-142, RF-144, RF-155, RNF-21, RNF-31 |
+| §7 Portal | RF-88 a RF-96, RF-142, RF-144, RF-149, RF-150, RF-155, RNF-21, RNF-31 |
 | §8 Estados | RNF-34, perfil `deliverable_unit_completeness`, RF-71, RF-95 |
 | §9 Wayfinding | RNF-43, C.6 |
 | §10 Responsive | RNF-01 (coste de render), C.6 (Flexibilidad) |
@@ -1267,3 +1291,5 @@ Ninguno se resuelve inventando. Todos son visibles en staging y bloquean `main` 
 - `2026-09-08` — **D-44** cierra CF-3 en el §3.2: el anillo de foco es de **dos capas** —exterior
   `--cyan`, interior `--blue-primary` o `--ink`—. **D-45** cierra CF-4 en el §7.3: el **origen
   separado** del visor es **normativo**, con `sandbox` y CSP como defensa en profundidad.
+- `2026-09-18` — **DU-26**: §7.1 pasa de «Inicio» a «Hoy» (cinco bloques, RF-149/RF-150) y la lista
+  de avisos se documenta aparte en §7.9 (`/portal/avisos`); filas nuevas en §8.2 y §11.
