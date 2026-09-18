@@ -708,8 +708,9 @@ cliente quiera abrir cada día. **Misma app, no proyecto aparte.** Plan aprobado
 `planning/spec-delta-academy.md` (RF-149…RF-156). Estado:
 - **FU-15 hecho** (`7081b25`): migración `0018_academy.sql` —`news_item`, `milestone`,
   `action_item` con la política de fila de 0015—, dos alcances, matriz B.3 con seis acciones
-  (`2cc6c56`). **Pendiente de correr contra PostgreSQL** (`test:isolation` +9) y de **migrar
-  producción** (`npm run db:migrate` con el rol dueño; hace copia antes).
+  (`2cc6c56`). **Migración 0018 APLICADA en producción** (Ricardo, 18-09 ~20:00: «19 de 19»). El
+  código de producción (`o4bkrnmrj`, desplegado antes de FU-15) no la usa todavía y no le afecta.
+  `test:isolation` (+9) sigue sin correr contra PostgreSQL: se corre en CI.
 - **En paralelo, tres agentes en worktrees** (`.claude/worktrees/`): DU-30 (servicios `lib/academy/`
   + API v1), DU-28 (portal «Clases»), DU-29a (HQ «Conexiones» + `content/conexiones.json`). Se
   fusionan en `develop` al terminar; conflictos previsibles en `content/ui/*.json`,
