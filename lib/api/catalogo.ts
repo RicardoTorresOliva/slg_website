@@ -1,6 +1,6 @@
 /**
- * catalogo.ts — **Las nueve rutas de `/api/v1`, como DATOS** (DU-22 · DU-23 ·
- * `api_contracts` §2, §3 y §4).
+ * catalogo.ts — **Las quince rutas de `/api/v1`, como DATOS** (DU-22 · DU-23 ·
+ * DU-30 · `api_contracts` §2, §3 y §4).
  *
  * ESTE ARCHIVO EXISTE PARA QUE LA ESPECIFICACIÓN NO PUEDA MENTIR. El criterio 5
  * de DU-23 pide que `GET /openapi.json` se genere **a partir de los mismos
@@ -19,6 +19,7 @@
  */
 import { ACCIONES, MATRIZ_B3, type Accion } from "../auth/index.ts";
 import {
+  ACTION_ITEM_CLOSER,
   DELIVERABLE_TYPES,
   LEAD_SOURCES,
   ORG_STATUS,
@@ -62,7 +63,7 @@ const CURSOR: Declaracion = {
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
- * Las nueve rutas
+ * Las quince rutas: nueve de DU-22/DU-23 y seis de la Academy (DU-30)
  * ══════════════════════════════════════════════════════════════════════════ */
 
 export type RutaDeApi = {
@@ -234,6 +235,114 @@ export const RUTAS: readonly RutaDeApi[] = [
     ],
     codigos: [201, 400, 404, 413, 415, 422],
   },
+
+  /* ── M6 · Academy (DU-30 · RF-153): noticias, hitos y pendientes ──────────
+   *
+   * Las seis son `POST`: la matriz B.3 no da alcance de agente a `news.read`
+   * ni a `milestone.read`, así que no hay lectura que una clave pueda hacer, y
+   * una ruta que ninguna clave puede llamar sería una mentira en la
+   * especificación. Las sub-acciones `done` y `reopen` son `POST`, como
+   * `/deliverables/{id}/publish`: un acto con nombre, no un campo que se
+   * parchea. Las tres son idempotentes a propósito —repetir `done` no mueve
+   * `done_at` ni falla—: un agente que reintenta una llamada cortada no tiene
+   * que preguntar antes.
+   */
+  {
+    metodo: "POST",
+    ruta: "/api/v1/organizations/{id}/news",
+    accion: "news.write",
+    resumen: "Noticia con comentario para una empresa. Ajena o inexistente, 404.",
+    cuerpo: [
+      { nombre: "title", tipo: "string", minimo: 1, maximo: 200, obligatorio: true, descripcion: "Título." },
+      { nombre: "source_url", tipo: "string", maximo: 2000, descripcion: "Fuente de la noticia. Solo http(s)." },
+      {
+        nombre: "summary_md",
+        tipo: "string",
+        minimo: 1,
+        maximo: 20_000,
+        obligatorio: true,
+        descripcion: "La noticia, en Markdown. Se guarda tal cual.",
+      },
+      {
+        nombre: "comment_md",
+        tipo: "string",
+        minimo: 1,
+        maximo: 20_000,
+        obligatorio: true,
+        descripcion: "Lo que la noticia significa PARA esa empresa, en Markdown.",
+      },
+      {
+        nombre: "importance",
+        tipo: "integer",
+        minimo: 1,
+        maximo: 3,
+        obligatorio: true,
+        descripcion: "Importancia editorial (D-161): 1 es lo primero. La fija quien escribe.",
+      },
+      {
+        nombre: "publish",
+        tipo: "boolean",
+        obligatorio: true,
+        descripcion: "Obligatorio y SIN defecto, como en los avisos: que un cliente lo vea no se olvida.",
+      },
+    ],
+    codigos: [201, 400, 404, 413, 415, 422],
+  },
+  {
+    metodo: "POST",
+    ruta: "/api/v1/projects/{id}/milestones",
+    accion: "milestone.write",
+    resumen: "Hito de entrega de un proyecto. Nace pendiente; la empresa sale del proyecto.",
+    cuerpo: [
+      { nombre: "title", tipo: "string", minimo: 1, maximo: 200, obligatorio: true, descripcion: "Título." },
+      { nombre: "due_at", tipo: "datetime", obligatorio: true, descripcion: "Fecha de entrega." },
+      { nombre: "position", tipo: "integer", minimo: 0, maximo: 10_000, descripcion: "Orden manual. Ausente: 0." },
+    ],
+    codigos: [201, 400, 404, 413, 415, 422],
+  },
+  {
+    metodo: "POST",
+    ruta: "/api/v1/milestones/{id}/done",
+    accion: "milestone.write",
+    resumen: "Marca un hito como hecho y pone `done_at`. Repetirlo no mueve la fecha.",
+    cuerpo: [],
+    codigos: [200, 400, 404, 415, 422],
+  },
+  {
+    metodo: "POST",
+    ruta: "/api/v1/milestones/{id}/reopen",
+    accion: "milestone.write",
+    resumen: "Devuelve un hito a pendiente y quita `done_at`.",
+    cuerpo: [],
+    codigos: [200, 400, 404, 415, 422],
+  },
+  {
+    metodo: "POST",
+    ruta: "/api/v1/projects/{id}/action-items",
+    accion: "action_item.write",
+    resumen: "Pendiente de un proyecto. `closes_by` dice quién puede cerrarlo.",
+    cuerpo: [
+      { nombre: "title", tipo: "string", minimo: 1, maximo: 200, obligatorio: true, descripcion: "Título." },
+      { nombre: "due_at", tipo: "datetime", descripcion: "Fecha límite, opcional." },
+      {
+        nombre: "closes_by",
+        tipo: "enum",
+        valores: ACTION_ITEM_CLOSER,
+        obligatorio: true,
+        descripcion: "Quién lo cierra: `client` o `slg`. Sin defecto: es una decisión.",
+      },
+    ],
+    codigos: [201, 400, 404, 413, 415, 422],
+  },
+  {
+    metodo: "POST",
+    ruta: "/api/v1/action-items/{id}/done",
+    accion: "action_item.write",
+    resumen: "Cierra un pendiente, sea de quien sea, con el actor de la clave. Repetirlo no cambia nada.",
+    cuerpo: [],
+    codigos: [200, 400, 404, 415, 422],
+  },
+
   {
     metodo: "GET",
     ruta: "/api/v1/openapi.json",

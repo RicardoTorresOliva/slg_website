@@ -13,6 +13,11 @@
  * rutas, no con un ejemplo. Un alcance que habilitara de más se vería aquí y en
  * ningún otro sitio.
  *
+ * DU-30 añade las seis rutas de la Academy (noticias, hitos y pendientes) con
+ * sus dos alcances, y —porque la puerta `lib/academy` la usan también HQ y el
+ * portal— comprueba la matriz B.3 **con personas**: que un cliente cierra sus
+ * pendientes y no los de SLG, y que el intento queda auditado.
+ *
  * Necesita `bash scripts/db/local-pg.sh up` y `npm run build:standalone`.
  */
 import { spawn, type ChildProcess } from "node:child_process";
@@ -65,6 +70,9 @@ const VALORES = {
   escribeAvisos: "valor-de-prueba-du23-avisos-write",
   escribeEventos: "valor-de-prueba-du23-eventos-write",
   escribeAcotada: "valor-de-prueba-du23-acotada-write",
+  escribeNoticias: "valor-de-prueba-du30-noticias-wr",
+  escribeHitos: "valor-de-prueba-du30-hitos-write",
+  academyAcotada: "valor-de-prueba-du30-acotada-wr",
   revocada: "valor-de-prueba-du22-revocada-0000",
   caducada: "valor-de-prueba-du22-caducada-0000",
   estrecha: "valor-de-prueba-du22-estrecha-0000",
@@ -76,7 +84,9 @@ type Alcance =
   | "deliverables:read"
   | "deliverables:write"
   | "announcements:write"
-  | "events:write";
+  | "events:write"
+  | "news:write"
+  | "milestones:write";
 
 async function crearClave(
   id: string,
@@ -96,9 +106,13 @@ async function crearClave(
 const CAPTURA = "cap-du22";
 
 async function limpiar() {
-  await dueno`delete from api_key where id like 'k-du22-%' or id like 'k-du23-%'`;
+  await dueno`delete from api_key where id like 'k-du22-%' or id like 'k-du23-%' or id like 'k-du30-%'`;
   await dueno`delete from agent_event where organization_id in (${A.org}, ${B.org}) or api_key_id like 'k-du23-%'`;
   await dueno`delete from announcement where organization_id in (${A.org}, ${B.org})`;
+  // Las tres de la Academy cuelgan del proyecto y de la empresa (ON DELETE RESTRICT): van antes.
+  await dueno`delete from news_item where organization_id in (${A.org}, ${B.org})`;
+  await dueno`delete from milestone where organization_id in (${A.org}, ${B.org})`;
+  await dueno`delete from action_item where organization_id in (${A.org}, ${B.org})`;
   await dueno`delete from download_event where lead_capture_id = ${CAPTURA}`;
   await dueno`delete from crm_delivery where lead_capture_id = ${CAPTURA}`;
   await dueno`delete from lead_capture where id = ${CAPTURA}`;
@@ -171,6 +185,10 @@ async function sembrar() {
   await crearClave("k-du23-eve", VALORES.escribeEventos, ["events:write"]);
   await crearClave("k-rev-cap", VALORES.capturasAcotada, ["captures:read"], { org: A.org });
   await crearClave("k-du23-aco", VALORES.escribeAcotada, ["announcements:write", "deliverables:write"], { org: A.org });
+  // DU-30: una clave por alcance de la Academy, y una acotada a A con los dos.
+  await crearClave("k-du30-new", VALORES.escribeNoticias, ["news:write"]);
+  await crearClave("k-du30-hit", VALORES.escribeHitos, ["milestones:write"]);
+  await crearClave("k-du30-aco", VALORES.academyAcotada, ["news:write", "milestones:write"], { org: A.org });
 }
 
 /* ── Servidor real ────────────────────────────────────────────────────────── */
@@ -908,6 +926,314 @@ async function main() {
     });
     check("un cuerpo por encima del tope duro → 413", enorme.status === 413, String(enorme.status));
 
+    console.log("\nDU-30 · Academy — noticias: alcance, empresa y forma:\n");
+
+    const RUTA_NOTICIAS_A = `/api/v1/organizations/${A.org}/news`;
+    const NOTICIA = {
+      title: "La UE fija el calendario del AI Act",
+      source_url: "https://ejemplo.test/ai-act",
+      summary_md: "Las obligaciones de alto riesgo entran en vigor en **agosto de 2027**.",
+      comment_md: "Para tu caso: el copiloto de atención queda fuera del alto riesgo.",
+      importance: 1,
+      publish: true,
+    };
+
+    const noticiaSinAlcance = await postJson(RUTA_NOTICIAS_A, VALORES.escribeAvisos, NOTICIA);
+    check("una clave sin `news:write` → 403 (criterio 1 de DU-30)", noticiaSinAlcance.status === 403, String(noticiaSinAlcance.status));
+    check(
+      "y es el MISMO 403 de siempre: no nombra el alcance que faltaba",
+      noticiaSinAlcance.cuerpo?.error?.code === "insufficient_scope" &&
+        noticiaSinAlcance.cuerpo?.error?.message === sinAlcance.cuerpo?.error?.message,
+    );
+
+    const noticia = await postJson(RUTA_NOTICIAS_A, VALORES.escribeNoticias, NOTICIA);
+    check("con `news:write` → 201", noticia.status === 201, JSON.stringify(noticia.cuerpo?.error));
+    check(
+      "la respuesta lleva la empresa de la RUTA y la importancia editorial tal como se envió (D-161)",
+      noticia.cuerpo?.data?.organization_id === A.org && noticia.cuerpo?.data?.importance === 1,
+    );
+    check(
+      "y la autoría distingue clave de persona (RF-111)",
+      noticia.cuerpo?.data?.author?.actor_type === "api_key" && noticia.cuerpo?.data?.author?.actor_id === "k-du30-new",
+      JSON.stringify(noticia.cuerpo?.data?.author),
+    );
+    const filaNoticia = (await dueno`
+      select author_type, author_id, published_at, importance from news_item where id = ${noticia.cuerpo?.data?.id ?? ""}
+    `) as unknown as { author_type: string | null; author_id: string | null; published_at: Date | null; importance: number }[];
+    check(
+      "la fila lleva `author_type = api_key` y está publicada (criterio 1 de DU-30)",
+      filaNoticia[0]?.author_type === "api_key" && filaNoticia[0]?.author_id === "k-du30-new" && filaNoticia[0]?.published_at !== null,
+      JSON.stringify(filaNoticia[0]),
+    );
+
+    const borrador = await postJson(RUTA_NOTICIAS_A, VALORES.escribeNoticias, { ...NOTICIA, title: "Borrador", importance: 3, publish: false });
+    check(
+      "con `publish: false` nace sin publicar y sin autor: lo impone la base, no la respuesta",
+      borrador.status === 201 && borrador.cuerpo?.data?.published_at === null && borrador.cuerpo?.data?.author === null,
+      JSON.stringify(borrador.cuerpo?.data ?? borrador.cuerpo?.error),
+    );
+
+    const { publish: _sinPublish, ...NOTICIA_SIN_PUBLISH } = NOTICIA;
+    void _sinPublish;
+    const noticiaSinPublish = await postJson(RUTA_NOTICIAS_A, VALORES.escribeNoticias, NOTICIA_SIN_PUBLISH);
+    check(
+      "`publish` es obligatorio y sin defecto → 422 que nombra el campo",
+      noticiaSinPublish.status === 422 &&
+        noticiaSinPublish.cuerpo?.error?.details?.some((d: Json) => d.field === "publish" && d.code === "required"),
+      JSON.stringify(noticiaSinPublish.cuerpo?.error?.details),
+    );
+    const importanciaFuera = await postJson(RUTA_NOTICIAS_A, VALORES.escribeNoticias, { ...NOTICIA, importance: 4 });
+    check(
+      "`importance: 4` → 422 `out_of_range` en `importance`, sin repetir el valor (RNF-26)",
+      importanciaFuera.status === 422 &&
+        importanciaFuera.cuerpo?.error?.details?.some((d: Json) => d.field === "importance" && d.code === "out_of_range") &&
+        !JSON.stringify(importanciaFuera.cuerpo?.error?.details).includes("4"),
+      JSON.stringify(importanciaFuera.cuerpo?.error?.details),
+    );
+    const importanciaTexto = await postJson(RUTA_NOTICIAS_A, VALORES.escribeNoticias, { ...NOTICIA, importance: "alta" });
+    check("`importance: \"alta\"` → 422 `not_an_integer`", importanciaTexto.status === 422 && importanciaTexto.cuerpo?.error?.details?.some((d: Json) => d.code === "not_an_integer"));
+    const fuenteHostil = await postJson(RUTA_NOTICIAS_A, VALORES.escribeNoticias, { ...NOTICIA, source_url: "javascript:alert(1)" });
+    check(
+      "un `source_url` con esquema ejecutable → 422 `scheme_not_allowed`",
+      fuenteHostil.status === 422 && fuenteHostil.cuerpo?.error?.details?.some((d: Json) => d.field === "source_url" && d.code === "scheme_not_allowed"),
+      JSON.stringify(fuenteHostil.cuerpo?.error?.details),
+    );
+    const sinComentario = await postJson(RUTA_NOTICIAS_A, VALORES.escribeNoticias, { ...NOTICIA, comment_md: "" });
+    check("sin `comment_md` → 422: el comentario es el producto, no un adorno", sinComentario.status === 422 && sinComentario.cuerpo?.error?.details?.some((d: Json) => d.field === "comment_md"));
+    const noticiaConCampoDeMas = await postJson(RUTA_NOTICIAS_A, VALORES.escribeNoticias, { ...NOTICIA, inventado: true });
+    check("un campo no declarado → 422, no se ignora en silencio", noticiaConCampoDeMas.status === 422, String(noticiaConCampoDeMas.status));
+
+    const noticiaAjena = await postJson(`/api/v1/organizations/${B.org}/news`, VALORES.academyAcotada, NOTICIA);
+    check("una clave acotada a A no escribe en B → 404, nunca 403 (criterio 2, D-38)", noticiaAjena.status === 404, String(noticiaAjena.status));
+    const noticiaInexistente = await postJson("/api/v1/organizations/org-que-no-existe/news", VALORES.escribeNoticias, NOTICIA);
+    check(
+      "y el 404 de lo ajeno es IDÉNTICO al de lo inexistente",
+      noticiaInexistente.status === 404 &&
+        JSON.stringify({ ...noticiaAjena.cuerpo?.error, request_id: "" }) === JSON.stringify({ ...noticiaInexistente.cuerpo?.error, request_id: "" }),
+      `${JSON.stringify(noticiaAjena.cuerpo?.error)} vs ${JSON.stringify(noticiaInexistente.cuerpo?.error)}`,
+    );
+    const enSuCasa = await postJson(RUTA_NOTICIAS_A, VALORES.academyAcotada, { ...NOTICIA, title: "Desde la acotada", importance: 2 });
+    check("la misma clave acotada SÍ escribe en la suya → 201", enSuCasa.status === 201, String(enSuCasa.status));
+    const noticiaDespues = await postJson(RUTA_NOTICIAS_A, VALORES.escribeNoticias, { ...NOTICIA, title: "La segunda de importancia 1" });
+    check("una segunda noticia de importancia 1, más reciente → 201", noticiaDespues.status === 201, String(noticiaDespues.status));
+
+    console.log("\nDU-30 · Academy — hitos: la empresa sale del proyecto; hecho ⇔ con fecha:\n");
+
+    const RUTA_HITOS_A = `/api/v1/projects/${A.proyecto}/milestones`;
+    const HITO = { title: "Entrega del diagnóstico", due_at: "2026-10-15T00:00:00Z", position: 1 };
+
+    check("`news:write` no habilita hitos: los alcances no se implican (RF-147)", (await postJson(RUTA_HITOS_A, VALORES.escribeNoticias, HITO)).status === 403);
+    check("ni `milestones:write` habilita noticias", (await postJson(RUTA_NOTICIAS_A, VALORES.escribeHitos, NOTICIA)).status === 403);
+    check("una clave sin ninguno de los dos → 403", (await postJson(RUTA_HITOS_A, VALORES.escribeAvisos, HITO)).status === 403);
+
+    const hito = await postJson(RUTA_HITOS_A, VALORES.escribeHitos, HITO);
+    check("con `milestones:write` → 201", hito.status === 201, JSON.stringify(hito.cuerpo?.error));
+    check("nace `pending` y sin `done_at`", hito.cuerpo?.data?.status === "pending" && hito.cuerpo?.data?.done_at === null);
+    check(
+      "y su empresa es la del proyecto, que NO viajó en el cuerpo",
+      hito.cuerpo?.data?.organization_id === A.org && hito.cuerpo?.data?.project_id === A.proyecto,
+      JSON.stringify(hito.cuerpo?.data),
+    );
+    check("la fecha vuelve normalizada a ISO", hito.cuerpo?.data?.due_at === "2026-10-15T00:00:00.000Z", hito.cuerpo?.data?.due_at);
+    const fechaMala = await postJson(RUTA_HITOS_A, VALORES.escribeHitos, { ...HITO, due_at: "el mes que viene" });
+    check(
+      "`due_at` que no es fecha → 422 `not_a_datetime`",
+      fechaMala.status === 422 && fechaMala.cuerpo?.error?.details?.some((d: Json) => d.field === "due_at" && d.code === "not_a_datetime"),
+      JSON.stringify(fechaMala.cuerpo?.error?.details),
+    );
+    const sinTitulo = await postJson(RUTA_HITOS_A, VALORES.escribeHitos, { due_at: HITO.due_at });
+    check("sin `title` → 422 `required`", sinTitulo.status === 422 && sinTitulo.cuerpo?.error?.details?.some((d: Json) => d.field === "title" && d.code === "required"));
+    const posicionNegativa = await postJson(RUTA_HITOS_A, VALORES.escribeHitos, { ...HITO, position: -1 });
+    check("`position: -1` → 422 `out_of_range`", posicionNegativa.status === 422 && posicionNegativa.cuerpo?.error?.details?.some((d: Json) => d.field === "position"));
+    check("un proyecto de otra empresa → 404, no 403", (await postJson(`/api/v1/projects/${B.proyecto}/milestones`, VALORES.academyAcotada, HITO)).status === 404);
+    check("y un proyecto inexistente, también 404", (await postJson("/api/v1/projects/p-que-no-existe/milestones", VALORES.escribeHitos, HITO)).status === 404);
+
+    const hitoId = hito.cuerpo?.data?.id as string;
+    const hecho = await postJson(`/api/v1/milestones/${hitoId}/done`, VALORES.escribeHitos, {});
+    check("`POST /milestones/{id}/done` → 200 con `status: done` y `done_at`", hecho.status === 200 && hecho.cuerpo?.data?.status === "done" && typeof hecho.cuerpo?.data?.done_at === "string", JSON.stringify(hecho.cuerpo));
+    const filaHecho = (await dueno`select status, done_at from milestone where id = ${hitoId}`) as unknown as { status: string; done_at: Date | null }[];
+    check("en la base: hecho ⇔ con fecha (`milestone_done_has_date`)", filaHecho[0]?.status === "done" && filaHecho[0]?.done_at !== null, JSON.stringify(filaHecho[0]));
+    const otraVezHecho = await postJson(`/api/v1/milestones/${hitoId}/done`, VALORES.escribeHitos, {});
+    check(
+      "repetir `done` es idempotente: 200 y la MISMA fecha, un reintento no reescribe cuándo se entregó",
+      otraVezHecho.status === 200 && otraVezHecho.cuerpo?.data?.done_at === hecho.cuerpo?.data?.done_at,
+      `${hecho.cuerpo?.data?.done_at} vs ${otraVezHecho.cuerpo?.data?.done_at}`,
+    );
+    const reabierto = await postJson(`/api/v1/milestones/${hitoId}/reopen`, VALORES.escribeHitos, {});
+    check("`POST /milestones/{id}/reopen` → 200, vuelve a `pending` y quita `done_at`", reabierto.status === 200 && reabierto.cuerpo?.data?.status === "pending" && reabierto.cuerpo?.data?.done_at === null, JSON.stringify(reabierto.cuerpo));
+    const filaReabierto = (await dueno`select status, done_at from milestone where id = ${hitoId}`) as unknown as { status: string; done_at: Date | null }[];
+    check("y en la base la fecha se fue con el estado", filaReabierto[0]?.status === "pending" && filaReabierto[0]?.done_at === null);
+    const hitoB = await postJson(`/api/v1/projects/${B.proyecto}/milestones`, VALORES.escribeHitos, { ...HITO, title: "Hito de B" });
+    check("la clave de SLG crea un hito en B (cruza empresas, como `agent_slg`)", hitoB.status === 201, String(hitoB.status));
+    check("hacer un hito de OTRA empresa con la clave acotada → 404", (await postJson(`/api/v1/milestones/${hitoB.cuerpo?.data?.id}/done`, VALORES.academyAcotada, {})).status === 404);
+    check("hacer un hito inexistente → 404", (await postJson("/api/v1/milestones/hito-que-no-existe/done", VALORES.escribeHitos, {})).status === 404);
+    check("hacer un hito sin `milestones:write` → 403", (await postJson(`/api/v1/milestones/${hitoId}/done`, VALORES.escribeNoticias, {})).status === 403);
+    check("`done` con un cuerpo que intenta parchear campos → 422: el estado no se escribe a mano", (await postJson(`/api/v1/milestones/${hitoId}/done`, VALORES.escribeHitos, { status: "done" })).status === 422);
+    check("`reopen` con un `Content-Type` que no es JSON → 415", (await postJson(`/api/v1/milestones/${hitoId}/reopen`, VALORES.escribeHitos, "x", "text/plain")).status === 415);
+
+    console.log("\nDU-30 · Academy — pendientes: `closes_by` se decide en el servidor:\n");
+
+    const RUTA_PENDIENTES_A = `/api/v1/projects/${A.proyecto}/action-items`;
+    const PENDIENTE = { title: "Enviar el organigrama", due_at: "2026-10-01T00:00:00Z", closes_by: "client" };
+
+    check("una clave sin `milestones:write` → 403", (await postJson(RUTA_PENDIENTES_A, VALORES.escribeAvisos, PENDIENTE)).status === 403);
+    const pendiente = await postJson(RUTA_PENDIENTES_A, VALORES.escribeHitos, PENDIENTE);
+    check("con `milestones:write` → 201, abierto, del cliente y sin quien lo cerró", pendiente.status === 201 && pendiente.cuerpo?.data?.status === "open" && pendiente.cuerpo?.data?.closes_by === "client" && pendiente.cuerpo?.data?.done_by === null, JSON.stringify(pendiente.cuerpo));
+    const sinFecha = await postJson(RUTA_PENDIENTES_A, VALORES.escribeHitos, { title: "Sin fecha límite", closes_by: "client" });
+    check("`due_at` es opcional: sin él, 201 con `due_at: null`", sinFecha.status === 201 && sinFecha.cuerpo?.data?.due_at === null);
+    const cierraInventado = await postJson(RUTA_PENDIENTES_A, VALORES.escribeHitos, { ...PENDIENTE, closes_by: "hermes" });
+    check(
+      "`closes_by` fuera de vocabulario → 422 `not_in_vocabulary`",
+      cierraInventado.status === 422 && cierraInventado.cuerpo?.error?.details?.some((d: Json) => d.field === "closes_by" && d.code === "not_in_vocabulary"),
+      JSON.stringify(cierraInventado.cuerpo?.error?.details),
+    );
+    const sinCierra = await postJson(RUTA_PENDIENTES_A, VALORES.escribeHitos, { title: "Sin decidir quién", due_at: PENDIENTE.due_at });
+    check("`closes_by` es obligatorio y sin defecto → 422 `required`", sinCierra.status === 422 && sinCierra.cuerpo?.error?.details?.some((d: Json) => d.field === "closes_by" && d.code === "required"));
+    check("`due_at` que no es fecha → 422", (await postJson(RUTA_PENDIENTES_A, VALORES.escribeHitos, { ...PENDIENTE, due_at: "pronto" })).status === 422);
+    check("en un proyecto de otra empresa → 404", (await postJson(`/api/v1/projects/${B.proyecto}/action-items`, VALORES.academyAcotada, PENDIENTE)).status === 404);
+
+    const pendienteId = pendiente.cuerpo?.data?.id as string;
+    const cerrado = await postJson(`/api/v1/action-items/${pendienteId}/done`, VALORES.escribeHitos, {});
+    check(
+      "`POST /action-items/{id}/done` → 200, `done` y con quién lo cerró, que es la clave (RF-111)",
+      cerrado.status === 200 && cerrado.cuerpo?.data?.status === "done" && typeof cerrado.cuerpo?.data?.done_at === "string" &&
+        cerrado.cuerpo?.data?.done_by?.actor_type === "api_key" && cerrado.cuerpo?.data?.done_by?.actor_id === "k-du30-hit",
+      JSON.stringify(cerrado.cuerpo),
+    );
+    const filaCerrado = (await dueno`select status, done_at, done_by_id from action_item where id = ${pendienteId}`) as unknown as { status: string; done_at: Date | null; done_by_id: string | null }[];
+    check("en la base: cerrado ⇔ con fecha y con actor (`action_item_done_is_complete`)", filaCerrado[0]?.status === "done" && filaCerrado[0]?.done_at !== null && filaCerrado[0]?.done_by_id === "k-du30-hit", JSON.stringify(filaCerrado[0]));
+    const otraVezCerrado = await postJson(`/api/v1/action-items/${pendienteId}/done`, VALORES.escribeHitos, {});
+    check(
+      "repetir el cierre no cambia nada: el primer cierre es el hecho",
+      otraVezCerrado.status === 200 && otraVezCerrado.cuerpo?.data?.done_at === cerrado.cuerpo?.data?.done_at,
+    );
+    const pendienteDeSlg = await postJson(RUTA_PENDIENTES_A, VALORES.escribeHitos, { title: "Preparar el informe", closes_by: "slg" });
+    const cerradoDeSlg = await postJson(`/api/v1/action-items/${pendienteDeSlg.cuerpo?.data?.id}/done`, VALORES.escribeHitos, {});
+    check(
+      "una clave con `milestones:write` cierra también los de SLG: cierra cualquiera",
+      pendienteDeSlg.status === 201 && cerradoDeSlg.status === 200 && cerradoDeSlg.cuerpo?.data?.status === "done",
+      `${pendienteDeSlg.status}/${cerradoDeSlg.status}`,
+    );
+    const pendienteB = await postJson(`/api/v1/projects/${B.proyecto}/action-items`, VALORES.escribeHitos, { ...PENDIENTE, title: "Pendiente de B" });
+    check("cerrar un pendiente de OTRA empresa con la clave acotada → 404", pendienteB.status === 201 && (await postJson(`/api/v1/action-items/${pendienteB.cuerpo?.data?.id}/done`, VALORES.academyAcotada, {})).status === 404);
+    check("cerrar uno inexistente → 404", (await postJson("/api/v1/action-items/pendiente-que-no-existe/done", VALORES.escribeHitos, {})).status === 404);
+    check("cerrar sin `milestones:write` → 403", (await postJson(`/api/v1/action-items/${pendienteId}/done`, VALORES.escribeNoticias, {})).status === 403);
+
+    console.log("\nDU-30 · Academy — la puerta `lib/academy` con PERSONAS (B.3 por rol; criterio 1 de DU-27):\n");
+
+    /**
+     * La API es un cliente más de `lib/academy`; HQ y el portal son los otros
+     * dos, y entran con personas. Lo que la API no puede demostrar —que un
+     * `client_member` cierra sus pendientes y no los de SLG, y que el intento
+     * se audita— se demuestra aquí, llamando a la puerta con un contexto de
+     * sesión. Un contexto de cliente no necesita fila en `user`: la política de
+     * fila lee `app.organization_id` y `app.actor_role`, y `audit_log` no lleva
+     * clave foránea al actor.
+     */
+    const academy = await import("../../lib/academy/index.ts");
+    const { ErrorDeAutorizacion } = await import("../../lib/auth/matriz.ts");
+    const cliente = contextoDeSesion({ userId: "u-du30-cli", userName: "Cliente de A", role: "client_member", organizationId: A.org });
+    const clienteDeB = contextoDeSesion({ userId: "u-du30-b", userName: "Cliente de B", role: "client_member", organizationId: B.org });
+    const INICIO_PUERTA = new Date();
+    const rechazoDe = async (fn: () => Promise<unknown>): Promise<unknown> => {
+      try {
+        await fn();
+        return null;
+      } catch (e) {
+        return e;
+      }
+    };
+    const denegadas = async (actorId: string, accion: string): Promise<number> =>
+      Number(
+        (
+          (await dueno`select count(*)::text as n from audit_log
+                        where actor_id = ${actorId} and action = ${`${accion}.denied`} and created_at >= ${INICIO_PUERTA}`) as unknown as { n: string }[]
+        )[0]?.n ?? -1,
+      );
+
+    const paraElCliente = await postJson(RUTA_PENDIENTES_A, VALORES.escribeHitos, { title: "Confirmar la fecha de la Sesión 2", closes_by: "client" });
+    const deSlgAbierto = await postJson(RUTA_PENDIENTES_A, VALORES.escribeHitos, { title: "Revisar el borrador", closes_by: "slg" });
+    check("fixtures: un pendiente del cliente y uno de SLG, abiertos", paraElCliente.status === 201 && deSlgAbierto.status === 201);
+
+    const cerradoPorCliente = await academy.cerrarPendiente(cliente, paraElCliente.cuerpo?.data?.id);
+    check(
+      "un `client_member` cierra un pendiente `closes_by = client`, y queda quién fue (persona, no clave)",
+      cerradoPorCliente?.estado === "done" && cerradoPorCliente.hechoPorTipo === "user" && cerradoPorCliente.hechoPorId === "u-du30-cli",
+      JSON.stringify(cerradoPorCliente),
+    );
+    const rechazoCierre = await rechazoDe(() => academy.cerrarPendiente(cliente, deSlgAbierto.cuerpo?.data?.id));
+    check(
+      "pero NO uno de SLG: el servidor lo rechaza con 403 aunque la pantalla no enseñe el botón",
+      rechazoCierre instanceof ErrorDeAutorizacion && rechazoCierre.status === 403,
+      String(rechazoCierre),
+    );
+    check("y el intento queda auditado como `action_item.close.denied` con su actor", (await denegadas("u-du30-cli", "action_item.close")) === 1);
+    const sigueAbierto = (await dueno`select status from action_item where id = ${deSlgAbierto.cuerpo?.data?.id}`) as unknown as { status: string }[];
+    check("y el pendiente de SLG sigue abierto", sigueAbierto[0]?.status === "open");
+    const rechazoReabrir = await rechazoDe(() => academy.reabrirPendiente(cliente, paraElCliente.cuerpo?.data?.id));
+    check("un cliente tampoco reabre: reabrir es escribir → 403", rechazoReabrir instanceof ErrorDeAutorizacion && rechazoReabrir.status === 403);
+    const rechazoHito = await rechazoDe(() => academy.crearHito(cliente, { projectId: A.proyecto, titulo: "Un hito del cliente", venceEn: "2026-11-01T00:00:00Z" }));
+    check("ni crea hitos (`milestone.write` es de SLG) → 403, y auditado", rechazoHito instanceof ErrorDeAutorizacion && (await denegadas("u-du30-cli", "milestone.create")) === 1);
+    const rechazoNoticia = await rechazoDe(() =>
+      academy.crearNoticia(cliente, {
+        organizationId: A.org,
+        titulo: "Del cliente",
+        resumenMd: "x",
+        comentarioMd: "y",
+        importancia: 2,
+        publicar: true,
+      }),
+    );
+    check("ni escribe noticias → 403, y auditado como `news.create.denied`", rechazoNoticia instanceof ErrorDeAutorizacion && (await denegadas("u-du30-cli", "news.create")) === 1);
+
+    const hitoDeAdmin = await academy.crearHito(admin, { projectId: A.proyecto, titulo: "Hito desde HQ", venceEn: "2026-12-01T00:00:00Z", posicion: 9 });
+    const apunteDeAdmin = (await dueno`
+      select organization_id from audit_log
+       where actor_id = ${A.dueno} and action = 'milestone.create' and entity_id = ${hitoDeAdmin.id} and created_at >= ${INICIO_PUERTA}
+    `) as unknown as { organization_id: string }[];
+    check(
+      "`slg_admin` crea un hito por la puerta y queda en `audit_log` con su actor y su empresa (RF-156)",
+      hitoDeAdmin.organizationId === A.org && apunteDeAdmin.length === 1 && apunteDeAdmin[0]!.organization_id === A.org,
+      JSON.stringify(apunteDeAdmin),
+    );
+    const hechoDesdeHq = await academy.actualizarHito(admin, hitoDeAdmin.id, { estado: "done" });
+    check("y lo marca hecho: `hechoEn` aparece con el estado", hechoDesdeHq?.estado === "done" && typeof hechoDesdeHq.hechoEn === "string");
+    const inexistenteDesdeHq = await academy.actualizarHito(admin, "hito-que-no-existe", { estado: "done" });
+    check("editar un hito que no existe devuelve `null`, no lanza: quien llama decide", inexistenteDesdeHq === null);
+
+    const lista = await academy.noticias(admin, { organizationId: A.org, soloPublicadas: true });
+    const ordenEsperado = [noticiaDespues.cuerpo?.data?.id, noticia.cuerpo?.data?.id, enSuCasa.cuerpo?.data?.id];
+    check(
+      "`noticias()` ordena por importancia y, a igual importancia, la más reciente primero (RF-149)",
+      lista.map((n) => n.id).join() === ordenEsperado.join(),
+      `${lista.map((n) => `${n.importancia}:${n.titulo}`).join(" | ")}`,
+    );
+    check("y `soloPublicadas` deja fuera el borrador", !lista.some((n) => n.id === borrador.cuerpo?.data?.id));
+    check("sin `soloPublicadas`, HQ ve también el borrador", (await academy.noticias(admin, { organizationId: A.org })).some((n) => n.id === borrador.cuerpo?.data?.id));
+    check("`limite` acota la lista", (await academy.noticias(admin, { organizationId: A.org, limite: 1 })).length === 1);
+    const desdeB = await academy.noticias(clienteDeB);
+    check("un cliente de B no ve ni una noticia de A: la política de fila, no un WHERE (RF-150)", !desdeB.some((n) => n.organizationId === A.org));
+
+    const proximos = await academy.proximosHitos(admin, A.org);
+    const fechas = proximos.map((h) => h.venceEn);
+    check(
+      "`proximosHitos()` devuelve solo pendientes de A, por fecha, y sin el que HQ acaba de hacer",
+      proximos.length >= 1 &&
+        proximos.every((h) => h.estado === "pending" && h.organizationId === A.org) &&
+        !proximos.some((h) => h.id === hitoDeAdmin.id) &&
+        [...fechas].sort().join() === fechas.join(),
+      JSON.stringify(proximos.map((h) => [h.titulo, h.estado, h.venceEn])),
+    );
+    const abiertos = await academy.pendientesAbiertos(admin, A.org);
+    check(
+      "`pendientesAbiertos()` trae el de SLG que sigue abierto y no el que la clave cerró",
+      abiertos.every((p) => p.estado === "open") && abiertos.some((p) => p.id === deSlgAbierto.cuerpo?.data?.id) && !abiertos.some((p) => p.id === pendienteId),
+    );
+    const hitosDelCliente = await academy.hitosDeProyecto(cliente, A.proyecto);
+    check("un `client_member` lee los hitos de su proyecto (`milestone.read` es de todos)", hitosDelCliente.length >= 2 && hitosDelCliente.some((h) => h.id === hitoId));
+    check("y del proyecto de otra empresa, cero", (await academy.hitosDeProyecto(cliente, B.proyecto)).length === 0);
+    check("los pendientes de su proyecto, también", (await academy.pendientesDeProyecto(cliente, A.proyecto)).some((p) => p.id === pendienteId));
+
     console.log("\nDU-23 · la especificación se genera del catálogo (criterio 5):\n");
 
     const sinClaveSpec = await P("/api/v1/openapi.json");
@@ -926,10 +1252,42 @@ async function main() {
       "/api/v1/events",
       "/api/v1/openapi.json",
     ];
+    const SEIS_ACADEMY = [
+      "/api/v1/organizations/{id}/news",
+      "/api/v1/projects/{id}/milestones",
+      "/api/v1/milestones/{id}/done",
+      "/api/v1/milestones/{id}/reopen",
+      "/api/v1/projects/{id}/action-items",
+      "/api/v1/action-items/{id}/done",
+    ];
     check(
-      "describe LAS NUEVE rutas, ni una más",
-      NUEVE.every((r) => r in (spec.cuerpo?.paths ?? {})) && Object.keys(spec.cuerpo.paths).length === 9,
+      "describe LAS QUINCE rutas —nueve de DU-22/23 y seis de la Academy—, ni una más",
+      [...NUEVE, ...SEIS_ACADEMY].every((r) => r in (spec.cuerpo?.paths ?? {})) && Object.keys(spec.cuerpo.paths).length === 15,
       Object.keys(spec.cuerpo?.paths ?? {}).join(" "),
+    );
+    const alcancesAcademy = SEIS_ACADEMY.map((r) => spec.cuerpo.paths[r]?.post?.["x-alcance-exigido"]);
+    check(
+      "las seis de la Academy llevan `news:write` o `milestones:write`, leídos de B.3 (criterio 4 de DU-30)",
+      alcancesAcademy[0] === "news:write" && alcancesAcademy.slice(1).every((a) => a === "milestones:write"),
+      JSON.stringify(alcancesAcademy),
+    );
+    const esquemaNoticia = spec.cuerpo.paths["/api/v1/organizations/{id}/news"]?.post?.requestBody?.content?.["application/json"]?.schema;
+    check(
+      "la especificación anuncia `importance` 1…3 y `publish` obligatorio",
+      esquemaNoticia?.properties?.importance?.minimum === 1 &&
+        esquemaNoticia?.properties?.importance?.maximum === 3 &&
+        esquemaNoticia?.required?.includes("publish"),
+      JSON.stringify(esquemaNoticia?.properties?.importance),
+    );
+    check(
+      "y pedir uno por encima del máximo anunciado → 422, como la especificación declara",
+      (await postJson(RUTA_NOTICIAS_A, VALORES.escribeNoticias, { ...NOTICIA, importance: esquemaNoticia.properties.importance.maximum + 1 })).status === 422,
+    );
+    const esquemaPendiente = spec.cuerpo.paths["/api/v1/projects/{id}/action-items"]?.post?.requestBody?.content?.["application/json"]?.schema;
+    check(
+      "`closes_by` se describe como enumerado cerrado `client | slg`, obligatorio",
+      JSON.stringify(esquemaPendiente?.properties?.closes_by?.enum) === JSON.stringify(["client", "slg"]) && esquemaPendiente?.required?.includes("closes_by"),
+      JSON.stringify(esquemaPendiente?.properties?.closes_by),
     );
     const alcances = NUEVE.map((r) => {
       const nodo = spec.cuerpo.paths[r];
@@ -998,9 +1356,10 @@ async function main() {
       select action, actor_type, actor_id, actor_label, entity, ip, metadata
         from audit_log
        where actor_id in ('k-du22-slg','k-du22-cap','k-du22-emp','k-du22-lim','k-du22-ent','k-du22-eve',
-                          'k-du22-rev','k-du22-cad','k-du23-ent','k-du23-avi','k-du23-eve','k-du23-aco','k-rev-cap','unknown')
+                          'k-du22-rev','k-du22-cad','k-du23-ent','k-du23-avi','k-du23-eve','k-du23-aco','k-rev-cap',
+                          'k-du30-new','k-du30-hit','k-du30-aco','unknown')
          and created_at >= ${INICIO}
-       order by created_at desc limit 400
+       order by created_at desc limit 600
     `) as unknown as { action: string; actor_type: string; actor_id: string; actor_label: string | null; entity: string; ip: string | null; metadata: Json }[];
 
     check("hay apuntes de esta corrida", apuntes.length > 0, String(apuntes.length));
@@ -1055,6 +1414,47 @@ async function main() {
       "el 401 de una clave REVOCADA sí sabe cuál era, y eso vive solo en el registro",
       apuntes.some((a) => a.metadata?.status === 401 && /k-du22-rev/.test(a.metadata?.reason ?? "")) &&
         !JSON.stringify(revocada.cuerpo).includes("k-du22-rev"),
+    );
+
+    console.log("\nDU-30 · toda llamada de la Academy queda auditada, una fila por llamada (criterio 5, D-140):\n");
+
+    const deLaAcademy = apuntes.filter((a) => a.actor_id.startsWith("k-du30-"));
+    const noticiasCreadas = [noticia, borrador, enSuCasa, noticiaDespues].filter((r) => r.status === 201).length;
+    check(
+      `las ${noticiasCreadas} noticias creadas dejan ${noticiasCreadas} filas \`news.create\` con 201, ni una más`,
+      deLaAcademy.filter((a) => a.action === "news.create" && a.metadata?.status === 201).length === noticiasCreadas,
+      String(deLaAcademy.filter((a) => a.action === "news.create" && a.metadata?.status === 201).length),
+    );
+    check(
+      "y las rechazadas también: hay `news.create` con 403, 404 y 422",
+      [403, 404, 422].every((s) => apuntes.some((a) => a.action === "news.create" && a.metadata?.status === s)),
+    );
+    check(
+      "`milestone.update` apunta `/done` y `/reopen`, cada uno con su ruta",
+      deLaAcademy.some((a) => a.action === "milestone.update" && /\/done$/.test(a.metadata?.path ?? "")) &&
+        deLaAcademy.some((a) => a.action === "milestone.update" && /\/reopen$/.test(a.metadata?.path ?? "")),
+    );
+    check(
+      "`action_item.close` apunta los cierres con la entidad y la empresa",
+      deLaAcademy.some((a) => a.action === "action_item.close" && a.entity === "action_item" && a.metadata?.status === 200),
+    );
+    check(
+      "una fila por LLAMADA para las claves de la Academy: ninguna sin ruta (D-140)",
+      deLaAcademy.length > 20 && deLaAcademy.every((a) => typeof a.metadata?.path === "string"),
+      `${deLaAcademy.length} apuntes; sin ruta: ${deLaAcademy.filter((a) => typeof a.metadata?.path !== "string").length}`,
+    );
+    check(
+      "el `request_id` del 404 de una empresa ajena ES una fila de auditoría (criterio 5 de DU-30)",
+      (
+        (await dueno`select count(*)::text as n from audit_log where id = ${noticiaAjena.cuerpo?.error?.request_id ?? ""}`) as unknown as { n: string }[]
+      )[0]?.n === "1",
+      noticiaAjena.cuerpo?.error?.request_id,
+    );
+    check(
+      "y el de un 422 de validación, también",
+      (
+        (await dueno`select count(*)::text as n from audit_log where id = ${importanciaFuera.cuerpo?.error?.request_id ?? ""}`) as unknown as { n: string }[]
+      )[0]?.n === "1",
     );
   } finally {
     servidor.parar();
