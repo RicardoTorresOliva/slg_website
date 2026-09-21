@@ -16,10 +16,7 @@ import type { Metadata } from "next";
 import { loadCollection } from "./loader.ts";
 import { idiomaDeLaRuta, rutaEnElOtroIdioma, SERVICIOS, rutaEnDeServicio } from "./rutas.ts";
 import type { Lang } from "./schema.ts";
-
-export function baseDelSitio(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL ?? "https://softlandingglobal.com").replace(/\/$/, "");
-}
+import { baseDelSitio } from "./sitio.ts";
 
 /** La imagen de marca de Open Graph. Una sola, servida desde nuestro dominio. */
 const IMAGEN_OG = "/og.png";

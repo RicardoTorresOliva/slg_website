@@ -23,7 +23,7 @@
 import { sql } from "drizzle-orm";
 
 import { articulos, prefijo } from "../content/blog.ts";
-import { baseDelSitio } from "../content/seo.ts";
+import { baseDelSitio } from "../content/sitio.ts";
 import type { Lang } from "../content/schema.ts";
 import { withSystemScope } from "../db/scope.ts";
 

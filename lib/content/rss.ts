@@ -69,8 +69,3 @@ ${items}
 </rss>
 `;
 }
-
-/** La base absoluta del sitio. Los enlaces de un RSS no pueden ser relativos. */
-export function baseDelSitio(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL ?? "https://softlandingglobal.com").replace(/\/$/, "");
-}

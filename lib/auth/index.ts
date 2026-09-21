@@ -41,7 +41,7 @@ export {
 
 export {
   COOKIES_DE_SESION,
-  MENSAJE_NEUTRO,
+  CLAVE_DEL_MENSAJE_NEUTRO,
   proveedoresDisponibles,
   esperaPendienteEnSegundos,
   registrarFallo,

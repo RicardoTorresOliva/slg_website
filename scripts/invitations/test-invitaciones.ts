@@ -21,7 +21,7 @@ import {
   consultarTestigo,
   emitirInvitacion,
   hashDeTestigo,
-  MENSAJE_DE_TESTIGO_INVALIDO,
+  CLAVE_DE_TESTIGO_INVALIDO,
   reenviarInvitacion,
   revocarInvitacion,
   VIGENCIA_EN_HORAS,
@@ -214,8 +214,8 @@ async function main() {
     });
     check("un enlace usado deja de servir", !segundoUso.aceptada);
     check(
-      "y el mensaje no revela que existió",
-      !segundoUso.aceptada && segundoUso.mensaje === MENSAJE_DE_TESTIGO_INVALIDO,
+      "y la clave del mensaje no revela que existió",
+      !segundoUso.aceptada && segundoUso.claveDeMensaje === CLAVE_DE_TESTIGO_INVALIDO,
     );
 
     const inexistente = await aceptarInvitacion({
@@ -225,7 +225,9 @@ async function main() {
     });
     check(
       "un enlace inexistente da EXACTAMENTE el mismo mensaje que uno usado",
-      !inexistente.aceptada && !segundoUso.aceptada && inexistente.mensaje === segundoUso.mensaje,
+      !inexistente.aceptada &&
+        !segundoUso.aceptada &&
+        inexistente.claveDeMensaje === segundoUso.claveDeMensaje,
       "distinguirlos le dice a quien prueba enlaces cuáles existieron",
     );
 

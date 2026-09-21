@@ -1,4 +1,5 @@
-import { baseDelSitio, canal } from "@/lib/content/rss";
+import { canal } from "@/lib/content/rss";
+import { baseDelSitio } from "@/lib/content/sitio";
 
 /** Canal RSS en inglés (RF-23). Solo publicados, solo inglés. */
 export const dynamic = "force-static";

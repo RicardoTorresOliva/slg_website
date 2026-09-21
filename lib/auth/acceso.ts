@@ -18,10 +18,22 @@ import { eq } from "drizzle-orm";
 import { session as sessionTable } from "../db/schema.ts";
 import { conexionDeAuth, dbDeAuth } from "./db.ts";
 
-/** El único texto que ve quien no entra. Da salida, no información. */
-export const MENSAJE_NEUTRO =
-  "No hemos podido iniciar sesión con esos datos. Si tu empresa trabaja con SLG, " +
-  "solicita acceso a tu contacto en SLG.";
+/**
+ * El único texto que ve quien no entra: da salida, no información.
+ *
+ * **AQUÍ VIAJA LA CLAVE, NO EL TEXTO** (RF-16). El texto vivía escrito en este
+ * archivo, y eso lo rompía por dos sitios a la vez: existía **en un solo
+ * idioma**, así que quien tuviera el inglés por preferencia recibía castellano
+ * en el peor momento —cuando ya no entiende por qué no entra—; y metía el
+ * nombre de la casa **dentro del motor**, donde `content/` no alcanza y ningún
+ * sitio que reutilice este código puede cambiarlo sin editar `lib/`.
+ *
+ * Era además una **segunda copia**: `auth.signin.error` ya decía exactamente lo
+ * mismo, y la pantalla de acceso ya pintaba esa, no ésta. Dos copias del mismo
+ * párrafo no se mantienen sincronizadas; se descubre que divergieron el día que
+ * alguien suaviza una de las dos.
+ */
+export const CLAVE_DEL_MENSAJE_NEUTRO = "auth.signin.error";
 
 /* ══════════════════════════════════════════════════════════════════════════
  * Bloqueo progresivo (RNF-24, criterio 5)
