@@ -57,6 +57,15 @@ primer arreglo concreto de esta lista:
 
 Las dos son texto de cara al usuario con la marca dentro del motor. Al diccionario.
 
+> **CERRADO el 2026-09-21.** Las dos eran además **copias**: `auth.signin.error` y
+> `auth.invitation.invalid` ya decían exactamente lo mismo en los dos idiomas, y las dos pantallas
+> ya pintaban la clave, no la constante. Así que no hubo que escribir cadenas nuevas, sino **dejar
+> de duplicarlas**: `lib/` exporta ahora la clave (`CLAVE_DEL_MENSAJE_NEUTRO`,
+> `CLAVE_DE_TESTIGO_INVALIDO`) y quien enseña el texto lo resuelve en el idioma que toque. El campo
+> `mensaje` de `ResultadoDeAceptacion` pasó a llamarse `claveDeMensaje`, que es lo que de verdad
+> lleva. Un barrido por `lib/` confirma que no quedaba ninguna tercera: todo lo demás que dice «SLG»
+> ahí dentro es comentario, vocabulario de roles o la identidad de §3.1.
+
 ## 3 · Piel — lo que un `site.config` tiene que dar
 
 Aquí está el trabajo real. Ordenado por lo que hay que decidir, no por archivo.
@@ -84,6 +93,24 @@ Aquí está el trabajo real. Ordenado por lo que hay que decidir, no por archivo
 `https://academy.softlandingglobal.com` **sin respaldo ninguno**. El respaldo es lo peligroso: un
 sitio de cliente al que se le olvide la variable no falla, **publica el dominio de SLG** en sus
 etiquetas sociales. El config manda; sin config, error de compilación.
+
+> **CERRADO el 2026-09-21 — la parte del respaldo, que era la peligrosa.** Los tres respaldos (y un
+> cuarto que el inventario no vio, `scripts/ci/check-seo.ts:68`, que hacía que el propio freno del
+> SEO midiera los `canonical` de otro dominio) se han reducido a **una sola función**,
+> `baseDelSitio()` en `lib/content/sitio.ts`, que **no inventa nada**: sin `NEXT_PUBLIC_SITE_URL`
+> lanza, y como la llaman `app/sitemap.ts`, `app/robots.ts` y el `metadatosDe()` de las 58 rutas
+> mientras Next prerenderiza, **el error sale al compilar**, no al servir. Es el sitio correcto por
+> una razón concreta: `NEXT_PUBLIC_*` se incrusta en el momento de compilar, así que comprobarla más
+> tarde sería comprobarla cuando ya no se puede arreglar.
+>
+> No hizo falta freno nuevo, y eso era lo que había que mirar antes de escribir uno:
+> `lib/ops/variables.ts` ya la declaraba `obligatoria: true`, `.env.example` ya la listaba,
+> `check:env` ya exige que toda variable que el código lea esté en esa plantilla y `check:literacy`
+> ya exige que el manual la explique. Lo único que faltaba era que el **código** se creyera lo que el
+> proyecto ya declaraba. El CI la pone ahora en los dos trabajos que compilan.
+>
+> Lo que **sigue abierto de §3.2**: el enlace de `components/OverviewDeRama.tsx:75`, que no es un
+> respaldo sino una URL de la oferta — es piel de §3.1/§3.3 y se decide con el resto.
 
 ### 3.3 Estructura — ejes, líneas y servicios (lo más caro)
 
@@ -118,8 +145,10 @@ treinta. La tabla debe poder quedarse **vacía** sin que `check:nomenclature` se
    `check:seo` y `check:copy` validan **contra la oferta de SLG**. Con estructura por config hay que
    parametrizarlos también, o un sitio de cliente arranca con cinco frenos en rojo y alguien los
    apaga — y un freno apagado no vuelve a encenderse nunca.
-3. **Dos arreglos que valen la pena aunque no haya plantilla**: las dos fugas de §2 y el respaldo de
-   dominio de §3.2. Son defectos hoy, en este sitio, no deuda de plantilla.
+3. ~~**Dos arreglos que valen la pena aunque no haya plantilla**: las dos fugas de §2 y el respaldo
+   de dominio de §3.2. Son defectos hoy, en este sitio, no deuda de plantilla.~~ **Hechos el
+   2026-09-21**, y por eso mismo: eran defectos de este sitio, así que no esperaron a la decisión de
+   §4.1. Nada de lo que sigue abierto depende de ellos.
 4. **Lo que no hay que rehacer**: `docs/blog-editor.md`, `lib/colas`, el sistema de regreso, el mapa,
    los 29 frenos y `AGENTS.md` + `profiles/software-app`. Todo eso es motor sin una sola línea de SLG.
 

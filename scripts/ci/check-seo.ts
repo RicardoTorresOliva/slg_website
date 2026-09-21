@@ -23,6 +23,7 @@ import net from "node:net";
 import path from "node:path";
 
 import { rutasDelSitemap } from "../../lib/content/seo.ts";
+import { baseDelSitio } from "../../lib/content/sitio.ts";
 
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 const SERVER = path.join(REPO_ROOT, ".next", "standalone", "server.js");
@@ -65,7 +66,14 @@ async function arrancar() {
       NODE_ENV: "production",
       BETTER_AUTH_URL: base,
       BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? "solo-para-comprobar-el-seo",
-      NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL ?? "https://softlandingglobal.com",
+      /**
+       * SIN RESPALDO, igual que en el sitio. Aquí había escrito a mano
+       * `?? "https://softlandingglobal.com"`, y eso hacía que el freno midiera
+       * los `canonical` de OTRO dominio cuando la variable faltaba: el freno
+       * pasaba en verde comprobando algo que no era este sitio. `baseDelSitio()`
+       * falla con el nombre de la variable delante, que es lo que hay que leer.
+       */
+      NEXT_PUBLIC_SITE_URL: baseDelSitio(),
       STAGING_BASIC_AUTH_USER: "",
       STAGING_BASIC_AUTH_PASSWORD: "",
     },

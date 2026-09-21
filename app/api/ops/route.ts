@@ -3,6 +3,7 @@ import { timingSafeEqual } from "node:crypto";
 import { VARIABLES } from "@/lib/ops/variables";
 import { Resolver } from "node:dns/promises";
 
+import { baseDelSitio } from "@/lib/content/sitio";
 import { asegurarBuckets, cerrarAccesoPublico, adaptadorDeArchivos, ttlEnSegundos } from "@/lib/files";
 import { enviarCorreo } from "@/lib/mail";
 import {
@@ -123,7 +124,7 @@ async function probarCorreo(): Promise<Resultado[]> {
         datos: {
           correo: from,
           origen: "comprobación de infraestructura",
-          urlCrm: process.env.NEXT_PUBLIC_SITE_URL ?? "https://softlandingglobal.com",
+          urlCrm: baseDelSitio(),
         },
       });
       out.push({

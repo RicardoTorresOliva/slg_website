@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
 
 import { articulos } from "@/lib/content/blog";
-import { baseDelSitio, rutasDelSitemap } from "@/lib/content/seo";
+import { rutasDelSitemap } from "@/lib/content/seo";
+import { baseDelSitio } from "@/lib/content/sitio";
 
 /**
  * `sitemap.xml` — las rutas de **los dos idiomas** (RNF-17).

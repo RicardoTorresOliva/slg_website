@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-import { baseDelSitio } from "@/lib/content/seo";
+import { baseDelSitio } from "@/lib/content/sitio";
 
 /**
  * `robots.txt`.

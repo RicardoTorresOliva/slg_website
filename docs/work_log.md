@@ -3384,3 +3384,56 @@ duplicado en `test-api.ts` pasó `check:types` y rompió CI. Ahora incluye `**/*
 
 CI: todo M6 en verde contra PostgreSQL real en corridas anteriores; la corrida de `8263173` quedó en
 marcha al cerrar.
+
+## Los dos defectos que el inventario de la plantilla dejó anotados (2026-09-21)
+
+`docs/plantilla-de-sitios.md` cerró el 18-09 con una lista de lo que hay que decidir con Ricardo y,
+al final, con tres cosas que **no** hay que decidir: dos fugas de texto en §2 y el respaldo de
+dominio de §3.2, «defectos hoy, en este sitio, no deuda de plantilla». Son las que se arreglan aquí,
+y nada más: ni `site.config`, ni `rutas.ts`, ni la identidad de §3.1, que siguen esperando la
+decisión de §4.1.
+
+**El texto con la marca dentro de `lib/`** resultó ser un problema más pequeño y más feo de lo
+anotado: los dos párrafos no estaban solo fuera del diccionario, estaban **duplicados**.
+`auth.signin.error` y `auth.invitation.invalid` ya decían exactamente lo mismo en ES y EN, y las dos
+pantallas ya pintaban la clave. Las constantes de `lib/` eran una segunda copia que nadie enseñaba,
+en un solo idioma, esperando a divergir de la primera el día que alguien suavizara una de las dos.
+Así que no se escribieron cadenas nuevas: `lib/` exporta ahora la **clave**, como ya hacían
+`lib/app/estados.ts` y `lib/portal/sesion-cero.ts`, y quien enseña el texto lo resuelve en el idioma
+que corresponda. Un barrido por `lib/` confirma que no había una tercera.
+
+**El respaldo de dominio era lo grave, y el arreglo consiste en quitarlo.** Tres sitios hacían
+`?? "https://softlandingglobal.com"` cuando faltaba `NEXT_PUBLIC_SITE_URL` —y un cuarto que el
+inventario no vio, dentro del propio freno del SEO, que por tanto medía los `canonical` de otro
+dominio y se ponía verde igual—. Un respaldo solo es bueno cuando el valor inventado es mejor que
+nada; aquí es peor, porque «nada» se ve al instante y un dominio ajeno se ve tarde, en público y ya
+indexado. Ahora hay **una sola función**, `baseDelSitio()` en `lib/content/sitio.ts`, que no inventa
+nada: sin la variable lanza, y también lanza si el valor no es una URL absoluta que sirva páginas,
+porque un `softlandingglobal.com` sin esquema rompe las mismas etiquetas y con el mismo silencio.
+
+**Falla al compilar, y esa es la decisión de ingeniería del día.** `app/sitemap.ts`, `app/robots.ts`
+y el `metadatosDe()` de las 58 rutas llaman a esa función mientras Next prerenderiza, así que el
+despliegue muere en la consola de quien lo lanzó, con el nombre de la variable escrito. No es solo
+que sea antes: es que `NEXT_PUBLIC_*` **se incrusta en el momento de compilar**, así que una
+comprobación en tiempo de ejecución sería una comprobación hecha cuando ya no se puede arreglar sin
+volver a construir. Y no hizo falta freno nuevo, que era lo que había que mirar antes de escribir
+uno: `lib/ops/variables.ts` ya la declaraba `obligatoria: true`, `.env.example` ya la listaba,
+`check:env` ya exige que toda variable que el código lea esté en esa plantilla y `check:literacy` ya
+exige que el manual la explique. Lo único que faltaba era que el **código** se creyera lo que el
+proyecto ya declaraba en tres sitios.
+
+**Hecho**: `lib/content/sitio.ts` nuevo con `baseDelSitio()`; `seo.ts`, `rss.ts`, `app/robots.ts`,
+`app/sitemap.ts`, los dos `rss.xml/route.ts`, `lib/webhooks/articulos.ts`, `app/api/ops/route.ts` y
+`scripts/ci/check-seo.ts` pasan por ella y ninguno guarda ya un dominio escrito a mano.
+`MENSAJE_NEUTRO` → `CLAVE_DEL_MENSAJE_NEUTRO` (`auth.signin.error`) y `MENSAJE_DE_TESTIGO_INVALIDO`
+→ `CLAVE_DE_TESTIGO_INVALIDO` (`auth.invitation.invalid`), con sus barriles; el campo `mensaje` de
+`ResultadoDeAceptacion` pasa a `claveDeMensaje`, que es lo que de verdad lleva, y `test:invitaciones`
+comprueba la clave. `NEXT_PUBLIC_SITE_URL` queda documentada como obligatoria y sin defecto en
+`.env.example` y en el README, y puesta en los **dos** trabajos de CI que compilan —sin ella, el
+`build:standalone` de CI se pararía—. El inventario queda anotado como cerrado en sus dos apartados.
+
+**Verificado**: `check:types`, `lint`, `check:cadenas`, `check:copy`, `check:content`,
+`check:literacy`, `check:env` (84 variables), `check:secrets` (562 archivos), `check:playbook` y
+`check:seo` (226 comprobaciones sobre el servidor real), todos en verde. Y las dos mitades del
+arreglo, a mano: `npm run build` **sin** la variable muere en `/ai/factory` con el mensaje entero y
+la línea de `sitio.ts` señalada; con ella puesta, `build:standalone` termina y sirve las 58 rutas.

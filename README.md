@@ -321,7 +321,7 @@ Los valores se ponen en **Easypanel → proyecto `slg_website` → el servicio �
 | `DATABASE_URL` | Se compone: usuario `slg_app`, su contraseña, el host interno del servicio y el nombre de la base | Tú, siguiendo `docs/deployment.md` §2.1 |
 | `DATABASE_URL_MIGRATIONS` | Igual, pero con el usuario dueño de la base | Tú, igual |
 | `APP_DB_PASSWORD` | La eliges tú; el botón de `/api/ops` se la pone al usuario `slg_app` | Tú, y se vuelve a aplicar con ese botón |
-| `NEXT_PUBLIC_SITE_URL` · `BETTER_AUTH_URL` | La dirección pública de ese entorno | Tú |
+| `NEXT_PUBLIC_SITE_URL` · `BETTER_AUTH_URL` | La dirección pública de ese entorno. `NEXT_PUBLIC_SITE_URL` **no tiene valor por defecto**: si falta, la compilación se detiene y lo dice — antes se inventaba un dominio y el sitio salía publicando el de otro en sus etiquetas sociales y en su RSS | Tú |
 | `BETTER_AUTH_SECRET` | Una cadena larga al azar que generas una vez | Tú. Cambiarla **cierra todas las sesiones abiertas** |
 | `STAGING_BASIC_AUTH_USER` · `STAGING_BASIC_AUTH_PASSWORD` | Los eliges tú: es la puerta que tapa staging | Tú |
 | `SUPERFICIES_EN_REVISION` | Qué intranets se pueden mirar en staging mientras se revisan: `hq`, `portal`, o las dos. **Solo en `slgweb-staging`**; en producción no hace nada | Tú, cuando vayas a revisarlas |

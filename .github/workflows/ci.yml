@@ -76,6 +76,12 @@ jobs:
     env:
       DATABASE_URL: postgresql://nadie@127.0.0.1:1/no-se-usa
       BETTER_AUTH_SECRET: solo-para-compilar-en-ci
+      # `lib/content/sitio.ts` ya no se inventa un dominio cuando esta falta: la
+      # compilación se para. Es exactamente lo que se quiere en un despliegue —y
+      # significa que el CI tiene que ponerla, como pone las dos de arriba—. Un
+      # `example.com` de mentira basta: aquí no se comprueba a dónde apunta, se
+      # comprueba que el sitio se construye entero con una base declarada.
+      NEXT_PUBLIC_SITE_URL: https://ci.example.com
 
     steps:
       - uses: actions/checkout@v4
@@ -298,6 +304,10 @@ jobs:
       # porque con el dueño las políticas de fila no se aplican y todo el
       # aislamiento entre empresas sería decorativo (hallazgo de FU-04).
       DATABASE_URL: postgresql://slg_app@127.0.0.1:5432/slg
+      # Este trabajo también compila (`test:acceso` habla con el servidor real),
+      # y compilar sin base declarada ya no pasa en silencio. Ver el trabajo de
+      # gates: de mentira, pero presente.
+      NEXT_PUBLIC_SITE_URL: https://ci.example.com
 
     steps:
       - uses: actions/checkout@v4

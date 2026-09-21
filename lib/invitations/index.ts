@@ -14,7 +14,7 @@ export {
   aceptarInvitacion,
   consultarTestigo,
   caducarPendientesVencidas,
-  MENSAJE_DE_TESTIGO_INVALIDO,
+  CLAVE_DE_TESTIGO_INVALIDO,
   type Invitacion,
   type ResultadoDeEmision,
   type ResultadoDeAceptacion,
