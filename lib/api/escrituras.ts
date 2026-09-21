@@ -1,7 +1,8 @@
 /**
- * escrituras.ts — Las **once escrituras** de `/api/v1`: cuatro de DU-23
+ * escrituras.ts — Las **doce escrituras** de `/api/v1`: cuatro de DU-23
  * (RF-102 · RF-104 · RF-105 · RF-111 · RF-146), cinco de la Academy, DU-30
- * (RF-153 · RF-156), y dos del proyecto que nace en el CRM (D-162).
+ * (RF-153 · RF-156), dos del proyecto que nace en el CRM (D-162) y una de la
+ * empresa que el CRM crea o encuentra por su identificador (D-163).
  *
  * **CREAR Y PUBLICAR SON DOS ACTOS, Y ESA ES LA UNIDAD.** El ciclo es
  * crear → subir → publicar, y no un `POST` que hace las tres cosas. La razón no
@@ -37,15 +38,15 @@ import {
   type QuienCierra,
 } from "../academy/index.ts";
 import type { AuthContext } from "../db/context.ts";
-import { agentEvent, announcement, deliverable, organization, project, user } from "../db/schema.ts";
+import { agentEvent, announcement, contact, deliverable, organization, project, user } from "../db/schema.ts";
 import { withScope } from "../db/scope.ts";
 import { adaptadorDeArchivos, validarSubida } from "../files/index.ts";
-import { DatoInvalido } from "../hq/empresas.ts";
+import { DatoInvalido, slugDe } from "../hq/empresas.ts";
 import { destinoDe } from "../hq/entregables.ts";
 import { anunciarAviso, anunciarEntregable } from "../webhooks/index.ts";
 
 import { ErrorDeApi } from "./errores.ts";
-import { empresaVisible, proyectoDelContrato } from "./lecturas.ts";
+import { empresaDelContrato, empresaVisible, proyectoDelContrato } from "./lecturas.ts";
 
 /**
  * **AQUÍ NO SE AUDITA, Y NO ES UN OLVIDO** (D-140).
@@ -870,4 +871,137 @@ export async function cambiarEstadoDeProyectoPorApi(ctx: AuthContext, id: string
   const proyecto = await proyectoConDueno(ctx, id);
   if (!proyecto) throw new ErrorDeApi(404, `proyecto ${id} fuera del universo de la clave`);
   return proyecto;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * 12 · POST /organizations
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * **NO PASA POR `lib/hq/empresas.ts`, POR LA MISMA RAZÓN QUE EL PROYECTO** (10):
+ * esa puerta audita con `conAuditoria` y aquí escribiría la segunda fila que
+ * D-140 prohíbe. Lo que sí se comparte es la derivación del slug (`slugDe`) y
+ * la forma de la empresa en el contrato (`empresaDelContrato`).
+ */
+
+/** Una empresa con su contacto principal, **bajo el contexto de la clave**. */
+async function empresaConContacto(ctx: AuthContext, organizationId: string) {
+  const filas = await withScope(ctx, (db) =>
+    db
+      .select({ o: organization, contactoId: contact.id, contactoNombre: contact.name })
+      .from(organization)
+      .leftJoin(contact, and(eq(contact.organizationId, organization.id), eq(contact.isPrimary, true)))
+      .where(eq(organization.id, organizationId))
+      .limit(1),
+  );
+  const fila = filas[0];
+  if (!fila) return null;
+  return {
+    organizationId: fila.o.id,
+    cuerpo: {
+      data: empresaDelContrato(fila.o, fila.contactoId ? { id: fila.contactoId, name: fila.contactoNombre } : null),
+    },
+  };
+}
+
+/**
+ * ¿Con qué índice único chocó? Drizzle deja el error del driver en `cause` (y
+ * el driver, a veces, directamente en `code`): se miran los dos sitios. Aquí
+ * hay dos índices que pueden saltar —el del slug y el del CRM— y responden
+ * distinto, así que hace falta el nombre, no solo el `23505`.
+ */
+function indiceQueChoco(e: unknown): "uq_organization_slug" | "uq_organization_crm_id" | null {
+  const mira = (x: unknown): string | null =>
+    typeof x === "object" && x !== null && (x as { code?: unknown }).code === "23505"
+      ? String((x as { constraint_name?: unknown }).constraint_name ?? "")
+      : null;
+  const nombre = mira(e) ?? mira((e as { cause?: unknown })?.cause);
+  if (nombre === "uq_organization_slug" || nombre === "uq_organization_crm_id") return nombre;
+  return null;
+}
+
+const SLUG_TOMADO = () =>
+  new ErrorDeApi(422, "slug ya pertenece a otra empresa", [{ field: "slug", code: "already_taken" }]);
+
+/**
+ * **IDEMPOTENTE POR `crm_company_id`.** Si ya hay una empresa con ese
+ * identificador, se devuelve **200 con la existente** y el resto del cuerpo se
+ * ignora: la que manda es la que ya está. Si no, se crea como cliente activa
+ * (`type = client`, `status = active`) y responde 201. El índice único parcial
+ * de 0020 sostiene la promesa aunque dos reintentos lleguen a la vez: el
+ * segundo choca, se relee y devuelve la misma empresa.
+ *
+ * **UNA CLAVE ACOTADA A UNA EMPRESA NO CREA EMPRESAS: 403.** Es el criterio de
+ * `crearProyectoPorApi` para la empresa ajena —su universo es exactamente la
+ * suya—, pero sin recurso en la ruta no hay «no existe» que responder: crear
+ * otra empresa está fuera de lo que esa clave puede hacer, y decirlo no revela
+ * la existencia de nadie.
+ *
+ * Un `slug` ya usado por otra empresa es un dato mal enviado, no un reintento:
+ * 422 sobre el campo. Y como el slug se deriva del nombre cuando falta,
+ * repetir un nombre con otro `crm_company_id` cae aquí.
+ */
+export async function crearEmpresaPorApi(
+  ctx: AuthContext,
+  datos: { nombre: string; crmCompanyId: string; slug: string | null },
+) {
+  if (ctx.organizationId !== null) {
+    throw new ErrorDeApi(403, "una clave acotada a una empresa no puede crear empresas");
+  }
+  // El catálogo midió la longitud; que no sea solo espacios lo mira HQ
+  // (`validar`) y aquí también: una empresa sin nombre no se elige en HQ.
+  const nombre = datos.nombre.trim();
+  if (nombre.length === 0) {
+    throw new ErrorDeApi(422, "name en blanco", [{ field: "name", code: "invalid" }]);
+  }
+  const slug = slugDe(datos.slug?.trim() || nombre);
+  if (slug.length === 0) {
+    throw new ErrorDeApi(422, "slug vacío tras normalizar", [{ field: "slug", code: "invalid" }]);
+  }
+
+  const yaExiste = async () => {
+    const filas = await withScope(ctx, (db) =>
+      db
+        .select({ id: organization.id })
+        .from(organization)
+        .where(eq(organization.crmCompanyId, datos.crmCompanyId))
+        .limit(1),
+    );
+    return filas[0]?.id ?? null;
+  };
+
+  const previo = await yaExiste();
+  if (previo) {
+    const existente = await empresaConContacto(ctx, previo);
+    if (!existente) throw new ErrorDeApi(404, `empresa ${previo} fuera del universo de la clave`);
+    return { ...existente, creado: false };
+  }
+
+  const id = crypto.randomUUID();
+  try {
+    await withScope(ctx, (db) =>
+      db.insert(organization).values({
+        id,
+        name: nombre,
+        slug,
+        type: "client",
+        status: "active",
+        crmCompanyId: datos.crmCompanyId,
+      }),
+    );
+  } catch (e) {
+    const indice = indiceQueChoco(e);
+    if (indice === "uq_organization_slug") throw SLUG_TOMADO();
+    if (indice !== "uq_organization_crm_id") throw e;
+    // La carrera: otro reintento entró primero con el mismo identificador. Es
+    // la misma empresa; se relee y se devuelve.
+    const ganador = await yaExiste();
+    const existente = ganador ? await empresaConContacto(ctx, ganador) : null;
+    if (!existente) throw new ErrorDeApi(404, "empresa del CRM fuera del universo de la clave");
+    return { ...existente, creado: false };
+  }
+
+  const creada = await empresaConContacto(ctx, id);
+  if (!creada) throw new ErrorDeApi(404, `empresa ${id} fuera del universo de la clave`);
+  return { ...creada, creado: true };
 }

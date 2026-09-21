@@ -79,6 +79,7 @@ export async function accionCrearEmpresa(datos: FormData) {
       tipo: texto(datos, "tipo"),
       estado: texto(datos, "estado"),
       contactoPrincipal: opcional(datos, "contacto"),
+      crmCompanyId: opcional(datos, "crmCompanyId"),
     });
   } catch (e) {
     salida("/hq/empresas", e);
@@ -97,6 +98,7 @@ export async function accionEditarEmpresa(datos: FormData) {
       tipo: texto(datos, "tipo"),
       estado: texto(datos, "estado"),
       contactoPrincipal: opcional(datos, "contacto"),
+      crmCompanyId: opcional(datos, "crmCompanyId"),
     });
   } catch (e) {
     salida("/hq/empresas", e);

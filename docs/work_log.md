@@ -3324,6 +3324,41 @@ donde tiene que estar. Seis servicios en ES y EN. Comprobado en el servidor loca
 móvil: la estructura es la misma, solo cambia dónde va la raíz. Frenos: `check:content` entero
 (2232 comprobaciones de copy), `cadenas`, `contraste`, `motion`, `types`, `lint`.
 
+## D-163: la empresa del CRM y la de aquí, relacionadas por el identificador (2026-09-21)
+
+D-162 dejó que el CRM creara aquí la carpeta del cliente, pero el CRM no sabía **qué empresa**:
+`POST /api/v1/organizations/{id}/projects` pide un `{id}` de este sitio que allí nadie conoce, y
+emparejar por nombre es adivinar. Ahora cada empresa guarda su identificador del CRM al lado, y el
+CRM tiene puerta propia para crearla o encontrarla por él.
+
+**Hecho**: migración `0020_empresa_del_crm` (`organization.crm_company_id` nulo, índice único
+**parcial** `uq_organization_crm_id`, `COMMENT`, y el `CHECK` de `api_key.scopes` reescrito de nueve
+a diez); alcance `orgs:write` en `API_SCOPES` y en la fila `org.write` de B.3
+(`lib/auth/roles.ts`), que pasa de `null` a ese alcance; la ruta `POST /api/v1/organizations` en el
+catálogo —diecinueve— con su escritura (`crearEmpresaPorApi`, la duodécima) y su manejador; la forma
+de la empresa en el contrato se extrae a `empresaDelContrato` para que la recién creada se lea igual
+que la del listado, y lleva `crm_company_id`; en HQ, el campo en el formulario de empresas (crear y
+editar) con su cadena en ES y EN, y `campoRepetido` distingue por fin **qué** índice chocó, que
+antes se daba siempre por el del slug. `api_contracts`, `data_model`, `decision_log` y `README` al
+día.
+
+**La ruta es idempotente por `crm_company_id`**: repetir devuelve 200 con la existente, nunca 409;
+crea con 201 y siempre como `type = client`, `status = active`. El índice único parcial sostiene la
+promesa aunque dos reintentos entren a la vez —el segundo choca, se relee y devuelve la misma—.
+Una clave acotada a una empresa responde **403**: crear otra está fuera de su universo, y sin
+recurso en la ruta no hay «no existe» que dar. Nada comercial viaja en el cuerpo: la frontera (a) de
+`scope.md` no se mueve.
+
+**Verificado aquí**: `check:types`, `lint`, `check:migrations`, `check:fronteras`, `check:alcance`,
+`check:literacy`, `check:secrets`, `check:env`, `check:anexo-d`, `check:cadenas` y `check:playbook`,
+todos en verde.
+
+**No verificado en esta máquina**: `scripts/api/test-api.ts` y `scripts/hq/test-gestion.ts` (el
+identificador se pone al crear, se edita, es de una sola empresa —repetirlo es dato inválido con su
+campo, no error crudo de PostgreSQL—, en blanco vuelve a nulo; y por la API: 403 sin alcance, 201,
+el mismo identificador dos veces → 200 y una sola fila, clave acotada → 403, slug tomado → 422).
+Necesitan PostgreSQL, que esta máquina no tiene; se corren en CI.
+
 ## Cierre del 2026-09-21: D-162 hecho, D-163 a medias, favicon, tsc sobre todos los scripts
 
 **D-162** (`31d6ad3`): el CRM crea el proyecto y el sitio lo recibe por `POST
@@ -3332,8 +3367,8 @@ producción), alcance `projects:write`, `close`/`reopen`, +40 comprobaciones en 
 del agente: el `CHECK` de 0001 acepta `SLG_Holdings` y el contenido dice `Holdings by SLG` — un
 proyecto de esa línea no se puede crear (pendiente). **Archivar** (`a827bfd`): empresas y proyectos,
 dos pasos por URL, nada se borra; §4.3 pide además cancelar invitaciones y revocar claves, y eso
-queda anotado. **D-163** (crm_company_id, `POST /organizations`, `orgs:write`, 0020): un agente lo
-tenía a medias al cerrar la sesión; su worktree conserva el trabajo sin commit.
+queda anotado. **D-163** (crm_company_id, `POST /organizations`, `orgs:write`, 0020): el agente lo dejó sin
+commit al cerrar la sesión; revisado y fusionado el 21-09 (entrada anterior).
 
 **Vista previa**: `DATABASE_URL` de Preview apuntaba a `db.example.com` (el marcador de la época sin
 base) y el login fallaba con el mensaje mudo de credenciales. Se vio solo cuando

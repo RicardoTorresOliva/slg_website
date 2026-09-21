@@ -18,6 +18,9 @@
  * portal— comprueba la matriz B.3 **con personas**: que un cliente cierra sus
  * pendientes y no los de SLG, y que el intento queda auditado.
  *
+ * D-162 y D-163 añaden lo que el CRM escribe aquí: la carpeta del cliente y la
+ * empresa que la contiene, las dos idempotentes por su identificador del CRM.
+ *
  * Necesita `bash scripts/db/local-pg.sh up` y `npm run build:standalone`.
  */
 import { spawn, type ChildProcess } from "node:child_process";
@@ -75,6 +78,8 @@ const VALORES = {
   academyAcotada: "valor-de-prueba-du30-acotada-wr",
   escribeProyectos: "valor-de-prueba-d162-proyectos-w",
   proyectosAcotada: "valor-de-prueba-d162-acotada-wr",
+  escribeEmpresas: "valor-de-prueba-d163-empresas-wr",
+  empresasAcotada: "valor-de-prueba-d163-acotada-wr",
   revocada: "valor-de-prueba-du22-revocada-0000",
   caducada: "valor-de-prueba-du22-caducada-0000",
   estrecha: "valor-de-prueba-du22-estrecha-0000",
@@ -89,7 +94,8 @@ type Alcance =
   | "events:write"
   | "news:write"
   | "milestones:write"
-  | "projects:write";
+  | "projects:write"
+  | "orgs:write";
 
 async function crearClave(
   id: string,
@@ -109,7 +115,10 @@ async function crearClave(
 const CAPTURA = "cap-du22";
 
 async function limpiar() {
-  await dueno`delete from api_key where id like 'k-du22-%' or id like 'k-du23-%' or id like 'k-du30-%' or id like 'k-d162-%'`;
+  await dueno`delete from api_key where id like 'k-du22-%' or id like 'k-du23-%' or id like 'k-du30-%' or id like 'k-d162-%' or id like 'k-d163-%'`;
+  // D-163: las empresas que el CRM creó por la API no cuelgan de nada; se
+  // reconocen por su identificador del CRM.
+  await dueno`delete from organization where crm_company_id like 'crm-d163-%'`;
   await dueno`delete from agent_event where organization_id in (${A.org}, ${B.org}) or api_key_id like 'k-du23-%'`;
   await dueno`delete from announcement where organization_id in (${A.org}, ${B.org})`;
   // Las tres de la Academy cuelgan del proyecto y de la empresa (ON DELETE RESTRICT): van antes.
@@ -195,6 +204,9 @@ async function sembrar() {
   // D-162: la clave con la que el CRM crea aquí la carpeta del cliente, y una acotada a A.
   await crearClave("k-d162-prj", VALORES.escribeProyectos, ["projects:write"]);
   await crearClave("k-d162-aco", VALORES.proyectosAcotada, ["projects:write"], { org: A.org });
+  // D-163: la clave con la que el CRM crea o encuentra aquí la empresa, y una acotada a A con el mismo alcance.
+  await crearClave("k-d163-org", VALORES.escribeEmpresas, ["orgs:write"]);
+  await crearClave("k-d163-aco", VALORES.empresasAcotada, ["orgs:write"], { org: A.org });
 }
 
 /* ── Servidor real ────────────────────────────────────────────────────────── */
@@ -1308,6 +1320,134 @@ async function main() {
       ((await dueno`select status from project where id = ${B.proyecto}`) as unknown as { status: string }[])[0]?.status === "active",
     );
 
+    console.log("\nD-163 · la empresa se relaciona con la del CRM por su identificador:\n");
+
+    /**
+     * Lo que D-163 promete y solo se ve por el puerto: que el alcance es propio
+     * (`orgs:read` y `projects:write` no lo implican), que una clave acotada a
+     * una empresa no crea otras, que **repetir el mismo `crm_company_id`
+     * devuelve 200 con la que ya existe y deja UNA fila**, que un slug ya usado
+     * es un 422 sobre el campo, que nada comercial entra por el cuerpo y que
+     * `GET /organizations` la devuelve con el identificador al lado.
+     */
+    const RUTA_EMPRESAS = "/api/v1/organizations";
+    const EMPRESA = { name: "Cliente D163", crm_company_id: "crm-d163-0001" };
+
+    const empresaSinAlcance = await postJson(RUTA_EMPRESAS, VALORES.escribeProyectos, EMPRESA);
+    check("una clave sin `orgs:write` → 403", empresaSinAlcance.status === 403, String(empresaSinAlcance.status));
+    check(
+      "y es el MISMO 403 de siempre: no nombra el alcance que faltaba",
+      empresaSinAlcance.cuerpo?.error?.code === "insufficient_scope" &&
+        empresaSinAlcance.cuerpo?.error?.message === sinAlcance.cuerpo?.error?.message,
+    );
+    check(
+      "`orgs:read` NO implica `orgs:write`: leer empresas no es crearlas (RF-147)",
+      (await postJson(RUTA_EMPRESAS, VALORES.slg, EMPRESA)).status === 403,
+    );
+    const empresaAcotada = await postJson(RUTA_EMPRESAS, VALORES.empresasAcotada, { ...EMPRESA, crm_company_id: "crm-d163-acotada" });
+    check(
+      "una clave ACOTADA a una empresa, aun con `orgs:write` → 403: crear otra está fuera de su universo",
+      empresaAcotada.status === 403,
+      String(empresaAcotada.status),
+    );
+    check(
+      "y no dejó fila",
+      ((await dueno`select count(*)::text as n from organization where crm_company_id = 'crm-d163-acotada'`) as unknown as { n: string }[])[0]?.n === "0",
+    );
+
+    const empresa = await postJson(RUTA_EMPRESAS, VALORES.escribeEmpresas, EMPRESA);
+    check("con `orgs:write` → 201", empresa.status === 201, JSON.stringify(empresa.cuerpo?.error));
+    const idEmpresa = empresa.cuerpo?.data?.id as string;
+    check(
+      "la respuesta lleva el `crm_company_id`, `type = client`, `status = active` y el slug derivado del nombre",
+      empresa.cuerpo?.data?.crm_company_id === EMPRESA.crm_company_id &&
+        empresa.cuerpo?.data?.type === "client" &&
+        empresa.cuerpo?.data?.status === "active" &&
+        empresa.cuerpo?.data?.slug === "cliente-d163",
+      JSON.stringify(empresa.cuerpo?.data),
+    );
+    const filaEmpresa = (await dueno`
+      select name, slug, type, status, crm_company_id from organization where id = ${idEmpresa ?? ""}
+    `) as unknown as { name: string; slug: string; type: string; status: string; crm_company_id: string | null }[];
+    check(
+      "la fila lleva `crm_company_id`, es cliente y está activa",
+      filaEmpresa[0]?.crm_company_id === EMPRESA.crm_company_id && filaEmpresa[0]?.type === "client" && filaEmpresa[0]?.status === "active",
+      JSON.stringify(filaEmpresa[0]),
+    );
+
+    const otraVezEmpresa = await postJson(RUTA_EMPRESAS, VALORES.escribeEmpresas, { ...EMPRESA, name: "Cliente D163 renombrado" });
+    check(
+      "el MISMO `crm_company_id` otra vez → 200 con la existente, ni 201 ni 409: un reintento no duplica la empresa",
+      otraVezEmpresa.status === 200 && otraVezEmpresa.cuerpo?.data?.id === idEmpresa,
+      `${otraVezEmpresa.status} ${otraVezEmpresa.cuerpo?.data?.id}`,
+    );
+    check(
+      "y el nombre es el que ya estaba: el resto del cuerpo se ignora",
+      otraVezEmpresa.cuerpo?.data?.name === EMPRESA.name,
+      otraVezEmpresa.cuerpo?.data?.name,
+    );
+    const cuantasEmpresas = (await dueno`select count(*)::text as n from organization where crm_company_id = ${EMPRESA.crm_company_id}`) as unknown as { n: string }[];
+    check("en la base hay UNA sola empresa con ese `crm_company_id` (índice único parcial de 0020)", cuantasEmpresas[0]?.n === "1", cuantasEmpresas[0]?.n);
+
+    const slugRepetido = await postJson(RUTA_EMPRESAS, VALORES.escribeEmpresas, { name: "Otra con el mismo slug", crm_company_id: "crm-d163-0002", slug: "cliente-d163" });
+    check(
+      "otro `crm_company_id` con el MISMO slug → 422 `already_taken` sobre `slug`",
+      slugRepetido.status === 422 && slugRepetido.cuerpo?.error?.details?.some((d: Json) => d.field === "slug" && d.code === "already_taken"),
+      JSON.stringify(slugRepetido.cuerpo?.error),
+    );
+    check(
+      "y el mismo nombre sin slug cae igual: el slug se deriva del nombre",
+      (await postJson(RUTA_EMPRESAS, VALORES.escribeEmpresas, { name: "Cliente D163", crm_company_id: "crm-d163-0002" })).status === 422,
+    );
+    const crmEmpresaVacio = await postJson(RUTA_EMPRESAS, VALORES.escribeEmpresas, { ...EMPRESA, crm_company_id: "" });
+    check(
+      "`crm_company_id` vacío → 422 `required`: si el CRM manda, dice cuál es",
+      crmEmpresaVacio.status === 422 && crmEmpresaVacio.cuerpo?.error?.details?.some((d: Json) => d.field === "crm_company_id" && d.code === "required"),
+    );
+    const crmEmpresaAusente = await postJson(RUTA_EMPRESAS, VALORES.escribeEmpresas, { name: "Sin identificador" });
+    check(
+      "y ausente, también 422 `required`",
+      crmEmpresaAusente.status === 422 && crmEmpresaAusente.cuerpo?.error?.details?.some((d: Json) => d.field === "crm_company_id" && d.code === "required"),
+    );
+    const nombreDeEmpresaEnBlanco = await postJson(RUTA_EMPRESAS, VALORES.escribeEmpresas, { name: "   ", crm_company_id: "crm-d163-0003" });
+    check(
+      "`name` en blanco → 422 sobre `name`",
+      nombreDeEmpresaEnBlanco.status === 422 && nombreDeEmpresaEnBlanco.cuerpo?.error?.details?.some((d: Json) => d.field === "name"),
+    );
+    const empresaConCampoComercial = await postJson(RUTA_EMPRESAS, VALORES.escribeEmpresas, { name: "Con campo de más", crm_company_id: "crm-d163-0003", stage: "negotiation" });
+    check(
+      "un campo comercial en el cuerpo → 422 `unknown_parameter`: la frontera (a) tampoco se cruza por aquí",
+      empresaConCampoComercial.status === 422 && empresaConCampoComercial.cuerpo?.error?.details?.some((d: Json) => d.field === "stage" && d.code === "unknown_parameter"),
+      JSON.stringify(empresaConCampoComercial.cuerpo?.error),
+    );
+    check(
+      "ninguno de los rechazos dejó fila",
+      ((await dueno`select count(*)::text as n from organization where crm_company_id in ('crm-d163-0002', 'crm-d163-0003')`) as unknown as { n: string }[])[0]?.n === "0",
+    );
+    const conSlugPropio = await postJson(RUTA_EMPRESAS, VALORES.escribeEmpresas, { name: "Cliente D163 Dos", crm_company_id: "crm-d163-0004", slug: "  D163 Dos  " });
+    check(
+      "un `slug` explícito se normaliza como en HQ: minúsculas y guiones",
+      conSlugPropio.status === 201 && conSlugPropio.cuerpo?.data?.slug === "d163-dos",
+      JSON.stringify(conSlugPropio.cuerpo?.data ?? conSlugPropio.cuerpo?.error),
+    );
+
+    const listadoDeEmpresas = await P(RUTA_EMPRESAS, VALORES.slg);
+    check(
+      "la empresa creada aparece en `GET /organizations` con su `crm_company_id`",
+      listadoDeEmpresas.status === 200 && listadoDeEmpresas.cuerpo?.data?.some((o: Json) => o.id === idEmpresa && o.crm_company_id === EMPRESA.crm_company_id),
+      JSON.stringify(listadoDeEmpresas.cuerpo?.data?.map((o: Json) => [o.id, o.crm_company_id])),
+    );
+    check(
+      "y las sembradas a mano se listan con `crm_company_id: null`: las anteriores a D-163 no lo tienen",
+      listadoDeEmpresas.cuerpo?.data?.some((o: Json) => o.id === A.org && o.crm_company_id === null),
+    );
+    const laSuya = await P(RUTA_EMPRESAS, VALORES.empresa);
+    check(
+      "la clave acotada sigue viendo exactamente la suya, y el campo viaja también ahí",
+      laSuya.status === 200 && laSuya.cuerpo?.data?.length === 1 && laSuya.cuerpo?.data?.[0]?.id === A.org && "crm_company_id" in (laSuya.cuerpo?.data?.[0] ?? {}),
+      JSON.stringify(laSuya.cuerpo?.data),
+    );
+
     console.log("\nDU-30 · Academy — la puerta `lib/academy` con PERSONAS (B.3 por rol; criterio 1 de DU-27):\n");
 
     /**
@@ -1449,13 +1589,22 @@ async function main() {
       "/api/v1/projects/{id}/action-items",
       "/api/v1/action-items/{id}/done",
     ];
-    // D-162: `POST /organizations/{id}/projects` comparte ruta con el `GET`, así
-    // que dieciocho operaciones son diecisiete rutas en `paths`.
+    // D-162: `POST /organizations/{id}/projects` comparte ruta con el `GET`, y
+    // D-163: `POST /organizations` también con el suyo, así que diecinueve
+    // operaciones son diecisiete rutas en `paths`.
     const TRES_DEL_CRM = ["/api/v1/organizations/{id}/projects", "/api/v1/projects/{id}/close", "/api/v1/projects/{id}/reopen"];
     check(
-      "describe LAS DIECIOCHO operaciones —nueve de DU-22/23, seis de la Academy y tres de D-162— en diecisiete rutas, ni una más",
+      "describe LAS DIECINUEVE operaciones —nueve de DU-22/23, seis de la Academy, tres de D-162 y una de D-163— en diecisiete rutas, ni una más",
       [...NUEVE, ...SEIS_ACADEMY, ...TRES_DEL_CRM].every((r) => r in (spec.cuerpo?.paths ?? {})) && Object.keys(spec.cuerpo.paths).length === 17,
       Object.keys(spec.cuerpo?.paths ?? {}).join(" "),
+    );
+    const empresasEnLaSpec = spec.cuerpo.paths["/api/v1/organizations"];
+    check(
+      "`/organizations` lleva `orgs:read` en el GET y `orgs:write` en el POST, leídos de B.3 (D-163), con `crm_company_id` obligatorio",
+      empresasEnLaSpec?.get?.["x-alcance-exigido"] === "orgs:read" &&
+        empresasEnLaSpec?.post?.["x-alcance-exigido"] === "orgs:write" &&
+        empresasEnLaSpec?.post?.requestBody?.content?.["application/json"]?.schema?.required?.includes("crm_company_id"),
+      JSON.stringify([empresasEnLaSpec?.get?.["x-alcance-exigido"], empresasEnLaSpec?.post?.["x-alcance-exigido"]]),
     );
     const proyectosEnLaSpec = spec.cuerpo.paths["/api/v1/organizations/{id}/projects"];
     check(
@@ -1566,7 +1715,7 @@ async function main() {
         from audit_log
        where actor_id in ('k-du22-slg','k-du22-cap','k-du22-emp','k-du22-lim','k-du22-ent','k-du22-eve',
                           'k-du22-rev','k-du22-cad','k-du23-ent','k-du23-avi','k-du23-eve','k-du23-aco','k-rev-cap',
-                          'k-du30-new','k-du30-hit','k-du30-aco','k-d162-prj','k-d162-aco','unknown')
+                          'k-du30-new','k-du30-hit','k-du30-aco','k-d162-prj','k-d162-aco','k-d163-org','k-d163-aco','unknown')
          and created_at >= ${INICIO}
        order by created_at desc limit 600
     `) as unknown as { action: string; actor_type: string; actor_id: string; actor_label: string | null; entity: string; ip: string | null; metadata: Json }[];
@@ -1683,6 +1832,20 @@ async function main() {
       "`project.update` apunta `/close` y `/reopen`, cada uno con su ruta y con 200",
       delCrm.some((a) => a.action === "project.update" && /\/close$/.test(a.metadata?.path ?? "") && a.metadata?.status === 200) &&
         delCrm.some((a) => a.action === "project.update" && /\/reopen$/.test(a.metadata?.path ?? "") && a.metadata?.status === 200),
+    );
+
+    console.log("\nD-163 · la empresa del CRM queda auditada, también el 200 del reintento y el 403 de la acotada:\n");
+
+    const delCrmEmpresas = apuntes.filter((a) => a.actor_id.startsWith("k-d163-"));
+    check(
+      "`organization.create` apunta el 201, el 200 del reintento, el 403 de la clave acotada y el 422, una fila por llamada",
+      [201, 200, 403, 422].every((s) => delCrmEmpresas.some((a) => a.action === "organization.create" && a.metadata?.status === s)) &&
+        delCrmEmpresas.every((a) => typeof a.metadata?.path === "string"),
+      JSON.stringify(delCrmEmpresas.filter((a) => a.action === "organization.create").map((a) => a.metadata?.status)),
+    );
+    check(
+      "el 403 sin `orgs:write` también es una fila `organization.create`, con la clave que lo intentó",
+      apuntes.some((a) => a.action === "organization.create" && a.metadata?.status === 403 && a.actor_id === "k-d162-prj"),
     );
   } finally {
     servidor.parar();

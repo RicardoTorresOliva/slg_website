@@ -1,6 +1,6 @@
 /**
- * catalogo.ts — **Las dieciocho rutas de `/api/v1`, como DATOS** (DU-22 · DU-23 ·
- * DU-30 · D-162 · `api_contracts` §2, §3 y §4).
+ * catalogo.ts — **Las diecinueve rutas de `/api/v1`, como DATOS** (DU-22 · DU-23 ·
+ * DU-30 · D-162 · D-163 · `api_contracts` §2, §3 y §4).
  *
  * ESTE ARCHIVO EXISTE PARA QUE LA ESPECIFICACIÓN NO PUEDA MENTIR. El criterio 5
  * de DU-23 pide que `GET /openapi.json` se genere **a partir de los mismos
@@ -64,8 +64,9 @@ const CURSOR: Declaracion = {
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
- * Las dieciocho rutas: nueve de DU-22/DU-23, seis de la Academy (DU-30) y
- * tres del proyecto que nace en el CRM (D-162)
+ * Las diecinueve rutas: nueve de DU-22/DU-23, seis de la Academy (DU-30),
+ * tres del proyecto que nace en el CRM (D-162) y una de la empresa que el
+ * CRM crea o encuentra por su identificador (D-163)
  * ══════════════════════════════════════════════════════════════════════════ */
 
 export type RutaDeApi = {
@@ -405,6 +406,42 @@ export const RUTAS: readonly RutaDeApi[] = [
     resumen: "Devuelve un proyecto a `active`. Idempotente sobre uno ya activo.",
     cuerpo: [],
     codigos: [200, 400, 404, 415, 422],
+  },
+
+  /* ── D-163 · La empresa se relaciona con la del CRM por su identificador ──
+   *
+   * D-162 dejó que el CRM creara aquí la carpeta del cliente, pero no sabía
+   * qué `{id}` de empresa usar: las empresas de aquí y las del CRM no estaban
+   * relacionadas. Esta ruta es la puerta: crea o encuentra la empresa por su
+   * `crm_company_id`. **Idempotente**: repetirlo devuelve 200 con la que ya
+   * existe. Sin `{id}` en la ruta no hay 404 que dar; una clave acotada a una
+   * empresa responde 403, porque crear otra está fuera de su universo. Nada
+   * comercial viaja en el cuerpo: frontera (a) de `scope.md`.
+   */
+  {
+    metodo: "POST",
+    ruta: "/api/v1/organizations",
+    accion: "org.write",
+    resumen:
+      "Crea o encuentra la empresa por su `crm_company_id`. Mismo identificador: 200 con la existente. Clave acotada a una empresa: 403.",
+    cuerpo: [
+      { nombre: "name", tipo: "string", minimo: 1, maximo: 200, obligatorio: true, descripcion: "Nombre de la empresa." },
+      {
+        nombre: "crm_company_id",
+        tipo: "string",
+        minimo: 1,
+        maximo: 200,
+        obligatorio: true,
+        descripcion: "Identificador de la empresa en el CRM. Si el CRM manda, dice cuál es. Repetirlo devuelve 200 con la existente.",
+      },
+      {
+        nombre: "slug",
+        tipo: "string",
+        maximo: 60,
+        descripcion: "Identificador legible, en minúsculas y con guiones. Ausente: se deriva del nombre. Ya usado por otra empresa: 422.",
+      },
+    ],
+    codigos: [200, 201, 400, 413, 415, 422],
   },
 
   {

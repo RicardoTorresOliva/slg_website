@@ -123,7 +123,16 @@ export const MATRIZ_B3: Readonly<Record<Accion, ReglaB3>> = {
   "org.write": {
     filaB3: "Crear/editar empresas, proyectos",
     porRol: { slg_admin: "si", slg_operator: "asignados", client_admin: "no", client_member: "no" },
-    alcanceDeAgente: null,
+    /**
+     * Era `null` hasta D-163: D-162 dejó que el CRM creara aquí la carpeta del
+     * cliente, pero el CRM no sabía qué `{id}` de empresa usar, porque las
+     * empresas de aquí y las del CRM no estaban relacionadas. Ahora el CRM crea
+     * o encuentra la empresa por su `crm_company_id` con `POST /organizations`.
+     * Es UN alcance propio, no `projects:write` ampliado: crear proyectos no
+     * implica crear empresas (RF-147). Una clave acotada a una empresa sigue
+     * sin poder crear otras.
+     */
+    alcanceDeAgente: "orgs:write",
   },
   "project.write": {
     filaB3: "Crear/editar empresas, proyectos",
