@@ -1205,14 +1205,14 @@ async function main() {
       JSON.stringify(enOtraEmpresa.cuerpo?.error),
     );
 
-    const proyectoAjeno = await postJson(`/api/v1/organizations/${B.org}/projects`, VALORES.proyectosAcotada, { ...PROYECTO, crm_project_id: "crm-d162-ajeno" });
-    check("una clave acotada a A no crea en B → 404, nunca 403 (§2.6)", proyectoAjeno.status === 404, String(proyectoAjeno.status));
+    const proyectoAjenoDelCrm = await postJson(`/api/v1/organizations/${B.org}/projects`, VALORES.proyectosAcotada, { ...PROYECTO, crm_project_id: "crm-d162-ajeno" });
+    check("una clave acotada a A no crea en B → 404, nunca 403 (§2.6)", proyectoAjenoDelCrm.status === 404, String(proyectoAjenoDelCrm.status));
     const proyectoInexistente = await postJson("/api/v1/organizations/org-que-no-existe/projects", VALORES.escribeProyectos, { ...PROYECTO, crm_project_id: "crm-d162-nadie" });
     check(
       "y el 404 de lo ajeno es IDÉNTICO al de lo inexistente",
       proyectoInexistente.status === 404 &&
-        JSON.stringify({ ...proyectoAjeno.cuerpo?.error, request_id: "" }) === JSON.stringify({ ...proyectoInexistente.cuerpo?.error, request_id: "" }),
-      `${JSON.stringify(proyectoAjeno.cuerpo?.error)} vs ${JSON.stringify(proyectoInexistente.cuerpo?.error)}`,
+        JSON.stringify({ ...proyectoAjenoDelCrm.cuerpo?.error, request_id: "" }) === JSON.stringify({ ...proyectoInexistente.cuerpo?.error, request_id: "" }),
+      `${JSON.stringify(proyectoAjenoDelCrm.cuerpo?.error)} vs ${JSON.stringify(proyectoInexistente.cuerpo?.error)}`,
     );
     check(
       "ni lo ajeno ni lo inexistente dejaron fila: el 404 se decide antes de escribir",
