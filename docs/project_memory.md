@@ -691,12 +691,11 @@ Producción = `slg-website-o4bkrnmrj` (desplegada por Ricardo el 18-09 **antes d
 M6 ni nada del 21-09). La base de producción SÍ tiene las migraciones **0018 y 0019** (20/20).
 
 ### 0 · Al abrir: tres comprobaciones antes de tocar nada
-1. `git worktree list`. Si sigue `.claude/worktrees/agent-a28e809eedadc8755` (rama
-   `worktree-agent-a28e809eedadc8755`), es el **agente de D-163 interrumpido** con ~12 archivos sin
-   commit (crm_company_id, migración 0020, `POST /api/v1/organizations`, alcance `orgs:write`,
-   formulario de HQ). Mirar `git -C <ruta> status` y `diff`: si está completo y pasa
-   `check:types` + `lint`, commit en su rama y fusionar en `develop`; si no, terminarlo o
-   descartarlo (`git worktree remove --force`). NO fusionar sin revisar.
+1. **D-163 quedó fusionado antes de cerrar** (`ba62641`, empujado): `organization.crm_company_id`,
+   migración **0020** (`0020_empresa_del_crm.sql`, **pendiente de aplicar en producción**), `POST
+   /api/v1/organizations` idempotente por `crm_company_id`, alcance `orgs:write`, campo en el
+   formulario de HQ. Los catorce frenos estáticos en verde sobre el árbol fusionado; `test:api`
+   (+25) y `test:gestion` (+10) los corre CI. No queda ningún worktree de agente abierto.
 2. `gh run list --branch develop --limit 3`: el CI de `8263173` estaba en marcha al cerrar. Todo lo
    de M6 ya había pasado en verde en corridas anteriores (api 216, hoy 58, programa 31, entregables
    55, gestión, materiales 29, webhooks 32); lo último que faltaba ver en verde era `check:brakes`
@@ -708,7 +707,7 @@ M6 ni nada del 21-09). La base de producción SÍ tiene las migraciones **0018 y
    inservible (`db.example.com`) — cualquier otra rama no conecta.
 
 ### 1 · Lo que Ricardo tiene que hacer (en este orden)
-1. **Aplicar 0020** cuando D-163 se fusione:
+1. **Aplicar 0020** (D-163 ya está en `develop`):
    `node --env-file=$HOME/Dev/SLG_Overhauling/ops/supabase-slg-website.env scripts/db/migrar.ts`
    → «1 migración(es) aplicada(s) ahora: 0020…».
 2. **Desplegar producción** con CI en verde: `cd ~/Dev/slg_website && git pull && vercel --prod`.
@@ -730,7 +729,7 @@ M6 ni nada del 21-09). La base de producción SÍ tiene las migraciones **0018 y
 ### 2 · Decisiones tomadas el 21-09 (todas en `decision_log`)
 - **D-162** el CRM crea el proyecto; el sitio lo recibe. Hecho (`31d6ad3`). Formulario de HQ se
   queda como respaldo.
-- **D-163** las empresas guardan el id del CRM (`crm_company_id`). **En curso** (ver §0.1).
+- **D-163** las empresas guardan el id del CRM (`crm_company_id`). Hecho (`ba62641`); falta 0020 en producción.
 - Archivar empresas / cerrar proyectos desde HQ (`a827bfd`). Solo `slg_admin` archiva empresas.
 - «Empieza aquí» horizontal con `tagline` por servicio (`85a8228`). Favicon de SLG (`8263173`).
 
