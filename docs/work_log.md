@@ -3309,3 +3309,17 @@ ajena → 404 idéntico al inexistente, `service` inventado, `crm_project_id` va
 comercial de más, `close`/`reopen` idempotentes, el listado con `crm_project_id`, la
 especificación y la auditoría). Necesita PostgreSQL y `build:standalone`, que esta máquina no tiene;
 se corre en CI.
+
+## «Empieza aquí» horizontal, líneas bajo VoltAi y la frase de cada servicio (2026-09-21)
+
+Ricardo, al ver el mapa: cuatro columnas verticales con solo la primera poblada —«desproporcionado»—,
+las tres líneas de VoltAi al nivel del eje, y los servicios sin una frase que diga para quién son.
+Tres cambios, todos en la pieza que ya derivaba de la tabla de rutas: (1) el árbol crece de
+izquierda a derecha —raíz a la izquierda y fija, destinos apilados a su derecha, y el mismo conector
+en todos los niveles—; (2) las líneas cuelgan de `VoltAi by SLG` (`Rama` pasa a ser recursiva y un
+solo componente pinta cualquier nivel); (3) cada servicio lleva su `tagline` al lado —«para
+Directores», «Army of Agents»—, como **campo opcional del registro del servicio** y no como cadena
+de `content/ui`: es oferta, no interfaz, y el día que la portada de la línea quiera enseñarla ya está
+donde tiene que estar. Seis servicios en ES y EN. Comprobado en el servidor local a 1280 px y en
+móvil: la estructura es la misma, solo cambia dónde va la raíz. Frenos: `check:content` entero
+(2232 comprobaciones de copy), `cadenas`, `contraste`, `motion`, `types`, `lint`.
