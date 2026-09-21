@@ -125,7 +125,12 @@ async function EnPortal({ ctx, id, idioma }: { ctx: AuthContext; id: string; idi
  * exactamente lo que D-45 prohíbe.
  */
 function Aislado({ id, titulo, t }: { id: string; titulo: string; t: Record<string, string> }) {
-  const src = visorEstaSeparado() ? urlDelVisor(id) : null;
+  // **El vale se firma con ámbito `cliente`, y eso es lo que el visor
+  // verifica.** Desde 0022 el visor también sirve entregables `internal`, pero
+  // solo a quien presente un vale de HQ; el que sale de aquí no lo es y no se
+  // puede convertir en uno reescribiendo la URL, porque el ámbito va dentro de
+  // la firma. El `id` que llega aquí, además, salió de `entregablesDelCliente()`.
+  const src = visorEstaSeparado() ? urlDelVisor(id, "cliente") : null;
   if (!src) {
     return (
       <Estado
