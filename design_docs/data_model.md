@@ -559,17 +559,28 @@ criterio:
 
 ### 4.3 Qué pasa exactamente al archivar una empresa
 
-Archivar `organization` es **`UPDATE organization SET status = 'archived'`**. Nada más. En detalle:
+Archivar `organization` es **`UPDATE organization SET status = 'archived'` y cerrar las dos puertas que
+no pasan por la capa de acceso**. Nada se borra. En detalle:
 
 | Qué | Qué le pasa |
 |---|---|
 | `project`, `deliverable`, `announcement` de esa empresa | **Nada.** Siguen ahí, íntegros y legibles desde HQ. Un cliente archivado puede volver, y sus entregables son la prueba de lo que se le entregó. |
 | Acceso de sus miembros al portal | Se deniega en la **capa de acceso** (§6), no borrando filas: la comprobación de sesión rechaza a un usuario cuya organización está `archived` con la misma respuesta que a un usuario sin permiso. |
 | `membership` | Se conserva. Es lo que permite reactivar sin volver a invitar. |
-| `invitation` en estado `pending` de esa empresa | Pasan a `canceled` en la misma transacción. Razón: una invitación vigente a una empresa archivada es una puerta abierta a un sitio cerrado (RF-60). |
-| `api_key` con `organization_id` de esa empresa | Se revocan (`revoked_at`) en la misma transacción, por la misma razón (R-14). |
+| `invitation` en estado `pending` de esa empresa | Pasan a `canceled` en la misma transacción, con `revoked_at` y **sin `token_hash`**. Razón: una invitación vigente a una empresa archivada es una puerta abierta a un sitio cerrado (RF-60). La condición es el estado de la fila, no la caducidad: una `pending` ya caducada también se cancela. |
+| `api_key` con `organization_id` de esa empresa | Se revocan (`revoked_at`) en la misma transacción, por la misma razón (R-14). Solo las que **ya estaban vivas**: una revocada antes conserva su fecha. Las claves **sin** `organization_id` —las de SLG— no se tocan: archivar un cliente no apaga la integración de la casa. |
 | `lead_capture` | **No se toca y no tiene relación con la empresa**: una captura es una persona que descargó un documento, no un cliente. Esa ausencia de relación es deliberada (frontera (a) de `scope.md`). |
-| `audit_log` | Recibe una fila del archivado, como cualquier otra escritura. |
+| `audit_log` | Recibe la fila del archivado (`org.archive`) **y una por cada cosa cerrada**: `invitation.revoke` por invitación y `apikey.revoke` por clave, las mismas acciones que apunta una revocación a mano. Así el histórico de una invitación se lee entero en un solo sitio. |
+
+**«En la misma transacción» es literal**: las tres escrituras van en un único `withScope`. Tres
+transacciones separadas dejarían, el día que fallara la segunda, una empresa archivada con sus claves
+vivas — el mismo agujero, pero intermitente.
+
+**Reactivar NO deshace el cierre.** `UPDATE organization SET status = 'active'` devuelve la empresa y a
+sus miembros, porque `membership` se conservó; las invitaciones canceladas y las claves revocadas se
+quedan como están. Es una puerta que se cerró, no una que se entornó: quien vuelva a hacer falta se
+invita otra vez, y la clave se crea de nuevo declarando alcances y caducidad. Resucitarlas en silencio
+sería conceder, meses después, un acceso que nadie recuerda haber dado.
 
 **Y si alguien intenta `DELETE FROM organization`**: falla por `RESTRICT` en la primera fila hija. Ese
 fallo ruidoso es el objetivo del diseño, no un efecto secundario: convierte un error irreversible en un

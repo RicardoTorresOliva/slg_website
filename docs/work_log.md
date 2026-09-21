@@ -3429,3 +3429,50 @@ verde.
 **No verificado en esta máquina**: `test:gestion` (las dos comprobaciones nuevas del criterio 2) y el
 resto de `test:db`, porque necesitan PostgreSQL y esta máquina no lo tiene; se corren en CI. La
 migración queda **pendiente de aplicar en producción**, igual que 0020.
+
+## Archivar una empresa cierra sus invitaciones y sus claves (2026-09-21)
+
+El cierre del 21-09 lo dejó anotado como deuda: archivar cambiaba `status` a `archived` y ahí se
+acababa, mientras `data_model` §4.3 lleva desde el primer día pidiendo dos cosas más. Las dos que
+faltaban son justo las que **no pasan por la capa de acceso**, que es la razón de que el agujero no
+se viera: la capa de sesión deniega el portal a los miembros de una empresa archivada, pero un enlace
+de invitación lo canjea alguien que todavía no tiene cuenta —se la crea al canjearlo—, y una clave de
+API escribe por `/api/v1` sin sesión ninguna. Una empresa archivada quedaba cerrada por dentro con
+dos llaves fuera.
+
+**Hecho**: `cambiarEstadoDeEmpresa` (`lib/hq/empresas.ts`) hace las tres escrituras en **un solo**
+`withScope` —que es una sola transacción— cuando el estado al que va es `archived`: la empresa a
+`archived`, sus `invitation` en `pending` a `canceled` con `revoked_at`, quién la cerró y el
+`token_hash` borrado (lo mismo que hace `revocarInvitacion` a mano), y sus `api_key` vivas con
+`revoked_at`. La condición de las invitaciones es el estado de la fila y no la caducidad: una
+`pending` ya caducada sigue siendo una fila que dice `pending`, y dejarla viva haría que el contenido
+de la tabla dependiera de cuándo se mira. Las claves llevan `revoked_at IS NULL` para no reescribir
+la fecha de una revocada hace meses, y las claves **sin** empresa no entran: son las de SLG, y
+archivar un cliente no puede apagar la integración de la casa. Tres `withScope` habrían sido tres
+transacciones, y el día que fallara la segunda dejarían una empresa archivada con las claves vivas —
+el mismo agujero, pero intermitente y mucho peor de encontrar.
+
+**La auditoría no estrena vocabulario**: cada invitación cancelada deja un `invitation.revoke` y cada
+clave revocada un `apikey.revoke`, que son las acciones que ya apuntan `lib/hq/usuarios.ts` y
+`lib/hq/claves.ts`. Inventar aquí una acción distinta partiría en dos el histórico de una invitación y
+obligaría a saber de antemano por cuál de las dos preguntar. Los apuntes salen por `auditar`, fuera de
+la transacción y a propósito: `lib/auditoria` escribe con `withSystemScope` y no lanza nunca, así que
+meterlo dentro no lo haría atómico —es otra conexión— y sí ataría el cierre al registro.
+
+**Reactivar no deshace nada de esto**, y está dicho en el código y en §4.3: la empresa vuelve y sus
+miembros con ella, porque `membership` se conservó, pero las invitaciones canceladas y las claves
+revocadas se quedan. Es una puerta que se cerró, no una que se entornó.
+
+**Sin migración**: `invitation.status` ya admite `canceled` —los cuatro valores del plugin, desde
+0001— y `api_key.revoked_at` existe desde 0006. La política de aislamiento de 0015 ya deja a
+`slg_admin` cruzar empresas en las dos tablas, así que tampoco hizo falta tocarla.
+
+**Verificado en esta máquina**: `check:types`, `lint`, `check:migrations`, `check:fronteras`,
+`check:alcance`, `check:cadenas`, `check:copy`, `check:playbook` y `check:literacy`, todos en verde.
+
+**No verificado en esta máquina**: `scripts/hq/test-gestion.ts`, ampliado con el caso entero —empresa
+con dos invitaciones pendientes (una de ellas caducada) y dos claves vivas, una del cliente y otra sin
+empresa → archivar → las dos invitaciones `canceled` y sin `token_hash`, la clave del cliente revocada
+y muerta para HQ, la de la casa intacta, y los apuntes de auditoría contados por delta; reactivar y
+comprobar que no resucita ninguna—. La prueba necesita PostgreSQL real, que esta máquina no tiene; se
+corre en CI.

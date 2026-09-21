@@ -31,6 +31,12 @@
  *     archiva empresas; `slg_operator` cierra solo los proyectos que tiene
  *     asignados, y cada rechazo queda auditado como `.denied`. Reactivar y
  *     reabrir lo devuelven todo tal como estaba.
+ *   · **Archivar CIERRA las dos puertas (§4.3)** — las invitaciones `pending`
+ *     de esa empresa quedan `canceled` y sus claves de API revocadas, en la
+ *     misma operación y con su apunte de auditoría; la clave sin empresa —la de
+ *     la casa— **no** se toca; y reactivar **no** resucita ni una ni otra. Es la
+ *     mitad del contrato que el código no cumplía: una empresa archivada dejaba
+ *     un enlace de invitación canjeable y una clave escribiendo por `/api/v1`.
  *   · **El identificador del CRM (D-163)** — se pone al crear la empresa, se
  *     edita, y **es de una sola**: repetirlo en otra empresa es un dato
  *     inválido con su campo (`crmCompanyId`), no un error de PostgreSQL, tanto
@@ -71,6 +77,14 @@ const SLUG_CLIENTE = "cliente-demo-du14";
 const SLUG_SEGUNDA = "cliente-dos-du14";
 const CRM_ID = "crm-du14-0001";
 const OPERADOR = "u-operador-du14";
+/**
+ * Las dos claves de API de la prueba del archivado, identificadas **por el
+ * nombre**: la del cliente se la llevaría el borrado de su empresa en cascada,
+ * pero la de la casa no cuelga de ninguna —ese es justo el punto— y sin nombre
+ * conocido no habría forma de limpiarla.
+ */
+const CLAVE_CLIENTE = "Clave DU14 del cliente";
+const CLAVE_SLG = "Clave DU14 de la casa";
 
 const ctxDe = (rol: UserRole, userId: string, org: string | null) =>
   contextoDeSesion({ userId, userName: `Persona ${rol}`, role: rol, organizationId: org });
@@ -120,6 +134,9 @@ async function limpiar() {
   await dueno`delete from news_item where organization_id in (${ORG_SLG}, ${ORG_CLIENTE})`;
   await dueno`delete from project where organization_id in (${ORG_SLG}, ${ORG_CLIENTE})`;
   await dueno`delete from "user" where id in (${ADMIN}, ${OPERADOR})`;
+  // Por nombre: ver el comentario de `CLAVE_SLG`. La del cliente caería con su
+  // empresa; la de la casa no cae con nada.
+  await dueno`delete from api_key where name in (${CLAVE_CLIENTE}, ${CLAVE_SLG})`;
   await dueno`delete from organization where id in (${ORG_SLG}, ${ORG_CLIENTE})`;
 }
 
@@ -156,6 +173,7 @@ async function main() {
     "../../lib/hq/proyectos.ts"
   );
   const { invitarASlg, invitarACliente, invitacionesPendientes, revocar } = await import("../../lib/hq/usuarios.ts");
+  const { claves, crearClave } = await import("../../lib/hq/claves.ts");
   const { esServicioLiteral, serviciosLiterales } = await import("../../lib/hq/servicios.ts");
   const { PROJECT_SERVICES } = await import("../../lib/db/schema.ts");
   const { consultarTestigo } = await import("../../lib/invitations/index.ts");
@@ -703,6 +721,65 @@ async function main() {
     );
     check("y la empresa sigue activa", (await empresas(admin())).find((e) => e.id === ORG_CLIENTE)?.estado === "active");
 
+    /**
+     * LAS DOS PUERTAS DE §4.3, abiertas a propósito justo antes de archivar.
+     *
+     * Ninguna de las dos pasa por la capa de sesión, que es la razón de que el
+     * estado de la empresa no bastara: el enlace de invitación lo canjea alguien
+     * que **todavía no tiene cuenta**, y la clave escribe por `/api/v1` sin
+     * sesión ninguna. Por eso se comprueban aquí y no en la prueba del portal.
+     *
+     * La invitación caducada de más arriba sigue en `pending` y también entra:
+     * lo que se cierra es el estado de la fila, no «las que aún valían».
+     */
+    const invitacionViva = await invitarACliente(admin(), {
+      email: `viva@${SUFIJO}`,
+      organizationId: ORG_CLIENTE,
+      role: "client_member",
+    });
+    const CADUCA = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const claveDelCliente = await crearClave(admin(), {
+      nombre: CLAVE_CLIENTE,
+      organizationId: ORG_CLIENTE,
+      alcances: ["deliverables:read"],
+      limite: 60,
+      ventanaSegundos: 60,
+      caducaEn: CADUCA,
+    });
+    // La de la casa: sin empresa. Archivar un cliente no puede apagar la
+    // integración de SLG, y sin esta clave el freno no distinguiría «revoca las
+    // de esa empresa» de «revoca todas».
+    const claveDeLaCasa = await crearClave(admin(), {
+      nombre: CLAVE_SLG,
+      organizationId: null,
+      alcances: ["orgs:read"],
+      limite: 60,
+      ventanaSegundos: 60,
+      caducaEn: CADUCA,
+    });
+
+    const estadoDeInvitacion = async (invitationId: string) => {
+      const [f] = await dueno<{ status: string }[]>`select status from invitation where id = ${invitationId}`;
+      return f?.status ?? "(no existe)";
+    };
+    const revocada = async (claveId: string) =>
+      (await claves(admin())).find((c) => c.id === claveId)?.revocadaEn !== null;
+    const pendientesDeLaEmpresa = async () => {
+      const [f] = await dueno<{ n: number }[]>`select count(*)::int as n from invitation
+                                                where organization_id = ${ORG_CLIENTE} and status = 'pending'`;
+      return Number(f?.n ?? -1);
+    };
+
+    check(
+      "antes de archivar hay dos invitaciones pendientes y dos claves vivas",
+      (await pendientesDeLaEmpresa()) === 2 && !(await revocada(claveDelCliente.id)) && !(await revocada(claveDeLaCasa.id)),
+      `pendientes: ${await pendientesDeLaEmpresa()}`,
+    );
+    // Se cuenta desde aquí porque `revocar` ya apuntó una revocación más arriba:
+    // lo que se comprueba es lo que añade el archivado, no el total.
+    const revocacionesAntes = (await apuntes("invitation.revoke", ADMIN)).length;
+    const clavesRevocadasAntes = (await apuntes("apikey.revoke", ADMIN)).length;
+
     const archivada = await archivarEmpresa(admin(), ORG_CLIENTE);
     check("el administrador la archiva y vuelve archivada", archivada?.estado === "archived", JSON.stringify(archivada));
     check(
@@ -722,11 +799,64 @@ async function main() {
     );
     check("una empresa que no existe es `null`, no un error", (await archivarEmpresa(admin(), "no-existe")) === null);
 
+    console.log("\n…y CIERRA las dos puertas que no pasan por la sesión (§4.3):\n");
+    check(
+      "la invitación viva queda cancelada, no borrada",
+      (await estadoDeInvitacion(invitacionViva.invitacion.id)) === "canceled",
+      await estadoDeInvitacion(invitacionViva.invitacion.id),
+    );
+    check(
+      "y la caducada también: lo que se cierra es el estado de la fila, no «las que aún valían»",
+      (await estadoDeInvitacion(caducable.invitacion.id)) === "canceled",
+      await estadoDeInvitacion(caducable.invitacion.id),
+    );
+    check("no queda ninguna pendiente en esa empresa", (await pendientesDeLaEmpresa()) === 0);
+    /**
+     * El hash del testigo se borra, igual que al revocar a mano: un hash
+     * guardado de un enlace que ya no vale solo sirve para confundir a quien
+     * lea la tabla después. Se mira la columna y no `consultarTestigo`, que ya
+     * decía «no vale» por la caducidad y no distinguiría las dos razones.
+     */
+    const [sinTestigo] = await dueno<{ vacio: boolean }[]>`select token_hash is null as vacio
+                                                             from invitation where id = ${caducable.invitacion.id}`;
+    check("y el hash de su enlace se borra, como en una revocación a mano", sinTestigo?.vacio === true);
+    check("la clave de la empresa queda revocada", await revocada(claveDelCliente.id));
+    check(
+      "y HQ la da por muerta",
+      (await claves(admin())).find((c) => c.id === claveDelCliente.id)?.muerta === true,
+    );
+    check(
+      "la clave SIN empresa sigue viva: archivar un cliente no apaga la integración de la casa",
+      !(await revocada(claveDeLaCasa.id)),
+    );
+    check(
+      "cada invitación cancelada deja su apunte, con la acción que ya existía",
+      (await apuntes("invitation.revoke", ADMIN)).length - revocacionesAntes === 2,
+      `${revocacionesAntes} → ${(await apuntes("invitation.revoke", ADMIN)).length}`,
+    );
+    check(
+      "y cada clave revocada, el suyo",
+      (await apuntes("apikey.revoke", ADMIN)).length - clavesRevocadasAntes === 1,
+      `${clavesRevocadasAntes} → ${(await apuntes("apikey.revoke", ADMIN)).length}`,
+    );
+
     console.log("\nReactivar — la devuelve, con todo lo suyo y sin volver a invitar a nadie:\n");
     const reactivada = await reactivarEmpresa(admin(), ORG_CLIENTE);
     check("vuelve activa", reactivada?.estado === "active", JSON.stringify(reactivada));
     check("y queda auditado", (await apuntes("org.reactivate", ADMIN)).length === 1);
     check("con todo lo suyo intacto", JSON.stringify(await cuenta()) === JSON.stringify(antesDeArchivar));
+    /**
+     * LO QUE REACTIVAR **NO** HACE, que es la mitad que se olvida. Una puerta
+     * que se cerró al archivar se queda cerrada: quien haga falta se invita otra
+     * vez, y la clave se crea de nuevo declarando alcances y caducidad. Volver a
+     * abrirlas en silencio sería conceder, meses después, un acceso que nadie
+     * recuerda haber dado.
+     */
+    check(
+      "y las invitaciones canceladas NO resucitan",
+      (await estadoDeInvitacion(invitacionViva.invitacion.id)) === "canceled" && (await pendientesDeLaEmpresa()) === 0,
+    );
+    check("ni la clave revocada", await revocada(claveDelCliente.id));
 
     console.log("\nCerrar un proyecto — solo los asignados, y sus entregables se quedan (RF-86, §2.5):\n");
     const estadoCierreAjeno = await estadoDe(() => archivarProyecto(operador(), ajeno));
