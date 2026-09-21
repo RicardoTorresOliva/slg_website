@@ -148,6 +148,13 @@
       "when": 1790030000000,
       "tag": "0020_empresa_del_crm",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1790040000000,
+      "tag": "0021_vocabulario_de_servicios",
+      "breakpoints": true
     }
   ]
 }

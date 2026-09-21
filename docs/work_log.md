@@ -3384,3 +3384,48 @@ duplicado en `test-api.ts` pasó `check:types` y rompió CI. Ahora incluye `**/*
 
 CI: todo M6 en verde contra PostgreSQL real en corridas anteriores; la corrida de `8263173` quedó en
 marcha al cerrar.
+
+## `Holdings by SLG`: la base decía otra cosa y el servicio no se podía crear (2026-09-21)
+
+El hallazgo quedó apuntado dos veces en este mismo registro sin resolverse: el `CHECK
+project_service_literal` de 0001 aceptaba `SLG_Holdings`, y desde el 18-09 el contenido, las páginas
+públicas, el desplegable de HQ y `data_model` §3.13 dicen `Holdings by SLG`. No era una diferencia
+cosmética entre un documento y un archivo: era un servicio de la oferta **imposible de dar de alta**.
+HQ lo ofrecía en la lista —el desplegable deriva de la colección de contenido, no del esquema—, el
+servidor lo daba por bueno porque `esServicioLiteral` pregunta a esa misma colección, y PostgreSQL lo
+rechazaba en el último metro: un 500 donde el contrato promete un 422 (D-162).
+
+**Hecho**: migración `0021_vocabulario_de_servicios` — `UPDATE` de las filas que llevaran el nombre
+viejo (no debería haber ninguna, pero un sembrado antiguo puede tenerlas y añadir la contención
+antes de traducirlas haría fallar la migración a mitad) y la contención **reescrita entera**,
+`DROP CONSTRAINT IF EXISTS` más `ADD CONSTRAINT`, como hicieron 0018, 0019 y 0020 con el `CHECK` de
+`api_key.scopes`; su entrada en `drizzle/meta/_journal.json` (`idx: 21`), sin la cual `drizzle-kit`
+no la aplicaría y el despliegue no diría nada; `PROJECT_SERVICES` en `lib/db/schema.ts`, que es el
+espejo del `CHECK`, con el comentario ampliado para que la próxima vez se lea que ser espejo **no
+autoriza a discrepar del contenido**; y §3.13 de `data_model`, donde el «coste asumido» de la
+contención gana el párrafo que le faltaba: renombrar un servicio también es una migración, y esta es
+la factura de haberlo olvidado.
+
+Siguen siendo once servicios: cambia uno, no el número. Los otros diez —`Phoenix PEEx`, `Phoenix
+TEAx`, `Phoenix RETx`, `Customize Programs`, `AI Coaching for Directors`, `SLG_Readiness`,
+`SLG_Implement`, `APP_Building`, `AGE_Building`, `CoO as a Service`— se comprobaron uno a uno contra
+el frontmatter `name` de `content/services/es` y `en`, y coinciden exactos. `download.service` no
+tiene contención en la base (guarda el *slug* del documento, no el nombre literal), así que no hay
+segunda migración escondida.
+
+**El freno que faltaba**: `scripts/hq/test-gestion.ts`, criterio 2, probaba las tres formas de
+escribir mal un servicio —minúsculas, espacio en vez de guion bajo, nombre inventado— y las tres
+preguntan al contenido, así que **ninguna podía ver este defecto**: la lista de la oferta estaba
+perfecta y la base decía otra cosa. Ahora enfrenta las tres fuentes: la colección de contenido,
+`PROJECT_SERVICES` y la definición viva de `project_service_literal` leída de `pg_constraint`. Se
+consulta la definición en vez de insertar once proyectos porque insertarlos alteraría los recuentos
+de archivar y cerrar que vienen después, y porque el texto del `CHECK` es exactamente lo que la base
+va a aplicar.
+
+**Verificado aquí**: `check:types`, `lint`, `check:migrations`, `check:fronteras`, `check:alcance`,
+`check:cadenas`, `check:copy`, `check:playbook`, `check:nomenclature` y `check:literacy`, todos en
+verde.
+
+**No verificado en esta máquina**: `test:gestion` (las dos comprobaciones nuevas del criterio 2) y el
+resto de `test:db`, porque necesitan PostgreSQL y esta máquina no lo tiene; se corren en CI. La
+migración queda **pendiente de aplicar en producción**, igual que 0020.
