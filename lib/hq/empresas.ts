@@ -7,12 +7,12 @@
  * dejaría filas creadas por quien no podía crearlas; auditar solo el éxito
  * dejaría los intentos sin rastro, que es lo que el criterio pide que no pase.
  */
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 
 import { exigir } from "../auth/matriz.ts";
-import { conAuditoria } from "../auditoria/index.ts";
+import { auditar, conAuditoria } from "../auditoria/index.ts";
 import type { AuthContext } from "../db/context.ts";
-import { ORG_STATUS, ORG_TYPES, organization } from "../db/schema.ts";
+import { apiKey, invitation, ORG_STATUS, ORG_TYPES, organization } from "../db/schema.ts";
 import { withScope } from "../db/scope.ts";
 
 /**
@@ -218,7 +218,9 @@ export async function editarEmpresa(
  * ══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * Archivar es `UPDATE organization SET status = 'archived'` **y nada más**.
+ * Archivar es `UPDATE organization SET status = 'archived'` **y cerrar las dos
+ * puertas que quedarían abiertas a un sitio cerrado** (data_model §4.3).
+ *
  * Los proyectos, los entregables y las pertenencias se quedan donde están:
  * son la prueba de lo que se entregó, y la pertenencia es lo que permite
  * reactivar sin volver a invitar. El acceso de sus miembros al portal lo corta
@@ -226,6 +228,28 @@ export async function editarEmpresa(
  * `active`—, no esta función. Lo pidió el uso real: se creó una empresa de
  * prueba y no había forma de quitarla desde la pantalla, aunque el modelo
  * llevaba el estado desde el primer día.
+ *
+ * **LAS DOS PUERTAS.** Una invitación `pending` y una clave de API viva no
+ * pasan por la capa de sesión, así que el estado de la empresa no las tocaba:
+ * la invitación la canjea alguien que nunca tuvo sesión —y se la crea al
+ * canjearla—, y la clave escribe por `/api/v1` sin sesión ninguna. Archivar
+ * dejaba, literalmente, una empresa cerrada con el pestillo echado por dentro y
+ * dos llaves fuera. Por eso las invitaciones pendientes pasan a `canceled`
+ * (RF-60) y las claves de esa empresa quedan revocadas (R-14) **aquí**.
+ *
+ * **EN LA MISMA TRANSACCIÓN, Y POR ESO EN UN SOLO `withScope`.** Cada llamada a
+ * `withScope` abre su propia transacción: tres llamadas serían tres, y un fallo
+ * en la segunda dejaría la empresa archivada con sus claves vivas —el defecto
+ * de partida, pero ahora intermitente y por tanto peor de encontrar—. Las tres
+ * escrituras van dentro del mismo `callback`: o entran las tres, o no entra
+ * ninguna.
+ *
+ * **REACTIVAR NO RESUCITA NADA.** La invitación cancelada y la clave revocada
+ * se quedan como están: son una puerta que se cerró, no una puerta que se
+ * entornó. Quien vuelva a hacer falta se invita otra vez —la pertenencia sigue
+ * ahí para quien ya era miembro— y la clave se crea de nuevo, que además la
+ * obliga a declarar alcances y caducidad. Devolverlas a la vida en silencio
+ * sería reabrir, meses después, un acceso que nadie recuerda haber concedido.
  *
  * **Sin prueba de asignación, a propósito.** Archivar una empresa entera
  * —con los proyectos de otros operadores y el acceso de todos sus miembros—
@@ -245,10 +269,85 @@ async function cambiarEstadoDeEmpresa(
   return conAuditoria(ctx, { accion, entidad: "organization", entidadId: id, organizationId: id }, async () => {
     exigir(ctx, "org.write", { asignado: false });
 
-    const [fila] = await withScope(ctx, (db) =>
-      db.update(organization).set({ status: estado }).where(eq(organization.id, id)).returning(),
-    );
+    const cerrado = await withScope(ctx, async (db) => {
+      const [fila] = await db
+        .update(organization)
+        .set({ status: estado })
+        .where(eq(organization.id, id))
+        .returning();
+      // Ni empresa que cambiar, ni reactivación que cierre nada: el cierre es
+      // cosa del archivado y solo del archivado.
+      if (!fila || estado !== "archived") return { fila, invitaciones: [] as string[], claves: [] as string[] };
+
+      /**
+       * El mismo instante para las dos, no dos `now()` separados por unos
+       * microsegundos: quien lea después el registro tiene que poder ver que
+       * fue **un** cierre y no varios.
+       */
+      const ahora = new Date();
+
+      /**
+       * El testigo se borra, igual que en `revocarInvitacion`: un hash guardado
+       * de un enlace que ya no vale solo sirve para confundir una auditoría.
+       * `status = 'pending'` es la condición, no «no caducada»: una pendiente
+       * ya caducada sigue siendo una fila que dice `pending`, y dejarla así
+       * haría que el estado de la tabla dependiera de cuándo se mira.
+       */
+      const invitaciones = await db
+        .update(invitation)
+        .set({
+          status: "canceled",
+          revokedAt: ahora,
+          revokedByUserId: ctx.actorType === "user" ? ctx.actorId : null,
+          tokenHash: null,
+        })
+        .where(and(eq(invitation.organizationId, id), eq(invitation.status, "pending")))
+        .returning({ id: invitation.id });
+
+      /**
+       * `isNull(revokedAt)` para no pisar la fecha de una clave ya revocada
+       * hace meses —sería reescribir cuándo se revocó— y para que el recuento
+       * que se audita diga **lo que este archivado cerró**, no lo que había.
+       * Las claves sin empresa (`organization_id` nulo) no entran: son las de
+       * SLG, y archivar un cliente no puede apagar la integración de la casa.
+       */
+      const claves = await db
+        .update(apiKey)
+        .set({ revokedAt: ahora })
+        .where(and(eq(apiKey.organizationId, id), isNull(apiKey.revokedAt)))
+        .returning({ id: apiKey.id });
+
+      return { fila, invitaciones: invitaciones.map((i) => i.id), claves: claves.map((c) => c.id) };
+    });
+
+    const { fila } = cerrado;
     if (!fila) return null;
+
+    /**
+     * **Una fila de auditoría por cada cosa cerrada, con las acciones que ya
+     * existen.** `invitation.revoke` y `apikey.revoke` son las mismas que
+     * apuntan `lib/hq/usuarios.ts` y `lib/hq/claves.ts` cuando alguien revoca a
+     * mano: inventar aquí una acción distinta partiría en dos el histórico de
+     * una invitación, y la pregunta «¿cuándo dejó de valer este enlace?» tendría
+     * que buscarse en dos sitios y saber de antemano en cuál.
+     *
+     * Van **fuera** de la transacción a propósito. `auditar` escribe con
+     * `withSystemScope` y no lanza nunca (ver `lib/auditoria`): meterlo dentro
+     * no lo haría atómico —es otra conexión— y sí ataría el cierre al registro,
+     * que es justo lo que ese módulo existe para evitar.
+     */
+    for (const invitacionId of cerrado.invitaciones) {
+      await auditar(ctx, {
+        accion: "invitation.revoke",
+        entidad: "invitation",
+        entidadId: invitacionId,
+        organizationId: id,
+      });
+    }
+    for (const claveId of cerrado.claves) {
+      await auditar(ctx, { accion: "apikey.revoke", entidad: "api_key", entidadId: claveId, organizationId: id });
+    }
+
     return {
       id: fila.id,
       nombre: fila.name,
@@ -265,6 +364,12 @@ export async function archivarEmpresa(ctx: AuthContext, id: string): Promise<Emp
   return cambiarEstadoDeEmpresa(ctx, id, "archived", "org.archive");
 }
 
+/**
+ * Devuelve la empresa a `active` **y nada más**: las invitaciones que el
+ * archivado canceló y las claves que revocó se quedan donde están (ver el
+ * comentario de `cambiarEstadoDeEmpresa`). Reactivar recupera a los miembros
+ * que ya lo eran, no los accesos que se cerraron.
+ */
 export async function reactivarEmpresa(ctx: AuthContext, id: string): Promise<Empresa | null> {
   return cambiarEstadoDeEmpresa(ctx, id, "active", "org.reactivate");
 }
