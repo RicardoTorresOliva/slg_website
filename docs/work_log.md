@@ -3323,3 +3323,29 @@ de `content/ui`: es oferta, no interfaz, y el día que la portada de la línea q
 donde tiene que estar. Seis servicios en ES y EN. Comprobado en el servidor local a 1280 px y en
 móvil: la estructura es la misma, solo cambia dónde va la raíz. Frenos: `check:content` entero
 (2232 comprobaciones de copy), `cadenas`, `contraste`, `motion`, `types`, `lint`.
+
+## Cierre del 2026-09-21: D-162 hecho, D-163 a medias, favicon, tsc sobre todos los scripts
+
+**D-162** (`31d6ad3`): el CRM crea el proyecto y el sitio lo recibe por `POST
+/api/v1/organizations/{id}/projects`, idempotente por `crm_project_id` (0019, aplicada en
+producción), alcance `projects:write`, `close`/`reopen`, +40 comprobaciones en `test:api`. Hallazgo
+del agente: el `CHECK` de 0001 acepta `SLG_Holdings` y el contenido dice `Holdings by SLG` — un
+proyecto de esa línea no se puede crear (pendiente). **Archivar** (`a827bfd`): empresas y proyectos,
+dos pasos por URL, nada se borra; §4.3 pide además cancelar invitaciones y revocar claves, y eso
+queda anotado. **D-163** (crm_company_id, `POST /organizations`, `orgs:write`, 0020): un agente lo
+tenía a medias al cerrar la sesión; su worktree conserva el trabajo sin commit.
+
+**Vista previa**: `DATABASE_URL` de Preview apuntaba a `db.example.com` (el marcador de la época sin
+base) y el login fallaba con el mensaje mudo de credenciales. Se vio solo cuando
+`/api/acceso/contrasena` empezó a registrar la causa en el servidor (`[acceso] … causa: [ENOTFOUND]`):
+la respuesta sigue siendo la misma para todos los motivos (RNF-32), pero el registro ya no calla.
+Arreglado con una variable acotada a la rama `develop` (pooler 6543). `scripts/auth/revisar-cuenta.ts`
+diagnostica una cuenta con las dos conexiones sin escribir nada.
+
+**Favicon** (`8263173`): el sitio servía el `favicon.ico` de la plantilla de Next; ahora el isotipo
+centrado en lienzo cuadrado (`app/icon.svg`, `icon.png`, `apple-icon.png`, `favicon.ico` con PNG).
+**tsc sobre todos los scripts**: `scripts/tsconfig.json` incluía cuatro carpetas; un identificador
+duplicado en `test-api.ts` pasó `check:types` y rompió CI. Ahora incluye `**/*.ts`.
+
+CI: todo M6 en verde contra PostgreSQL real en corridas anteriores; la corrida de `8263173` quedó en
+marcha al cerrar.
