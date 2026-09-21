@@ -686,60 +686,61 @@ rama. `.gitignore`: el `.env*` del final **anulaba el `!.env.example`** de arrib
 
 ## PRÓXIMA SESIÓN
 
-Cierre del 2026-09-21 por límite de ventana de contexto. **`develop` = `8263173`**, empujado.
-Producción = `slg-website-o4bkrnmrj` (desplegada por Ricardo el 18-09 **antes de FU-15**: no tiene
-M6 ni nada del 21-09). La base de producción SÍ tiene las migraciones **0018 y 0019** (20/20).
+Cierre del 2026-09-21 (segunda tanda). **`develop` = `dfc767d`**, empujado, **CI entero en verde**
+—incluido «Datos», que corre las migraciones y el aislamiento contra PostgreSQL real—.
+**Producción = `slg-website-ohk96rxwu`**, desplegada desde `dfc767d`: código y base **en 23 de 23**,
+sin desajuste. Comprobado por HTTP sobre el dominio: portada, `/acceder`, favicon e `icon.svg` a 200,
+`robots.txt` publicando `https://softlandingglobal.com` (la variable real, no un respaldo inventado),
+`/visor/<id>` sin vale a 404.
 
-### 0 · Al abrir: tres comprobaciones antes de tocar nada
-1. **D-163 quedó fusionado antes de cerrar** (`ba62641`, empujado): `organization.crm_company_id`,
-   migración **0020** (`0020_empresa_del_crm.sql`, **pendiente de aplicar en producción**), `POST
-   /api/v1/organizations` idempotente por `crm_company_id`, alcance `orgs:write`, campo en el
-   formulario de HQ. Los catorce frenos estáticos en verde sobre el árbol fusionado; `test:api`
-   (+25) y `test:gestion` (+10) los corre CI. No queda ningún worktree de agente abierto.
-2. `gh run list --branch develop --limit 3`: el CI de `8263173` estaba en marcha al cerrar. Todo lo
-   de M6 ya había pasado en verde en corridas anteriores (api 216, hoy 58, programa 31, entregables
-   55, gestión, materiales 29, webhooks 32); lo último que faltaba ver en verde era `check:brakes`
-   tras arreglar la expectativa del armazón y el `tsconfig` de scripts.
-3. La vista previa de `develop`: `https://slg-website-git-develop-ricardotorresolivas-projects.vercel.app`
-   (compuerta: usuario `slg`; la contraseña la guarda Vercel → Preview/develop →
-   `STAGING_BASIC_AUTH_PASSWORD`; Ricardo ya la tiene en su navegador). `DATABASE_URL` de esa rama
-   apunta a la base real por el pooler **6543**; la de Preview genérica sigue con un valor
-   inservible (`db.example.com`) — cualquier otra rama no conecta.
+### 0 · Lo que se cerró hoy, después de D-163
+Cuatro defectos de la lista «anotados, sin arreglar», cada uno por un agente en su worktree, todos
+fusionados y con los frenos en verde tras cada fusión:
 
-### 1 · Lo que Ricardo tiene que hacer (en este orden)
-1. **Aplicar 0020** (D-163 ya está en `develop`):
-   `node --env-file=$HOME/Dev/SLG_Overhauling/ops/supabase-slg-website.env scripts/db/migrar.ts`
-   → «1 migración(es) aplicada(s) ahora: 0020…».
-2. **Desplegar producción** con CI en verde: `cd ~/Dev/slg_website && git pull && vercel --prod`.
-   Antes, en Vercel → Settings → Environment Variables → `DATABASE_URL` (Production): `:5432` →
-   `:6543` (sigue en modo sesión, tope 15 conexiones; fue la causa del 500 de Capturas).
-3. **Terminar la revisión visual** (no la acabó): en la vista previa, invitar
+- **0021 · vocabulario de servicios.** El `CHECK project_service_literal` aceptaba `SLG_Holdings`
+  donde el contenido dice `Holdings by SLG`: un proyecto de esa línea no se podía crear. Los once
+  literales verificados uno a uno contra el frontmatter de `content/services`; los otros diez
+  coincidían. La prueba de gestión ahora lee la definición viva del `CHECK` desde `pg_constraint` y
+  la compara con el contenido, así que la discrepancia no vuelve sin que un freno la vea.
+- **0022 · el visor abre los entregables internos desde HQ.** El arreglo NO relaja la función de
+  0016: el **ámbito va firmado dentro del vale** (`<id>.<caducidad>.<ámbito>`). HQ firma `hq` sobre
+  lo que ya filtró la política de fila; el portal firma `cliente` sobre una consulta que nunca
+  devuelve un `internal`. Reescribir `a=hq` en una URL del portal rompe el HMAC. La función pide el
+  ámbito **sin `DEFAULT`**, y 0022 hace `DROP` de la de un argumento: la versión vieja no queda
+  llamable.
+- **Archivar cierra de verdad** (§4.3, sin migración: `invitation.status` admitía `canceled` desde
+  0001 y `api_key.revoked_at` existe desde 0006). En la misma transacción: estado a `archived`,
+  invitaciones pendientes a `canceled` con `token_hash = NULL`, claves de esa empresa revocadas.
+  Las claves sin empresa —las de la casa— no se tocan. Reactivar devuelve solo el estado: ni
+  invitaciones ni claves resucitan. Auditoría con el vocabulario que ya existía
+  (`invitation.revoke`, `apikey.revoke`).
+- **Dos defectos de la plantilla.** El texto con la marca en `lib/` resultó ser una **copia
+  duplicada**: `auth.signin.error` y `auth.invitation.invalid` ya existían en los dos idiomas y las
+  pantallas ya las pintaban; `lib/` exporta ahora la clave, no el mensaje. Y el respaldo
+  `?? "https://softlandingglobal.com"` se sustituye por `baseDelSitio()` en `lib/content/sitio.ts`,
+  que **falla al compilar** si falta `NEXT_PUBLIC_SITE_URL` o no es URL absoluta — al construir y no
+  al arrancar, porque `NEXT_PUBLIC_*` se incrusta en el build. Apareció un cuarto sitio que el
+  inventario no había visto: `scripts/ci/check-seo.ts` medía los `canonical` contra el dominio
+  inventado y pasaba en verde. `ci.yml` lleva la variable en los dos trabajos que compilan.
+
+### 1 · Lo que Ricardo tiene que hacer
+1. **Terminar la revisión visual** (sigue sin hacerse): en la vista previa de `develop`, invitar
    `torresoliva.ricardo@gmail.com` como `client_admin` de `Cliente de Prueba` desde `/hq/usuarios`,
    entrar al portal y recorrer «Hoy», «Programa» (marcar un pendiente), «Clases», «Avisos». Al
-   terminar, archivar `Cliente de Prueba` desde `/hq/empresas` (ya existe el botón).
-4. **Clave para Hermes Editor**: `/hq/claves` → alcances `orgs:read` + `news:write` → dársela a
-   Hermes con `GET /api/v1/organizations` + `POST /api/v1/organizations/{id}/news`
-   (`title, source_url, summary_md, comment_md, importance 1-3, publish`). Contrato en
-   `GET /api/v1/openapi.json`.
-5. **El flujo CRM → sitio** (n8n o webhook del CRM), cuando D-163 esté: al crear proyecto en el
-   CRM → `POST /api/v1/organizations` (idempotente por `crm_company_id`) → `POST
-   /api/v1/organizations/{id}/projects` (idempotente por `crm_project_id`). Clave con `orgs:read`
-   + `orgs:write` + `projects:write`. Vive fuera de este repo.
+   terminar, archivar `Cliente de Prueba` desde `/hq/empresas` — y ahora eso además cancela sus
+   invitaciones y revoca sus claves, que es justo lo que conviene ver funcionando.
+2. **Clave para Hermes Editor**: `/hq/claves` → alcances `orgs:read` + `news:write`.
+3. **El flujo CRM → sitio** (n8n o webhook del CRM): `POST /api/v1/organizations` (idempotente por
+   `crm_company_id`) → `POST /api/v1/organizations/{id}/projects` (idempotente por
+   `crm_project_id`). Clave con `orgs:read` + `orgs:write` + `projects:write`. Vive fuera del repo.
+4. **La pregunta de la plantilla, §4.1 de `docs/plantilla-de-sitios.md`**: estructura de
+   ejes/líneas/servicios declarada en un archivo (cuesta un generador, paga desde el segundo
+   cliente) o `rutas.ts` por cliente (cuesta cero, paga hasta el tercero). Sin esa respuesta no
+   tiene sentido escribir `site.config` ni el playbook `crear-sitio`.
 
-### 2 · Decisiones tomadas el 21-09 (todas en `decision_log`)
-- **D-162** el CRM crea el proyecto; el sitio lo recibe. Hecho (`31d6ad3`). Formulario de HQ se
-  queda como respaldo.
-- **D-163** las empresas guardan el id del CRM (`crm_company_id`). Hecho (`ba62641`); falta 0020 en producción.
-- Archivar empresas / cerrar proyectos desde HQ (`a827bfd`). Solo `slg_admin` archiva empresas.
-- «Empieza aquí» horizontal con `tagline` por servicio (`85a8228`). Favicon de SLG (`8263173`).
-
-### 3 · Defectos anotados, sin arreglar (cada uno cabe en una hora)
-- `CHECK project_service_literal` (0001) acepta `SLG_Holdings`; el contenido dice `Holdings by SLG`
-  desde el 18-09. Un proyecto de esa línea no se puede crear. Migración de vocabulario.
-- Archivar una empresa **no** cancela sus invitaciones ni revoca sus claves (data_model §4.3 lo
-  pide). Hoy solo cambia `status`.
-- Un entregable `html` `internal` (dashboard de un agente) no abre en el visor desde HQ: la
-  función de 0016 solo sirve `client` (`ui_wireframes` §6.13).
+### 2 · Defectos anotados que siguen abiertos
+- `design_docs/data_model.md:1018` describe un `CHECK download_service_literal` que **no existe en
+  ninguna migración**. El documento dice que la base valida algo que la base no valida.
 - `GET /organizations/{id}/news` no existe: `news.read` no tiene alcance de agente. Si Hermes
   necesita leer noticias, es decisión de matriz B.3.
 - Los botones «Continuar con Google/Microsoft» salen apagados en `/acceder` (deliberado, D-01);
@@ -747,16 +748,29 @@ M6 ni nada del 21-09). La base de producción SÍ tiene las migraciones **0018 y
 - Frenos que no corren en el portátil: los de navegador (Playwright sin Chromium) y los de base
   (sin PostgreSQL ni Docker). CI los corre todos.
 
-### 4 · La plantilla (objetivo A) sigue donde estaba
-Leer `docs/plantilla-de-sitios.md` y responder la pregunta del §4.1 (estructura declarada en un
-archivo o `rutas.ts` por cliente). Después: `site.config` → parametrizar los cinco frenos →
-playbook `crear-sitio` → repositorio plantilla. Y los dos defectos de §2/§3.2 del inventario
-(marca dentro de `lib/`, respaldo `softlandingglobal.com`).
+### 3 · Cosas aprendidas hoy sobre la operación
+- **Una anónima sobre `/hq/tablero` no prueba RF-87.** En producción devuelve 307 a `/acceder`
+  porque el middleware redirige antes de que corra la comprobación del 404; el despliegue del 18-09
+  hacía lo mismo. La comprobación de verdad es **con sesión válida**, como hace `test:acceso`. La
+  frase «Producción sigue en 404» de esta memoria era, leída a secas, engañosa.
+- **Los agentes del Agent tool NO nacen en su propio worktree** salvo que se pida. Dos empezaron a
+  escribir sobre el mismo directorio; hay que crearles el worktree y decírselo. Y cada worktree
+  necesita `node_modules` —enlace simbólico al del repositorio principal basta, salvo para
+  `check:seo`, que compila y Turbopack rechaza el enlace: ahí hace falta copia de verdad—.
+- **Cada empujón cancela el CI del anterior.** Fusionar todo y empujar una sola vez.
+- **Desplegar desde una copia limpia**, no desde el directorio donde trabaja un agente:
+  `.claude/worktrees/desplegar` es un worktree separado con `.vercel` copiado dentro.
+- El `vercel --prod` que devolvía `Not authorized` se arregló con `vercel logout && vercel login`:
+  la sesión del CLI leía (`ls`, `project ls`, `env ls`) pero no escribía.
+- **Orden al desplegar**: primero `scripts/db/migrar.ts`, después `vercel --prod`. Hoy hubo una
+  ventana en la que la base tenía 0022 —que hace `DROP` de la función del visor de un argumento— y
+  el código desplegado aún llamaba a la vieja. Sin consecuencia porque el visor sin vale da 404 y
+  los vales solo los firman HQ y el portal, cerrados en producción; pero la ventana existió.
 
 ### Herramientas que existen y conviene recordar
 - `npm run auth:primer-admin` (arranque; `--rehacer` mientras nadie haya entrado).
 - `npm run auth:revisar-cuenta -- --correo X --password Y`: por qué no entra una cuenta, sin
-  escribir nada. `/api/acceso/contrasena` registra la causa real en el servidor (`[acceso] …`).
+  escribir nada.
 - `node --env-file=<ops>.env scripts/db/migrar.ts`: dice qué aplicó.
-- Los worktrees que crea el Agent tool **nacen de `main`**, ~60 commits detrás de `develop`: cada
-  agente debe empezar con `git merge --ff-only develop`.
+- `.claude/worktrees/desplegar`: copia limpia enlazada a Vercel. Ponerla en el commit que se quiere
+  desplegar con `git -C .claude/worktrees/desplegar checkout --detach <sha>`.
