@@ -148,6 +148,13 @@
       "when": 1790030000000,
       "tag": "0020_empresa_del_crm",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1790050000000,
+      "tag": "0022_visor_de_entregables_internos",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,12 @@
 import { sesionActual } from "@/lib/auth";
 import { MAXIMO_BYTES, sanearHtml } from "@/lib/visor/documento";
-import { origenDelVisor, politicaDelVisor, valeValido, visorEstaSeparado } from "@/lib/visor/origen";
+import {
+  ambitoDeLaPeticion,
+  origenDelVisor,
+  politicaDelVisor,
+  valeValido,
+  visorEstaSeparado,
+} from "@/lib/visor/origen";
 import { documentoParaElVisor, urlFirmadaDelObjeto } from "@/lib/visor/servicio";
 
 /**
@@ -64,11 +70,21 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
    *
    * Sin vale válido, 404 **con el mismo cuerpo que un entregable inexistente**:
    * un mensaje distinto diría que ese identificador existe.
+   *
+   * **EL ÁMBITO ES PARTE DEL VALE, NO UNA OPCIÓN DE LA PETICIÓN.** Dice desde
+   * qué pantalla se firmó el permiso —el portal o HQ— y es lo único que permite
+   * que un `html` `internal` se abra aquí sin abrirlo a un usuario de cliente:
+   * un `internal` solo sale de la base con ámbito `hq`, y ese ámbito va dentro
+   * de la firma. Poner `a=hq` a mano sobre un vale de portal rompe el HMAC y
+   * cae en este mismo 404; quitarlo, también, porque sin ámbito no hay vale que
+   * verificar y **no se supone ninguno**.
    */
   const consulta = new URL(request.url).searchParams;
-  if (!valeValido(id, consulta.get("c"), consulta.get("f"))) return noEncontrado();
+  const ambito = ambitoDeLaPeticion(consulta.get("a"));
+  if (!ambito) return noEncontrado();
+  if (!valeValido(id, consulta.get("c"), consulta.get("f"), ambito)) return noEncontrado();
 
-  const doc = await documentoParaElVisor(id);
+  const doc = await documentoParaElVisor(id, ambito);
   if (!doc) return noEncontrado();
 
   let crudo: string;

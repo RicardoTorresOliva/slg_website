@@ -1037,12 +1037,25 @@ edición ni publicación posterior de un borrador, y la pista del formulario lo 
 ### 6.13 Entregables: filtro de agentes y visor (`/hq/entregables?agentes=1`) — DU-29(d) · mod. §6.5
 
 Dos enlaces sobre la lista, «Todos» y «Publicados por agentes» (`published_by_type = 'api_key'`), con
-estado vacío por filtro. Cada `html` lleva «Abrir en el visor»: **la misma URL firmada** que usa el
-portal (D-45), en pestaña nueva. El visor solo sirve `client` + `html` + publicado (función de la
-migración 0016), así que un `internal` muestra el aviso en vez de un enlace roto; abrirlo desde HQ es
-una decisión sobre esa función, fuera de esta unidad. El campo «Enlace» del formulario vale también
-para un `material` por enlace (data_model §3.10): un vídeo alojado fuera se publica sin archivo y
-«Clases» (§7.8) lo encuentra.
+estado vacío por filtro. Cada `html` **con archivo** lleva «Abrir en el visor»: el mismo visor y la
+misma firma que usa el portal (D-45), en pestaña nueva. Sin archivo —un `html` que nunca terminó de
+subirse— no hay nada que abrir y la ficha lo dice.
+
+**Un `internal` también se abre, y solo desde aquí** (migración 0022, que reemplaza la función de la
+0016). El tablero que un agente Hermes publica para SLG es un `html` `internal`, y hasta esa
+migración no se abría en ninguna parte: el visor servía solo `client`, así que la pantalla de la
+gente que sí podía verlo era la que enseñaba el aviso de que no se podía. La línea que separa lo
+interno de lo del cliente **no se mueve**, porque el visor vive en un origen sin sesión y ahí no hay
+a quién preguntarle el rol: lo que cambia es que **el vale dice desde dónde se firmó**. HQ firma
+ámbito `hq` sobre lo que `entregables()` le devolvió —ya acotado por la política de fila y por la
+asignación que B.3 exige a un `slg_operator`—; el portal firma ámbito `cliente` sobre
+`entregablesDelCliente()`, que nunca contiene un `internal`. El ámbito va dentro del HMAC: reescribir
+`a=hq` en una URL del portal rompe la firma y devuelve el mismo 404 que un entregable inexistente.
+Junto al enlace, la ficha marca el `internal` como tal: que se pueda abrir no puede hacer olvidar que
+compartir ese enlace fuera de HQ es enseñarle al cliente algo que no era para él.
+
+El campo «Enlace» del formulario vale también para un `material` por enlace (data_model §3.10): un
+vídeo alojado fuera se publica sin archivo y «Clases» (§7.8) lo encuentra.
 
 ---
 

@@ -229,15 +229,25 @@ export default async function Entregables({
 }
 
 /**
- * El enlace al visor aislado para un `html` (DU-29(d)): **la misma URL firmada
- * que usa el portal** (`urlDelVisor`, D-45), abierta en pestaña nueva en vez de
- * en un iframe. No hay un segundo visor para HQ ni una segunda firma.
+ * El enlace al visor aislado para un `html` (DU-29(d)): **el mismo visor y la
+ * misma firma que usa el portal** (`urlDelVisor`, D-45), abierta en pestaña
+ * nueva en vez de en un iframe. No hay un segundo visor para HQ.
  *
- * El visor sirve **solo** `client` + `html` + publicado + con archivo: lo decide
- * `app_entregable_para_el_visor` en la base (migración 0016) y no admite
- * filtros de quien llama. Un `internal` —el dashboard que un agente publica
- * para HQ— hoy no se abre ahí, y la ficha lo dice en vez de enseñar un enlace a
- * un 404. Abrirlo desde HQ exige tocar esa función, que no es de esta unidad.
+ * **LO QUE CAMBIA RESPECTO A LA PRIMERA VERSIÓN, Y POR QUÉ.** Aquí se enseñaba
+ * un aviso para todo lo que no fuera `client`, porque la función de la base
+ * (0016) solo servía eso y un enlace habría llevado a un 404. El resultado era
+ * absurdo: el tablero que un agente publica **para SLG** no se podía abrir
+ * desde la pantalla de SLG. Desde 0022 el visor también sirve `internal`, pero
+ * **solo con un vale de ámbito `hq`**, que es el que se firma aquí.
+ *
+ * Esta pantalla es el sitio donde ese ámbito se puede firmar honestamente: la
+ * lista viene de `entregables(sesion.ctx)`, o sea ya acotada por la política de
+ * fila y por la asignación que B.3 le exige a un `slg_operator`. El portal
+ * firma `"cliente"` sobre `entregablesDelCliente()`, que no devuelve `internal`
+ * — así que el cliente sigue sin poder pedir uno, ni por enlace directo.
+ *
+ * Sin archivo no hay nada que abrir, y eso no depende de la visibilidad: un
+ * `html` por enlace externo o uno cuya subida nunca terminó se queda en aviso.
  */
 function EnlaceAlVisor({
   entregable,
@@ -246,10 +256,8 @@ function EnlaceAlVisor({
   entregable: { readonly id: string; readonly visibilidad: string; readonly claveDeArchivo: string | null };
   t: Record<string, string>;
 }) {
-  if (entregable.visibilidad !== "client" || !entregable.claveDeArchivo) {
-    return <p style={nota}>{t["hq.deliv.viewerClientOnly"]}</p>;
-  }
-  const src = urlDelVisor(entregable.id);
+  if (!entregable.claveDeArchivo) return <p style={nota}>{t["hq.deliv.viewerNoFile"]}</p>;
+  const src = urlDelVisor(entregable.id, "hq");
   if (!src) return <p style={nota}>{t["hq.deliv.viewerMissing"]}</p>;
   return (
     <p style={nota}>
@@ -258,6 +266,10 @@ function EnlaceAlVisor({
       <a href={src} target="_blank" rel="noreferrer noopener" style={{ color: "var(--slg-link)" }}>
         {t["hq.deliv.viewerOpen"]}
       </a>
+      {/* Que el enlace exista no puede hacer olvidar de qué se trata: un
+          `internal` se abre aquí y **no** en el portal, y quien lo comparta
+          fuera de HQ estará compartiendo algo que el cliente no debía ver. */}
+      {entregable.visibilidad === "internal" ? <> · {t["hq.deliv.viewerInternal"]}</> : null}
     </p>
   );
 }

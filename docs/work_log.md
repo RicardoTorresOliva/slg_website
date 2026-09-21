@@ -3384,3 +3384,59 @@ duplicado en `test-api.ts` pasó `check:types` y rompió CI. Ahora incluye `**/*
 
 CI: todo M6 en verde contra PostgreSQL real en corridas anteriores; la corrida de `8263173` quedó en
 marcha al cerrar.
+
+## El visor abre los entregables `internal`, pero solo desde HQ (2026-09-21)
+
+El defecto estaba anotado en `ui_wireframes` §6.13 desde DU-29(d): el tablero que un agente Hermes
+publica para SLG es un `html` con visibilidad `internal`, y **no se abría en ninguna parte**. La
+función de la migración 0016 sirve `visibility = 'client'` y nada más, así que `/hq/entregables`
+enseñaba un aviso en vez de un enlace —un enlace habría llevado a un 404—. La pantalla de la gente
+que sí podía ver ese tablero era justo la que decía que no se podía.
+
+**0016 no estaba mal escrita, y por eso el arreglo no es quitarle la condición.** El visor vive en un
+origen **sin sesión** —el navegador aísla el subdominio de la cookie de la aplicación, que es la
+defensa entera (D-45)—, así que ahí no hay a quién preguntarle el rol y no hay política de fila que
+acote. Toda la autorización tenía que caber dentro de la función, y la única respuesta segura para
+una función sin quién es la más estrecha. Servir `internal` desde ahí, sin más, sería servírselo
+también a un usuario de cliente que conociera el identificador.
+
+Lo que cambia es **el vale**. Hasta hoy firmaba `<id>.<caducidad>`: decía qué se puede abrir y hasta
+cuándo, pero no para quién. Ahora firma `<id>.<caducidad>.<ámbito>`, con ámbito `cliente` o `hq`, y
+ese ámbito es lo único que la función recibe de quien llama —ni empresa, ni proyecto, ni visibilidad
+suelta—. No lo elige el código: lo firma la pantalla que sí tenía sesión. HQ firma `hq` sobre lo que
+`entregables(ctx)` le devolvió, ya acotado por la política de fila y por la asignación que B.3 exige
+a un `slg_operator`; el portal firma `cliente` sobre `entregablesDelCliente()`, que no devuelve
+`internal` y por tanto ni siquiera le da el identificador con el que pedir un vale. Reescribir `a=hq`
+en una URL del portal rompe el HMAC y cae en el mismo 404 que un entregable inexistente.
+
+**Hecho**: migración `0022_visor_de_entregables_internos` — `DROP` de la función de un argumento
+(dejarla viva habría dejado llamable la versión que no sabe de ámbitos) y
+`app_entregable_para_el_visor(p_id, p_ambito)` con `client` siempre e `internal` solo con
+`p_ambito = 'hq'`, más `REVOKE`/`GRANT` y `COMMENT`; el parámetro es **obligatorio**, sin `DEFAULT`,
+por lo mismo que `entregablesDelCliente()` existe aparte de `entregables()`: un filtro opcional es un
+filtro que alguien olvida pasar. En el código, `AmbitoDelVale` y `ambitoDeLaPeticion()` en
+`lib/visor/origen.ts`, con el ámbito dentro de la firma y en la URL como `a`; `valeValido()` y
+`urlDelVisor()` lo piden sin valor por defecto; la ruta `/visor/[id]` lo lee de la petición y **no
+supone ninguno** si falta o es inventado; `documentoParaElVisor(id, ambito)` lo pasa a la base. En
+HQ, la ficha ofrece el enlace para todo `html` con archivo y marca el `internal` al lado; se retira
+la cadena `hq.deliv.viewerClientOnly` y entran `hq.deliv.viewerNoFile` y `hq.deliv.viewerInternal`
+en ES y EN. El portal firma `"cliente"` explícito. `ui_wireframes` §6.13 deja de describir un defecto
+y describe el mecanismo.
+
+**Verificado aquí**: `check:types`, `lint`, `check:fronteras`, `check:alcance`, `check:cadenas`,
+`check:copy`, `check:playbook` y `check:literacy`, en verde.
+
+**No verificado en esta máquina**: `scripts/portal/test-visor.ts`, ampliada con el ámbito. Contra
+PostgreSQL real comprueba que un `internal` publicado **sí** vuelve con ámbito `hq` y **sigue sin
+volver** con ámbito `cliente` —las dos mitades, porque ninguna vale sin la otra—, que un `internal`
+sin publicar no se abre ni desde HQ, que un PDF tampoco (el ámbito amplía la visibilidad, no el
+tipo), que un `client` se abre en los dos, y que queda **una sola** función con ese nombre, con el
+`p_ambito = 'hq'` dentro del `WHERE` y sin `DEFAULT`. Sin base, además, que un vale de portal no vale
+como vale de HQ ni al revés, y que un `a` ausente o inventado no es ningún ámbito. Necesita
+PostgreSQL, que esta máquina no tiene; se corre en CI.
+
+**`check:migrations` queda en rojo en esta rama, y no por esta migración**: el journal salta de la
+`0020` a la `0022` porque la `0021` la está escribiendo otro agente en paralelo, y el freno exige
+índices consecutivos. Comprobado aparte con `MIGRATIONS_DIR` sobre una copia con un `0021` de
+relleno: en verde, 23 archivos y 23 declaradas, en secuencia. Vuelve a verde al fusionar las dos
+ramas.
