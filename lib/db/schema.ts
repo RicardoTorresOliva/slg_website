@@ -37,9 +37,16 @@ export const ORG_STATUS = ["active", "archived"] as const;
 export const PROJECT_STATUS = ["active", "paused", "closed"] as const;
 /**
  * Los once servicios de A.2, tal como los admite `project_service_literal`
- * (0001). **Espejo del CHECK, no de la colección de contenido**: es lo que la
- * base acepta en la inserción, y un valor que la API anunciara y la base
- * rechazara sería un 500 donde el contrato promete un 422 (D-162).
+ * (0001, reescrito por 0021). **Espejo del CHECK, no de la colección de
+ * contenido**: es lo que la base acepta en la inserción, y un valor que la API
+ * anunciara y la base rechazara sería un 500 donde el contrato promete un 422
+ * (D-162).
+ *
+ * Ser espejo del `CHECK` no autoriza a discrepar del contenido: cuando 0001
+ * decía `SLG_Holdings` y la oferta ya decía `Holdings by SLG`, esta lista
+ * copiaba fielmente a la base y el servicio entero era inoperante —HQ lo
+ * ofrecía, el servidor lo aceptaba y PostgreSQL lo rechazaba—. El arreglo
+ * nunca es tocar solo esta lista: es la migración, y esta constante detrás.
  */
 export const PROJECT_SERVICES = [
   "Phoenix PEEx",
@@ -52,7 +59,7 @@ export const PROJECT_SERVICES = [
   "APP_Building",
   "AGE_Building",
   "CoO as a Service",
-  "SLG_Holdings",
+  "Holdings by SLG",
 ] as const;
 export const LEAD_SOURCES = ["download", "contact", "doctrine-request"] as const;
 export const QUEUE_STATUS = ["pending", "delivered", "failed"] as const;

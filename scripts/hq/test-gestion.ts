@@ -6,7 +6,11 @@
  *
  *   · **criterio 2** — el campo `service` **solo admite nomenclatura literal**.
  *     Se prueban las tres formas de romperlo que salen solas al escribir:
- *     minúsculas, espacios en vez de guion bajo, y un nombre inventado.
+ *     minúsculas, espacios en vez de guion bajo, y un nombre inventado. Y, desde
+ *     la migración 0021, la cuarta forma —la que no se ve escribiendo—: que la
+ *     oferta se renombre y el `CHECK` de la base se quede con el nombre viejo.
+ *     Se enfrentan la colección de contenido, `PROJECT_SERVICES` y la
+ *     definición viva de `project_service_literal` en PostgreSQL.
  *   · **criterio 3** — una invitación no aceptada **se revoca y deja de servir
  *     de inmediato**: el mismo testigo que valía hace un segundo ya no vale.
  *   · **criterio 4** — `slg_operator` opera **solo sobre sus proyectos
@@ -153,6 +157,7 @@ async function main() {
   );
   const { invitarASlg, invitarACliente, invitacionesPendientes, revocar } = await import("../../lib/hq/usuarios.ts");
   const { esServicioLiteral, serviciosLiterales } = await import("../../lib/hq/servicios.ts");
+  const { PROJECT_SERVICES } = await import("../../lib/db/schema.ts");
   const { consultarTestigo } = await import("../../lib/invitations/index.ts");
   const { generarTestigo } = await import("../../lib/invitations/token.ts");
 
@@ -291,6 +296,40 @@ async function main() {
     for (const roto of ["phoenix peex", "Phoenix PEEX", "SLG Readiness", "Consultoría IA", ""]) {
       check(`«${roto || "(vacío)"}» NO vale`, !esServicioLiteral(roto));
     }
+
+    // El defecto que esta comprobación existe para impedir, y que ya ocurrió:
+    // la oferta se renombró (`SLG_Holdings` → `Holdings by SLG`, 18-09) y el
+    // `CHECK` de la base se quedó con el nombre viejo. Todo lo de arriba seguía
+    // en verde —porque todo lo de arriba pregunta al contenido— y aun así un
+    // proyecto de esa línea era imposible de crear. La única forma de verlo es
+    // enfrentar las dos listas y, después, pasar cada nombre por PostgreSQL.
+    const enLaBase = [...PROJECT_SERVICES].sort((a, b) => a.localeCompare(b, "es"));
+    const soloEnLaOferta = oferta.filter((s) => !enLaBase.includes(s as (typeof PROJECT_SERVICES)[number]));
+    const soloEnLaBase = enLaBase.filter((s) => !oferta.includes(s));
+    check(
+      "la oferta del contenido y lo que la base acepta dicen EXACTAMENTE lo mismo",
+      soloEnLaOferta.length === 0 && soloEnLaBase.length === 0,
+      `solo en el contenido: ${soloEnLaOferta.join(" · ") || "—"} · solo en la base: ${soloEnLaBase.join(" · ") || "—"}`,
+    );
+
+    // Y contra PostgreSQL, no contra el espejo: se lee la contención viva y se
+    // comprueba que cada nombre de la oferta está dentro. Se pregunta por la
+    // definición en vez de insertar once proyectos porque insertarlos
+    // cambiaría los recuentos de archivar y cerrar, más abajo, y porque el
+    // texto del `CHECK` es exactamente lo que la base va a aplicar.
+    const [contencion] = await dueno<{ def: string }[]>`
+      SELECT pg_get_constraintdef(oid) AS def
+        FROM pg_constraint
+       WHERE conname = 'project_service_literal'
+    `;
+    const sinContencion = oferta.filter((s) => !(contencion?.def ?? "").includes(`'${s}'`));
+    check(
+      "el CHECK de PostgreSQL acepta los once nombres de la oferta, uno por uno",
+      contencion !== undefined && sinContencion.length === 0,
+      contencion === undefined
+        ? "no existe project_service_literal"
+        : `los rechaza: ${sinContencion.join(" · ")}`,
+    );
 
     let motivo = "";
     try {

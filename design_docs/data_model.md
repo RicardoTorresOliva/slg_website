@@ -498,6 +498,15 @@ bajo) en un proyecto se rechaza en la inserción, no en la revisión.
 contenido. Es el precio correcto: un servicio nuevo ya exige página, copy bilingüe y documento de
 descarga (A.3, D-17); la migración es lo barato del lote.
 
+**Y el coste tiene una factura que ya llegó**: *renombrar* un servicio es también una migración, y
+la primera vez se olvidó. 0001 escribió la contención con `SLG_Holdings`; el 18-09 la línea pasó a
+llamarse `Holdings by SLG` y se movieron el contenido, las páginas y este documento, pero no la
+base. Durante tres días la lista de HQ ofrecía el nombre bueno, el servidor lo validaba contra la
+colección de contenido y PostgreSQL lo rechazaba en la inserción: el servicio entero era
+inoperante. Lo arregla `0021_vocabulario_de_servicios`, que traduce las filas que hubiera y
+reescribe el `CHECK` completo. La lectura que queda: el `CHECK` solo protege la nomenclatura
+mientras diga lo mismo que la oferta; en cuanto se separan, bloquea a quien la escribe bien.
+
 ---
 
 ## 4. Claves foráneas y políticas `ON DELETE`
