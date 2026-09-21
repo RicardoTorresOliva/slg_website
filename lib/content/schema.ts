@@ -173,6 +173,12 @@ export const SCHEMAS: Record<Exclude<CollectionName, "ui">, FieldSpec[]> = {
     { name: "download", required: true, check: isNonEmptyString },
     { name: "lang", required: true, check: isLang },
     { name: "pair", required: true, check: isPair },
+    /**
+     * La frase que acompaña al nombre en el mapa («para Directores», «Army of
+     * Agents»). Opcional: no todo servicio tiene una y el mapa no la inventa.
+     * Vive en el registro y no en `content/ui` porque es oferta, no interfaz.
+     */
+    { name: "tagline", required: false, check: isNonEmptyString },
     COPY,
   ],
 

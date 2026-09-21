@@ -1,6 +1,7 @@
 ---
 type: service
 name: "Phoenix RETx"
+tagline: "for Researchers and students"
 branch: VoltAi Academy
 parent: "slg-academy-en"
 download: "d-03-en"

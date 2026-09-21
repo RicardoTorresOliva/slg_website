@@ -1,6 +1,7 @@
 ---
 type: service
 name: "Phoenix PEEx"
+tagline: "for Directors"
 branch: VoltAi Academy
 parent: "slg-academy-en"
 download: "what-a-director-should-know"

@@ -1,6 +1,7 @@
 ---
 type: service
 name: "APP_Building"
+tagline: "Build scalable, robust applications"
 branch: VoltAi Factory
 parent: "slg-factory-en"
 download: "d-08-en"

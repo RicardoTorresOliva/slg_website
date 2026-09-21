@@ -1,6 +1,7 @@
 ---
 type: service
 name: "Phoenix TEAx"
+tagline: "para C-suite"
 branch: VoltAi Academy
 parent: "slg-academy"
 download: "d-02"

@@ -1,6 +1,7 @@
 ---
 type: service
 name: "AGE_Building"
+tagline: "Create AI Agents for any scenario"
 branch: VoltAi Factory
 parent: "slg-factory-en"
 download: "d-09-en"
