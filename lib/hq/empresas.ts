@@ -34,6 +34,8 @@ export type Empresa = {
   readonly tipo: string;
   readonly estado: string;
   readonly contactoPrincipal: string | null;
+  /** El identificador de la empresa en el CRM (D-163). Nulo en las anteriores. */
+  readonly crmCompanyId: string | null;
 };
 
 export type DatosDeEmpresa = {
@@ -43,7 +45,17 @@ export type DatosDeEmpresa = {
   readonly estado: string;
   /** El correo de la persona de contacto. Un dato de trabajo, no una cuenta. */
   readonly contactoPrincipal?: string | null;
+  /**
+   * El identificador de la empresa en el CRM (D-163): es lo que permite al CRM
+   * crear aquí sus proyectos. Opcional, porque una empresa puede darse de alta
+   * antes de existir en el CRM; único, porque dos empresas de aquí no pueden
+   * ser la misma de allí.
+   */
+  readonly crmCompanyId?: string | null;
 };
+
+/** El tope de la columna, el mismo que declara el catálogo de la API v1. */
+const CRM_ID_MAXIMO = 200;
 
 /** El slug se normaliza aquí, una vez, y no en cada formulario. */
 export function slugDe(texto: string): string {
@@ -61,16 +73,25 @@ function validar(datos: DatosDeEmpresa): string | null {
   if (!slugDe(datos.slug || datos.nombre)) return "slug";
   if (!(TIPOS_DE_EMPRESA as readonly string[]).includes(datos.tipo)) return "tipo";
   if (!(ESTADOS_DE_EMPRESA as readonly string[]).includes(datos.estado)) return "estado";
+  if ((datos.crmCompanyId?.trim().length ?? 0) > CRM_ID_MAXIMO) return "crmCompanyId";
   return null;
 }
 
 /**
- * Una violación de unicidad de PostgreSQL. Se reconoce por el código `23505`,
- * que es estable y está documentado; el texto del mensaje no lo es.
+ * Una violación de unicidad de PostgreSQL, y **de qué campo**. Se reconoce por
+ * el código `23505`, que es estable y está documentado; el texto del mensaje no
+ * lo es. Desde D-163 hay dos índices únicos en la tabla —el del slug y el del
+ * identificador del CRM— y responden con campos distintos, así que se mira el
+ * nombre de la restricción: sin nombre, es el slug, que es lo que había.
  */
-function esSlugRepetido(e: unknown): boolean {
-  const causa = (e as { cause?: { code?: string }; code?: string } | null) ?? {};
-  return causa.code === "23505" || causa.cause?.code === "23505";
+function campoRepetido(e: unknown): "slug" | "crmCompanyId" | null {
+  const mira = (x: unknown): { code?: string; constraint_name?: string } | null =>
+    typeof x === "object" && x !== null ? (x as { code?: string; constraint_name?: string }) : null;
+  const directo = mira(e);
+  const causa = mira((e as { cause?: unknown } | null)?.cause);
+  const chocado = directo?.code === "23505" ? directo : causa?.code === "23505" ? causa : null;
+  if (!chocado) return null;
+  return chocado.constraint_name === "uq_organization_crm_id" ? "crmCompanyId" : "slug";
 }
 
 export class DatoInvalido extends Error {
@@ -94,6 +115,7 @@ export async function empresas(ctx: AuthContext): Promise<Empresa[]> {
     tipo: f.type,
     estado: f.status,
     contactoPrincipal: f.metadata,
+    crmCompanyId: f.crmCompanyId,
   }));
 }
 
@@ -112,6 +134,7 @@ export async function crearEmpresa(ctx: AuthContext, datos: DatosDeEmpresa): Pro
     if (malo) throw new DatoInvalido(malo);
 
     const slug = slugDe(datos.slug || datos.nombre);
+    const crmCompanyId = datos.crmCompanyId?.trim() || null;
     try {
       await withScope(ctx, (db) =>
         db.insert(organization).values({
@@ -121,6 +144,7 @@ export async function crearEmpresa(ctx: AuthContext, datos: DatosDeEmpresa): Pro
           type: datos.tipo,
           status: datos.estado,
           metadata: datos.contactoPrincipal?.trim() || null,
+          crmCompanyId,
         }),
       );
     } catch (e) {
@@ -129,9 +153,11 @@ export async function crearEmpresa(ctx: AuthContext, datos: DatosDeEmpresa): Pro
        * prueba de esta unidad: sin esto, crear «Cliente Demo» dos veces devolvía
        * un error crudo de PostgreSQL — un 500 en la cara de quien solo había
        * repetido un nombre. Y como el slug se deriva del nombre cuando se deja
-       * vacío, repetirlo es lo más fácil del mundo.
+       * vacío, repetirlo es lo más fácil del mundo. El identificador del CRM
+       * repetido en otra empresa (D-163) es el mismo caso con otro campo.
        */
-      if (esSlugRepetido(e)) throw new DatoInvalido("slug");
+      const campo = campoRepetido(e);
+      if (campo) throw new DatoInvalido(campo);
       throw e;
     }
     return {
@@ -141,6 +167,7 @@ export async function crearEmpresa(ctx: AuthContext, datos: DatosDeEmpresa): Pro
       tipo: datos.tipo,
       estado: datos.estado,
       contactoPrincipal: datos.contactoPrincipal?.trim() || null,
+      crmCompanyId,
     };
   });
 }
@@ -173,11 +200,13 @@ export async function editarEmpresa(
               type: datos.tipo,
               status: datos.estado,
               metadata: datos.contactoPrincipal?.trim() || null,
+              crmCompanyId: datos.crmCompanyId?.trim() || null,
             })
             .where(eq(organization.id, id)),
         );
       } catch (e) {
-        if (esSlugRepetido(e)) throw new DatoInvalido("slug");
+        const campo = campoRepetido(e);
+        if (campo) throw new DatoInvalido(campo);
         throw e;
       }
     },
@@ -227,6 +256,7 @@ async function cambiarEstadoDeEmpresa(
       tipo: fila.type,
       estado: fila.status,
       contactoPrincipal: fila.metadata,
+      crmCompanyId: fila.crmCompanyId,
     };
   });
 }

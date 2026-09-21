@@ -27,6 +27,10 @@
  *     archiva empresas; `slg_operator` cierra solo los proyectos que tiene
  *     asignados, y cada rechazo queda auditado como `.denied`. Reactivar y
  *     reabrir lo devuelven todo tal como estaba.
+ *   · **El identificador del CRM (D-163)** — se pone al crear la empresa, se
+ *     edita, y **es de una sola**: repetirlo en otra empresa es un dato
+ *     inválido con su campo (`crmCompanyId`), no un error de PostgreSQL, tanto
+ *     al crear como al editar. En blanco vuelve a ser nulo.
  *
  * Necesita `bash scripts/db/local-pg.sh up`.
  */
@@ -59,6 +63,9 @@ const ADMIN = "u-admin-du14";
 /** Con sufijo: «Cliente Demo» a secas es de la semilla y no es nuestro. */
 const NOMBRE_CLIENTE = "Cliente Demo DU14";
 const SLUG_CLIENTE = "cliente-demo-du14";
+/** La segunda empresa, solo para probar que el identificador del CRM es de una (D-163). */
+const SLUG_SEGUNDA = "cliente-dos-du14";
+const CRM_ID = "crm-du14-0001";
 const OPERADOR = "u-operador-du14";
 
 const ctxDe = (rol: UserRole, userId: string, org: string | null) =>
@@ -91,6 +98,8 @@ async function limpiar() {
   await dueno`delete from news_item where organization_id in (select id from organization where slug in (${SLUG_CLIENTE}, 'slg-du14'))`;
   await dueno`delete from project where organization_id in (select id from organization where slug in (${SLUG_CLIENTE}, 'slg-du14'))`;
   await dueno`delete from organization where slug in (${SLUG_CLIENTE}, 'slg-du14')`;
+  // La segunda empresa de D-163 no tiene proyectos ni miembros: solo la fila.
+  await dueno`delete from organization where slug = ${SLUG_SEGUNDA}`;
   /**
    * **`audit_log` NO se limpia, y no es un olvido**: un disparador de la
    * migración 0003 lo hace inmutable (RNF-29) y rechaza el `DELETE` incluso al
@@ -163,9 +172,15 @@ async function main() {
       tipo: "client",
       estado: "active",
       contactoPrincipal: `contacto@${SUFIJO}`,
+      crmCompanyId: ` ${CRM_ID} `,
     });
     await dueno`update organization set id = ${ORG_CLIENTE} where id = ${creada.id}`;
     check("la empresa se crea", creada.nombre === NOMBRE_CLIENTE, JSON.stringify(creada));
+    check("con el identificador del CRM, recortado (D-163)", creada.crmCompanyId === CRM_ID, String(creada.crmCompanyId));
+    check(
+      "y la fila lo lleva",
+      ((await dueno`select crm_company_id from organization where id = ${ORG_CLIENTE}`) as unknown as { crm_company_id: string | null }[])[0]?.crm_company_id === CRM_ID,
+    );
     check("el slug se deriva del nombre cuando se deja vacío", creada.slug === SLUG_CLIENTE, creada.slug);
     check(
       "el alta queda auditada",
@@ -195,10 +210,15 @@ async function main() {
       tipo: "client",
       estado: "active",
       contactoPrincipal: `contacto@${SUFIJO}`,
+      crmCompanyId: CRM_ID,
     });
     check(
       "el administrador edita la empresa",
       (await empresas(admin())).some((e) => e.nombre === `${NOMBRE_CLIENTE} S.L.`),
+    );
+    check(
+      "y conserva el identificador del CRM",
+      (await empresas(admin())).some((e) => e.id === ORG_CLIENTE && e.crmCompanyId === CRM_ID),
     );
     check("y la edición queda auditada", (await apuntes("org.update", ADMIN)).length === 1);
 
@@ -218,6 +238,46 @@ async function main() {
     }
     check("el operador NO edita una empresa que no tiene asignada", estadoEdicion > 0, `estado ${estadoEdicion}`);
     check("y ese intento queda auditado", (await apuntes("org.update.denied", OPERADOR)).length === 1);
+
+    /* ── D-163 · el identificador del CRM es de una sola empresa ────────── */
+    console.log("\nEl identificador del CRM es de una sola empresa (D-163):\n");
+    const campoDe = async (fn: () => Promise<unknown>): Promise<string> => {
+      try {
+        await fn();
+        return "";
+      } catch (e) {
+        return (e as Error & { campo?: string }).campo ?? (e as Error).name;
+      }
+    };
+    const SEGUNDA = { nombre: "Cliente Dos DU14", slug: SLUG_SEGUNDA, tipo: "client", estado: "active" };
+    check(
+      "crear otra empresa con el MISMO identificador devuelve «crmCompanyId», no un error de PostgreSQL",
+      (await campoDe(() => crearEmpresa(admin(), { ...SEGUNDA, crmCompanyId: CRM_ID }))) === "crmCompanyId",
+    );
+    check(
+      "y la primera sigue siendo la única con ese identificador (índice único parcial de 0020)",
+      ((await dueno`select count(*)::text as n from organization where crm_company_id = ${CRM_ID}`) as unknown as { n: string }[])[0]?.n === "1",
+    );
+    const segunda = await crearEmpresa(admin(), SEGUNDA);
+    check("sin identificador se crea: es opcional, y queda nulo", segunda.slug === SLUG_SEGUNDA && segunda.crmCompanyId === null, JSON.stringify(segunda));
+    check(
+      "editarla para ponerle el de la primera también se rechaza sobre «crmCompanyId»",
+      (await campoDe(() => editarEmpresa(admin(), segunda.id, { ...SEGUNDA, crmCompanyId: CRM_ID }))) === "crmCompanyId",
+    );
+    await editarEmpresa(admin(), segunda.id, { ...SEGUNDA, crmCompanyId: "crm-du14-0002" });
+    check(
+      "con uno propio, la edición lo guarda y la lista lo enseña",
+      (await empresas(admin())).some((e) => e.id === segunda.id && e.crmCompanyId === "crm-du14-0002"),
+    );
+    await editarEmpresa(admin(), segunda.id, { ...SEGUNDA, crmCompanyId: "  " });
+    check(
+      "y en blanco lo quita: vuelve a ser nulo, no una cadena vacía",
+      (await empresas(admin())).some((e) => e.id === segunda.id && e.crmCompanyId === null),
+    );
+    check(
+      "uno más largo de lo que admite la columna es «crmCompanyId» antes de tocar la base",
+      (await campoDe(() => editarEmpresa(admin(), segunda.id, { ...SEGUNDA, crmCompanyId: "x".repeat(201) }))) === "crmCompanyId",
+    );
 
     console.log("\nCriterio 2 — `service` solo admite nomenclatura literal (RF-79, RF-14):\n");
     const oferta = serviciosLiterales();

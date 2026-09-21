@@ -142,7 +142,7 @@ Toda petición autenticada actualiza `api_key.last_request` y `api_key.request_c
 
 ### 2.3 Alcances por clave (RF-98, RF-147)
 
-Los **nueve** alcances son exactamente los de `data_model` §3.6, sin implicación entre ellos: una
+Los **diez** alcances son exactamente los de `data_model` §3.6, sin implicación entre ellos: una
 clave con `events:write` **no** puede crear un entregable, y que pudiera sería un defecto de
 seguridad, no una comodidad (RF-147).
 
@@ -150,6 +150,7 @@ seguridad, no una comodidad (RF-147).
 |---|---|
 | `captures:read` | `GET /captures` |
 | `orgs:read` | `GET /organizations` · `GET /organizations/{id}/projects` |
+| `orgs:write` | `POST /organizations` (D-163: el CRM crea o encuentra aquí la empresa por su `crm_company_id`). **No** incluye `GET /organizations` ni `projects:write`: leer no implica escribir, y crear empresas no implica crear proyectos |
 | `deliverables:read` | `GET /projects/{id}/deliverables` |
 | `deliverables:write` | `POST /deliverables` · `POST /deliverables/{id}/publish` |
 | `announcements:write` | `POST /announcements` |
@@ -327,10 +328,11 @@ del error y en la cabecera `X-Request-Id` de **toda** respuesta.
 
 ---
 
-## 3. Los dieciocho endpoints
+## 3. Los diecinueve endpoints
 
-Nueve de DU-22/DU-23 (§3.1–§3.9), seis de la Academy, M6 · DU-30 (§3.10–§3.15), y tres del proyecto
-que nace en el CRM, D-162 (§3.16–§3.18).
+Nueve de DU-22/DU-23 (§3.1–§3.9), seis de la Academy, M6 · DU-30 (§3.10–§3.15), tres del proyecto
+que nace en el CRM, D-162 (§3.16–§3.18), y uno de la empresa que el CRM crea o encuentra por su
+identificador, D-163 (§3.19).
 
 ### 3.1 `GET /api/v1/captures` — evidencia de capturas web
 
@@ -444,6 +446,7 @@ Un valor fuera de vocabulario → **422**. `since` posterior a `until` → **422
       "type": "client",
       "status": "active",
       "primary_contact": { "id": "usr_01J9Z7...", "name": "Nombre Apellido" },
+      "crm_company_id": "crm_cmp_9b2e",
       "created_at": "2026-08-14T09:12:00Z",
       "updated_at": "2026-09-02T17:40:11Z"
     }
@@ -455,6 +458,9 @@ Un valor fuera de vocabulario → **422**. `since` posterior a `until` → **422
 `primary_contact` es `null` cuando `organization.primary_contact_user_id` es nulo. **No se expone el
 correo del contacto**: un agente que lista empresas no necesita datos personales para hacerlo
 (minimización, principio de Responsabilidad de C.6).
+
+`crm_company_id` viaja desde D-163 en cada empresa (`null` en las anteriores a la decisión, o en las
+dadas de alta en HQ sin él), para que el CRM reconcilie sin adivinar por el nombre.
 
 Si la clave lleva `organization_id`, la colección tiene **exactamente un elemento**: el suyo. No es un
 filtro que el agente pueda ampliar.
@@ -1173,6 +1179,72 @@ parchea a mano.
 Idempotente sobre uno ya activo. Existe para que un proyecto cerrado por error se deshaga **sin
 borrar la fila**: el registro conserva las dos escrituras. Mismos códigos que §3.17.
 
+### 3.19 `POST /api/v1/organizations` — la empresa que el CRM crea o encuentra por su identificador
+
+**Alcance:** `orgs:write` · **D-163** · acción `org.write` de B.3
+
+**D-162 dejó que el CRM creara aquí la carpeta del cliente, pero el CRM no sabía qué `{id}` de
+empresa usar**: las empresas de aquí y las del CRM no estaban relacionadas. Se relacionan guardando
+el identificador del CRM al lado de cada empresa de aquí (`organization.crm_company_id`, índice único
+parcial, migración 0020), y esta ruta es la puerta: el CRM crea o encuentra la empresa por ese
+identificador y con el `id` que recibe llama a §3.16. **No se importa nada comercial** —ni etapa, ni
+importe, ni propietario comercial—: la frontera (a) de `scope.md` no se mueve. Los proyectos que
+cuelgan de la empresa, sus miembros y su contacto principal siguen siendo cosa de HQ.
+
+**Petición**
+
+```json
+{
+  "name": "Cliente Demo",
+  "crm_company_id": "crm_cmp_9b2e",
+  "slug": "cliente-demo"
+}
+```
+
+| Campo | Obligatorio | Reglas |
+|---|---|---|
+| `name` | sí | 1…200 caracteres. Solo espacios → 422 `invalid` |
+| `crm_company_id` | **sí** | 1…200 caracteres. Si el CRM manda, tiene que decir cuál es. Vacío → 422 `required` |
+| `slug` | no | Hasta 60 caracteres. Se normaliza como en HQ (minúsculas, guiones). Ausente: se deriva del nombre. Ya usado por **otra** empresa → 422 `already_taken` |
+
+**Respuesta 201**: la empresa con la forma de §3.2, siempre `type: "client"` y `status: "active"`. El
+tipo y el estado no se mandan: el CRM no da de alta a SLG ni archiva a nadie.
+
+```json
+{
+  "data": {
+    "id": "org_01J9Z7...",
+    "name": "Cliente Demo",
+    "slug": "cliente-demo",
+    "type": "client",
+    "status": "active",
+    "primary_contact": null,
+    "crm_company_id": "crm_cmp_9b2e",
+    "created_at": "2026-09-21T09:20:00Z"
+  }
+}
+```
+
+**Idempotente por `crm_company_id`.** Si ya existe una empresa con ese identificador, la ruta responde
+**200 con la existente**: ni crea otra ni responde 409, y el resto del cuerpo se ignora —la que manda
+es la que ya está, aunque el CRM haya cambiado el nombre desde entonces—. El índice único parcial
+`uq_organization_crm_id` lo garantiza aunque dos reintentos lleguen a la vez.
+
+**Una clave acotada a una empresa no crea empresas: 403.** Es el criterio de §3.16 para la empresa
+ajena —el universo de esa clave es exactamente la suya—, pero sin recurso en la ruta no hay «no
+existe» que responder: crear otra empresa está fuera de lo que esa clave puede hacer, y decirlo no
+revela la existencia de nadie.
+
+| Situación | Código |
+|---|---|
+| Nuevo `crm_company_id` | **201** |
+| El mismo `crm_company_id` | **200**, la existente, sin escribir nada |
+| `slug` ya usado por otra empresa | **422** `already_taken` sobre `slug` |
+| Clave acotada a una empresa | **403** |
+| Alcance insuficiente | **403** |
+
+`audit_log` recibe `action: "organization.create"` con el 201, el 200 y los rechazos.
+
 ## 4. Matriz de referencia y las tres pruebas del DoD #6
 
 ### 4.1 Ruta × alcance × códigos
@@ -1196,9 +1268,10 @@ borrar la fila**: el registro conserva las dos escrituras. Mismos códigos que �
 | `POST /organizations/{id}/projects` | `projects:write` | ✔ (200 si ya existía) | ✔ | ✔ | ✔ | ✔ | — | ✔ | ✔ |
 | `POST /projects/{id}/close` | `projects:write` | ✔ | ✔ | ✔ | ✔ | ✔ | — | ✔ | ✔ |
 | `POST /projects/{id}/reopen` | `projects:write` | ✔ | ✔ | ✔ | ✔ | ✔ | — | ✔ | ✔ |
+| `POST /organizations` | `orgs:write` | ✔ (200 si ya existía) | ✔ | ✔ | ✔ | — | — | ✔ | ✔ |
 | `GET /openapi.json` | *cualquiera* | ✔ | — | ✔ | — | — | — | — | ✔ |
 
-`413` y `415` aplican a las trece rutas `POST`. `500` y `503` a todas.
+`413` y `415` aplican a las catorce rutas `POST`. `500` y `503` a todas.
 
 ### 4.2 Las tres pruebas que el DoD #6 exige demostrar
 

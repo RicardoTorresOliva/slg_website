@@ -9,6 +9,7 @@ import { exigirSeccion } from "@/lib/app/navegacion";
 import { exigirSuperficie } from "@/lib/auth";
 import { loadUiStrings } from "@/lib/content/loader";
 import { empresas, ESTADOS_DE_EMPRESA, TIPOS_DE_EMPRESA, type Empresa } from "@/lib/hq/empresas";
+import { urlDelCrm } from "@/lib/hq/metricas";
 
 import { accionArchivarEmpresa, accionCrearEmpresa, accionReactivarEmpresa } from "../_acciones";
 
@@ -28,6 +29,12 @@ import { accionArchivarEmpresa, accionCrearEmpresa, accionReactivarEmpresa } fro
  * se vuelve atrás con el navegador. Las archivadas **no desaparecen**: bajan
  * al final, atenuadas y con su estado escrito, porque una empresa archivada
  * con entregables es la prueba de lo que se le entregó (data_model §2.5).
+ *
+ * **EL IDENTIFICADOR DEL CRM SE PONE AQUÍ, AL CREAR** (D-163). Es lo que
+ * relaciona la empresa de aquí con la del CRM y lo que permite al CRM crear
+ * sus proyectos en este sitio. La lista lo enseña cuando existe, con «Abrir
+ * CRM» al lado si `CRM_APP_URL` está puesta: el mismo enlace que el tablero,
+ * por el mismo ayudante.
  */
 export const dynamic = "force-dynamic";
 
@@ -43,6 +50,7 @@ export default async function Empresas({
   const { error, archivar } = await searchParams;
   const lista = archivadasAlFinal(await empresas(sesion.ctx));
   const err = (campo: string) => (error === campo ? t["hq.form.error"] : null);
+  const crm = urlDelCrm();
 
   return (
     <div style={{ display: "grid", gap: "1.5rem" }}>
@@ -68,6 +76,9 @@ export default async function Empresas({
         <Campo etiqueta={t["hq.orgs.contact"]}>
           <Texto name="contacto" type="email" maxLength={200} />
         </Campo>
+        <Campo etiqueta={t["hq.orgs.crmId"]} pista={t["hq.orgs.crmIdHint"]} error={err("crmCompanyId")}>
+          <Texto name="crmCompanyId" maxLength={200} aria-invalid={error === "crmCompanyId"} />
+        </Campo>
         <Boton type="submit">{t["hq.orgs.save"]}</Boton>
       </Formulario>
 
@@ -85,6 +96,7 @@ export default async function Empresas({
             t["hq.orgs.type"],
             t["hq.orgs.status"],
             t["hq.orgs.contact"],
+            t["hq.orgs.crmId"],
             t["hq.orgs.actions"],
           ]}
           filas={lista.map((e) => {
@@ -98,6 +110,7 @@ export default async function Empresas({
               celda(e.tipo),
               celda(e.estado),
               celda(e.contactoPrincipal ?? "—"),
+              celda(<IdentificadorDelCrm valor={e.crmCompanyId} crm={crm} t={t} />),
               <AccionesDeEmpresa key={e.id} empresa={e} pendiente={archivar} t={t} />,
             ];
           })}
@@ -110,6 +123,33 @@ export default async function Empresas({
 /** Las activas primero, en su orden; las archivadas después, en el suyo. */
 function archivadasAlFinal(lista: readonly Empresa[]): Empresa[] {
   return [...lista].sort((a, b) => Number(a.estado === "archived") - Number(b.estado === "archived"));
+}
+
+/**
+ * La celda del identificador del CRM (D-163): el valor cuando existe, y al
+ * lado «Abrir CRM» si hay a dónde ir. Sin `CRM_APP_URL` no hay enlace, como en
+ * el tablero: un enlace a ninguna parte es peor que ninguno.
+ */
+function IdentificadorDelCrm({
+  valor,
+  crm,
+  t,
+}: {
+  valor: string | null;
+  crm: string | null;
+  t: Record<string, string>;
+}) {
+  if (!valor) return "—";
+  return (
+    <span style={{ display: "inline-flex", gap: "0.5rem", alignItems: "baseline", flexWrap: "wrap" }}>
+      <code style={codigo}>{valor}</code>
+      {crm ? (
+        <a href={crm} rel="noreferrer" style={enlace}>
+          {t["hq.orgs.crmOpen"]}
+        </a>
+      ) : null}
+    </span>
+  );
 }
 
 /**
@@ -161,6 +201,7 @@ function AccionesDeEmpresa({
 
 const atenuado: CSSProperties = { opacity: 0.55 };
 const enlace: CSSProperties = { color: "var(--slg-link)", fontSize: "0.875rem" };
+const codigo: CSSProperties = { fontSize: "0.875rem" };
 const enlaceComoBoton: CSSProperties = {
   background: "none",
   border: "none",

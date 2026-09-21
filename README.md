@@ -159,7 +159,9 @@ Esto **no pasa por GitHub**: se hace dentro del sitio.
 
 1. Entra en `https://softlandingglobal.com/acceder` con tu cuenta.
 2. Menú lateral → **Empresas** → rellena **nombre** y **slug** (el slug es el nombre en minúsculas y
-   con guiones: `cliente-demo`), tipo **client**, estado **active** → **Guardar**.
+   con guiones: `cliente-demo`), tipo **client**, estado **active** → **Guardar**. El **identificador
+   en el CRM** se pone aquí, al crear la empresa: es lo que permite que el CRM cree en el sitio sus
+   proyectos (si el CRM la crea él por la API, ya viene puesto).
 3. Menú lateral → **Proyectos** → elige la empresa, ponle nombre, elige el **servicio** de la lista
    y **Guardar**. El servicio se elige de una lista cerrada: los nombres son literales y no se
    escriben a mano.

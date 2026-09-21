@@ -248,17 +248,35 @@ export async function organizaciones(
 
   return {
     page,
-    data: data.map(({ o, contactoId, contactoNombre }) => ({
-      id: o.id,
-      name: o.name,
-      slug: o.slug,
-      type: o.type,
-      status: o.status,
-      // **Sin el correo del contacto**: un agente que lista empresas no
-      // necesita datos personales para hacerlo (minimización, C.6).
-      primary_contact: contactoId ? { id: contactoId, name: contactoNombre } : null,
-      created_at: o.createdAt.toISOString(),
-    })),
+    data: data.map(({ o, contactoId, contactoNombre }) =>
+      empresaDelContrato(o, contactoId ? { id: contactoId, name: contactoNombre } : null),
+    ),
+  };
+}
+
+/**
+ * La forma de una empresa en el contrato (§3.2). La comparten el listado y
+ * `POST /organizations` (D-163): la que el CRM acaba de crear tiene que leerse
+ * igual que la que ya estaba.
+ */
+export function empresaDelContrato(
+  o: typeof organization.$inferSelect,
+  contacto: { id: string; name: string | null } | null,
+) {
+  return {
+    id: o.id,
+    name: o.name,
+    slug: o.slug,
+    type: o.type,
+    status: o.status,
+    // **Sin el correo del contacto**: un agente que lista empresas no
+    // necesita datos personales para hacerlo (minimización, C.6).
+    primary_contact: contacto,
+    // D-163: el identificador de la empresa en el CRM. `null` en las
+    // anteriores a la decisión, para que el CRM reconcilie sin adivinar por
+    // el nombre.
+    crm_company_id: o.crmCompanyId,
+    created_at: o.createdAt.toISOString(),
   };
 }
 

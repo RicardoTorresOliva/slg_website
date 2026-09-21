@@ -334,14 +334,16 @@ actualice, y ese proceso es exactamente lo que falla en silencio.
 
 ### 3.6 Alcances de `api_key.scopes`
 
-**Nueve** alcances, granulares y **sin implicación entre ellos** (RF-147: que una clave con
+**Diez** alcances, granulares y **sin implicación entre ellos** (RF-147: que una clave con
 `events:write` consiga crear un entregable es un defecto de seguridad, no una comodidad). Los seis de
-B.3 y B.5, los dos de la Academy (FU-15, RF-153) y el del proyecto que nace en el CRM (D-162).
+B.3 y B.5, los dos de la Academy (FU-15, RF-153), el del proyecto que nace en el CRM (D-162) y el de la
+empresa que el CRM crea o encuentra por su identificador (D-163).
 
 | Alcance | Qué habilita | Origen |
 |---|---|---|
 | `captures:read` | `GET /api/v1/captures`; ver capturas y su estado en el CRM (solo evidencia) | B.3, B.5, RF-100 |
 | `orgs:read` | `GET /api/v1/organizations` y sus proyectos | B.5, RF-101 |
+| `orgs:write` | `POST /api/v1/organizations` (la empresa que el CRM crea o encuentra por su `crm_company_id`, idempotente). Siempre `type = client`, `status = active`. **No** habilita `orgs:read` ni `projects:write`; una clave acotada a una empresa no crea otras | D-163 |
 | `deliverables:read` | `GET /api/v1/projects/{id}/deliverables` | B.5, RF-103 |
 | `deliverables:write` | `POST /api/v1/deliverables` y su publicación | B.5, RF-102 |
 | `announcements:write` | `POST /api/v1/announcements` | B.5, RF-104 |
@@ -353,7 +355,7 @@ B.3 y B.5, los dos de la Academy (FU-15, RF-153) y el del proyecto que nace en e
 `GET /api/v1/openapi.json` responde a **cualquier** clave válida (RF-106) y por eso no consume
 alcance: no es una laguna, es el requisito.
 
-`CHECK api_key_scopes_valid: scopes <@ '["captures:read","orgs:read","deliverables:read","deliverables:write","announcements:write","events:write","news:write","milestones:write","projects:write"]'::jsonb` (reescrito entero en 0019)
+`CHECK api_key_scopes_valid: scopes <@ '["captures:read","orgs:read","orgs:write","deliverables:read","deliverables:write","announcements:write","events:write","news:write","milestones:write","projects:write"]'::jsonb` (reescrito entero en 0020)
 — el operador de contención hace que un alcance inventado no llegue a guardarse.
 `CHECK api_key_scopes_not_empty: cardinality(scopes) > 0` — una clave sin alcance no puede hacer nada
 y solo sirve para confundir en HQ.
@@ -695,7 +697,7 @@ Better Auth núcleo. Verificación de correo y recuperación de contraseña (RF-
 
 ### 5.5 `organization` — empresa
 
-Plugin `organization` + cuatro columnas nuestras.
+Plugin `organization` + cinco columnas nuestras.
 
 | Columna | Tipo SQL | Nulo | Defecto | Propósito |
 |---|---|---|---|---|
@@ -707,6 +709,7 @@ Plugin `organization` + cuatro columnas nuestras.
 | `type` | `text` | NO | `'client'` | **Nuestro.** `client` · `slg` (§3.2) |
 | `status` | `text` | NO | `'active'` | **Nuestro.** `active` · `archived` (§3.3) |
 | `primary_contact_user_id` | `text` | SÍ | `NULL` | **Nuestro.** `FK → user.id`. Contacto principal (B.2) |
+| `crm_company_id` | `text` | SÍ | `NULL` | **Nuestro. Identificador de la empresa en el CRM** (D-163): es lo que relaciona la empresa de aquí con la del CRM y lo que permite al CRM crear aquí sus proyectos (`POST /api/v1/organizations`, y con el `id` recibido, §5.13). Se pone al crear la empresa en HQ o lo pone el CRM. Nulo en las anteriores. **Aquí no entra nada comercial** —ni etapa, ni importe, ni propietario comercial—: la frontera (a) de `scope.md` no se mueve |
 | `created_at` | `timestamptz` | NO | `now()` | — |
 | `updated_at` | `timestamptz` | NO | `now()` | **Nuestro** |
 
@@ -715,6 +718,7 @@ Plugin `organization` + cuatro columnas nuestras.
 | Nombre | Definición | Por qué |
 |---|---|---|
 | `organization_slug_unique` | `UNIQUE (slug)` | El slug aparece en rutas de HQ |
+| `uq_organization_crm_id` | `UNIQUE (crm_company_id) WHERE crm_company_id IS NOT NULL` (0020) | La misma empresa del CRM no entra dos veces, y eso es lo que hace seguro reintentar la creación. Parcial porque las anteriores no lo tienen y varios `NULL` no colisionan |
 | `organization_type_valid` | `CHECK (type IN ('client','slg'))` | §3.2 |
 | `organization_status_valid` | `CHECK (status IN ('active','archived'))` | §3.3 |
 | `organization_id_type_unique` | `UNIQUE (id, type)` | **Redundante a propósito**: es el destino de la clave foránea compuesta de `membership` (§5.6). Sin ella, la denormalización que hace cumplir RF-144 no sería verificable por la base de datos |

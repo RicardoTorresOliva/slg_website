@@ -69,6 +69,10 @@ export const VISIBILITY = ["client", "internal"] as const;
 export const API_SCOPES = [
   "captures:read",
   "orgs:read",
+  // D-163: el CRM crea o encuentra aquí la empresa por su `crm_company_id`.
+  // Solo nombre, slug e identificador; nada comercial cruza. No implica
+  // `orgs:read` ni `projects:write` (RF-147).
+  "orgs:write",
   "deliverables:read",
   "deliverables:write",
   "announcements:write",
@@ -193,9 +197,21 @@ export const organization = pgTable(
     // Plugin `organization` de Better Auth (FU-06).
     logo: text("logo"),
     metadata: text("metadata"),
+    /**
+     * El identificador de la empresa EN EL CRM (D-163): es lo que permite al
+     * CRM crear aquí sus proyectos sin conocer el `id` de este sitio. Nulo en
+     * las que ya existían. Como en `project.crm_project_id`, aquí no entra
+     * nada comercial: la frontera (a) de `scope.md` no se mueve.
+     */
+    crmCompanyId: text("crm_company_id"),
     createdAt: createdAt(),
   },
-  (t) => [uniqueIndex("uq_organization_slug").on(t.slug)],
+  (t) => [
+    uniqueIndex("uq_organization_slug").on(t.slug),
+    // Único y parcial: la misma empresa del CRM no entra dos veces, y eso es
+    // lo que hace seguro reintentar la creación.
+    uniqueIndex("uq_organization_crm_id").on(t.crmCompanyId).where(sql`crm_company_id IS NOT NULL`),
+  ],
 );
 
 /**
