@@ -720,6 +720,30 @@ cliente quiera abrir cada día. **Misma app, no proyecto aparte.** Plan aprobado
   sirve `client`); `GET /organizations/{id}/news` no existe porque `news.read` no tiene alcance de
   agente — si Hermes necesita leer noticias, es decisión de matriz, no de código.
 
+### 2bis · Lo decidido el 2026-09-21 con Ricardo delante de las pantallas
+- **D-162 · El CRM manda en proyectos** (`31d6ad3`): `POST /api/v1/organizations/{id}/projects`,
+  idempotente por `crm_project_id` (migración 0019, **aplicada en producción**, 20/20), alcance
+  `projects:write`, más `close`/`reopen`. El formulario de HQ se queda como respaldo.
+- **D-163 · Las empresas guardan el id del CRM** (en curso, un agente): `organization.crm_company_id`
+  (migración 0020, **habrá que aplicarla**), `POST /api/v1/organizations` idempotente por ese id,
+  alcance `orgs:write`, campo en el formulario de HQ. Con esto el CRM puede crear aquí empresa y
+  proyecto sin conocer nuestros ids. **Falta el flujo del lado del CRM/n8n** que llame a la API.
+- **Archivar** empresas y cerrar proyectos desde HQ (`a827bfd`): nada se borra; solo `slg_admin`
+  archiva empresas. Pendiente anotado: §4.3 pide cancelar invitaciones y revocar claves al archivar.
+- **Noticias**: Ricardo conecta el perfil Editor de Hermes a `POST /organizations/{id}/news`
+  (clave con `orgs:read` + `news:write` desde `/hq/claves`). La pantalla de HQ es solo respaldo.
+- **«Empieza aquí» horizontal** (`85a8228`): raíz a la izquierda, líneas bajo VoltAi, `tagline`
+  opcional en el registro del servicio (seis servicios, ES y EN).
+- **Defecto abierto**: el `CHECK project_service_literal` (0001) acepta `SLG_Holdings`; el contenido
+  dice `Holdings by SLG` desde el renombre. Un proyecto de esa línea no se puede crear. Migración
+  pendiente de decidir.
+- **La vista previa apuntaba a `db.example.com`** en `DATABASE_URL` (Preview): corregido con una
+  variable acotada a la rama `develop` (pooler, puerto 6543). `scripts/auth/revisar-cuenta.ts`
+  (`npm run auth:revisar-cuenta`) diagnostica «no hemos podido iniciar sesión» sin escribir nada; y
+  `/api/acceso/contrasena` registra ahora la causa en el servidor (nunca en la respuesta).
+- **Producción sigue sin nada de M6 ni del 21-09**: desplegar desde `develop` cuando CI esté verde.
+  La base de producción SÍ tiene 0018 y 0019 (y necesitará 0020).
+
 ### 3 · La plantilla (objetivo A): la decisión, y luego el código
 Leer `docs/plantilla-de-sitios.md` y responder **la pregunta del §4.1**: estructura declarada o
 `rutas.ts` por cliente. Después: `site.config` → parametrizar los cinco frenos → playbook
