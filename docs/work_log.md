@@ -3744,3 +3744,79 @@ se comparan sin los `<script>`, sin el `<style>` nuevo y sin los nombres de los 
 pasan por el armazón raíz (los tres que no, `_global-error` y las dos redirecciones del mapa antiguo,
 tampoco cargaban `tokens.css`). El asunto y el cuerpo de la invitación, compuestos en los dos
 idiomas, dicen lo mismo que antes.
+
+## Plantilla, paso 6: el perfil `marketing-website` (2026-09-22)
+
+Sexto paso del plan de `docs/PLAYBOOK_REPLICACION.md` §3. **`profiles/marketing-website/profile.md`**
+es el perfil corto para las webs de cliente, en sus dos variantes del §2 —informativa, y con área
+privada—, con todos los campos de `profiles/_contract.md`, que ahora lo lista entre los perfiles
+provistos.
+
+Lo que decide: los `design_docs` se reducen a **la ficha** (`site.config.ts`), el mapa de contenido,
+los pendientes con el cliente y, solo con área privada, el acceso; un DU es **una página** (o los
+servicios de una línea) y está terminado cuando se sirve en cada idioma de la ficha, con su copy
+declarado, enlazada, y —si lleva formulario— con un envío de prueba recibido en el buzón del
+cliente. El `quality_gate` son **D1–D6 de `docs/gates.md` por sus órdenes**, más las capturas en
+móvil y escritorio. Una tabla dice lo que el perfil **no** pide y cuándo sí: `data_model`,
+`api_contracts`, identidad social, API v1, copias a almacenamiento externo, `/hq`, doctrina.
+
+**Una tensión, resuelta a la vista.** El contrato prohíbe nombres de producto en un perfil, y el
+encargo pedía la publicación «Vercel + Supabase». `publication_step` y `stack_candidates` van en
+categorías, como exige el contrato, y una nota cita la elección vigente y remite a su decisión en el
+§2 del playbook: el perfil la cita, no la fija.
+
+**Verificado**: `check:types`, `lint`, `check:playbook`, `check:literacy`, `check:secrets`.
+
+## Plantilla, paso 10: el lector del intake (`commands/leer-intake.md`) (2026-09-22)
+
+Décimo paso del plan de `docs/PLAYBOOK_REPLICACION.md` §3. **`commands/leer-intake.md`** es el
+playbook que Claude sigue cuando un cliente responde el formulario; su envoltorio,
+`.claude/commands/leer-intake.md`, lo pone en el menú como `/leer-intake`.
+
+Qué fija: cómo se localizan la hoja y la carpeta por el conector de Drive (por `title`, que el
+conector no acepta `name`); las **32 columnas** de la hoja, literales y en orden; la comprobación de
+cada ítem ★ del §4 con su condición de cumplido y el camino del correo de faltantes; cinco
+**paradas** —respuestas que la plantilla no cubre y decide Ricardo—; la correspondencia de cada
+columna con la ficha, con otra parte del procedimiento o con una variable no secreta; los colores
+del cliente repartidos en los nueve tokens con su contraste mínimo; la conversión de los servicios en
+texto libre a oferta, slugs, rutas y registros de seis secciones; el destino de cada archivo de la
+carpeta; y el resultado, con `docs/intake/pendientes.md`.
+
+**El ejemplo «Cliente Demo» se comprobó**: su ficha compila contra `lib/sitio/tipos.ts` con `tsc
+--strict`.
+
+**Huecos que el ejemplo destapó**, anotados en el playbook como pendientes o paradas:
+
+- El formulario ofrece «Solo inglés» y el motor no lo soporta.
+- Ofrece tres páginas que el motor no tiene: «Preguntas frecuentes», «Equipo», «Trabaja con nosotros».
+- No pregunta el **correo público** de la web (`marca.correoPublico`): se usa el de contactos, por confirmar.
+- La ficha no tiene **tipografía** ni **nombre de servicio por idioma**.
+- El contrato de servicio exige `download` y `## Descarga` aunque `descargas` esté apagado.
+- El buzón de contactos es hoy `MAIL_ALERTS_TO`; el playbook admite `MAIL_LEADS_TO` si el paso 5b la crea.
+- La convención de rutas de la oferta (todo bajo `/servicios`) queda a confirmar por el paso 3.
+
+**Verificado**: `check:types`, `lint`, `check:playbook`, `check:literacy`, `check:secrets`.
+
+## Plantilla, paso 11: los cuatro correos al cliente (`docs/intake/correos.md`) (2026-09-22)
+
+Undécimo paso del plan de `docs/PLAYBOOK_REPLICACION.md` §3. **`docs/intake/correos.md`** trae las
+cuatro plantillas del §5 —envío del formulario, faltantes, revisión de la vista previa y entrega con
+accesos— en texto plano para Gmail, firmadas por Ricardo Torres Oliva, Softlanding Global, con el
+tagline del kit.
+
+Lo que fija además: el tono que pidió Ricardo, con la lista de fórmulas que no entran; los **16
+campos variables** entre dobles llaves, cada uno con su origen (columna de la hoja, ficha, plan o
+conector) y los correos en que aparece; las líneas condicionales `[solo si …]`; que ninguna
+contraseña viaja por correo; cuándo se escribe en inglés —por el idioma de la persona, no el de la
+web—; y la nota de estilo HTML con los colores del kit y una estructura mínima con estilos en línea.
+
+**Dos cosas que el paso destapó**, anotadas en el documento:
+
+- `#50B4DC`, el color de enlace del kit para correos, mide 2,4:1 sobre blanco: se exige subrayado
+  siempre.
+- El brief está solo en español: a un cliente que no lo lee no se le puede mandar el correo 1.
+
+**Y una incoherencia del formulario**: la ayuda de la pregunta del CRM promete que los contactos
+«quedan guardados en tu panel», y una web sin área privada (variante A) no tiene panel.
+
+**Verificado**: `check:types`, `lint`, `check:playbook`, `check:literacy`, `check:secrets`.
