@@ -176,6 +176,13 @@
       "when": 1790100000000,
       "tag": "0025_captura_sin_crm",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1790110000000,
+      "tag": "0026_cerrar_la_api_rest",
+      "breakpoints": true
     }
   ]
 }

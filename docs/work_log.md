@@ -4013,3 +4013,22 @@ siguen fuera del comando.
 
 **Verificado**: `check:types`, `lint`, `check:secrets`, `check:env`, `check:literacy`,
 `check:playbook` y `test:sitio-secretos`. Solo en simulación: nada se ha llamado de verdad.
+
+## Seguridad: la API REST de Supabase exponía diez tablas y siete funciones (2026-09-22)
+
+Hallazgo del agente del paso 7 al preparar `crear-sitio`, **confirmado sobre producción** con el asesor
+de seguridad de Supabase (solo lectura, por el conector MCP): nivel ERROR, diez tablas sin RLS legibles
+por el rol `anon` a través de la API REST automática —`user`, `session`, `account`, `verification`,
+`lead_capture`, `organization`, `email_delivery`, `crm_delivery`, `download_event`,
+`webhook_delivery`— y siete funciones `SECURITY DEFINER` ejecutables sin sesión por
+`/rest/v1/rpc/…`. El sitio no usa esa API; estaba abierta igual, porque Supabase la publica por
+defecto. Bastaba la clave `anon` del proyecto.
+
+**Hecho**: migración `0026_cerrar_la_api_rest.sql` — quita a `PUBLIC`, `anon` y `authenticated` el uso
+del esquema `public`, que cierra de una vez lo que hay y lo que se cree después. Comprobado antes en
+producción que `slg_app` tiene su USAGE concedido explícitamente (`slg_app=U`), así que la aplicación no
+lo pierde; la migración lo vuelve a conceder por si acaso. `anon` y `authenticated` solo se tocan si
+existen, porque en PostgreSQL local y en CI no son roles.
+
+**No aplicada en producción**: va por el camino de siempre (`scripts/db/migrar.ts`, Ricardo), junto con
+0024 y 0025.
