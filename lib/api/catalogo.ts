@@ -20,13 +20,13 @@
 import { ACCIONES, MATRIZ_B3, type Accion } from "../auth/index.ts";
 import {
   ACTION_ITEM_CLOSER,
+  CAPTURE_SYNC_STATUS,
   DELIVERABLE_TYPES,
   LEAD_SOURCES,
   ORG_STATUS,
   ORG_TYPES,
   PROJECT_SERVICES,
   PROJECT_STATUS,
-  QUEUE_STATUS,
   VISIBILITY,
   type ApiScope,
 } from "../db/schema.ts";
@@ -98,8 +98,9 @@ export const RUTAS: readonly RutaDeApi[] = [
       {
         nombre: "crm_sync_status",
         tipo: "enum",
-        valores: QUEUE_STATUS,
-        descripcion: "Estado de la entrega al CRM.",
+        valores: CAPTURE_SYNC_STATUS,
+        descripcion:
+          "Estado de la entrega al CRM; en un sitio sin CRM, del aviso por correo (`notified`, `notify_failed`).",
       },
       {
         nombre: "doc_code",

@@ -215,6 +215,7 @@
   "hq.form.error": "Revisa este campo",
   "hq.form.errorFor": "No hemos podido guardar: revisa el campo",
   "hq.captures.title": "Capturas web",
+  "hq.captures.withoutCrm": "Sin CRM: cada captura se avisa por correo al buzón del cliente",
   "hq.captures.all": "Todas",
   "hq.captures.filterStatus": "Estado",
   "hq.captures.filterDocument": "Documento",

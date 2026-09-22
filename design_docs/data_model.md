@@ -972,7 +972,7 @@ Responsabilidad de C.6).
 |---|---|---|
 | `lead_capture_source_valid` | `CHECK (source IN ('download','contact','doctrine-request'))` | §3.7 |
 | `lead_capture_locale_valid` | `CHECK (locale IN ('es','en'))` | Dos idiomas |
-| `lead_capture_sync_status_valid` | `CHECK (crm_sync_status IN ('pending','delivered','failed'))` | §3.8 |
+| `lead_capture_sync_status_valid` | `CHECK (crm_sync_status IN ('pending','delivered','failed','notified','notify_failed'))` — los dos últimos desde 0025: el aviso por correo de un sitio sin CRM | §3.8 |
 | `lead_capture_mode_valid` | `CHECK (crm_mode IS NULL OR crm_mode IN ('contact_note','lead_admission'))` | §3.8 |
 | `lead_capture_download_required` | `CHECK ((source = 'download') = (download_id IS NOT NULL))` | Una captura de descarga sin documento no es evidencia de nada; una de contacto con documento es un dato inventado |
 | `lead_capture_delivered_coherent` | `CHECK (crm_sync_status <> 'delivered' OR (crm_contact_id IS NOT NULL AND crm_mode IS NOT NULL AND crm_delivered_at IS NOT NULL))` | «Entregada» sin identificador de contacto es una mentira que se descubre meses después |

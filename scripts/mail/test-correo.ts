@@ -119,6 +119,14 @@ const DATOS: Readonly<Record<TipoDeCorreo, Record<string, string>>> = {
   capture_notice: { correo: "lead@empresa.com", origen: "/ai/academy/phoenix-peex", urlCrm: "https://crm.softlandingglobal.com/contacts/1", documento: "D-01" },
   capture_failed_alert: { correo: "lead@empresa.com", urlHq: "https://softlandingglobal.com/hq/capturas/1", ultimoError: "timeout" },
   backup_failed_alert: { fecha: "2026-09-13", motivo: "pg_dump salió con 1" },
+  capture_inbox_notice: {
+    nombre: "Ana",
+    apellido: "Cliente",
+    correo: "lead@empresa.com",
+    origen: "contact",
+    pagina: "https://cliente-demo.test/contacto",
+    mensaje: "Quiero una llamada.",
+  },
 };
 
 async function filaDe(id: string) {

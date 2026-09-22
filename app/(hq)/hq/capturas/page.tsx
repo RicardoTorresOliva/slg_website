@@ -4,9 +4,9 @@ import { idiomaDeInterfaz } from "@/lib/app/idioma";
 import { exigirSeccion } from "@/lib/app/navegacion";
 import { exigirSuperficie } from "@/lib/auth";
 import { loadUiStrings } from "@/lib/content/loader";
-import { capturasDeHq } from "@/lib/hq/capturas";
-import { modoActivo } from "@/lib/crm";
-import { intentosDeCaptura } from "@/lib/hq/reintento";
+import { capturasDeHq, ESTADOS_DE_CAPTURA } from "@/lib/hq/capturas";
+import { crmEncendido, modoActivo } from "@/lib/crm";
+import { AGOTADAS, intentosDeCaptura } from "@/lib/hq/reintento";
 
 import { accionReintentarCaptura } from "../_acciones";
 
@@ -30,7 +30,7 @@ import { accionReintentarCaptura } from "../_acciones";
  */
 export const dynamic = "force-dynamic";
 
-const ESTADOS = ["pending", "delivered", "failed"] as const;
+const ESTADOS = ESTADOS_DE_CAPTURA;
 
 export default async function Capturas({
   searchParams,
@@ -74,8 +74,11 @@ export default async function Capturas({
         <h1 style={{ margin: 0, fontSize: "1.5rem", color: "var(--slg-blue-deep)" }}>
           {t["hq.captures.title"]}
         </h1>
+        {/* El modo de entrega de HOY. Sin CRM no hay modo que enseñar: se dice
+            que las capturas se avisan por correo, que es lo que explica los
+            estados `notified` y `notify_failed` de la lista. */}
         <p style={{ margin: 0, fontSize: "0.8125rem", color: "var(--slg-ink-2)" }}>
-          <code>{modoActivo()}</code>
+          {crmEncendido() ? <code>{modoActivo()}</code> : t["hq.captures.withoutCrm"]}
         </p>
       </header>
 
@@ -156,9 +159,10 @@ export default async function Capturas({
                       {t["hq.board.openContact"]}
                     </a>
                   ) : null}
-                  {/* Solo sobre una fallida: el botón no existe donde no
-                      procede, y el servidor lo vuelve a comprobar igual. */}
-                  {c.estado === "failed" ? (
+                  {/* Solo sobre una agotada —entrega al CRM o aviso por
+                      correo—: el botón no existe donde no procede, y el
+                      servidor lo vuelve a comprobar igual. */}
+                  {AGOTADAS.includes(c.estado) ? (
                     <form action={accionReintentarCaptura}>
                       <input type="hidden" name="id" value={c.id} />
                       <button type="submit" style={botonPequeno}>
@@ -309,8 +313,14 @@ const celdaCabecera: React.CSSProperties = {
 const celda: React.CSSProperties = { padding: "0.5rem", borderBottom: "1px solid var(--slg-line)" };
 
 function insignia(estado: string): React.CSSProperties {
+  // Terminado bien, en gris; agotado, en rojo; en curso, en azul. El aviso por
+  // correo de un sitio sin CRM se pinta igual que su pareja de la entrega.
   const color =
-    estado === "delivered" ? "var(--slg-ink-2)" : estado === "failed" ? "var(--slg-red)" : "var(--slg-blue-deep)";
+    estado === "delivered" || estado === "notified"
+      ? "var(--slg-ink-2)"
+      : AGOTADAS.includes(estado)
+        ? "var(--slg-red)"
+        : "var(--slg-blue-deep)";
   return {
     padding: "0.125rem 0.5rem",
     borderRadius: "var(--slg-radius-sm)",

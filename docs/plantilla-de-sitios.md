@@ -162,4 +162,6 @@ Ya existe y está probada en este proyecto; el playbook `crear-sitio` la ejecuta
   repo, protección SSO desactivada, DNS en el registrador.
 - **Correo**: subdominio de envío verificado en el proveedor (DKIM + SPF); `/api/ops` lo comprueba
   antes de mandar nada.
-- **CRM**: opcional. Sin `CRM_*`, la cola se queda en `pending` y no se pierde ninguna captura.
+- **CRM**: opcional. Con `crm: false` en la ficha, cada captura se avisa por correo al buzón del
+  cliente (`MAIL_LEADS_TO`, obligatoria en ese caso) y queda `notified` en HQ; no se intenta ninguna
+  entrega (paso 5b).

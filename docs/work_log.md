@@ -3687,3 +3687,51 @@ las siete comparaciones dan igual. Limitación declarada en el tipo: un sitio **
 está soportado (el principal vive en la raíz y es español).
 
 **Verificado**: `check:types`, `lint`, y el cotejo de las siete tablas.
+
+## Plantilla, paso 5b: el modo sin CRM (2026-09-22)
+
+**El defecto.** En un sitio con `modulos.crm: false` la captura se guardaba en `lead_capture` y nadie
+se enteraba: la cola intentaba entregar a un CRM que no existe, fallaba cinco veces y a las ~31 h
+mandaba un aviso de FALLO. El cliente no recibía el contacto y el operador recibía una alarma falsa.
+
+**Lo que hace ahora.** La misma cola decide por la ficha: con el CRM apagado, `barrerUnaVez` no
+entrega, **avisa por correo** al buzón del cliente (`MAIL_LEADS_TO`) con el contacto entero —nombre,
+apellido, correo, origen, página, documento, empresa, cargo, idioma y el mensaje partido en líneas—,
+plantilla nueva `capture_inbox_notice` en ES y EN, en el idioma principal del sitio. Lo manda **la
+cola y no el formulario**, por lo mismo que con el CRM: el barrido corre tras responder (`lib/colas`),
+el visitante no espera al proveedor, y si el proceso muere entre guardar y avisar, la fila sigue
+`pending` y la recoge el barrido siguiente. Código propio del correo en `lib/crm/sin-crm.ts`; la
+rama, en `lib/crm/cola.ts` (`avisarUna`, `barrerSinCrmUnaVez`). No se escribe `crm_delivery` ni se
+llama a ningún CRM. **Con el CRM encendido —la ficha de SLG— el camino es exactamente el de antes.**
+
+**El estado.** Dos nuevos, migración **`drizzle/0025_captura_sin_crm.sql`** (rehace el `CHECK`
+`lead_capture_sync_status_valid`; espejo `CAPTURE_SYNC_STATUS` en `lib/db/schema.ts`):
+`notified` —el proveedor aceptó el aviso— y `notify_failed` —cinco avisos sin salir—. Ni `delivered`
+ni `failed` servían: los dos hablan de un CRM, y `pending` era justo el defecto. Un correo caído se
+trata como un CRM caído: misma escalera (1 min → 24 h), error en `crm_last_error` con el prefijo
+«aviso por correo:» y en `email_delivery`; al quinto, `notify_failed`. HQ → Capturas ofrece los
+estados nuevos en el filtro, pinta cada uno como su pareja y deja **Reintentar** sobre
+`notify_failed`, que reabre un ciclo como con `failed` (`lib/hq/reintento.ts`); sobre `notified`
+contesta «ya entregada». La cabecera de la pantalla dice «Sin CRM» en vez del modo. La API v1 acepta
+los dos estados en el filtro `crm_sync_status`.
+
+**`MAIL_LEADS_TO`**: declarada en `lib/ops/variables.ts` (obligatoria solo si el CRM está apagado),
+`.env.example`, `README.md` (tabla de variables y el apartado del CRM), `docs/MANUAL_DEL_SISTEMA.md`
+y `docs/plantilla-de-sitios.md`. No cae a `MAIL_ALERTS_TO`: ese es el buzón del operador, no el del
+cliente, y el contacto llegaría a quien no lo contesta.
+
+**Pruebas.** `scripts/crm/test-crm.ts` (bloque `probarSinCrm`, contra PostgreSQL y un puerto de
+correo falso): aviso al buzón con los datos, `notified`, cero llamadas y cero traza de CRM, el
+correo compuesto en los dos idiomas y escapado, la escalera hasta `notify_failed` y el fallo sin
+`MAIL_LEADS_TO`. `scripts/hq/test-capturas.ts`: el reintento de HQ sobre los dos estados y el filtro.
+`scripts/mail/test-correo.ts`: datos de la plantilla nueva. Las tres necesitan PostgreSQL; las corre CI.
+
+**Encontrado de paso y NO tocado** (el encargo exige que con CRM no cambie nada): `avisarDelFallo`
+en `lib/crm/cola.ts` manda `urlCrm` y `error`, y la plantilla `capture_failed_alert` exige `urlHq`
+(y lee `ultimoError`). `componer` lanza antes de encolar, el `catch` lo traga, y **el aviso del
+quinto fallo al CRM no ha salido nunca**. Queda para una unidad propia.
+
+**Verificado aquí**: `check:types`, `tsc` de la raíz, `lint`, `check:env`, `check:literacy`,
+`check:secrets`, `check:cadenas`, `check:copy`, `check:fronteras`, `check:alcance`, `check:hq`,
+`check:playbook`. `check:migrations` **falla en esta rama a propósito**: el 0024 es de otro trabajo en
+paralelo y el journal salta de 23 a 25; se resuelve al fusionar.

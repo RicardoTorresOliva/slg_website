@@ -16,6 +16,8 @@
  *     Es la prueba del gate D7.
  *   · **criterio 7** — tras **cinco** fallos pasa a `failed` y se avisa.
  *   · **criterio 8** — cada intento deja su fila en `crm_delivery`.
+ *   · **paso 5b** — un sitio SIN CRM avisa por correo al buzón del cliente, y
+ *     no entrega a nadie (ver `probarSinCrm`).
  *
  * Necesita `bash scripts/db/local-pg.sh up`.
  */
@@ -156,6 +158,188 @@ const estadoDe = async (id: string) =>
 
 const intentosDe = async (id: string) =>
   await dueno`select attempt, endpoint, response_code from crm_delivery where lead_capture_id = ${id} order by attempt`;
+
+/* ── Plantilla, paso 5b · el sitio SIN CRM ─────────────────────────────────── */
+
+/**
+ * El modo sin CRM, contra PostgreSQL real y un puerto de correo falso.
+ *
+ * **Se ejerce `barrerSinCrmUnaVez` y no `barrerUnaVez`** porque el modo lo
+ * decide la ficha (`site.config.ts`), y la de SLG tiene el CRM encendido: no se
+ * cambia en tiempo de ejecución, y una variable de entorno para forzarlo sería
+ * una segunda puerta a la ficha que solo existiría para esta prueba. Lo que se
+ * comprueba aquí es lo que hace la cola en ese modo; que `barrerUnaVez` elija
+ * este camino es una línea que se lee.
+ *
+ * Los casos:
+ *   · el aviso sale al buzón del cliente con el contacto entero, la captura
+ *     queda `notified` y **no se llama al CRM ni se escribe traza de CRM**;
+ *   · un proveedor de correo caído se reintenta con la escalera de la cola y,
+ *     al quinto intento, `notify_failed` con el error escrito — la captura,
+ *     intacta;
+ *   · sin `MAIL_LEADS_TO` el fallo lo dice con su nombre.
+ */
+async function probarSinCrm(llamadasAlCrm: readonly Registro[]): Promise<void> {
+  console.log("\nPaso 5b — un sitio SIN CRM avisa por correo al buzón del cliente:\n");
+
+  const { barrerSinCrmUnaVez } = await import("../../lib/crm/index.ts");
+  const { componer, ErrorDeCorreo } = await import("../../lib/mail/index.ts");
+  const { moduloActivo } = await import("../../lib/sitio/index.ts");
+  type Mensaje = import("../../lib/mail/index.ts").MensajeSaliente;
+  type Puerto = import("../../lib/mail/index.ts").PuertoDeCorreo;
+
+  check(
+    "la ficha de SLG sigue con el CRM encendido: su camino es el de arriba, sin cambios",
+    moduloActivo("crm") === true,
+  );
+
+  // `enviarCorreo` lee la configuración SMTP aunque se le inyecte el puerto: se
+  // le da una inventada, que nunca se llega a usar. La contraseña, compuesta,
+  // por lo mismo que `CLAVE_DE_PRUEBA`.
+  process.env.MAIL_SMTP_HOST ??= "127.0.0.1";
+  process.env.MAIL_SMTP_PORT ??= "2525";
+  process.env.MAIL_SMTP_USERNAME ??= "prueba";
+  process.env.MAIL_SMTP_PASSWORD ??= ["sin", "crm", "solo", "en", "memoria"].join("-");
+  process.env.MAIL_FROM_ADDRESS ??= "web@envio.crm-prueba.test";
+  const BUZON = "buzon@cliente.crm-prueba.test";
+  process.env.MAIL_LEADS_TO = BUZON;
+
+  const enviados: Mensaje[] = [];
+  let correoCaido = false;
+  const puertoDeCorreo: Puerto = {
+    async enviar(m) {
+      if (correoCaido) throw new ErrorDeCorreo("red", "el proveedor de correo no contesta");
+      enviados.push(m);
+      return {
+        providerMessageId: `m-${enviados.length}`,
+        from: process.env.MAIL_FROM_ADDRESS ?? "",
+        replyTo: null,
+        templateKey: "mail.capture_inbox_notice",
+        subjectKey: "mail.capture_inbox_notice.subject",
+      };
+    },
+    async cerrar() {},
+  };
+
+  const capturaDeContacto = async (email: string): Promise<string> => {
+    const id = crypto.randomUUID();
+    await dueno`
+      insert into lead_capture (id, email, email_domain, name, last_name, company, source,
+                                page_path, locale, message, consent_at, privacy_version)
+      values (${id}, ${email}, ${email.split("@")[1]}, 'Ana', 'Sin Crm', 'Cliente Demo', 'contact',
+              '/contacto', 'en', ${"Hola.\nQuiero una llamada."}, now(), '2026-09-13')`;
+    return id;
+  };
+
+  /** Barre hasta que la fila deja `pending` o pasa su turno: el lote lo comparte con otras. */
+  const barrerHasta = async (id: string) => {
+    for (let i = 0; i < 5; i++) {
+      await barrerSinCrmUnaVez({ puertoDeCorreo });
+      const e = await estadoDe(id);
+      if (e?.crm_sync_status !== "pending" || Number(e?.crm_attempts ?? 0) > 0) return e;
+    }
+    return estadoDe(id);
+  };
+
+  /* · El aviso sale ─────────────────────────────────────────────────────── */
+  const llamadasAntes = llamadasAlCrm.length;
+  const id = await capturaDeContacto("avisada@crm-prueba.test");
+  const avisada = await barrerHasta(id);
+  check(
+    "la captura queda `notified`, con un intento y sin error",
+    avisada?.crm_sync_status === "notified" && avisada?.crm_attempts === 1 && avisada?.crm_last_error === null,
+    JSON.stringify(avisada),
+  );
+  check(
+    "y sin nada de CRM: ni modo, ni contacto, ni próximo intento",
+    avisada?.crm_mode === null && avisada?.crm_contact_id === null && avisada?.crm_next_attempt_at === null,
+    JSON.stringify(avisada),
+  );
+  check("no se llamó al CRM", llamadasAlCrm.length === llamadasAntes, `${llamadasAlCrm.length - llamadasAntes} llamadas`);
+  check("ni se escribió traza de entrega al CRM", (await intentosDe(id)).length === 0);
+
+  const aviso = enviados.find((m) => m.datos.correo === "avisada@crm-prueba.test");
+  check(
+    "el aviso va al buzón del cliente, con la plantilla propia, en el idioma principal del sitio",
+    aviso?.para === BUZON && aviso?.tipo === "capture_inbox_notice" && aviso?.idioma === "es",
+    JSON.stringify(aviso && { para: aviso.para, tipo: aviso.tipo, idioma: aviso.idioma }),
+  );
+  check(
+    "y lleva el contacto entero: nombre, apellido, correo, origen, página y mensaje",
+    aviso?.datos.nombre === "Ana" &&
+      aviso?.datos.apellido === "Sin Crm" &&
+      aviso?.datos.origen === "contact" &&
+      String(aviso?.datos.pagina).endsWith("/contacto") &&
+      String(aviso?.datos.mensaje).includes("Quiero una llamada") &&
+      aviso?.datos.idiomaDelContacto === "en",
+    JSON.stringify(aviso?.datos),
+  );
+
+  if (aviso) {
+    const es = componer(aviso);
+    const en = componer({ ...aviso, idioma: "en" });
+    check(
+      "el correo compuesto en español se lee: quién, desde dónde y qué escribió, línea a línea",
+      es.texto.includes("Ana Sin Crm <avisada@crm-prueba.test>") &&
+        es.texto.includes("formulario de contacto") &&
+        es.texto.includes("Hola.\nQuiero una llamada.") &&
+        es.asunto === "Nuevo contacto desde la web",
+      es.texto,
+    );
+    check(
+      "y en inglés, con su propio asunto",
+      en.texto.includes("contact form") && en.asunto === "New contact from the website",
+      en.texto,
+    );
+    check("el HTML escapa lo que escribió la persona", !es.html.includes("<avisada@") && es.html.includes("&lt;avisada@"));
+  }
+
+  const [registro] = await dueno`
+    select status from email_delivery
+     where kind = 'capture_inbox_notice' and to_email = ${BUZON}
+     order by created_at desc limit 1`;
+  check("el envío queda registrado en `email_delivery` como cualquier correo", registro?.status === "delivered", JSON.stringify(registro));
+
+  /* · El correo cae: la escalera, y al quinto `notify_failed` ────────────── */
+  correoCaido = true;
+  const idCaida = await capturaDeContacto("caida@crm-prueba.test");
+  const primera = await barrerHasta(idCaida);
+  check(
+    "con el correo caído la captura sigue ahí, `pending`, con próximo intento y el error escrito",
+    primera?.crm_sync_status === "pending" &&
+      primera?.crm_attempts === 1 &&
+      Boolean(primera?.crm_next_attempt_at) &&
+      String(primera?.crm_last_error).startsWith("aviso por correo:"),
+    JSON.stringify(primera),
+  );
+  for (let i = 0; i < 4; i++) {
+    await dueno`update lead_capture set crm_next_attempt_at = now() - interval '1 minute' where id = ${idCaida}`;
+    await barrerSinCrmUnaVez({ puertoDeCorreo });
+  }
+  const agotada = await estadoDe(idCaida);
+  check(
+    "al quinto intento queda `notify_failed`, no `pending` para siempre",
+    agotada?.crm_sync_status === "notify_failed" && agotada?.crm_attempts === 5 && agotada?.crm_next_attempt_at === null,
+    JSON.stringify(agotada),
+  );
+  check("y tampoco aquí se escribió traza de CRM", (await intentosDe(idCaida)).length === 0);
+
+  /* · Sin buzón ─────────────────────────────────────────────────────────── */
+  correoCaido = false;
+  delete process.env.MAIL_LEADS_TO;
+  const idSinBuzon = await capturaDeContacto("sinbuzon@crm-prueba.test");
+  const sinBuzon = await barrerHasta(idSinBuzon);
+  check(
+    "sin MAIL_LEADS_TO el fallo dice qué variable falta, y la captura no se pierde",
+    sinBuzon?.crm_sync_status === "pending" && String(sinBuzon?.crm_last_error).includes("MAIL_LEADS_TO"),
+    JSON.stringify(sinBuzon),
+  );
+  process.env.MAIL_LEADS_TO = BUZON;
+
+  // El reintento manual de HQ sobre `notify_failed` se prueba en
+  // `scripts/hq/test-capturas.ts`: fabricar el contexto de quien pulsa el botón
+  // solo se permite allí (`check:fronteras`).
+}
 
 async function main() {
   const doble = crearDoble();
@@ -348,6 +532,8 @@ async function main() {
       entregadaPorOtro?.crm_sync_status === "delivered",
       `${JSON.stringify(entregadaPorOtro)} · salida del hijo: ${salidaHijo.slice(0, 200)}`,
     );
+
+    await probarSinCrm(doble.recibido);
 
     await dueno`delete from crm_delivery where lead_capture_id in (select id from lead_capture where email like '%@crm-prueba.test')`;
     await dueno`delete from lead_capture where email like '%@crm-prueba.test'`;
