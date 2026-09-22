@@ -686,6 +686,72 @@ rama. `.gitignore`: el `.env*` del final **anulaba el `!.env.example`** de arrib
 
 ## PRÓXIMA SESIÓN
 
+Cierre del 2026-09-21, noche. **`develop` = `92903ba`**, empujado; nada vive solo en el portátil
+(se subió también la rama vieja `claude/wizardly-spence-6b2e2e`, del D-50 de septiembre, que no
+estaba en el remoto y no está fusionada). **Producción = `slg-website-hpx6scn2i`**, desde `1e55868`.
+**Base de producción = 23 de 23: falta aplicar 0023.**
+
+### 0 · Lo primero al abrir, en este orden
+1. **Mirar el CI de `92903ba`** (`gh run list --branch develop --limit 1`). Quedó en marcha al cerrar.
+   Es el tercer intento de dejar D-164 en verde: los dos anteriores fallaron y los dos fallos eran
+   reales (ver §1). Si sigue rojo, el patrón es siempre el mismo — algún llamador del camino de
+   captura que no manda el campo trampa.
+2. **Aplicar 0023 en producción**, con la cadena del POOLER (ver §2):
+   `cd ~/Dev/slg_website && node --env-file=$HOME/Dev/SLG_Overhauling/ops/supabase-slg-website.env scripts/db/migrar.ts`
+   → «1 migración(es) aplicada(s) ahora: 0023_dominios_desechables.sql. Total en la base: 24 de 24».
+3. **Desplegar**, después de la migración y solo con el CI en verde:
+   `cd ~/Dev/slg_website/.claude/worktrees/desplegar && git checkout --detach origin/develop && vercel --prod`
+   Producción va tres commits por detrás de `develop`: le falta D-164 entero.
+
+### 1 · D-164 vino de `main` y traía tres fallos, los tres reales
+El commit `356ae02` estaba **solo en `main`**, 102 commits por detrás; se trajo con `cherry-pick -x`.
+El traslado destapó lo que el CI de `main` no podía ver, porque allí falta medio proyecto:
+- **La migración 0023 no estaba declarada en `_journal.json`.** En `main` el journal se queda en 0016
+  y `check:migrations` no tenía con qué comparar. Registrada como `idx: 23`.
+- **La puerta de contacto quedaba rota.** D-164 puso la trampa vacía en el ayudante de
+  `/api/descargas` y se dejó el de `/api/contacto` y la solicitud de doctrina: con la regla nueva,
+  los envíos legítimos se descartaban en silencio. Tal cual estaba en `main`, **el formulario de
+  contacto del sitio habría dejado de capturar leads**.
+- **D-164 no tenía ni una prueba que ejerciera lo que decide.** Ninguna enviaba un formulario sin el
+  campo, que es justo el envío que se coló cinco veces en producción. Añadida en
+  `test-descargas.ts`, con `fetch` pelado para saltarse el ayudante que pinta la trampa.
+- Y un tercer llamador: el fixture de `test-webhooks.ts`, que llama a `registrarCaptura` con un
+  formulario de un solo campo. El arreglo va en el fixture y no en el código, y se comprobó antes de
+  decidirlo: `verificarEnvio` tiene un solo llamador, `registrarCaptura`, el embudo de las dos
+  puertas públicas, así que la comprobación ya está en la frontera del formulario.
+
+**Lección, para el próximo cambio de esta forma**: una regla que atraviesa tres puertas se cambia en
+las tres o no se cambia. Y **nada se commitea sobre `main`**: `main` no ve lo que ve `develop`.
+
+### 2 · El host directo de Supabase es IPv6 y la red de casa no siempre lo tiene
+`scripts/db/migrar.ts` falló con `CONNECT_TIMEOUT db.jadrwpbgtshwqanrhjxp.supabase.co:5432` después
+de haber funcionado dos veces el mismo día. Comprobado: ese host **no tiene dirección IPv4** y esa
+noche la máquina no tenía salida IPv6. El pooler sí responde por IPv4 en el 5432.
+La salida es cambiar `DATABASE_URL_OWNER` en `ops/supabase-slg-website.env` al **pooler en modo
+sesión**: usuario `<rol>.jadrwpbgtshwqanrhjxp`, host `aws-0-us-east-1.pooler.supabase.com`, puerto
+**5432** (el 6543 es modo transacción, para la aplicación; las migraciones necesitan sesión).
+**No se sabe si Ricardo llegó a hacer el cambio**: preguntar antes de dar por buena la cadena.
+
+### 3 · La sesión del CLI de Vercel se cayó dos veces en una hora
+Síntoma exacto: `vercel whoami`, `ls`, `project ls` y `env ls` funcionan; `vercel --prod` responde
+`Not authorized`. Se arregla con `vercel logout && vercel login`. Sospecha principal: **otra sesión
+de Claude en la misma máquina** haciendo `logout`/`login`/`setup` — el token es uno por máquina.
+Segunda sospecha, sin descartar: el CLI está en 59.23.1 y hay 59.24.0.
+
+### 4 · Analítica: el sitio no tiene ninguna, y es deliberado
+Ricardo preguntó dónde ver las visitas. **No hay ni un script de analítica en el repositorio**
+—`grep` de analytics/plausible/umami/posthog/@vercel/analytics: cero—, y eso lo exige **RF-35**: la
+capa pública no carga ningún script de terceros. Lo que sí hay hoy son los **registros de Vercel**
+(peticiones por ruta, sin visitantes únicos), y `lead_capture`, que mide conversión, no tráfico.
+**Decisión pendiente de Ricardo**: si quiere métricas de visitas, hay que elegir entre (a) Vercel
+Web Analytics, que **es un script de terceros y choca de frente con RF-35** salvo que se decida
+excepción explícita; (b) una analítica propia, servidor adentro, sin script; (c) quedarse sin ella.
+
+---
+
+### Lo anterior de esta sesión (21-09, primera y segunda tanda)
+
+
 Cierre del 2026-09-21 (segunda tanda). **`develop` = `dfc767d`**, empujado, **CI entero en verde**
 —incluido «Datos», que corre las migraciones y el aislamiento contra PostgreSQL real—.
 **Producción = `slg-website-ohk96rxwu`**, desplegada desde `dfc767d`: código y base **en 23 de 23**,
