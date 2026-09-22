@@ -13,6 +13,7 @@
  * (en honor a Alessandro Volta: la pila, la corriente sostenida). El nombre
  * anterior pasa a ser una variante PROHIBIDA para que ningún resto sobreviva.
  */
+import { sitio } from "../sitio/index.ts";
 
 /** Los nombres que deben aparecer literalmente, en cualquier idioma. */
 export const LITERAL_TERMS = [
@@ -98,8 +99,12 @@ export const DAL_OS_FORBIDDEN: ReadonlyArray<{ pattern: RegExp; why: string }> =
   { pattern: /\bCreative\s+Disruption\b/gi, why: 'la «D» de DAL OS es «Destrucción Creativa» / «Creative Destruction»' },
 ];
 
-/** Marca pública: SLG Agency. «Softlanding Global» solo en contexto SLG_Holdings (§10-4). */
-export const PUBLIC_BRAND = "SLG Agency";
+/**
+ * Marca pública del sitio, desde la ficha (`sitio.marca.nombre`, D-165). Para
+ * SLG, «SLG Agency»; «Softlanding Global» solo en contexto SLG_Holdings (§10-4).
+ * Se conserva el nombre porque es el que citan los frenos y la documentación.
+ */
+export const PUBLIC_BRAND = sitio.marca.nombre;
 
 export type NomenclatureIssue = {
   line: number;

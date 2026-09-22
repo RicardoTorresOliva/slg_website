@@ -28,6 +28,7 @@ import { createAccessControl } from "better-auth/plugins/access";
 import { organization } from "better-auth/plugins/organization";
 import * as schema from "../db/schema.ts";
 import { destinatarioDeAvisos, enviarCorreo } from "../mail/index.ts";
+import { sitio } from "../sitio/index.ts";
 import { dbDeAuth } from "./db.ts";
 
 /**
@@ -158,7 +159,7 @@ export const auth = betterAuth({
         tipo: "invitation",
         para: user.email,
         idioma: idiomaDe(user),
-        datos: { invitadoPor: "SLG Agency", url },
+        datos: { invitadoPor: sitio.marca.nombre, url },
       });
     },
   },

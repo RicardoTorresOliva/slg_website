@@ -16,6 +16,7 @@ import {
 import { ESTADOS_CANONICOS } from "@/lib/app/estados";
 import { SECCIONES } from "@/lib/app/navegacion";
 import { loadUiStrings } from "@/lib/content/loader";
+import { sitio } from "@/lib/sitio";
 
 /**
  * `/prototipo` — la compuerta de FU-10, navegable.
@@ -74,6 +75,7 @@ export default function Prototipo() {
         activo="/ai"
         acceso={{ href: "/acceder", etiqueta: t["nav.signin"] }}
         inicio="/"
+        marca={{ nombre: sitio.marca.nombre, isotipo: sitio.marca.isotipo }}
         conmutador={{
           href: "/en/ai",
           etiqueta: t["nav.lang"],

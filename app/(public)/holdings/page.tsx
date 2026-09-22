@@ -3,6 +3,7 @@ import { PaginaDeServicio } from "@/components/PaginaDeServicio";
 import { loadCollection } from "@/lib/content/loader";
 import { metadatosDe } from "@/lib/content/seo";
 import { secciones } from "@/lib/content/secciones";
+import { sitio } from "@/lib/sitio";
 
 const registro = loadCollection<{ name: string }>("service", "es").find(
   (r) => r.slug === "slg-holdings",
@@ -10,7 +11,7 @@ const registro = loadCollection<{ name: string }>("service", "es").find(
 
 export const metadata = metadatosDe({
   ruta: "/holdings",
-  titulo: registro?.data.name ?? "SLG Agency",
+  titulo: registro?.data.name ?? sitio.marca.nombre,
   descripcion: secciones(registro?.body ?? "")[0]?.cuerpo.split("\n")[0] ?? "",
 });
 

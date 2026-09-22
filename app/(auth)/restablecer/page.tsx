@@ -1,4 +1,5 @@
 import { loadUiStrings } from "@/lib/content/loader";
+import { sitio } from "@/lib/sitio";
 
 /**
  * `/restablecer?token=…` — la pantalla donde aterriza el enlace de recuperación.
@@ -13,7 +14,7 @@ import { loadUiStrings } from "@/lib/content/loader";
  * convierte la pantalla en un comprobador de testigos.
  */
 export const metadata = {
-  title: "Restablecer · SLG Agency",
+  title: `Restablecer · ${sitio.marca.nombre}`,
   robots: { index: false, follow: false },
 };
 export const dynamic = "force-dynamic";

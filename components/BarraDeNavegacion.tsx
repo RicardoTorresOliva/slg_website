@@ -48,6 +48,7 @@ export function BarraDeNavegacion({
   acceso,
   conmutador,
   inicio,
+  marca,
   textos,
 }: {
   enlaces: readonly Enlace[];
@@ -56,6 +57,8 @@ export function BarraDeNavegacion({
   conmutador: Conmutador;
   /** A dónde lleva el logo: `/` en español, `/en` en inglés. */
   inicio: string;
+  /** El nombre y el isotipo de la ficha. Llegan por prop: la ficha no viaja al cliente. */
+  marca: { nombre: string; isotipo: string };
   textos: { menu: string; navegacion: string; inicio: string };
 }) {
   const [abierto, setAbierto] = useState(false);
@@ -66,7 +69,7 @@ export function BarraDeNavegacion({
         <nav style={fila} aria-label={textos.navegacion}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", flexShrink: 0 }}>
             <Link href={inicio} style={{ display: "flex", alignItems: "center", flexShrink: 0 }} aria-label={textos.inicio}>
-              <Wordmark />
+              <Wordmark label={marca.nombre} isotipo={marca.isotipo} />
             </Link>
             {/* El idioma se elige con dos banderas pegadas al logo, en escritorio
                 y en móvil (decisión del 2026-09-17). Fuera del sheet a propósito:

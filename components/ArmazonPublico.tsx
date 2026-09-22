@@ -3,6 +3,7 @@ import Link from "next/link";
 import { loadUiStrings } from "@/lib/content/loader";
 import { ACCESO, DESTINOS, idiomaDeLaRuta, rutaEnElOtroIdioma } from "@/lib/content/rutas";
 import { organizacionJsonLd } from "@/lib/content/seo";
+import { sitio } from "@/lib/sitio";
 
 import { Analitica } from "./Analitica";
 import { BarraDeNavegacion } from "./BarraDeNavegacion";
@@ -57,6 +58,7 @@ export function ArmazonPublico({
         activo={ruta}
         acceso={{ href: ACCESO[idioma], etiqueta: t["nav.signin"] }}
         inicio={idioma === "en" ? "/en" : "/"}
+        marca={{ nombre: sitio.marca.nombre, isotipo: sitio.marca.isotipo }}
         conmutador={{
           href: otra,
           etiqueta: t["nav.lang"],
@@ -126,7 +128,7 @@ function PiePublico({ idioma, t }: { idioma: "es" | "en"; t: Record<string, stri
               el optimizador ni un componente cliente para una imagen estática. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/marca/logo-softlanding-global.webp"
+            src={sitio.marca.logo}
             alt={t["footer.logoAlt"]}
             width={600}
             height={163}

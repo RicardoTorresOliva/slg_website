@@ -1,9 +1,18 @@
 /* ============================================================================
  * tokens.css — Kit de Marca SLG Rojo v1
  * ----------------------------------------------------------------------------
- * ÚNICO archivo del proyecto autorizado a contener valores de color literales.
- * Cualquier `#rrggbb` fuera de aquí rechaza FU-02 en revisión (criterio 2) y
- * viola RF-16. Todo componente consume estas variables.
+ * ÚNICO archivo del proyecto autorizado a contener valores de color literales,
+ * con UNA excepción: los nueve colores de marca. Cualquier `#rrggbb` fuera de
+ * aquí rechaza FU-02 en revisión (criterio 2) y viola RF-16. Todo componente
+ * consume estas variables.
+ *
+ * LOS NUEVE COLORES DE MARCA NO ESTÁN AQUÍ (D-165, plantilla paso 2). Salen de
+ * `sitio.marca.colores` en `site.config.ts` y `app/layout.tsx` los escribe en
+ * un `<style>` del `<head>`; `check:contraste` los mide desde la misma ficha.
+ * Aquí se quedan su NOMBRE y sus REGLAS DE USO, que son del kit y del motor, no
+ * de un cliente. No se vuelven a escribir aquí ni como respaldo: dos fuentes
+ * para un mismo color hacen que gane la que Next escriba después, y el freno
+ * se niega a medir si encuentra una (ver `check-contraste.ts`).
  *
  * Fuentes:  START_PROJECT.md Anexo C.1 (tabla de tokens con contrastes medidos)
  *           design_docs/style_guide.md
@@ -24,7 +33,7 @@
    */
 
   /* 4,7:1 sobre --paper (AA texto) · 4,4:1 sobre --paper-2 → ahí solo ≥ 24px */
-  --slg-blue-primary: #2878b4;
+  /* --slg-blue-primary ← sitio.marca.colores.primario */
 
   /* Color de enlace. Se separa de --slg-blue-deep desde D-47: un enlace en el
    * azul oscuro nuevo apenas se distingue del texto de cuerpo, y un enlace que
@@ -37,29 +46,29 @@
    * saturación baja (36%), que es lo que produce la sensación metálica.
    * 11,9:1 sobre --paper. Wordmark, H1, titulares de portada, títulos de bloque.
    * NO se usa para enlaces: ver --slg-link. */
-  --slg-blue-deep: #24394d;
+  /* --slg-blue-deep ← sitio.marca.colores.profundo */
 
   /* 2,4:1 sobre claro → NUNCA como color de texto sobre fondo claro.
    * Solo highlight, icono, subrayado, o capa exterior del anillo de foco.
    * Como texto, únicamente sobre --slg-indigo (5,3:1). */
-  --slg-cyan: #50b4dc;
+  /* --slg-cyan ← sitio.marca.colores.acento */
 
   /* Solo fondo, al 20–40 % de opacidad. Nunca texto. */
-  --slg-blue-tint: #78b4dc;
+  /* --slg-blue-tint ← sitio.marca.colores.tinte */
 
   /* 12,6:1 sobre --paper. H3, VoltAi Academy, datos destacados */
-  --slg-indigo: #282878;
+  /* --slg-indigo ← sitio.marca.colores.secundario */
 
   /* DETENCIÓN VISUAL. 5,0:1 sobre --paper; blanco sobre rojo 5,0:1.
    * Solo el botón del CTA de descarga y alertas críticas en HQ.
    * Máximo 1–2 instancias por viewport. Nunca fondo, nunca decoración. */
-  --slg-red: #dc141e;
+  /* --slg-red ← sitio.marca.colores.alerta */
 
   /* ── Tinta y superficie ────────────────────────────────────────────────── */
-  --slg-ink: #0a0a14;      /* 19,7:1 — texto de cuerpo */
+  /* --slg-ink ← sitio.marca.colores.tinta · 19,7:1 — texto de cuerpo */
   --slg-ink-2: #5a6470;    /*  6,0:1 — texto secundario, captions, pie */
-  --slg-line: #c8ccd3;     /* solo divisores y bordes de tarjeta */
-  --slg-paper: #ffffff;    /* fondo principal */
+  /* --slg-line ← sitio.marca.colores.linea · solo divisores y bordes de tarjeta */
+  /* --slg-paper ← sitio.marca.colores.papel · fondo principal */
   --slg-paper-2: #f4f6f9;  /* fondos suaves y alternancia de secciones */
 
   /* ── Radio ─────────────────────────────────────────────────────────────── */

@@ -3687,3 +3687,60 @@ las siete comparaciones dan igual. Limitación declarada en el tipo: un sitio **
 está soportado (el principal vive en la raíz y es español).
 
 **Verificado**: `check:types`, `lint`, y el cotejo de las siete tablas.
+
+## Plantilla, paso 2: la marca y el dominio salen de la ficha (2026-09-22)
+
+Segundo paso de `docs/PLAYBOOK_REPLICACION.md` §3, sobre la ficha del paso 1. Lo que
+`docs/plantilla-de-sitios.md` §3.1 inventariaba como «SLG Agency» escrito a mano —y el enlace a la
+Academy externa que §3.2 dejaba abierto— se lee ahora de `sitio.marca` y `sitio.dominio`, siempre a
+través de `lib/sitio`. Para SLG no cambia nada que se vea: la ficha tiene exactamente los valores de
+antes, y eso es lo que se ha medido.
+
+**Hecho**:
+
+- **Nombre, razón social, lema y correo.** `PUBLIC_BRAND` es ahora `sitio.marca.nombre` (se conserva
+  el nombre porque lo citan la documentación y los frenos). `metadatosDe()` compone el título, el
+  `siteName` y el `alt` de la imagen social con el nombre; el JSON-LD de la organización y del
+  proveedor de cada servicio llevan la **razón social** y el **correo público**. El canal RSS, el
+  título y la descripción por defecto del armazón raíz (nombre y lema), los seis títulos de `(auth)`
+  y los diez `?? "SLG Agency"` de respaldo de `(public)`, también.
+- **Correo.** Las dos versiones de la invitación y el `invitadoPor` del correo de verificación dicen
+  `sitio.marca.nombre`; sin `MAIL_FROM_NAME`, el remitente es `sitio.marca.remitente`.
+- **Logo e isotipo.** El pie pinta `sitio.marca.logo`. El `Wordmark` ya **no** lee la ficha: recibe
+  nombre e isotipo por props desde `ArmazonPublico`, a través de `BarraDeNavegacion`. La razón es
+  concreta: la barra es de cliente, e importar `@/lib/sitio` desde el `Wordmark` metería la ficha
+  entera —oferta y patrones de nomenclatura— en el JavaScript de cada visitante para usar dos
+  cadenas. El prototipo, que también pinta la barra, pasa las mismas dos.
+- **La Academy externa.** `OverviewDeRama` enlaza `sitio.dominio.enlaces.academiaExterna` y, si la
+  ficha no declara esa clave, **no pinta el enlace**: antes un cliente habría mandado a sus
+  visitantes a la Academy de SLG.
+- **Los nueve colores.** Salen de `sitio.marca.colores` y **se quitan de `app/tokens.css`**, que
+  conserva sus nombres y sus reglas de uso. `app/layout.tsx` escribe un
+  `<style>:root{--slg-…}</style>` en el `<head>` con `cssDeLaMarca()`; la tabla color → variable
+  (`VARIABLES_DE_COLOR`) vive en `lib/sitio/index.ts` porque la leen dos. Se eligió así por tres
+  motivos: es servidor puro, sin JavaScript de cliente —la regla se escribe al prerrenderizar y
+  viaja en el HTML—; la CSP ya admite estilos en línea (`style-src 'unsafe-inline'`, a propósito);
+  y no hay un CSS generado que pueda quedarse viejo respecto de la ficha. Quitar los valores de
+  `tokens.css` en vez de dejarlos de respaldo es parte de la decisión: con dos fuentes, cuál gana
+  depende del orden en que Next escriba el `<head>`. `cssDeLaMarca()` solo acepta hexadecimales,
+  porque su texto va sin escapar dentro de un `<style>`.
+- **`check:contraste` mide la ficha.** Toma los nueve colores de `coloresDeLaMarca()` y el resto
+  (`--slg-ink-2`, `--slg-paper-2`, los alias) de `tokens.css`. Si `tokens.css` vuelve a definir uno
+  de los nueve como literal, el freno se niega a medir: mediría un color y el navegador pintaría
+  otro.
+
+**Fuera de este paso, a propósito**: el título de `/prototipo` («Prototipo C.5 · SLG Agency»), las
+cadenas de `content/ui/*.json` que nombran la marca, `scripts/auth/primer-admin.ts`,
+`scripts/db/seed.ts` y los dominios de las pruebas. `nomenclature.ts` solo cambia en `PUBLIC_BRAND`;
+los literales y patrones son de otro paso.
+
+**Verificado**: `check:types`, `lint`, `check:content`, `check:cadenas`, `check:contraste` (21
+mediciones, ahora sobre la ficha), `check:secrets` y `check:env`; con las variables del trabajo
+`gates` del CI, `build:standalone`, `check:seo`, `check:produccion`, `check:armazon`,
+`check:runtime`, y además `check:js-budget`, `check:paginas` y `check:blog`. Y la prueba directa del
+invariante: compilado también el commit anterior (`10e14fd`), los 97 HTML y cuerpos prerrenderizados
+se comparan sin los `<script>`, sin el `<style>` nuevo y sin los nombres de los trozos con hash: son
+**idénticos** salvo la fecha de `lastmod` del sitemap. El `<style>` de marca está en los 86 HTML que
+pasan por el armazón raíz (los tres que no, `_global-error` y las dos redirecciones del mapa antiguo,
+tampoco cargaban `tokens.css`). El asunto y el cuerpo de la invitación, compuestos en los dos
+idiomas, dicen lo mismo que antes.
