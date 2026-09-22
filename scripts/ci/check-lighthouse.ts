@@ -19,6 +19,9 @@ import path from "node:path";
 
 import { chromium, type Browser } from "playwright";
 
+import { loadCollection } from "../../lib/content/loader.ts";
+import { moduloActivo, serviciosDeLaOferta } from "../../lib/sitio/index.ts";
+
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 const SERVER = path.join(REPO_ROOT, ".next", "standalone", "server.js");
 
@@ -31,8 +34,26 @@ const SERVER = path.join(REPO_ROOT, ".next", "standalone", "server.js");
  * visto no significa nada en verde (R-26) — aquí especialmente, porque entre el
  * medidor y el veredicto hay una librería entera: bastaba leer una categoría con
  * otro nombre para que todo saliera `undefined`, cayera a 0… o a `?? 100`.
+ *
+ * **SIN `LH_PAGINAS`, LAS TRES SALEN DE LA FICHA Y DEL CONTENIDO** (plantilla,
+ * 2026-09-22). Antes eran `/ai/enterprise/readiness` y `/blog/mes-cuatro`,
+ * escritas a mano: en el sitio de un cliente las dos serían 404 y el freno
+ * mediría una página de error. Ahora: la portada; el primer servicio de la
+ * oferta (el gate pide «una página de servicio», y todas salen de la misma
+ * plantilla); y el primer artículo publicado, si el blog está encendido.
  */
-const PAGINAS = (process.env.LH_PAGINAS ?? "/,/ai/enterprise/readiness,/blog/mes-cuatro")
+function paginasPorDefecto(): string[] {
+  const paginas = ["/"];
+  const servicio = serviciosDeLaOferta()[0];
+  if (servicio) paginas.push(servicio.ruta.es);
+  if (moduloActivo("blog")) {
+    const articulo = loadCollection<{ status?: string }>("post", "es").find((p) => p.data.status === "published");
+    if (articulo) paginas.push(`/blog/${articulo.slug}`);
+  }
+  return paginas;
+}
+
+const PAGINAS = (process.env.LH_PAGINAS ?? paginasPorDefecto().join(","))
   .split(",")
   .map((r) => r.trim())
   .filter(Boolean);
