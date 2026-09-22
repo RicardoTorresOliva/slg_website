@@ -3603,3 +3603,31 @@ que el cambio son tres líneas de estructura, no una lista escrita a mano.
 **Verificado**: `check:types`, `lint`, `check:cadenas`, `check:paginas` y `check:copy` en verde, y la
 portada leída en el servidor local — el texto aparece una sola vez y el árbol conserva los tres
 niveles de VoltAi.
+
+## D-164 llega a `develop`, y trae un fallo propio que aquí sí se ve (2026-09-21)
+
+D-164 —la trampa anti-abuso descarta también cuando el campo **no viene**, no solo cuando viene
+relleno— se había commiteado directamente sobre `main`, que iba 102 commits por detrás. Se trae con
+`cherry-pick -x`, no fusionando `main`, para no arrastrar aquí una historia vieja.
+
+**El fallo que el traslado destapó**: el commit añadía `drizzle/0023_dominios_desechables.sql`
+**sin declararlo en `drizzle/meta/_journal.json`**. En `main` eso no se notaba porque allí el journal
+se queda en 0016 y `check:migrations` no tenía con qué comparar; en `develop`, con 0017 a 0022
+presentes, el freno lo caza en el acto. Registrado como `idx: 23`: 24 archivos, 24 declaradas, en
+secuencia.
+
+**Dos conflictos, los dos de texto.** `.gitignore`: las dos ramas ignoraban `.vercel` y
+`supabase/.temp/`; se conserva la redacción comentada de `develop` y se añaden, con su porqué, las
+dos rutas nuevas de `.claude/` —que es un acierto de D-164, porque este repositorio es público y esos
+archivos son configuración del portátil—. `decision_log.md`: D-164 entra en su propia sección
+después de la tabla D-160…D-163, con las tildes puestas, que es como está escrito el resto del
+documento.
+
+**Verificado aquí**: `check:types`, `lint`, `check:migrations`, `check:fronteras`, `check:alcance`,
+`check:literacy`, `check:secrets`, `check:env`, `check:anexo-d`, `check:cadenas`, `check:copy`,
+`check:nomenclature`, `check:archivos` y `check:playbook`, los catorce en verde.
+
+**No verificado en esta máquina**: `scripts/descargas/test-descargas.ts`, que necesita PostgreSQL;
+lo corre CI. Y la migración 0023 **está pendiente de aplicar en producción** — la lista de dominios
+ya se amplió en caliente el mismo día, así que la migración devuelve al repositorio lo aprendido,
+pero la base recreada desde cero la necesita.
