@@ -52,8 +52,10 @@ export function BarraDeNavegacion({
 }: {
   enlaces: readonly Enlace[];
   activo?: string;
-  acceso: Enlace;
-  conmutador: Conmutador;
+  /** Sin intranet no hay botón de acceso. */
+  acceso?: Enlace;
+  /** Sin un segundo idioma no hay conmutador. */
+  conmutador?: Conmutador;
   /** A dónde lleva el logo: `/` en español, `/en` en inglés. */
   inicio: string;
   textos: { menu: string; navegacion: string; inicio: string };
@@ -71,13 +73,15 @@ export function BarraDeNavegacion({
             {/* El idioma se elige con dos banderas pegadas al logo, en escritorio
                 y en móvil (decisión del 2026-09-17). Fuera del sheet a propósito:
                 es lo primero que busca quien llega al idioma equivocado. */}
-            <BanderasDeIdioma
-              actual={conmutador.idiomaActual}
-              href={conmutador.href}
-              nombres={{ actual: conmutador.nombreActual, otro: conmutador.etiqueta }}
-              textoActual={conmutador.textoActual}
-              textoNoDisponible={conmutador.etiquetaNoDisponible}
-            />
+            {conmutador ? (
+              <BanderasDeIdioma
+                actual={conmutador.idiomaActual}
+                href={conmutador.href}
+                nombres={{ actual: conmutador.nombreActual, otro: conmutador.etiqueta }}
+                textoActual={conmutador.textoActual}
+                textoNoDisponible={conmutador.etiquetaNoDisponible}
+              />
+            ) : null}
           </div>
 
           {/* Escritorio: los cinco destinos a la vista. Móvil = rápido,
@@ -98,13 +102,15 @@ export function BarraDeNavegacion({
                 </Link>
               </li>
             ))}
-            <li>
-              {/* Secundario a propósito: el CTA de la capa pública es la
-                  descarga, no el login (§10-8). Nunca rojo. */}
-              <Link href={acceso.href} style={botonAcceso}>
-                {acceso.etiqueta}
-              </Link>
-            </li>
+            {acceso ? (
+              <li>
+                {/* Secundario a propósito: el CTA de la capa pública es la
+                    descarga, no el login (§10-8). Nunca rojo. */}
+                <Link href={acceso.href} style={botonAcceso}>
+                  {acceso.etiqueta}
+                </Link>
+              </li>
+            ) : null}
           </ul>
 
           {/* Móvil: un solo botón, y el sheet arrastrable detrás. */}
@@ -134,11 +140,13 @@ export function BarraDeNavegacion({
               </Link>
             </li>
           ))}
-          <li>
-            <Link href={acceso.href} style={enlaceDeSheet}>
-              {acceso.etiqueta}
-            </Link>
-          </li>
+          {acceso ? (
+            <li>
+              <Link href={acceso.href} style={enlaceDeSheet}>
+                {acceso.etiqueta}
+              </Link>
+            </li>
+          ) : null}
         </ul>
       </SheetMovil>
     </>

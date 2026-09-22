@@ -3,7 +3,7 @@ import Link from "next/link";
 import { loadCollection, loadUiStrings } from "@/lib/content/loader";
 import { EJES, RAMAS, SERVICIOS, rutaEnDeServicio, slugEnDeServicio } from "@/lib/content/rutas";
 import { secciones } from "@/lib/content/secciones";
-import { PAGINAS_DEL_MOTOR } from "@/lib/sitio/motor";
+import { PAGINAS_DEL_MOTOR, paginaDelMotorActiva } from "@/lib/sitio/motor";
 
 import { Markdown } from "./Markdown";
 import { HeroTipografico } from "./piezas";
@@ -45,7 +45,7 @@ type Rama = Nodo & { hijos: Rama[] };
 const M = PAGINAS_DEL_MOTOR;
 
 /** Descargas y Contacto: accesos transversales, con la ruta del pie. */
-const TRANSVERSALES = [M.descargas, M.contacto] as const;
+const TRANSVERSALES = (["descargas", "contacto"] as const).filter(paginaDelMotorActiva).map((c) => M[c]);
 
 export function MapaDelSitio({ slug, lang }: { slug: string; lang: "es" | "en" }) {
   const t = loadUiStrings()[lang];
@@ -116,11 +116,16 @@ export function MapaDelSitio({ slug, lang }: { slug: string; lang: "es" | "en" }
       hijos: [],
     };
   });
+  // Doctrina y Blog solo si su módulo está encendido: un nodo a un 404 no orienta.
   const destinos: Rama[] = [
     ...ejes,
     ...sueltos,
-    { ...nodoDePagina(M.doctrina.registro[lang], M.doctrina.ruta[lang], t["footer.doctrine"]), hijos: [] },
-    { nombre: t["nav.blog"], linea: t["blog.metaDescription"], href: M.blog.ruta[lang], hijos: [] },
+    ...(paginaDelMotorActiva("doctrina")
+      ? [{ ...nodoDePagina(M.doctrina.registro[lang], M.doctrina.ruta[lang], t["footer.doctrine"]), hijos: [] }]
+      : []),
+    ...(paginaDelMotorActiva("blog")
+      ? [{ nombre: t["nav.blog"], linea: t["blog.metaDescription"], href: M.blog.ruta[lang], hijos: [] }]
+      : []),
     { ...nodoDePagina(M.nosotros.registro[lang], M.nosotros.ruta[lang], t["nav.about"]), hijos: [] },
   ];
 

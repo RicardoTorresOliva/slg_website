@@ -14,7 +14,8 @@
 import type { Metadata } from "next";
 
 import { loadCollection } from "./loader.ts";
-import { PAGINAS_DEL_MOTOR, type ClaveDelMotor } from "../sitio/motor.ts";
+import { idiomaActivo } from "../sitio/index.ts";
+import { PAGINAS_DEL_MOTOR, rutaDisponible, type ClaveDelMotor } from "../sitio/motor.ts";
 import {
   DESCARGAS,
   EJES,
@@ -59,7 +60,9 @@ export function metadatosDe({
     description: descripcion,
     alternates: {
       canonical: `${base}${ruta}`,
-      languages: idiomas,
+      // Un sitio de un solo idioma no declara `hreflang`: no hay pareja que
+      // anunciar, y un `x-default` sin alternativas no le dice nada a nadie.
+      ...(idiomaActivo("en") ? { languages: idiomas } : {}),
     },
     openGraph: {
       type: "website",
@@ -174,5 +177,6 @@ export function rutasDelSitemap(): string[] {
       .map((d) => `${DESCARGAS[lang]}/${d.slug}`),
   );
 
-  return [...fijas, ...servicios, ...sueltas, ...documentos];
+  // Lo de un idioma o un módulo apagado responde 404: no se anuncia.
+  return [...fijas, ...servicios, ...sueltas, ...documentos].filter(rutaDisponible);
 }

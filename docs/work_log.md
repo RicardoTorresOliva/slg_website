@@ -3767,3 +3767,45 @@ verde: `check:types`, `lint`, `check:content`, `check:cadenas`, `check:migration
 `check:fronteras`, `check:alcance`, `check:secrets`, `check:env`, `check:playbook`, `check:sitio`,
 `check:produccion`, `check:runtime`, `check:blog` y `check:js-budget`. `check:brakes` necesita
 PostgreSQL: lo corre CI.
+
+## Plantilla, paso 5: módulos e idiomas apagables (2026-09-22)
+
+Quinto paso de `docs/PLAYBOOK_REPLICACION.md` §3. `sitio.modulos` y `sitio.idiomas` dejan de ser
+declaración y pasan a mandar: lo que la ficha apaga no existe en el sitio servido.
+
+**Hecho.** `lib/sitio/motor.ts` gana la tabla de qué rutas son de qué módulo —las páginas del motor
+y los prefijos que no tienen página: `/api/contacto`, `/api/descargas`, `/hq`, `/portal`, el acceso,
+el visor, `/api/auth`, `/api/v1`— y `rutaDisponible()`, que además da por inexistente todo `/en/**`
+si el inglés está apagado; la API exige también la intranet. **El middleware es la puerta**, porque
+es lo único por lo que pasan a la vez páginas y manejadores (`rss.xml`, `/api/**`): tras la
+compuerta de staging, una ruta apagada responde 404 —las páginas, reescritas a una ruta inexistente
+para que salga la 404 propia con sus salidas; los manejadores, 404 sin cuerpo— y en el host del
+visor lo mismo. Además: el menú, el pie y el mapa solo enlazan páginas de módulos encendidos; el
+botón de acceso desaparece sin intranet y el conmutador sin segundo idioma (`BarraDeNavegacion`
+los recibe opcionales); sin inglés no se emite `hreflang` ni se generan rutas `/en` de la ficha;
+la página de Servicios omite los bloques de doctrina, artículos y descarga si su módulo está
+apagado (`bloquesDeServiciosActivos()`) sin desplazar el texto de los demás; la página de servicio
+no ofrece documento sin descargas ni enlace a contacto sin contacto; el sitemap filtra rutas y
+artículos, `robots.txt` deja de nombrar `/hq` y `/portal` sin intranet y las salidas de la 404 no
+llevan al blog si no lo hay. `crm` y `analitica` quedan expuestos por `moduloActivo()`; su
+comportamiento es del paso 5b. **Los frenos que miden esas rutas las saltan**: `check:blog` sale en
+verde sin blog, `check:armazon` comprueba que sin intranet no hay botón y que sin inglés no hay
+conmutador y `/en` da 404, `check:paginas` y `check:seo` recorren solo lo encendido (y el segundo
+exige que sin inglés no haya `hreflang`), `check:runtime` mide la política estricta en `/prototipo`
+si `/acceder` no existe, y `check:terceros` y `test:gesto` filtran sus páginas.
+
+**Verificado.** Con la ficha de SLG, las 117 URL rastreadas sirven el mismo código y el mismo HTML
+que `develop`, y los frenos del servidor hacen el mismo número de comprobaciones (142, 226, 60).
+Con una ficha de prueba —sin inglés, blog, doctrina, contacto, intranet ni API, solo en la copia de
+trabajo y devuelta después— se compiló y: `/blog`, `/blog/rss.xml`, `/doctrina`, `/contacto`, `/en`,
+`/en/about`, `/acceder`, `/hq`, `/portal`, `/api/v1/…`, `/api/contacto` y `/visor/…` responden 404
+(las páginas con la 404 propia, CSP y `noindex`); `/gracias` y `/descargas` siguen en 200; la barra
+enlaza solo `/servicios` y `/nosotros`, sin acceso ni conmutador ni `hreflang`; el pie, el mapa, el
+sitemap, `robots.txt`, los bloques de Servicios y las salidas de la 404 se recortan como se espera;
+y `check:sitio`, `check:paginas` (58), `check:seo` (141), `check:armazon` (30), `check:produccion`,
+`check:runtime`, `check:blog` y `check:js-budget` pasan sobre ese sitio. Las pruebas negativas de
+armazón, páginas y SEO siguen en rojo por sus motivos. En verde con la ficha de SLG: `check:types`,
+`lint`, `check:content`, `check:cadenas`, `check:migrations`, `check:fronteras`, `check:alcance`,
+`check:secrets`, `check:env`, `check:playbook`, `check:sitio` y los siete del servidor.
+`check:terceros`, `test:gesto` y `check:lighthouse` necesitan Chromium, y `check:brakes` PostgreSQL:
+no corren en esta máquina.

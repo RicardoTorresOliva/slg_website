@@ -27,6 +27,7 @@ import path from "node:path";
 
 import { salidasDeError, SERVICIOS } from "../../lib/content/rutas.ts";
 import { rutasDelSitemap } from "../../lib/content/seo.ts";
+import { idiomaActivo, moduloActivo } from "../../lib/sitio/index.ts";
 import { baseDelSitio } from "../../lib/content/sitio.ts";
 
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
@@ -177,6 +178,10 @@ async function main() {
 
       // hreflang recíproco: si declara pareja, la pareja declara la vuelta.
       const alt = alternativas(html);
+      // Un sitio de un solo idioma no declara hreflang: no hay pareja (D-166).
+      if (!idiomaActivo("en")) {
+        check(`${ruta} · sin segundo idioma, sin hreflang`, Object.keys(alt).length === 0, JSON.stringify(alt));
+      }
       const enOtroIdioma = ruta.startsWith("/en") ? alt.es : alt.en;
       if (enOtroIdioma) {
         const rutaPar = enOtroIdioma.replace(origen, "") || "/";
@@ -243,7 +248,9 @@ async function main() {
     const txt = await robots.text();
     check("robots.txt responde", robots.ok, `status ${robots.status}`);
     check("robots.txt apunta al sitemap", txt.includes("/sitemap.xml"), txt.slice(0, 120));
-    for (const privada of ["/hq", "/portal", "/api"]) {
+    // Sin intranet, `/hq` y `/portal` no existen y no se nombran.
+    const privadas = [...(moduloActivo("intranet") ? ["/hq", "/portal"] : []), "/api"];
+    for (const privada of privadas) {
       check(`robots.txt mantiene ${privada} fuera del índice`, txt.includes(`Disallow: ${privada}`));
     }
 

@@ -9,10 +9,18 @@
  * no las decide ningún cliente. Aquí se listan una vez, con su par de idioma, el
  * registro de `content/pages` que las describe y el módulo del que dependen.
  *
+ * **POR QUÉ UNA TABLA DE PREFIJOS Y NO UN `notFound()` EN CADA CARPETA.** Un
+ * módulo apagado tiene que desaparecer entero: sus páginas, sus manejadores de
+ * ruta (`rss.xml`, `/api/contacto`, `/api/v1/**`) y su versión inglesa. Los
+ * manejadores no pasan por ningún `layout`, así que la única puerta por la que
+ * pasan todos es el middleware, y el middleware necesita una tabla que pueda
+ * evaluar en el borde: datos planos, sin `node:fs`. Esta. Lo mismo vale para un
+ * idioma apagado: sin inglés, nada bajo `/en` existe.
+ *
  * Sin `next/*` ni nada que no pueda ejecutar Node ni el runtime del middleware.
  */
-import { sitio } from "./index.ts";
-import type { Idioma, Modulos, PorIdioma } from "./tipos.ts";
+import { idiomaActivo, moduloActivo, sitio } from "./index.ts";
+import type { BloqueDeServicios, Idioma, Modulos, PorIdioma } from "./tipos.ts";
 
 type Modulo = keyof Modulos;
 
@@ -71,6 +79,70 @@ export const PAGINAS_DEL_MOTOR = {
 } as const satisfies Record<string, PaginaDelMotor>;
 
 export type ClaveDelMotor = keyof typeof PAGINAS_DEL_MOTOR;
+
+/**
+ * Los prefijos de ruta de cada módulo, además de sus páginas: los manejadores
+ * de ruta y las superficies que no tienen par de idioma. Una ruta es de un
+ * módulo si es el prefijo o cuelga de él.
+ */
+const PREFIJOS_DE_MODULO: ReadonlyArray<{ prefijo: string; modulos: readonly Modulo[] }> = [
+  ...Object.values(PAGINAS_DEL_MOTOR as Record<string, PaginaDelMotor>).flatMap((p) =>
+    p.modulos ? [{ prefijo: p.ruta.es, modulos: p.modulos }, { prefijo: p.ruta.en, modulos: p.modulos }] : [],
+  ),
+  { prefijo: "/api/descargas", modulos: ["descargas"] },
+  { prefijo: "/api/contacto", modulos: ["contacto"] },
+  // La intranet: sus dos superficies, el acceso y el visor de entregables.
+  { prefijo: "/hq", modulos: ["intranet"] },
+  { prefijo: "/portal", modulos: ["intranet"] },
+  { prefijo: "/restablecer", modulos: ["intranet"] },
+  { prefijo: "/invitacion", modulos: ["intranet"] },
+  { prefijo: "/visor", modulos: ["intranet"] },
+  { prefijo: "/api/acceso", modulos: ["intranet"] },
+  { prefijo: "/api/auth", modulos: ["intranet"] },
+];
+
+/** La API v1 opera sobre la intranet: sin intranet no hay nada que exponer. */
+const PREFIJO_API = "/api/v1";
+
+const cuelga = (ruta: string, prefijo: string) =>
+  prefijo === "/" ? ruta === "/" : ruta === prefijo || ruta.startsWith(`${prefijo}/`);
+
+/**
+ * ¿Existe esta ruta en ESTE sitio? `false` si es de un idioma apagado o de un
+ * módulo apagado. No dice si la ruta existe en `app/`: eso lo dice Next.
+ */
+export function rutaDisponible(ruta: string): boolean {
+  if (!idiomaActivo("en") && cuelga(ruta, "/en")) return false;
+  if (cuelga(ruta, PREFIJO_API)) return moduloActivo("api") && moduloActivo("intranet");
+  for (const { prefijo, modulos } of PREFIJOS_DE_MODULO) {
+    if (cuelga(ruta, prefijo) && !modulos.some(moduloActivo)) return false;
+  }
+  return true;
+}
+
+/** ¿Existe esta página del motor en este sitio? */
+export function paginaDelMotorActiva(clave: ClaveDelMotor): boolean {
+  const p: PaginaDelMotor = PAGINAS_DEL_MOTOR[clave];
+  return !p.modulos || p.modulos.some(moduloActivo);
+}
+
+/**
+ * Los bloques de la página de Servicios que dependen de un módulo. Apagado el
+ * módulo, el bloque no se pinta y `check:paginas` no lo espera.
+ */
+const MODULO_DEL_BLOQUE: Partial<Record<string, Modulo>> = {
+  doctrina: "doctrina",
+  articulos: "blog",
+  descarga: "descargas",
+};
+
+/** Los bloques de Servicios que se pintan en este sitio, en el orden de la ficha. */
+export function bloquesDeServiciosActivos(): readonly BloqueDeServicios[] {
+  return sitio.bloquesDeServicios.filter((b) => {
+    const modulo = typeof b === "string" ? MODULO_DEL_BLOQUE[b] : undefined;
+    return !modulo || moduloActivo(modulo);
+  });
+}
 
 /** Los idiomas que sirve este sitio, el principal primero. */
 export function idiomasActivos(): readonly Idioma[] {

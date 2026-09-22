@@ -17,8 +17,8 @@
  * `app/(public)/[...ruta]`. `check:sitio` comprueba que cada fila tiene su
  * contenido, y `check:paginas` que cada ruta responde y que su par existe.
  */
-import { serviciosDeLaOferta, sitio } from "../sitio/index.ts";
-import { enIdioma, PAGINAS_DEL_MOTOR } from "../sitio/motor.ts";
+import { idiomaActivo, moduloActivo, serviciosDeLaOferta, sitio } from "../sitio/index.ts";
+import { enIdioma, PAGINAS_DEL_MOTOR, rutaDisponible } from "../sitio/motor.ts";
 import { loadCollection } from "./loader.ts";
 import type { Lang } from "./schema.ts";
 
@@ -27,12 +27,16 @@ import type { Lang } from "./schema.ts";
  * de Ricardo, 2026-09-18): «Empieza aquí» es la portada —el mapa del sitio,
  * poco invasivo—; «Servicios» es la casa comercial; Blog y Nosotros sostienen
  * la propuesta. Doctrina y Descargas se llegan desde Servicios, el mapa y el pie.
+ *
+ * El destino de un módulo apagado no sale: su ruta responde 404.
  */
-export const DESTINOS = sitio.menu.map((d) => ({
-  clave: d.clave,
-  es: d.ruta.es,
-  en: enIdioma(d.ruta, "en"),
-}));
+export const DESTINOS = sitio.menu
+  .filter((d) => rutaDisponible(d.ruta.es))
+  .map((d) => ({
+    clave: d.clave,
+    es: d.ruta.es,
+    en: enIdioma(d.ruta, "en"),
+  }));
 
 /**
  * Los ejes de la oferta: el nivel más alto, con su página de índice. Ya no son
@@ -143,13 +147,14 @@ export type SalidaDeError = { href: string; clave: string };
 
 /**
  * Las tres salidas de la 404 y la 500 (RF-17), por idioma: la portada, la
- * oferta —el primer eje, o Servicios si el sitio no tiene ejes— y el blog.
+ * oferta —el primer eje, o Servicios si el sitio no tiene ejes— y el blog, si
+ * el sitio tiene blog.
  */
 export function salidasDeError(): Record<Lang, SalidaDeError[]> {
   const para = (lang: Lang): SalidaDeError[] => [
     { href: INICIO[lang], clave: "error.home" },
     { href: EJES[0]?.[lang] || PAGINA_DE_SERVICIOS[lang], clave: "error.ai" },
-    { href: PAGINAS_DEL_MOTOR.blog.ruta[lang], clave: "error.blog" },
+    ...(moduloActivo("blog") ? [{ href: PAGINAS_DEL_MOTOR.blog.ruta[lang], clave: "error.blog" }] : []),
   ];
   return { es: para("es"), en: para("en") };
 }
@@ -184,7 +189,8 @@ let destinos: Map<string, DestinoDeLaFicha> | null = null;
 function tablaDeDestinos(): Map<string, DestinoDeLaFicha> {
   if (destinos) return destinos;
   const m = new Map<string, DestinoDeLaFicha>();
-  for (const lang of ["es", "en"] as const) {
+  // Un idioma apagado no tiene rutas: ni se prerrenderizan ni se resuelven.
+  for (const lang of (["es", "en"] as const).filter(idiomaActivo)) {
     for (const eje of EJES) if (eje[lang]) m.set(eje[lang], { tipo: "eje", lang, eje });
     for (const linea of RAMAS) if (linea[lang]) m.set(linea[lang], { tipo: "linea", lang, linea });
     for (const servicio of SERVICIOS) if (servicio[lang]) m.set(servicio[lang], { tipo: "servicio", lang, servicio });
@@ -219,7 +225,8 @@ function mapa(): Map<string, string> {
   const m = new Map<string, string>();
   const añadir = (a: string, b: string) => {
     // Sin la otra mitad no hay par: un enlace inventado es peor que ninguno.
-    if (!a || !b) return;
+    // Y sin inglés, o con el módulo apagado, la otra mitad no existe.
+    if (!a || !b || !rutaDisponible(a) || !rutaDisponible(b)) return;
     m.set(a, b);
     m.set(b, a);
   };

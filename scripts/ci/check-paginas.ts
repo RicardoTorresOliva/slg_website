@@ -35,17 +35,22 @@ import {
   SERVICIOS,
   rutaEnDeServicio,
 } from "../../lib/content/rutas.ts";
-import { sitio } from "../../lib/sitio/index.ts";
-import { PAGINAS_DEL_MOTOR } from "../../lib/sitio/motor.ts";
+import { moduloActivo, sitio } from "../../lib/sitio/index.ts";
+import { bloquesDeServiciosActivos, PAGINAS_DEL_MOTOR, rutaDisponible } from "../../lib/sitio/motor.ts";
 
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 const SERVER = path.join(REPO_ROOT, ".next", "standalone", "server.js");
 
 /**
  * Los bloques de la página de Servicios (RF-09), en orden, por su ancla: los de
- * la ficha. Antes de ellos va el hero y después el pie, que no llevan ancla.
+ * la ficha cuyo módulo está encendido. Antes de ellos va el hero y después el
+ * pie, que no llevan ancla.
  */
-const BLOQUES_DE_PORTADA = sitio.bloquesDeServicios.map((b) => (typeof b === "string" ? b : b.id));
+const BLOQUES_DE_PORTADA = bloquesDeServiciosActivos().map((b) => (typeof b === "string" ? b : b.id));
+
+/** Las dos mitades de un par, sin la de un idioma apagado (D-166). */
+const pares = <T extends string>(es: T, en: T) =>
+  ([["es", es], ["en", en]] as const).filter(([, ruta]) => ruta && rutaDisponible(ruta));
 
 let fallos = 0;
 let comprobaciones = 0;
@@ -124,7 +129,7 @@ async function main() {
     /* ── DU-03 · la portada ─────────────────────────────────────────────── */
     console.log("\nDU-03 — los bloques de Servicios, en el orden de la ficha (RF-09):\n");
     // Desde el 2026-09-18 los bloques de RF-09 viven en Servicios; la portada es el mapa.
-    for (const ruta of [PAGINA_DE_SERVICIOS.es, PAGINA_DE_SERVICIOS.en]) {
+    for (const [, ruta] of pares(PAGINA_DE_SERVICIOS.es, PAGINA_DE_SERVICIOS.en)) {
       const r = await fetch(`${base}${ruta}`);
       const html = await r.text();
       const dentro = cuerpo(html);
@@ -167,7 +172,7 @@ async function main() {
     /* ── DU-04 · los índices de las líneas ──────────────────────────────── */
     console.log("\nDU-04 — cada overview enlaza a TODOS sus servicios y a ninguno ajeno:\n");
     for (const rama of RAMAS) {
-      for (const [lang, ruta] of [["es", rama.es], ["en", rama.en]] as const) {
+      for (const [lang, ruta] of pares(rama.es, rama.en)) {
         const r = await fetch(`${base}${ruta}`);
         const html = await r.text();
         const dentro = cuerpo(html);
@@ -197,7 +202,7 @@ async function main() {
     for (const rama of RAMAS.filter((r) => r.enlaceExterno)) {
       const url = sitio.dominio.enlaces[rama.enlaceExterno!.enlace] ?? "";
       const host = url ? new URL(url).host : "(sin URL en dominio.enlaces)";
-      for (const ruta of [rama.es, rama.en]) {
+      for (const [, ruta] of pares(rama.es, rama.en)) {
         const dentro = cuerpo(await (await fetch(`${base}${ruta}`)).text());
         const enlace = [...dentro.matchAll(/<a[^>]+>/g)].map((m) => m[0]).find((a) => a.includes(`//${host}`)) ?? "";
         check(
@@ -217,7 +222,7 @@ async function main() {
     console.log("\nDU-05 — las seis secciones en orden fijo, y un solo CTA (RF-06, RF-07):\n");
     const CONTACTO = PAGINAS_DEL_MOTOR.contacto.ruta;
     for (const s of SERVICIOS) {
-      for (const [lang, ruta] of [["es", s.es], ["en", rutaEnDeServicio(s)]] as const) {
+      for (const [lang, ruta] of pares(s.es, rutaEnDeServicio(s))) {
         const r = await fetch(`${base}${ruta}`);
         const html = await r.text();
         const dentro = cuerpo(html);
@@ -255,11 +260,14 @@ async function main() {
           !/<iframe/i.test(dentro) && !/<script[^>]+src="https?:\/\//.test(html),
           "frontera (h): cero scripts de terceros",
         );
-        check(
-          `${ruta} · la sección 6 enlaza a contacto`,
-          botones.includes(enlaceContacto),
-          `no encuentra ${enlaceContacto}`,
-        );
+        // Sin el módulo de contacto, la sección 6 es solo su texto.
+        if (moduloActivo("contacto")) {
+          check(
+            `${ruta} · la sección 6 enlaza a contacto`,
+            botones.includes(enlaceContacto),
+            `no encuentra ${enlaceContacto}`,
+          );
+        }
       }
     }
   } finally {

@@ -5,6 +5,7 @@ import { loadCollection, loadUiStrings } from "@/lib/content/loader";
 import { DESCARGAS, DOCTRINA, EJES, PAGINA_DE_SERVICIOS, RAMAS, SERVICIOS } from "@/lib/content/rutas";
 import { secciones } from "@/lib/content/secciones";
 import { sitio, type BloqueDeServicios } from "@/lib/sitio";
+import { bloquesDeServiciosActivos } from "@/lib/sitio/motor";
 
 import { Markdown, MarkdownEnLinea } from "./Markdown";
 import { Reveal } from "./Reveal";
@@ -32,7 +33,8 @@ import { HeroTipografico, TarjetaDeArticulo, TarjetaDeServicio } from "./piezas"
  * hero es la primera sección del registro `servicios` de `content/pages`, y el
  * bloque N de la ficha toma la sección N+1. Si alguien reordena la página, la
  * reordena editando la ficha y el registro a la vez, que es exactamente lo que
- * RF-27 promete.
+ * RF-27 promete. Un bloque cuyo módulo está apagado —doctrina, artículos,
+ * descarga— no se pinta.
  *
  * Cero cadena de negocio escrita aquí (RF-16). Lo vigila `check:cadenas`.
  */
@@ -40,6 +42,9 @@ export function Portada({ lang }: { lang: "es" | "en" }) {
   const t = loadUiStrings()[lang];
   const home = loadCollection("page", lang).find((p) => p.slug === (lang === "en" ? "services" : "servicios"));
   const [hero, ...resto] = secciones(home?.body ?? "");
+  // La sección N+1 del registro es la del bloque N de la ficha, esté o no
+  // encendido su módulo: apagar el blog no desplaza el texto de los demás.
+  const seccionDe = new Map(sitio.bloquesDeServicios.map((b, i) => [idDelBloque(b), resto[i]]));
 
   return (
     <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "0 1.25rem" }}>
@@ -49,8 +54,8 @@ export function Portada({ lang }: { lang: "es" | "en" }) {
         apoyo={restoDeLineas(hero?.cuerpo ?? "")}
       />
 
-      {sitio.bloquesDeServicios.map((b, i) => (
-        <Bloque key={idDelBloque(b)} bloque={b} seccion={resto[i]} lang={lang} t={t} />
+      {bloquesDeServiciosActivos().map((b) => (
+        <Bloque key={idDelBloque(b)} bloque={b} seccion={seccionDe.get(idDelBloque(b))} lang={lang} t={t} />
       ))}
     </div>
   );

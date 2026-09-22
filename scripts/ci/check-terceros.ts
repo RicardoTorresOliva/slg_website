@@ -38,6 +38,8 @@ import http from "node:http";
 import net from "node:net";
 import path from "node:path";
 
+import { rutaDisponible } from "../../lib/sitio/motor.ts";
+
 import { chromium } from "playwright";
 
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
@@ -85,9 +87,10 @@ async function puertoLibre(): Promise<number> {
 /**
  * Las páginas donde se mide. Una de cada FORMA, no una de cada ruta: portada,
  * una página de contenido, una con formulario —que es la que más librería
- * arrastra—, un artículo y el índice del blog.
+ * arrastra—, un artículo y el índice del blog. Las de un módulo o un idioma
+ * apagados en la ficha no existen y no se miden.
  */
-const PAGINAS = ["/", "/doctrina", "/descargas", "/contacto", "/blog", "/en"];
+const PAGINAS = ["/", "/doctrina", "/descargas", "/contacto", "/blog", "/en"].filter(rutaDisponible);
 
 async function arrancarServidor(): Promise<{ url: string; parar: () => void }> {
   const port = await puertoLibre();
