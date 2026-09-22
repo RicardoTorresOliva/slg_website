@@ -3668,3 +3668,22 @@ Barrido de los dos archivos que tocan este camino (`test-descargas.ts` y `test-w
 queda ningún otro fixture sin el campo.
 
 **Verificado aquí**: `check:types` y `lint`. Las dos pruebas necesitan PostgreSQL; las corre CI.
+
+## Plantilla, paso 1: la ficha del sitio (`site.config.ts`) (2026-09-22)
+
+Primer paso del plan de `docs/PLAYBOOK_REPLICACION.md` §3, tras D-165. **`site.config.ts`** (raíz) es
+la ficha de este sitio; su forma está en **`lib/sitio/tipos.ts`** y lo que se deriva de ella en
+**`lib/sitio/index.ts`**, la única puerta por la que el motor la leerá. Recoge: marca (nombre, razón
+social, lema, correo público, logo, isotipo, remitente, los nueve colores de `app/tokens.css`),
+dominio de producción y enlaces externos, idiomas, ocho módulos apagables, menú, la oferta como
+**ejes → líneas → servicios** más servicios **sueltos** (Holdings), fotos de las páginas fijas,
+bloques de la página de Servicios y nomenclatura.
+
+**Todavía no la consume nadie**, y es deliberado: este paso fija el contrato del que dependen los
+pasos 2–5, que se hacen en paralelo. Lo que sí está verificado es que la ficha **reproduce exactamente**
+lo escrito a mano: comparada campo a campo con `PROJECT_SERVICES`, `BRANCHES`, `SERVICIOS`, `RAMAS`,
+`LITERAL_TERMS`, `FORBIDDEN_VARIANTS` y `DAL_OS_FORBIDDEN` —los 31 patrones por su código fuente—,
+las siete comparaciones dan igual. Limitación declarada en el tipo: un sitio **solo en inglés** no
+está soportado (el principal vive en la raíz y es español).
+
+**Verificado**: `check:types`, `lint`, y el cotejo de las siete tablas.
