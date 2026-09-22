@@ -3687,3 +3687,25 @@ las siete comparaciones dan igual. Limitación declarada en el tipo: un sitio **
 está soportado (el principal vive en la raíz y es español).
 
 **Verificado**: `check:types`, `lint`, y el cotejo de las siete tablas.
+
+## Plantilla, paso 6: el perfil `marketing-website` (2026-09-22)
+
+Sexto paso del plan de `docs/PLAYBOOK_REPLICACION.md` §3. **`profiles/marketing-website/profile.md`**
+es el perfil corto para las webs de cliente, en sus dos variantes del §2 —informativa, y con área
+privada—, con todos los campos de `profiles/_contract.md`, que ahora lo lista entre los perfiles
+provistos.
+
+Lo que decide: los `design_docs` se reducen a **la ficha** (`site.config.ts`), el mapa de contenido,
+los pendientes con el cliente y, solo con área privada, el acceso; un DU es **una página** (o los
+servicios de una línea) y está terminado cuando se sirve en cada idioma de la ficha, con su copy
+declarado, enlazada, y —si lleva formulario— con un envío de prueba recibido en el buzón del
+cliente. El `quality_gate` son **D1–D6 de `docs/gates.md` por sus órdenes**, más las capturas en
+móvil y escritorio. Una tabla dice lo que el perfil **no** pide y cuándo sí: `data_model`,
+`api_contracts`, identidad social, API v1, copias a almacenamiento externo, `/hq`, doctrina.
+
+**Una tensión, resuelta a la vista.** El contrato prohíbe nombres de producto en un perfil, y el
+encargo pedía la publicación «Vercel + Supabase». `publication_step` y `stack_candidates` van en
+categorías, como exige el contrato, y una nota cita la elección vigente y remite a su decisión en el
+§2 del playbook: el perfil la cita, no la fija.
+
+**Verificado**: `check:types`, `lint`, `check:playbook`, `check:literacy`, `check:secrets`.

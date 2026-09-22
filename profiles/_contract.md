@@ -123,3 +123,5 @@ hybrids while authoring only *n* profiles (optionality; via negativa; barbell).
 - `data-product` — a dataset/dashboard that is *queried*: refined data made consultable.
 - `intelligence-product` — **composed** (`research-report` + `data-product`): the consulting hybrid —
   an argued report backed by a validated dataset/dashboard. Validation case for v4.1 generalization.
+- `marketing-website` — una web informativa de cliente sobre el motor de `slg_website`, con o sin
+  área privada: la ficha (`site.config.ts`) y el contenido son el diseño; gates D1–D6 + captura.
