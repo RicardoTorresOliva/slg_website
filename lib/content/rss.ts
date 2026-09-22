@@ -8,6 +8,7 @@
  */
 import { articulos, prefijo } from "./blog.ts";
 import type { Lang } from "./schema.ts";
+import { sitio } from "../sitio/index.ts";
 
 /** Escapa lo que va dentro de un nodo XML. Sin esto, un `&` rompe el canal entero. */
 function xml(texto: string): string {
@@ -21,11 +22,11 @@ function xml(texto: string): string {
 
 const TITULOS: Record<Lang, { titulo: string; descripcion: string }> = {
   es: {
-    titulo: "SLG Agency — Blog",
+    titulo: `${sitio.marca.nombre} — Blog`,
     descripcion: "Criterio para decidir sobre inteligencia artificial, publicado sin venderlo.",
   },
   en: {
-    titulo: "SLG Agency — Blog",
+    titulo: `${sitio.marca.nombre} — Blog`,
     descripcion: "Judgement for deciding on artificial intelligence, published without selling it.",
   },
 };

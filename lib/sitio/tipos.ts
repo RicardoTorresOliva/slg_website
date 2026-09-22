@@ -116,8 +116,10 @@ export type Marca = {
   /** Nombre del remitente de los correos si falta `MAIL_FROM_NAME`. */
   readonly remitente: string;
   /**
-   * Los colores de marca. Son las variables `--slg-*` de `app/tokens.css`:
-   * la ficha manda y el CSS las recibe.
+   * Los colores de marca. Son las variables `--slg-*` que usa todo el CSS: la
+   * ficha manda, `app/layout.tsx` las escribe en un `<style>` del `<head>` y
+   * `app/tokens.css` solo guarda sus reglas de uso. La tabla color → variable
+   * está en `VARIABLES_DE_COLOR` (`lib/sitio/index.ts`).
    */
   readonly colores: {
     readonly primario: Hex;

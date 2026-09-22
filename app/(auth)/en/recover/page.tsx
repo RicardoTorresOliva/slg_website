@@ -1,6 +1,8 @@
+import { sitio } from "@/lib/sitio";
+
 import { PantallaDeRecuperacion } from "../../recuperacion";
 
-export const metadata = { title: "Recover · SLG Agency", robots: { index: false, follow: false } };
+export const metadata = { title: `Recover · ${sitio.marca.nombre}`, robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
 export default async function Recover({

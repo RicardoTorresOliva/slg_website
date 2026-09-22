@@ -1,6 +1,7 @@
 import { loadCollection, loadUiStrings } from "@/lib/content/loader";
 import { RAMAS, SERVICIOS, rutaEnDeServicio, slugEnDeServicio } from "@/lib/content/rutas";
 import { secciones } from "@/lib/content/secciones";
+import { sitio } from "@/lib/sitio";
 
 import { Markdown } from "./Markdown";
 import { HeroTipografico, TarjetaDeServicio } from "./piezas";
@@ -26,6 +27,7 @@ export function OverviewDeRama({ slug, lang }: { slug: string; lang: "es" | "en"
   const bloques = secciones(pagina?.body ?? "");
 
   const servicios = SERVICIOS.filter((s) => s.rama === slug);
+  const academiaExterna = sitio.dominio.enlaces.academiaExterna;
   const registros = loadCollection<{ name: string }>("service", lang);
 
   const tarjetas = servicios
@@ -68,11 +70,13 @@ export function OverviewDeRama({ slug, lang }: { slug: string; lang: "es" | "en"
             frontera (e)): se enlaza y se señala como externo. Sin integración,
             sin sesión compartida y sin contenido embebido. `rel="noopener"`
             porque `target="_blank"` sin él deja al destino manipular esta
-            pestaña. */}
-        {slug === "slg-academy" ? (
+            pestaña. La URL es de la ficha (`dominio.enlaces.academiaExterna`,
+            D-165): un sitio que no la declare no pinta el enlace, en vez de
+            mandar a sus visitantes a la Academy de otro. */}
+        {slug === "slg-academy" && academiaExterna ? (
           <p style={{ paddingTop: "1.5rem" }}>
             <a
-              href="https://academy.softlandingglobal.com"
+              href={academiaExterna}
               target="_blank"
               rel="noopener noreferrer external"
               style={enlaceExterno}

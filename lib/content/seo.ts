@@ -13,6 +13,7 @@
  */
 import type { Metadata } from "next";
 
+import { sitio } from "../sitio/index.ts";
 import { loadCollection } from "./loader.ts";
 import { idiomaDeLaRuta, rutaEnElOtroIdioma, SERVICIOS, rutaEnDeServicio } from "./rutas.ts";
 import type { Lang } from "./schema.ts";
@@ -35,9 +36,10 @@ export function metadatosDe({
   const otra = rutaEnElOtroIdioma(ruta);
 
   // El título de la pestaña lleva la marca detrás, no delante: en una lista de
-  // pestañas estrechas se ve el principio, y «SLG Agency» repetido diez veces
-  // no distingue nada.
-  const tituloCompleto = ruta === "/" || ruta === "/en" ? "SLG Agency" : `${titulo} · SLG Agency`;
+  // pestañas estrechas se ve el principio, y la marca repetida diez veces no
+  // distingue nada.
+  const marca = sitio.marca.nombre;
+  const tituloCompleto = ruta === "/" || ruta === "/en" ? marca : `${titulo} · ${marca}`;
 
   const idiomas: Record<string, string> = { "x-default": `${base}/` };
   idiomas[lang === "en" ? "en" : "es"] = `${base}${ruta}`;
@@ -52,12 +54,12 @@ export function metadatosDe({
     },
     openGraph: {
       type: "website",
-      siteName: "SLG Agency",
+      siteName: marca,
       title: tituloCompleto,
       description: descripcion,
       url: `${base}${ruta}`,
       locale: lang === "en" ? "en_US" : "es_ES",
-      images: [{ url: `${base}${IMAGEN_OG}`, width: 1200, height: 630, alt: "SLG Agency" }],
+      images: [{ url: `${base}${IMAGEN_OG}`, width: 1200, height: 630, alt: marca }],
     },
     twitter: {
       card: "summary_large_image",
@@ -75,14 +77,15 @@ export function metadatosDePagina(slug: string, lang: Lang, ruta: string): Metad
   );
   return metadatosDe({
     ruta,
-    titulo: p?.data.title ?? "SLG Agency",
+    titulo: p?.data.title ?? sitio.marca.nombre,
     descripcion: p?.data.description ?? "",
   });
 }
 
 /**
  * `schema.org` de la organización. **Solo hechos verificables**: nombre, tipo,
- * sitio y correo. Sin número de empleados, sin fundación, sin valoraciones:
+ * sitio y correo. El nombre es la **razón social** de la ficha, no la marca
+ * pública: es la entidad que responde por el sitio. Sin número de empleados, sin fundación, sin valoraciones:
  * los datos estructurados son afirmaciones legibles por máquina, y RF-11 no
  * distingue entre una cifra en una página y una en un `<script type="ld+json">`.
  */
@@ -91,10 +94,10 @@ export function organizacionJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "SLG Agency Inc.",
+    name: sitio.marca.razonSocial,
     url: base,
     logo: `${base}${IMAGEN_OG}`,
-    email: "support@softlandingglobal.com",
+    email: sitio.marca.correoPublico,
     address: { "@type": "PostalAddress", addressRegion: "FL", addressCountry: "US" },
   };
 }
@@ -116,7 +119,7 @@ export function servicioJsonLd({
     name: nombre,
     description: descripcion,
     url: `${base}${ruta}`,
-    provider: { "@type": "Organization", name: "SLG Agency Inc.", url: base },
+    provider: { "@type": "Organization", name: sitio.marca.razonSocial, url: base },
   };
 }
 

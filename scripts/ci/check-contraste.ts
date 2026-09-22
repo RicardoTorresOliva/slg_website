@@ -2,9 +2,18 @@
  * check-contraste.ts — El gate D2, MEDIDO. No afirmado.
  *
  * Los criterios 3 y 4 de FU-10 dicen «se mide, no se afirma». Esto lo mide: lee
- * los hexadecimales de `app/tokens.css` —el único archivo autorizado a
- * contenerlos— y calcula el contraste WCAG 2.1 de cada combinación que el kit
- * declara, incluidas las **prohibidas**.
+ * los nueve colores de marca de la ficha del sitio (`sitio.marca.colores`, en
+ * `site.config.ts`) y el resto de hexadecimales de `app/tokens.css`, y calcula
+ * el contraste WCAG 2.1 de cada combinación que el kit declara, incluidas las
+ * **prohibidas**.
+ *
+ * **LOS COLORES DE MARCA SE MIDEN DESDE LA FICHA** porque es de donde los sirve
+ * `app/layout.tsx` (D-165, plantilla paso 2). Medirlos en `tokens.css` sería
+ * medir un color que ya no manda: el freno pasaría en verde con el azul de SLG
+ * mientras el sitio de un cliente sirve otro. Y por lo mismo, si `tokens.css`
+ * vuelve a definir uno de esos nueve como literal, el freno se niega a medir:
+ * habría dos fuentes para un color y la que gana en el navegador depende del
+ * orden de las etiquetas, no de nada que este guion pueda saber.
  *
  * LAS TRES REGLAS DURAS DEL KIT, comprobadas en cada push:
  *   · `--cyan` (#50B4DC) y `--blue-tint` (#78B4DC) **nunca** como color de
@@ -21,6 +30,8 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+
+import { coloresDeLaMarca } from "../../lib/sitio/index.ts";
 
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 const TOKENS = process.env.TOKENS_PATH
@@ -62,6 +73,22 @@ for (const m of css.matchAll(/(--slg-[a-z0-9-]+)\s*:\s*(#[0-9a-fA-F]{3,8})\s*;/g
   tokens.set(m[1], m[2].toLowerCase());
 }
 
+// Los colores de marca, de la ficha. Uno que además esté literal en el CSS es
+// una segunda fuente: se para aquí, antes de medir nada.
+const duplicados: string[] = [];
+for (const [variable, valor] of coloresDeLaMarca()) {
+  if (tokens.has(variable)) duplicados.push(variable);
+  tokens.set(variable, valor);
+}
+if (duplicados.length > 0) {
+  console.error(
+    `✗ contraste: ${path.relative(REPO_ROOT, TOKENS)} define ${duplicados.join(", ")}, ` +
+      `que son colores de marca y salen de site.config.ts (sitio.marca.colores). ` +
+      `Quítalos del CSS: dos fuentes para un color hacen que el freno mida uno y el navegador pinte otro.`,
+  );
+  process.exit(1);
+}
+
 /**
  * Alias. `--slg-link` y las dos capas del anillo se definen como `var(--otro)`,
  * y eso es deliberado: el día que el enlace deje de ser el azul primario se
@@ -88,7 +115,10 @@ for (const [nombre, apunta] of alias) {
 function token(nombre: string): string {
   const v = tokens.get(nombre);
   if (!v) {
-    console.error(`✗ contraste: falta el token ${nombre} en ${path.relative(REPO_ROOT, TOKENS)}.`);
+    console.error(
+      `✗ contraste: falta el token ${nombre} en ${path.relative(REPO_ROOT, TOKENS)} ` +
+        `ni está entre los colores de site.config.ts.`,
+    );
     process.exit(1);
   }
   return v;
@@ -219,7 +249,7 @@ const PROHIBIDOS: readonly Caso[] = [
 const fallos: string[] = [];
 let comprobaciones = 0;
 
-console.log("Contraste medido sobre los tokens del kit (gate D2):\n");
+console.log("Contraste medido sobre los tokens del kit y los colores de la ficha (gate D2):\n");
 
 for (const c of EXIGIDOS) {
   comprobaciones++;

@@ -18,6 +18,7 @@
  */
 
 import type { Idioma, MensajeSaliente, TipoDeCorreo } from "./port.ts";
+import { sitio } from "../sitio/index.ts";
 
 export type CorreoCompuesto = {
   readonly asunto: string;
@@ -61,8 +62,8 @@ const DEFINICIONES: Readonly<Record<TipoDeCorreo, Definicion>> = {
   invitation: {
     subjectKey: "mail.invitation.subject",
     asunto: {
-      es: "Te han invitado a SLG Agency",
-      en: "You have been invited to SLG Agency",
+      es: `Te han invitado a ${sitio.marca.nombre}`,
+      en: `You have been invited to ${sitio.marca.nombre}`,
     },
     componer: (datos, idioma) => {
       const quien = exigir(datos, "invitadoPor");
@@ -71,11 +72,11 @@ const DEFINICIONES: Readonly<Record<TipoDeCorreo, Definicion>> = {
       const es = idioma === "es";
       const parrafos = es
         ? [
-            `${quien} te ha invitado a acceder${empresa ? ` al espacio de ${empresa}` : ""} en SLG Agency.`,
+            `${quien} te ha invitado a acceder${empresa ? ` al espacio de ${empresa}` : ""} en ${sitio.marca.nombre}.`,
             "El enlace caduca; si expira, pide una invitación nueva.",
           ]
         : [
-            `${quien} has invited you to access${empresa ? ` the ${empresa} space` : ""} at SLG Agency.`,
+            `${quien} has invited you to access${empresa ? ` the ${empresa} space` : ""} at ${sitio.marca.nombre}.`,
             "The link expires; if it does, ask for a new invitation.",
           ];
       return {

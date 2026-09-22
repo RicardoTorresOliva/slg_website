@@ -6,6 +6,7 @@ import { loadCollection } from "@/lib/content/loader";
 import { SERVICIOS } from "@/lib/content/rutas";
 import { metadatosDe } from "@/lib/content/seo";
 import { secciones } from "@/lib/content/secciones";
+import { sitio } from "@/lib/sitio";
 
 const DE_ESTA_RAMA = SERVICIOS.filter((s) => s.rama === "slg-enterprise");
 
@@ -34,7 +35,7 @@ export async function generateMetadata({ params }: { params: Promise<{ servicio:
   const primera = secciones(registro?.body ?? "")[0]?.cuerpo.split("\n")[0] ?? "";
   return metadatosDe({
     ruta: `/en${s.es}`,
-    titulo: registro?.data.name ?? "SLG Agency",
+    titulo: registro?.data.name ?? sitio.marca.nombre,
     descripcion: primera,
   });
 }

@@ -5,6 +5,7 @@ import { PaginaProvisional } from "@/components/PaginaProvisional";
 import { loadCollection } from "@/lib/content/loader";
 import { metadatosDe } from "@/lib/content/seo";
 import { PAGINAS_CON_RUTA_PROPIA } from "@/lib/content/rutas";
+import { sitio } from "@/lib/sitio";
 
 /**
  * Páginas públicas en INGLÉS, bajo `/en` (§10-5).
@@ -26,7 +27,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   );
   return metadatosDe({
     ruta: `/en/${slug}`,
-    titulo: p?.data.title ?? "SLG Agency",
+    titulo: p?.data.title ?? sitio.marca.nombre,
     descripcion: p?.data.description ?? "",
   });
 }

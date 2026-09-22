@@ -16,6 +16,7 @@ import type {
   EjeDeLaOferta,
   Idioma,
   LineaDeLaOferta,
+  Marca,
   Modulos,
   ServicioDeLaOferta,
 } from "./tipos.ts";
@@ -69,4 +70,50 @@ export function idiomaActivo(idioma: Idioma): boolean {
 /** ¿Está encendida esta función? */
 export function moduloActivo(modulo: keyof Modulos): boolean {
   return sitio.modulos[modulo];
+}
+
+/**
+ * Qué variable CSS recibe cada color de la ficha. Los nombres `--slg-*` son
+ * espacio de nombres técnico del motor, no marca (`plantilla-de-sitios.md` §1):
+ * un cliente cambia el valor, nunca el nombre, y así ningún componente se toca.
+ *
+ * Vive aquí y no en `app/layout.tsx` porque la leen dos: el armazón raíz, que
+ * pinta los colores, y `check:contraste`, que los mide. Una segunda tabla en el
+ * freno podría desincronizarse de la primera y medir un color que no se sirve.
+ */
+export const VARIABLES_DE_COLOR: Readonly<Record<keyof Marca["colores"], string>> = {
+  primario: "--slg-blue-primary",
+  profundo: "--slg-blue-deep",
+  acento: "--slg-cyan",
+  tinte: "--slg-blue-tint",
+  secundario: "--slg-indigo",
+  alerta: "--slg-red",
+  tinta: "--slg-ink",
+  linea: "--slg-line",
+  papel: "--slg-paper",
+};
+
+/** Los colores de la ficha como pares `[variable, valor]`, en el orden de la tabla. */
+export function coloresDeLaMarca(): ReadonlyArray<readonly [string, string]> {
+  return (Object.keys(VARIABLES_DE_COLOR) as Array<keyof Marca["colores"]>).map(
+    (clave) => [VARIABLES_DE_COLOR[clave], sitio.marca.colores[clave].toLowerCase()] as const,
+  );
+}
+
+/**
+ * La regla `:root{…}` con los colores de marca, lista para un `<style>`.
+ *
+ * **Solo acepta hexadecimales.** El texto va a parar dentro de una etiqueta
+ * `<style>` sin escapar; un valor con `;`, `}` o `<` en la ficha podría cerrar
+ * la regla o la etiqueta. El tipo `Hex` no lo impide —solo exige la almohadilla—,
+ * así que se comprueba aquí y, si falla, falla la compilación, no la página.
+ */
+export function cssDeLaMarca(): string {
+  const declaraciones = coloresDeLaMarca().map(([variable, valor]) => {
+    if (!/^#[0-9a-f]{3,8}$/.test(valor)) {
+      throw new Error(`site.config.ts: el color ${variable} («${valor}») no es un hexadecimal válido.`);
+    }
+    return `${variable}:${valor}`;
+  });
+  return `:root{${declaraciones.join(";")}}`;
 }

@@ -21,16 +21,25 @@
  *
  * Nota: la marca pública es **SLG Agency** (§10-4). «Softlanding Global» solo
  * se usa en el contexto de `Holdings by SLG`.
+ *
+ * **EL NOMBRE Y EL ISOTIPO LLEGAN POR PROPS**, desde la ficha (`sitio.marca`,
+ * D-165), y no se leen aquí. El único que pinta este componente es
+ * `BarraDeNavegacion`, que es de cliente: importar `@/lib/sitio` desde aquí
+ * metería la ficha entera —oferta, patrones de nomenclatura— en el JavaScript
+ * que se descarga cada visitante, para usar dos cadenas. Las pone
+ * `ArmazonPublico`, que es de servidor.
  */
 
 type WordmarkProps = {
-  /** Etiqueta accesible. Por defecto, el nombre de la marca. */
-  label?: string;
+  /** El nombre de la marca (`sitio.marca.nombre`): el texto y la etiqueta accesible. */
+  label: string;
+  /** El isotipo (`sitio.marca.isotipo`), ruta dentro de `public/`. */
+  isotipo: string;
   /** Clases adicionales del contenedor. No usar para recolorear la marca. */
   className?: string;
 };
 
-export function Wordmark({ label = "SLG Agency", className = "" }: WordmarkProps) {
+export function Wordmark({ label, isotipo, className = "" }: WordmarkProps) {
   return (
     <span
       className={`slg-wordmark ${className}`.trim()}
@@ -60,7 +69,7 @@ export function Wordmark({ label = "SLG Agency", className = "" }: WordmarkProps
           `alt=""` porque es decorativo: el nombre accesible lo da el texto de
           al lado, y anunciarlo dos veces sería ruido para un lector. */}
       <img
-        src="/marca/isotipo-slg.svg"
+        src={isotipo}
         alt=""
         style={{ height: "1.15em", width: "auto", display: "block" }}
       />
