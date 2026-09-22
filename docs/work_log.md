@@ -3735,3 +3735,40 @@ quinto fallo al CRM no ha salido nunca**. Queda para una unidad propia.
 `check:secrets`, `check:cadenas`, `check:copy`, `check:fronteras`, `check:alcance`, `check:hq`,
 `check:playbook`. `check:migrations` **falla en esta rama a propósito**: el 0024 es de otro trabajo en
 paralelo y el journal salta de 23 a 25; se resuelve al fusionar.
+
+## Plantilla, paso 9: el primer administrador sin contraseña impresa (2026-09-22)
+
+**El defecto.** `scripts/auth/primer-admin.ts` creaba el primer `slg_admin` e **imprimía** su
+contraseña: acababa en el historial del intérprete, en el registro de la sesión y en la
+transcripción de quien lo ejecutara —Claude incluido—. Era la credencial que abre todo.
+
+**Lo que hace ahora, por defecto.** Crea empresa, usuario (`email_verified`), pertenencia y apunte de
+auditoría como antes, pero **sin fila `credential` en `account`**: no hay contraseña con la que
+entrar. Después pide a la librería `auth.api.requestPasswordReset` para ese correo —el mismo camino
+de `/recuperar`, con su token de un solo uso, su caducidad de una hora y su plantilla
+`password_reset`—, y el enlace aterriza en `/restablecer`, donde la persona elige la contraseña;
+Better Auth crea entonces la fila `credential` con la forma que el login busca. El guion lee en
+`email_delivery` si el correo salió (la librería no lo cuenta: responde igual siempre) y lo dice; si
+no salió, sale con código 1 y explica las dos salidas (`/recuperar` en cuanto funcione el correo, o
+`--rehacer`). **Antes de crear nada** comprueba que están las variables de correo y
+`NEXT_PUBLIC_SITE_URL`: una cuenta creada sin poder mandar su enlace obligaría a rehacer el arranque.
+No se usa `lib/invitations`: la invitación crea la cuenta al canjearse y exige un actor de SLG que
+invite, que es justo lo que aún no existe.
+
+**Modo de emergencia explícito: `--imprimir-contrasena`.** Avisa antes de hacer nada y se comporta
+como el guion anterior (genera y enseña una vez, o usa `PRIMER_ADMIN_PASSWORD` sin enseñarla).
+`PRIMER_ADMIN_PASSWORD` sin el modificador se rechaza. La auditoría guarda cómo se dio el acceso
+(`acceso: enlace_por_correo | contrasena_impresa`).
+
+**Guardarraíles intactos**: validación del correo, rol dueño con `BYPASSRLS`, «solo si no hay
+nadie», `--rehacer` con sus tres condiciones (un usuario, creado por el guion, cero sesiones) y los
+dos apuntes de `audit_log`.
+
+**Documentado** en `README.md` (Tarea 4, «Antes de la primera invitación: la primera cuenta», con los
+pasos que hace la persona que recibe el correo), `docs/plantilla-de-sitios.md` §5 y
+`docs/project_memory.md`.
+
+**Verificado aquí**: `check:types`, `lint`, y los caminos que se niegan antes de tocar la base
+(faltan variables de correo · `PRIMER_ADMIN_PASSWORD` sin el modificador · aviso del modo de
+emergencia), ejecutados a mano. El camino completo necesita PostgreSQL **vacío** y un SMTP: no tiene
+prueba automática, porque la base de CI ya tiene usuarios y el guion, a propósito, se niega.

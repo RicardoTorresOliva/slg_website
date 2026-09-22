@@ -179,6 +179,28 @@ Esto **no pasa por GitHub**: se hace dentro del sitio.
 > pantalla. Es a propósito: un fallo del correo no puede dejar a un cliente sin acceso y a ti sin
 > saberlo.
 
+### Antes de la primera invitación: la primera cuenta
+
+Invitar exige estar dentro, así que la **primera** cuenta de un sitio nuevo (rol `slg_admin`) no se
+invita: la crea una sola vez el guion `npm run auth:primer-admin`, que ejecuta Claude —o quien tenga
+el archivo de variables del despliegue— al montar el sitio. **No te da ninguna contraseña**: la
+cuenta nace sin ella y te llega un correo para que la elijas tú.
+
+1. Abre tu correo y busca uno con el asunto **«Restablecer tu contraseña»**. Es el enlace de alta:
+   sirve **una vez** y **caduca en una hora**.
+2. Pulsa **Restablecer la contraseña**. Se abre `…/restablecer` en el sitio.
+3. Escribe tu contraseña (**12 caracteres como mínimo**) y confírmala.
+4. Entra en `…/acceder` con tu correo y esa contraseña. Deberías ver el panel de HQ.
+
+**Si el enlace caducó o el correo no llegó** (mira también la carpeta de spam): entra en
+`…/recuperar`, escribe **el mismo correo** y pulsa enviar; llega otro enlace igual. Si tampoco llega,
+el correo del sitio no está funcionando: díselo a Claude, que puede repetir el arranque mientras
+nadie haya entrado (`--rehacer`).
+
+> Existe un modo de emergencia, `--imprimir-contrasena`, que enseña la contraseña en la terminal en
+> vez de mandar el enlace. Es solo para cuando el correo del sitio no funciona todavía, lo avisa al
+> ejecutarse, y esa contraseña hay que cambiarla nada más entrar: ha pasado por una pantalla.
+
 ---
 
 ## Tarea 5 · Crear una clave de API

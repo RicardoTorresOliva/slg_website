@@ -157,7 +157,9 @@ treinta. La tabla debe poder quedarse **vacía** sin que `check:nomenclature` se
 Ya existe y está probada en este proyecto; el playbook `crear-sitio` la ejecutaría:
 
 - **Base**: proyecto Supabase nuevo → `npm run db:migrate` (rol dueño, host directo) → bucket privado
-  → `npm run auth:primer-admin` para la primera cuenta (ver `scripts/auth/primer-admin.ts`).
+  → `npm run auth:primer-admin` para la primera cuenta (ver `scripts/auth/primer-admin.ts`): nace sin
+  contraseña y manda al responsable el enlace para elegirla (paso 9); necesita las variables de correo
+  y `NEXT_PUBLIC_SITE_URL` en el mismo `--env-file`.
 - **Web**: proyecto Vercel, variables en Production y Preview desde un `ops/<cliente>.env` fuera del
   repo, protección SSO desactivada, DNS en el registrador.
 - **Correo**: subdominio de envío verificado en el proveedor (DKIM + SPF); `/api/ops` lo comprueba

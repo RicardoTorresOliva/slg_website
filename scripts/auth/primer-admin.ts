@@ -35,11 +35,40 @@
  * creación de la primera cuenta queda en el registro y nadie —tampoco quien la
  * creó— puede quitarla de ahí.
  *
- * LA CONTRASEÑA SE PICA CON EL HASHEADOR DE LA LIBRERÍA, no con uno propio:
- * `auth.$context.password.hash` es el mismo que usa `signUpEmail`, así que si
- * mañana se cambia la opción `emailAndPassword.password.hash`, esto la sigue.
- * Escribir aquí un scrypt «equivalente» es cómo se acaba con una cuenta que el
- * guion crea y el login no reconoce.
+ * **NO IMPRIME NINGUNA CONTRASEÑA** (plantilla, paso 9). La primera versión
+ * generaba una y la enseñaba en la terminal: acababa en el historial del
+ * intérprete, en el registro de la sesión y en la transcripción de quien lo
+ * ejecutara por otro —Claude incluido—, y era la credencial de `slg_admin`, la
+ * que abre todo. Ahora la cuenta nace **sin contraseña** —sin fila `credential`
+ * en `account`: no hay nada con qué entrar— y el guion pide a la librería un
+ * **enlace de recuperación** para ese correo, el mismo de `/recuperar`. Llega
+ * como «Restablecer tu contraseña», sirve una vez y caduca en una hora; al
+ * abrirlo, la persona elige la suya en `/restablecer`, y Better Auth crea
+ * entonces la fila `credential` con la forma exacta que el login busca. La
+ * contraseña la conoce solo quien la eligió.
+ *
+ * Por qué el enlace de recuperación y no una invitación de `lib/invitations`:
+ * la invitación **crea** la cuenta al canjearse y exige un actor de SLG que
+ * invite, que es justo lo que todavía no existe. Aquí la cuenta ya está creada
+ * y solo le falta la contraseña, que es exactamente lo que resuelve
+ * `requestPasswordReset` —con su token de un solo uso, su caducidad y su
+ * plantilla—, sin una línea de criptografía propia.
+ *
+ * **MODO DE EMERGENCIA: `--imprimir-contrasena`.** Para el día en que el correo
+ * no se puede mandar —el proveedor sin verificar, las variables SMTP sin
+ * poner— y hace falta entrar igual. Se escribe entero a propósito, avisa antes
+ * de hacer nada, y hace lo de siempre: genera una contraseña y la enseña una
+ * vez, o usa `PRIMER_ADMIN_PASSWORD` sin enseñarla. Fuera de ese modo,
+ * `PRIMER_ADMIN_PASSWORD` se rechaza: una variable que en silencio cambia de
+ * «manda un enlace» a «pon esta contraseña» es un modo de emergencia sin
+ * nombre.
+ *
+ * LA CONTRASEÑA, CUANDO LA HAY, SE PICA CON EL HASHEADOR DE LA LIBRERÍA, no
+ * con uno propio: `auth.$context.password.hash` es el mismo que usa
+ * `signUpEmail`, así que si mañana se cambia la opción
+ * `emailAndPassword.password.hash`, esto la sigue. Escribir aquí un scrypt
+ * «equivalente» es cómo se acaba con una cuenta que el guion crea y el login no
+ * reconoce.
  *
  * NO SE USA `auth.api.signUpEmail` a propósito: con `sendOnSignUp: true`, el
  * alta manda un correo de verificación, y el arranque ocurre **antes** de que el
@@ -56,16 +85,17 @@
  * los nombres de los dos sitios donde viven hoy: `DATABASE_URL_OWNER` /
  * `DATABASE_URL_APP` (los archivos de `ops/`) o `DATABASE_URL_MIGRATIONS` /
  * `DATABASE_URL` (`.env.example`). También hace falta `BETTER_AUTH_SECRET`, que
- * está en el mismo archivo.
+ * está en el mismo archivo, y —para mandar el enlace— las variables de correo
+ * (`MAIL_SMTP_*`, `MAIL_FROM_ADDRESS`) y la dirección pública del sitio
+ * (`NEXT_PUBLIC_SITE_URL`), que es a donde apunta el enlace.
  *
  * El `tu@correo` de los ejemplos **está mal a propósito**: no tiene dominio de
  * primer nivel, así que pegarlo tal cual no crea nada y lo dice. Un ejemplo que
  * parece una dirección se pega, y esto sólo se puede hacer una vez.
  *
  * Opcionales: `--empresa` (por defecto «SLG Agency»), `--slug` (por defecto
- * `slg`), `--rehacer` (ver `exigirArranqueSinConsumir`), y
- * `PRIMER_ADMIN_PASSWORD` en el entorno. Sin ella se genera una y se enseña
- * **una sola vez**.
+ * `slg`), `--idioma es|en` (el del correo), `--rehacer` (ver
+ * `exigirArranqueSinConsumir`) y `--imprimir-contrasena` (arriba).
  */
 import { randomUUID, randomInt } from "node:crypto";
 
@@ -95,6 +125,8 @@ const SLUG = (argumento("slug") ?? "slg").trim();
 const IDIOMA = (argumento("idioma") ?? "es").trim() === "en" ? "en" : "es";
 /** Ver §«El arranque que salió mal» en la cabecera de `main`. */
 const REHACER = process.argv.includes("--rehacer");
+/** El modo de emergencia: ver la cabecera. Sin él, la cuenta nace sin contraseña. */
+const CON_CONTRASENA = process.argv.includes("--imprimir-contrasena");
 
 function abortar(mensaje: string): never {
   console.error(`\n✗ ${mensaje}\n`);
@@ -104,7 +136,8 @@ function abortar(mensaje: string): never {
 const USO =
   "Uso: node --env-file=<archivo.env> scripts/auth/primer-admin.ts \\\n" +
   "       --correo tu@correo --nombre \"Tu Nombre\"\n" +
-  "     [--empresa \"SLG Agency\"] [--slug slg] [--idioma es|en] [--rehacer]";
+  "     [--empresa \"SLG Agency\"] [--slug slg] [--idioma es|en] [--rehacer]\n" +
+  "     [--imprimir-contrasena]   (emergencia: sin correo, la contraseña sale en pantalla)";
 
 if (!CORREO || !NOMBRE) abortar(`Falta --correo o --nombre.\n\n${USO}`);
 
@@ -125,9 +158,11 @@ if (!/^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$/.test(CORREO)) {
 }
 
 /**
- * La contraseña. Doce caracteres es el mínimo que exige la librería
- * (`minPasswordLength`), y una generada aquí trae veinticuatro: la que se
- * escribe a mano en una línea de comandos acaba en el historial del intérprete.
+ * La contraseña del modo de emergencia. Doce caracteres es el mínimo que exige
+ * la librería (`minPasswordLength`), y una generada aquí trae veinticuatro: la
+ * que se escribe a mano en una línea de comandos acaba en el historial del
+ * intérprete. **Solo existe con `--imprimir-contrasena`**; sin él, la cuenta
+ * nace sin contraseña y `CONTRASENA` es `null`.
  */
 const ALFABETO = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 function generarContrasena(largo = 24): string {
@@ -137,10 +172,58 @@ function generarContrasena(largo = 24): string {
 }
 
 const DADA = process.env.PRIMER_ADMIN_PASSWORD?.trim();
+if (DADA && !CON_CONTRASENA) {
+  abortar(
+    "PRIMER_ADMIN_PASSWORD está puesta, y por defecto este guion ya no pone contraseña: manda al\n" +
+      "  correo un enlace para que la elija quien la va a usar. Quítala del entorno, o, si de verdad\n" +
+      "  hace falta entrar sin correo, pídelo con todas las letras: --imprimir-contrasena.",
+  );
+}
 if (DADA && DADA.length < 12) {
   abortar("PRIMER_ADMIN_PASSWORD tiene menos de 12 caracteres, que es el mínimo de DU-01.");
 }
-const CONTRASENA = DADA || generarContrasena();
+const CONTRASENA = CON_CONTRASENA ? DADA || generarContrasena() : null;
+
+/**
+ * La dirección pública del sitio: el enlace del correo apunta a su
+ * `/restablecer` (`sendResetPassword`, `lib/auth/better-auth.ts`). Sin ella, la
+ * librería caería a su ruta `/reset-password`, que en este proyecto es un 404.
+ */
+const BASE_PUBLICA = (process.env.NEXT_PUBLIC_SITE_URL ?? process.env.BETTER_AUTH_URL ?? "").trim().replace(/\/$/, "");
+
+/**
+ * **Todo lo que el enlace necesita se comprueba ANTES de crear nada.** La
+ * cuenta se crea una sola vez: si se creara y el correo no pudiera salir por
+ * una variable que faltaba, quedaría un administrador sin contraseña y sin
+ * enlace, y habría que rehacer el arranque. Mejor negarse ahora y decir qué
+ * falta.
+ */
+if (!CON_CONTRASENA) {
+  const faltan = [
+    "MAIL_SMTP_HOST",
+    "MAIL_SMTP_PORT",
+    "MAIL_SMTP_USERNAME",
+    "MAIL_SMTP_PASSWORD",
+    "MAIL_FROM_ADDRESS",
+  ].filter((n) => !process.env[n]?.trim());
+  if (!BASE_PUBLICA) faltan.push("NEXT_PUBLIC_SITE_URL");
+  if (faltan.length > 0) {
+    abortar(
+      `Para mandar el enlace de la contraseña faltan: ${faltan.join(", ")}.\n` +
+        `  Añádelas al mismo archivo de --env-file (los valores del despliegue) y repite.\n` +
+        `  No se ha creado nada. Si el correo no tiene arreglo hoy: --imprimir-contrasena.`,
+    );
+  }
+} else {
+  console.warn(
+    `\n⚠ MODO DE EMERGENCIA (--imprimir-contrasena).\n` +
+      (DADA
+        ? `  Se usa PRIMER_ADMIN_PASSWORD y no se enseña.\n`
+        : `  La contraseña de slg_admin se va a IMPRIMIR en esta terminal: queda en su historial y en\n` +
+          `  cualquier registro o transcripción de esta sesión.\n`) +
+      `  Cámbiala en cuanto entres (/perfil, o /recuperar con ese correo).`,
+  );
+}
 
 /* ── Las conexiones ─────────────────────────────────────────────────────── */
 
@@ -203,6 +286,9 @@ if (!process.env.BETTER_AUTH_SECRET?.trim()) {
 }
 
 const sql = postgres(URL_DUENO, { max: 2, onnotice: () => {} });
+
+/** Solo el tipo: la librería se carga dentro de `main`, ver la nota de arriba. */
+type LibreriaDeIdentidad = (typeof import("../../lib/auth/better-auth.ts"))["auth"];
 
 /**
  * ── EL ARRANQUE QUE SALIÓ MAL ────────────────────────────────────────────────
@@ -309,11 +395,10 @@ async function main() {
   const [{ n: cuantos }] = await sql<{ n: number }[]>`select count(*)::int as n from "user"`;
   if (cuantos > 0) await exigirArranqueSinConsumir(cuantos);
 
-  // El hasheador de la librería, no uno propio. Ver la cabecera: se importa
-  // AQUÍ, con las comprobaciones ya hechas, porque importarla abre conexiones.
+  // La librería se importa AQUÍ, con las comprobaciones ya hechas, porque
+  // importarla abre conexiones. Sin contraseña no hay nada que picar.
   const { auth } = await import("../../lib/auth/better-auth.ts");
-  const contexto = await auth.$context;
-  const hash = await contexto.password.hash(CONTRASENA);
+  const hash = CONTRASENA ? await (await auth.$context).password.hash(CONTRASENA) : null;
 
   const idUsuario = randomUUID();
   const idEmpresa = randomUUID();
@@ -346,11 +431,19 @@ async function main() {
      * `provider_id = 'credential'` y `account_id = user_id`: es la forma exacta
      * en la que Better Auth guarda una cuenta de contraseña, y la que
      * `lib/auth/acceso.ts` busca para saber si alguien puede cambiar la suya.
+     *
+     * **Solo en el modo de emergencia.** Por defecto no se escribe: la fila la
+     * crea la propia librería cuando la persona abre el enlace y elige su
+     * contraseña (`resetPassword` crea la cuenta `credential` si no existe), y
+     * hasta entonces no hay contraseña con la que entrar —ni conocida ni
+     * desconocida—.
      */
-    await tx`
-      insert into account (id, user_id, provider_id, account_id, password)
-      values (${randomUUID()}, ${idUsuario}, 'credential', ${idUsuario}, ${hash})
-    `;
+    if (hash) {
+      await tx`
+        insert into account (id, user_id, provider_id, account_id, password)
+        values (${randomUUID()}, ${idUsuario}, 'credential', ${idUsuario}, ${hash})
+      `;
+    }
 
     await tx`
       insert into membership (id, user_id, organization_id, org_role)
@@ -365,7 +458,14 @@ async function main() {
       insert into audit_log (id, actor_type, actor_id, actor_label, action, entity, entity_id, organization_id, metadata)
       values (${randomUUID()}, 'system', null, 'scripts/auth/primer-admin.ts',
               'auth.primer-admin', 'user', ${idUsuario}, ${empresa.id},
-              ${sql.json({ correo: CORREO, rol: "slg_admin", empresa: empresa.name })})
+              ${sql.json({
+                correo: CORREO,
+                rol: "slg_admin",
+                empresa: empresa.name,
+                // Cómo se le dio acceso: la diferencia importa al auditar, porque
+                // una contraseña impresa ha pasado por una terminal.
+                acceso: CONTRASENA ? "contrasena_impresa" : "enlace_por_correo",
+              })})
     `;
 
     return empresa;
@@ -375,22 +475,72 @@ async function main() {
   console.log(`  Empresa      ${resumen.name} (${SLUG}, tipo slg)`);
   console.log(`  Usuario      ${NOMBRE} <${CORREO}>`);
   console.log(`  Rol          slg_admin`);
-  if (!DADA) {
+
+  const correoSalio = CONTRASENA ? true : await mandarEnlace(auth);
+
+  if (CONTRASENA && !DADA) {
     console.log(`\n  CONTRASEÑA   ${CONTRASENA}`);
     console.log(
       `\n  Cópiala ahora a tu gestor de contraseñas: no se guarda en ninguna parte y no\n` +
-        `  se vuelve a enseñar. Para cambiarla: /perfil si el portal está abierto y, si no,\n` +
-        `  /recuperar, que es público y manda el enlace a ese correo.`,
+        `  se vuelve a enseñar. Y cámbiala al entrar: ha pasado por esta terminal.`,
     );
   }
-  console.log(`\n  Entra en /acceder con ese correo y esa contraseña.`);
+  if (CONTRASENA) console.log(`\n  Entra en /acceder con ese correo y esa contraseña.`);
   console.log(
     `  Si /hq contesta 404, no es la cuenta: es que la superficie sigue cerrada\n` +
       `  (SUPERFICIES_ABIERTAS en lib/auth/roles.ts).\n`,
   );
 
   await sql.end({ timeout: 5 });
-  process.exit(0);
+  process.exit(correoSalio ? 0 : 1);
+}
+
+/**
+ * Pide a la librería el enlace de recuperación para la cuenta recién creada y
+ * dice si el correo salió.
+ *
+ * `requestPasswordReset` no lo cuenta —responde lo mismo exista la cuenta o no,
+ * y un fallo del correo lo registra y se lo traga (RF-59, RF-119)—, así que la
+ * respuesta se lee de donde queda escrita: la fila de `email_delivery` que
+ * `enviarCorreo` deja SIEMPRE, salga o no. Sin fila, el correo ni se intentó.
+ *
+ * **Un fallo aquí no deshace la cuenta**, y no debe: nadie ha entrado, así que
+ * `--rehacer` sigue disponible, y `/recuperar` manda otro enlace en cuanto el
+ * correo funcione. El guion sale con código 1 para que no pase por un éxito.
+ */
+async function mandarEnlace(auth: LibreriaDeIdentidad): Promise<boolean> {
+  // El instante lo da la base y no este proceso: la fila la fecha PostgreSQL, y
+  // un reloj local adelantado un par de segundos haría que no se encontrara.
+  const [{ desde }] = await sql<{ desde: Date }[]>`select now() as desde`;
+  await auth.api.requestPasswordReset({ body: { email: CORREO } });
+
+  const [fila] = await sql<{ status: string; last_error: string | null }[]>`
+    select status, last_error from email_delivery
+     where to_email = ${CORREO} and kind = 'password_reset' and created_at >= ${desde}
+     order by created_at desc
+     limit 1
+  `;
+
+  if (fila?.status === "delivered") {
+    console.log(`  Contraseña   ninguna todavía: la elige esa persona con el enlace.`);
+    console.log(
+      `\n✓ Enlace enviado a <${CORREO}>, con el asunto «Restablecer tu contraseña».\n` +
+        `  Sirve una vez y caduca en una hora. Al abrirlo se elige la contraseña (12 caracteres\n` +
+        `  como mínimo) y después se entra en ${BASE_PUBLICA}/acceder.\n` +
+        `  Si caduca o no llega: ${BASE_PUBLICA}/recuperar con ese mismo correo manda otro.`,
+    );
+    return true;
+  }
+
+  console.error(
+    `\n✗ La cuenta está creada, pero el correo con el enlace NO salió` +
+      (fila ? `: ${fila.last_error ?? fila.status}.` : ": no llegó ni a intentarse.") +
+      `\n  Nadie ha entrado todavía, así que hay dos salidas:\n` +
+      `    1. Arregla el correo y pide el enlace en ${BASE_PUBLICA}/recuperar con <${CORREO}>.\n` +
+      `    2. O repite este guion con --rehacer (y, si el correo no tiene arreglo hoy,\n` +
+      `       --imprimir-contrasena).`,
+  );
+  return false;
 }
 
 main().catch(async (e) => {
