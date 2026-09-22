@@ -35,6 +35,7 @@ import http from "node:http";
 
 import postgres from "postgres";
 
+import { NOMBRE_DEL_CAMPO_TRAMPA } from "../../lib/antiabuso/index.ts";
 import { CABECERA_EVENTO, CABECERA_FIRMA, CABECERA_MARCA, firmaValida } from "../../lib/webhooks/firma.ts";
 
 let fallos = 0;
@@ -347,6 +348,11 @@ async function main() {
     const formulario = (email: string) => {
       const f = new FormData();
       f.set("email", email);
+      // La trampa VACÍA: esto imita lo que llega de un formulario del sitio, y
+      // un navegador real la manda siempre, porque la página la pinta. Desde
+      // D-164 su ausencia descarta el envío (RF-33), así que un fixture sin
+      // ella no probaría el cableado de eventos: no llegaría a haberlo.
+      f.set(NOMBRE_DEL_CAMPO_TRAMPA, "");
       return f;
     };
 

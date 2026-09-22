@@ -3649,3 +3649,22 @@ las dos mitades de la decisión, que responde como si hubiera funcionado y que n
 
 **Verificado aquí**: `check:types`, `lint`, `check:cadenas`, `check:migrations` y `check:playbook`.
 La prueba necesita PostgreSQL; la corre CI.
+
+## D-164, tercer llamador: el fixture de `test-webhooks` (2026-09-21)
+
+La corrida siguiente dejó `descargas` en verde —19 de 19, incluida la comprobación nueva— y sacó el
+mismo fallo un piso más abajo: **7 de 32 en `test-webhooks`**. La sección que comprueba el cableado
+—que los eventos salen desde donde ocurren las cosas, y no desde un `emitir` que nadie llama— arma
+su formulario con un solo campo y llama a `registrarCaptura`, la función real. Sin la trampa, el
+veredicto es `trampa` y no llega a haber cableado que observar.
+
+**Por qué el arreglo va en el fixture y no en el código.** `verificarEnvio` tiene un solo llamador,
+`registrarCaptura`, que es el embudo de las dos puertas públicas: la comprobación está, de hecho, en
+la frontera del formulario, y no hay ningún llamador interno que no sea un envío de formulario. El
+fixture imitaba mal lo que llega de un navegador. Se le pone `NOMBRE_DEL_CAMPO_TRAMPA` vacío —la
+constante, no la cadena escrita a mano— y con eso queda dicho también en la prueba por qué está ahí.
+
+Barrido de los dos archivos que tocan este camino (`test-descargas.ts` y `test-webhooks.ts`): no
+queda ningún otro fixture sin el campo.
+
+**Verificado aquí**: `check:types` y `lint`. Las dos pruebas necesitan PostgreSQL; las corre CI.
