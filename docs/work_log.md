@@ -3709,3 +3709,33 @@ categorías, como exige el contrato, y una nota cita la elección vigente y remi
 §2 del playbook: el perfil la cita, no la fija.
 
 **Verificado**: `check:types`, `lint`, `check:playbook`, `check:literacy`, `check:secrets`.
+
+## Plantilla, paso 10: el lector del intake (`commands/leer-intake.md`) (2026-09-22)
+
+Décimo paso del plan de `docs/PLAYBOOK_REPLICACION.md` §3. **`commands/leer-intake.md`** es el
+playbook que Claude sigue cuando un cliente responde el formulario; su envoltorio,
+`.claude/commands/leer-intake.md`, lo pone en el menú como `/leer-intake`.
+
+Qué fija: cómo se localizan la hoja y la carpeta por el conector de Drive (por `title`, que el
+conector no acepta `name`); las **32 columnas** de la hoja, literales y en orden; la comprobación de
+cada ítem ★ del §4 con su condición de cumplido y el camino del correo de faltantes; cinco
+**paradas** —respuestas que la plantilla no cubre y decide Ricardo—; la correspondencia de cada
+columna con la ficha, con otra parte del procedimiento o con una variable no secreta; los colores
+del cliente repartidos en los nueve tokens con su contraste mínimo; la conversión de los servicios en
+texto libre a oferta, slugs, rutas y registros de seis secciones; el destino de cada archivo de la
+carpeta; y el resultado, con `docs/intake/pendientes.md`.
+
+**El ejemplo «Cliente Demo» se comprobó**: su ficha compila contra `lib/sitio/tipos.ts` con `tsc
+--strict`.
+
+**Huecos que el ejemplo destapó**, anotados en el playbook como pendientes o paradas:
+
+- El formulario ofrece «Solo inglés» y el motor no lo soporta.
+- Ofrece tres páginas que el motor no tiene: «Preguntas frecuentes», «Equipo», «Trabaja con nosotros».
+- No pregunta el **correo público** de la web (`marca.correoPublico`): se usa el de contactos, por confirmar.
+- La ficha no tiene **tipografía** ni **nombre de servicio por idioma**.
+- El contrato de servicio exige `download` y `## Descarga` aunque `descargas` esté apagado.
+- El buzón de contactos es hoy `MAIL_ALERTS_TO`; el playbook admite `MAIL_LEADS_TO` si el paso 5b la crea.
+- La convención de rutas de la oferta (todo bajo `/servicios`) queda a confirmar por el paso 3.
+
+**Verificado**: `check:types`, `lint`, `check:playbook`, `check:literacy`, `check:secrets`.
