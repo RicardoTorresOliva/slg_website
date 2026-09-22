@@ -6,11 +6,12 @@
  *
  *   · **criterio 2** — el campo `service` **solo admite nomenclatura literal**.
  *     Se prueban las tres formas de romperlo que salen solas al escribir:
- *     minúsculas, espacios en vez de guion bajo, y un nombre inventado. Y, desde
- *     la migración 0021, la cuarta forma —la que no se ve escribiendo—: que la
- *     oferta se renombre y el `CHECK` de la base se quede con el nombre viejo.
- *     Se enfrentan la colección de contenido, `PROJECT_SERVICES` y la
- *     definición viva de `project_service_literal` en PostgreSQL.
+ *     minúsculas, espacios en vez de guion bajo, y un nombre inventado. Y la
+ *     cuarta forma —la que no se ve escribiendo—: que dos puertas acepten
+ *     listas distintas. Desde la migración 0024 (D-166) la lista es la de la
+ *     ficha del sitio y la aplica la aplicación, no un `CHECK`: se enfrentan la
+ *     ficha, el formulario de HQ y el catálogo de la API, y se comprueba que la
+ *     contención vieja ya no está en PostgreSQL.
  *   · **criterio 3** — una invitación no aceptada **se revoca y deja de servir
  *     de inmediato**: el mismo testigo que valía hace un segundo ya no vale.
  *   · **criterio 4** — `slg_operator` opera **solo sobre sus proyectos
@@ -176,6 +177,8 @@ async function main() {
   const { claves, crearClave } = await import("../../lib/hq/claves.ts");
   const { esServicioLiteral, serviciosLiterales } = await import("../../lib/hq/servicios.ts");
   const { PROJECT_SERVICES } = await import("../../lib/db/schema.ts");
+  const { nombresDeServicio } = await import("../../lib/sitio/index.ts");
+  const { buscarRuta } = await import("../../lib/api/catalogo.ts");
   const { consultarTestigo } = await import("../../lib/invitations/index.ts");
   const { generarTestigo } = await import("../../lib/invitations/token.ts");
 
@@ -304,7 +307,12 @@ async function main() {
 
     console.log("\nCriterio 2 — `service` solo admite nomenclatura literal (RF-79, RF-14):\n");
     const oferta = serviciosLiterales();
-    check("están LOS ONCE servicios de A.2, no solo los que son marca", oferta.length === 11, `${oferta.length}: ${oferta.join(" · ")}`);
+    const ficha = [...nombresDeServicio()].sort((a, b) => a.localeCompare(b, "es"));
+    check(
+      "están TODOS los servicios de la ficha, no solo los que son marca",
+      oferta.length === ficha.length,
+      `${oferta.length} de ${ficha.length}: ${oferta.join(" · ")}`,
+    );
     check(
       "incluidos los dos que NO son marca registrada y por eso no están en LITERAL_TERMS",
       oferta.some((s) => s.includes("Coaching")) && oferta.some((s) => s.includes("Customize") || s.includes("Programa")),
@@ -316,37 +324,43 @@ async function main() {
     }
 
     // El defecto que esta comprobación existe para impedir, y que ya ocurrió:
-    // la oferta se renombró (`SLG_Holdings` → `Holdings by SLG`, 18-09) y el
-    // `CHECK` de la base se quedó con el nombre viejo. Todo lo de arriba seguía
-    // en verde —porque todo lo de arriba pregunta al contenido— y aun así un
-    // proyecto de esa línea era imposible de crear. La única forma de verlo es
-    // enfrentar las dos listas y, después, pasar cada nombre por PostgreSQL.
-    const enLaBase = [...PROJECT_SERVICES].sort((a, b) => a.localeCompare(b, "es"));
-    const soloEnLaOferta = oferta.filter((s) => !enLaBase.includes(s as (typeof PROJECT_SERVICES)[number]));
-    const soloEnLaBase = enLaBase.filter((s) => !oferta.includes(s));
+    // la oferta se renombró (`SLG_Holdings` → `Holdings by SLG`, 18-09) y una
+    // de las listas —entonces el `CHECK` de la base— se quedó con el nombre
+    // viejo. Todo lo de arriba seguía en verde y aun así un proyecto de esa
+    // línea era imposible de crear. Desde 0024 no hay `CHECK`: la lista es la
+    // de la ficha, y lo que hay que enfrentar son las puertas que la aplican.
+    const diferencia = (a: readonly string[], b: readonly string[]) => a.filter((x) => !b.includes(x));
     check(
-      "la oferta del contenido y lo que la base acepta dicen EXACTAMENTE lo mismo",
-      soloEnLaOferta.length === 0 && soloEnLaBase.length === 0,
-      `solo en el contenido: ${soloEnLaOferta.join(" · ") || "—"} · solo en la base: ${soloEnLaBase.join(" · ") || "—"}`,
+      "el formulario de HQ acepta EXACTAMENTE los servicios de la ficha",
+      diferencia(oferta, ficha).length === 0 &&
+        diferencia(ficha, oferta).length === 0 &&
+        ficha.every((s) => esServicioLiteral(s)),
+      `solo en HQ: ${diferencia(oferta, ficha).join(" · ") || "—"} · solo en la ficha: ${diferencia(ficha, oferta).join(" · ") || "—"}`,
+    );
+    const enLaApi = buscarRuta("POST", "/api/v1/organizations/{id}/projects").cuerpo?.find(
+      (c) => c.nombre === "service",
+    );
+    const valoresDeLaApi = enLaApi && enLaApi.tipo === "enum" ? [...enLaApi.valores] : [];
+    check(
+      "el catálogo de la API anuncia EXACTAMENTE los servicios de la ficha",
+      diferencia(valoresDeLaApi, ficha).length === 0 &&
+        diferencia(ficha, valoresDeLaApi).length === 0 &&
+        diferencia([...PROJECT_SERVICES], ficha).length === 0,
+      `solo en la API: ${diferencia(valoresDeLaApi, ficha).join(" · ") || "—"} · solo en la ficha: ${diferencia(ficha, valoresDeLaApi).join(" · ") || "—"}`,
     );
 
-    // Y contra PostgreSQL, no contra el espejo: se lee la contención viva y se
-    // comprueba que cada nombre de la oferta está dentro. Se pregunta por la
-    // definición en vez de insertar once proyectos porque insertarlos
-    // cambiaría los recuentos de archivar y cerrar, más abajo, y porque el
-    // texto del `CHECK` es exactamente lo que la base va a aplicar.
-    const [contencion] = await dueno<{ def: string }[]>`
+    // Y la base ya no lleva su propia lista: si alguien reintroduce el `CHECK`,
+    // vuelve a haber dos vocabularios y un cliente que no puede crear
+    // proyectos con sus servicios.
+    const contencion = await dueno<{ def: string }[]>`
       SELECT pg_get_constraintdef(oid) AS def
         FROM pg_constraint
        WHERE conname = 'project_service_literal'
     `;
-    const sinContencion = oferta.filter((s) => !(contencion?.def ?? "").includes(`'${s}'`));
     check(
-      "el CHECK de PostgreSQL acepta los once nombres de la oferta, uno por uno",
-      contencion !== undefined && sinContencion.length === 0,
-      contencion === undefined
-        ? "no existe project_service_literal"
-        : `los rechaza: ${sinContencion.join(" · ")}`,
+      "PostgreSQL ya no contiene la lista de servicios (0024)",
+      contencion.length === 0,
+      `sigue existiendo project_service_literal: ${contencion[0]?.def ?? ""}`,
     );
 
     let motivo = "";

@@ -169,6 +169,13 @@
       "when": 1790080000000,
       "tag": "0023_dominios_desechables",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790090000000,
+      "tag": "0024_servicio_desde_la_ficha",
+      "breakpoints": true
     }
   ]
 }

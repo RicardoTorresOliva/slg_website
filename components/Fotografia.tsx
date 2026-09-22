@@ -1,3 +1,7 @@
+import { EJES, RAMAS, SERVICIOS } from "@/lib/content/rutas";
+import { sitio } from "@/lib/sitio";
+import { PAGINAS_DEL_MOTOR, type ClaveDelMotor } from "@/lib/sitio/motor";
+
 /**
  * Fotografía de cabecera de las páginas públicas.
  *
@@ -15,52 +19,28 @@
  * Formato WebP y 1600 px de ancho: las originales pesaban 34 MB entre las once
  * y el gate D1 mide LCP. Así pesan 352 KB en total.
  */
-const POR_RUTA: Record<string, string> = {
-  // La portada es el mapa y va sin fotografía; la escena de la mesa es de Servicios.
-  "/servicios": "home",
-  "/en/services": "home",
-  "/ai": "ai",
-  "/en/ai": "ai",
-  "/ai/academy": "academy",
-  "/en/ai/academy": "academy",
-  "/ai/enterprise": "enterprise",
-  "/en/ai/enterprise": "enterprise",
-  "/ai/factory": "factory",
-  "/en/ai/factory": "factory",
-  // Una escena por servicio (2026-09-18), misma sesión y mismo acento azul.
-  "/ai/academy/phoenix-peex": "phoenix-peex",
-  "/en/ai/academy/phoenix-peex": "phoenix-peex",
-  "/ai/academy/phoenix-teax": "phoenix-teax",
-  "/en/ai/academy/phoenix-teax": "phoenix-teax",
-  "/ai/academy/phoenix-retx": "phoenix-retx",
-  "/en/ai/academy/phoenix-retx": "phoenix-retx",
-  "/ai/academy/customize-programs": "customize-programs",
-  "/en/ai/academy/customize-programs": "customize-programs",
-  "/ai/academy/ai-coaching": "ai-coaching",
-  "/en/ai/academy/ai-coaching": "ai-coaching",
-  "/ai/enterprise/readiness": "readiness",
-  "/en/ai/enterprise/readiness": "readiness",
-  "/ai/enterprise/implement": "implement",
-  "/en/ai/enterprise/implement": "implement",
-  "/ai/factory/app-building": "app-building",
-  "/en/ai/factory/app-building": "app-building",
-  "/ai/factory/age-building": "age-building",
-  "/en/ai/factory/age-building": "age-building",
-  "/ai/factory/coo-as-a-service": "coo-as-a-service",
-  "/en/ai/factory/coo-as-a-service": "coo-as-a-service",
-  "/holdings": "holdings",
-  "/en/holdings": "holdings",
-  "/doctrina": "doctrina",
-  "/en/doctrine": "doctrina",
-  "/nosotros": "nosotros",
-  "/en/about": "nosotros",
-  "/descargas": "descargas",
-  "/en/downloads": "descargas",
-  "/blog": "blog",
-  "/en/blog": "blog",
-  "/contacto": "contacto",
-  "/en/contact": "contacto",
-};
+const POR_RUTA: Record<string, string> = porRuta();
+
+/**
+ * La foto de cada ruta, **desde la ficha**: la que declara cada eje, línea y
+ * servicio de la oferta (`foto`), y la de las páginas fijas del motor
+ * (`sitio.fotos`, por clave de página). Las dos rutas de un par llevan la
+ * misma escena. La portada es el mapa y va sin fotografía salvo que la ficha le
+ * dé una.
+ */
+function porRuta(): Record<string, string> {
+  const m: Record<string, string> = {};
+  const poner = (ruta: { es: string; en: string }, foto: string | undefined) => {
+    if (!foto) return;
+    m[ruta.es] = foto;
+    if (ruta.en) m[ruta.en] = foto;
+  };
+  for (const [clave, foto] of Object.entries(sitio.fotos)) {
+    if (clave in PAGINAS_DEL_MOTOR) poner(PAGINAS_DEL_MOTOR[clave as ClaveDelMotor].ruta, foto);
+  }
+  for (const x of [...EJES, ...RAMAS, ...SERVICIOS]) poner(x, x.foto);
+  return m;
+}
 
 export function Fotografia({ ruta }: { ruta: string }) {
   const nombre = POR_RUTA[ruta];

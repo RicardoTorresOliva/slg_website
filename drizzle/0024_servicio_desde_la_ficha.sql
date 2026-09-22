@@ -1,0 +1,42 @@
+-- El servicio de un proyecto lo valida la aplicación contra la ficha del sitio,
+-- no un `CHECK` de PostgreSQL (D-166, 2026-09-22).
+--
+-- QUÉ SE RETIRA. El `CHECK project_service_literal` que puso 0001 y reescribió
+-- 0021: `service IN (…)` con los once servicios de SLG escritos dentro de la
+-- base. Era una buena defensa mientras este repositorio servía a un solo sitio:
+-- un nombre traducido o alterado («Phoenix Peex», «SLG Readiness») se rechazaba
+-- en la INSERCIÓN, no en la revisión (data_model §3.13).
+--
+-- POR QUÉ SE RETIRA. Desde D-165 el repositorio es una PLANTILLA: cada cliente
+-- declara su oferta en `site.config.ts`, y el motor no nombra a ninguno. Con el
+-- `CHECK` en su sitio, un cliente no podría crear un solo proyecto con sus
+-- propios servicios —PostgreSQL rechazaría todos los que no fueran de SLG—, y
+-- adaptarlo exigiría una migración por cliente con su lista escrita a mano: el
+-- mismo vocabulario en dos sitios, que es exactamente el defecto que 0021 tuvo
+-- que arreglar cuando la oferta se renombró y la base se quedó con el nombre
+-- viejo. Una lista que cambia con cada sitio no puede vivir en el esquema que
+-- comparten todos.
+--
+-- QUÉ VALIDA AHORA, Y DÓNDE. La lista es una sola: `nombresDeServicio()` de
+-- `lib/sitio`, que lee la ficha. Tres puertas la aplican antes de que un valor
+-- llegue aquí, y las tres leen esa misma lista:
+--
+--   · la API v1 (`lib/api/catalogo.ts`): `service` es un `enum` con los valores
+--     de la ficha; fuera de ellos, 422 `not_in_vocabulary` antes de tocar nada;
+--   · la escritura (`lib/api/escrituras.ts`): lo vuelve a comprobar justo antes
+--     del `INSERT`, porque ya no hay una capa detrás que lo pare;
+--   · HQ (`lib/hq/servicios.ts`): el desplegable ofrece esa lista, y el
+--     servidor rechaza cualquier otro valor con comparación exacta, sin
+--     normalizar: «phoenix peex» no es «Phoenix PEEx».
+--
+-- Y la coherencia que el `CHECK` garantizaba por construcción la garantizan dos
+-- frenos: `check:sitio`, que exige que cada servicio de la ficha tenga su
+-- registro de contenido con ese mismo `name`, y `test:gestion`, que comprueba
+-- que HQ y la API aceptan exactamente los nombres de la ficha y que esta
+-- contención ya no existe en la base.
+--
+-- LAS FILAS NO SE TOCAN. Todo proyecto existente lleva un nombre que el
+-- `CHECK` ya aceptó, y ese nombre sigue en la ficha de SLG: quitar la
+-- contención no invalida nada. `IF EXISTS` porque 0021 ya la quitaba y ponía
+-- así, y una base a medio migrar no debe fallar aquí.
+ALTER TABLE project DROP CONSTRAINT IF EXISTS project_service_literal;

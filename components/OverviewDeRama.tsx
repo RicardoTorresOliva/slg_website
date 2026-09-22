@@ -1,12 +1,13 @@
 import { loadCollection, loadUiStrings } from "@/lib/content/loader";
 import { RAMAS, SERVICIOS, rutaEnDeServicio, slugEnDeServicio } from "@/lib/content/rutas";
 import { secciones } from "@/lib/content/secciones";
+import { sitio } from "@/lib/sitio";
 
 import { Markdown } from "./Markdown";
 import { HeroTipografico, TarjetaDeServicio } from "./piezas";
 
 /**
- * Overview de una línea de `VoltAi by SLG` — el índice de sus servicios (DU-04).
+ * Overview de una línea de la oferta — el índice de sus servicios (DU-04).
  *
  * **Enlaza a TODOS sus servicios y a ninguno que no le corresponda** (criterio
  * 2): la lista sale de `SERVICIOS` filtrando por rama, así que añadir un
@@ -24,6 +25,10 @@ export function OverviewDeRama({ slug, lang }: { slug: string; lang: "es" | "en"
     (p) => p.slug === registroSlug,
   );
   const bloques = secciones(pagina?.body ?? "");
+  // El destino externo de la línea, si la ficha lo declara: URL de
+  // `dominio.enlaces`, texto de `content/ui`.
+  const externo = rama?.enlaceExterno;
+  const hrefExterno = externo ? sitio.dominio.enlaces[externo.enlace] : undefined;
 
   const servicios = SERVICIOS.filter((s) => s.rama === slug);
   const registros = loadCollection<{ name: string }>("service", lang);
@@ -64,20 +69,20 @@ export function OverviewDeRama({ slug, lang }: { slug: string; lang: "es" | "en"
           ))}
         </ul>
 
-        {/* Criterio 3 · `Phoenix Academy` está FUERA de alcance (§10-7,
-            frontera (e)): se enlaza y se señala como externo. Sin integración,
-            sin sesión compartida y sin contenido embebido. `rel="noopener"`
-            porque `target="_blank"` sin él deja al destino manipular esta
-            pestaña. */}
-        {slug === "slg-academy" ? (
+        {/* Criterio 3 · un destino de otro proyecto (en SLG, Phoenix Academy)
+            está FUERA de alcance (§10-7, frontera (e)): se enlaza y se señala
+            como externo. Sin integración, sin sesión compartida y sin
+            contenido embebido. `rel="noopener"` porque `target="_blank"` sin él
+            deja al destino manipular esta pestaña. */}
+        {externo && hrefExterno ? (
           <p style={{ paddingTop: "1.5rem" }}>
             <a
-              href="https://academy.softlandingglobal.com"
+              href={hrefExterno}
               target="_blank"
               rel="noopener noreferrer external"
               style={enlaceExterno}
             >
-              {t["overview.phoenixAcademy"]}
+              {t[externo.etiqueta]}
               <span aria-hidden="true"> ↗</span>
               <span style={visualmenteOculto}>{t["overview.opensExternal"]}</span>
             </a>

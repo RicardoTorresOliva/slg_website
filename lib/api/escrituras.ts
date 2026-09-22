@@ -38,7 +38,16 @@ import {
   type QuienCierra,
 } from "../academy/index.ts";
 import type { AuthContext } from "../db/context.ts";
-import { agentEvent, announcement, contact, deliverable, organization, project, user } from "../db/schema.ts";
+import {
+  agentEvent,
+  announcement,
+  contact,
+  deliverable,
+  organization,
+  project,
+  PROJECT_SERVICES,
+  user,
+} from "../db/schema.ts";
 import { withScope } from "../db/scope.ts";
 import { adaptadorDeArchivos, validarSubida } from "../files/index.ts";
 import { DatoInvalido, slugDe } from "../hq/empresas.ts";
@@ -705,7 +714,13 @@ export async function cerrarPendientePorApi(ctx: AuthContext, id: string) {
  * auditoría con `conAuditoria`, que aquí escribiría la segunda fila que D-140
  * prohíbe (el manejador ya apunta toda llamada). Lo que sí se comparte es la
  * forma del proyecto en el contrato (`proyectoDelContrato`, de las lecturas) y
- * la lista de servicios (`PROJECT_SERVICES`, que el catálogo ya validó).
+ * la lista de servicios (`PROJECT_SERVICES`, la de la ficha del sitio).
+ *
+ * **EL SERVICIO SE VUELVE A MIRAR AQUÍ, AUNQUE EL CATÁLOGO YA LO MIRÓ.** Hasta
+ * la migración 0024 había una tercera defensa: el `CHECK` de PostgreSQL. Ya no
+ * está —listaba los servicios de un solo cliente (D-166)—, así que la última
+ * palabra antes de la inserción es esta. Una defensa que depende de que otra
+ * capa se acuerde se pierde en el primer refactor.
  *
  * `owner_user_id` queda nulo a propósito: el responsable es una persona de
  * SLG y se asigna en HQ, no lo decide el CRM.
@@ -783,6 +798,11 @@ export async function crearProyectoPorApi(
   // (`validar`) y aquí también: un proyecto sin nombre no se elige en el portal.
   if (datos.nombre.trim().length === 0) {
     throw new ErrorDeApi(422, "name en blanco", [{ field: "name", code: "invalid" }]);
+  }
+  // La lista es la de la ficha: fuera de ella, 422 con el mismo código que el
+  // catálogo, y nunca un proyecto con un nombre que la oferta no tiene.
+  if (!PROJECT_SERVICES.includes(datos.servicio)) {
+    throw new ErrorDeApi(422, "service fuera de la oferta", [{ field: "service", code: "not_in_vocabulary" }]);
   }
   // Como en HQ: un proyecto que termina antes de empezar es un error de teclado
   // que se descubre en pantalla meses después.

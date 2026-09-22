@@ -4,84 +4,112 @@
  * **LA TABLA ES EXPLÍCITA, Y ESO ES LA DECISIÓN.** Podría derivarse del slug del
  * registro —`/${slug}`— y así estaba hasta DU-04. No sirve: el Anexo A.2 anida
  * la oferta (`/ai/academy/phoenix-peex`) mientras que el archivo se llama
- * `phoenix-peex.md`, y `/holdings` lo sirve un registro de servicio y no uno de
- * página. Una regla implícita que necesita cuatro excepciones ya no es una
+ * `phoenix-peex.md`, y un servicio suelto lo sirve un registro de servicio y no
+ * uno de página. Una regla implícita que necesita excepciones ya no es una
  * regla: es una tabla mal escrita.
  *
- * Aquí está la tabla. Se lee de una vez, se compara con el Anexo A.2 línea a
- * línea, y `check:paginas` comprueba que cada ruta responde y que su par existe.
+ * **Y LA TABLA YA NO SE ESCRIBE AQUÍ: SALE DE LA FICHA** (D-165, D-166). La
+ * oferta de cada sitio —ejes, líneas, servicios, sus rutas y sus registros— la
+ * declara `site.config.ts`; las páginas fijas del motor, `lib/sitio/motor.ts`.
+ * Este archivo las junta en la forma que necesitan la barra, el mapa, el
+ * regreso, la portada de Servicios y los frenos, y resuelve una ruta pedida en
+ * lo que hay que pintar (`resolverRuta`), que es lo que sirve
+ * `app/(public)/[...ruta]`. `check:sitio` comprueba que cada fila tiene su
+ * contenido, y `check:paginas` que cada ruta responde y que su par existe.
  */
+import { serviciosDeLaOferta, sitio } from "../sitio/index.ts";
+import { enIdioma, PAGINAS_DEL_MOTOR } from "../sitio/motor.ts";
 import { loadCollection } from "./loader.ts";
 import type { Lang } from "./schema.ts";
 
 /**
- * Los cuatro destinos del menú, en este orden (decisión de Ricardo, 2026-09-18):
- * «Empieza aquí» es la portada —el mapa del sitio, poco invasivo—; «Servicios»
- * es la casa comercial, con los dos ejes y sus líneas; Blog y Nosotros
- * sostienen la propuesta. Doctrina, Holdings y Descargas se llegan desde
- * Servicios, el mapa y el pie. RF-01 hablaba de cinco destinos: son cuatro.
+ * Los destinos del menú, en el orden de la ficha. En SLG son cuatro (decisión
+ * de Ricardo, 2026-09-18): «Empieza aquí» es la portada —el mapa del sitio,
+ * poco invasivo—; «Servicios» es la casa comercial; Blog y Nosotros sostienen
+ * la propuesta. Doctrina y Descargas se llegan desde Servicios, el mapa y el pie.
  */
-export const DESTINOS = [
-  { clave: "nav.start", es: "/", en: "/en" },
-  { clave: "nav.services", es: "/servicios", en: "/en/services" },
-  { clave: "nav.blog", es: "/blog", en: "/en/blog" },
-  { clave: "nav.about", es: "/nosotros", en: "/en/about" },
-] as const;
-
-/** Los dos ejes, que ya no son destinos del menú: se entra por Servicios. */
-export const EJES = {
-  voltai: { es: "/ai", en: "/en/ai" },
-  holdings: { es: "/holdings", en: "/en/holdings" },
-} as const;
-
-/** Doctrina tampoco es destino del menú: se llega desde Servicios, el mapa y el pie. */
-export const DOCTRINA = { es: "/doctrina", en: "/en/doctrine" } as const;
-
-/** La biblioteca de descargas. */
-export const DESCARGAS = { es: "/descargas", en: "/en/downloads" } as const;
+export const DESTINOS = sitio.menu.map((d) => ({
+  clave: d.clave,
+  es: d.ruta.es,
+  en: enIdioma(d.ruta, "en"),
+}));
 
 /**
- * El botón de acceso va aparte de los cinco: es un botón, no un destino de
- * menú, y su peso visual es secundario a propósito (§10-8). **Nunca es rojo**:
- * el CTA de la capa pública es la descarga.
+ * Los ejes de la oferta: el nivel más alto, con su página de índice. Ya no son
+ * destinos del menú: se entra por Servicios. `slug`/`slugEn` son los registros
+ * de `content/pages` que los describen.
  */
-export const ACCESO = { clave: "nav.signin", es: "/acceder", en: "/en/sign-in" } as const;
+export const EJES = sitio.oferta.ejes.map((e) => ({
+  clave: e.clave,
+  nombre: e.nombre,
+  slug: e.pagina.es,
+  slugEn: enIdioma(e.pagina, "en"),
+  es: e.ruta.es,
+  en: enIdioma(e.ruta, "en"),
+  foto: e.foto,
+}));
 
-/** Las tres líneas de `VoltAi by SLG`, con el slug de su registro de página. */
-export const RAMAS = [
-  { slug: "slg-academy", slugEn: "slg-academy-en", es: "/ai/academy", en: "/en/ai/academy" },
-  { slug: "slg-enterprise", slugEn: "slg-enterprise-en", es: "/ai/enterprise", en: "/en/ai/enterprise" },
-  { slug: "slg-factory", slugEn: "slg-factory-en", es: "/ai/factory", en: "/en/ai/factory" },
-] as const;
+export type Eje = (typeof EJES)[number];
+
+/** Las líneas de todos los ejes, con el slug de su registro de página y el eje del que cuelgan. */
+export const RAMAS = sitio.oferta.ejes.flatMap((e) =>
+  e.lineas.map((l) => ({
+    clave: l.clave,
+    nombre: l.nombre,
+    eje: e.clave,
+    slug: l.pagina.es,
+    slugEn: enIdioma(l.pagina, "en"),
+    es: l.ruta.es,
+    en: enIdioma(l.ruta, "en"),
+    foto: l.foto,
+    enlaceExterno: l.enlaceExterno,
+  })),
+);
 
 export type Rama = (typeof RAMAS)[number];
 
 /**
- * Las once páginas de servicio (A.2), con su ruta anidada bajo la rama.
+ * Todos los servicios de la oferta, con su ruta.
  *
- * `Holdings by SLG` NO cuelga de `/ai`: es la otra rama de la casa y vive en la
- * raíz. Por eso su ruta se declara aquí y no se compone desde `RAMAS`.
+ * `rama` es el slug de la línea de la que cuelgan, o `null` si el servicio es
+ * **suelto**: vive al nivel de los ejes (en SLG, `Holdings by SLG` en
+ * `/holdings`) y vuelve a Servicios, no a una línea.
  */
-export const SERVICIOS = [
-  { slug: "phoenix-peex", rama: "slg-academy", es: "/ai/academy/phoenix-peex" },
-  { slug: "phoenix-teax", rama: "slg-academy", es: "/ai/academy/phoenix-teax" },
-  { slug: "phoenix-retx", rama: "slg-academy", es: "/ai/academy/phoenix-retx" },
-  { slug: "customize-programs", rama: "slg-academy", es: "/ai/academy/customize-programs" },
-  { slug: "ai-coaching", rama: "slg-academy", es: "/ai/academy/ai-coaching" },
-  { slug: "readiness", rama: "slg-enterprise", es: "/ai/enterprise/readiness" },
-  { slug: "implement", rama: "slg-enterprise", es: "/ai/enterprise/implement" },
-  { slug: "app-building", rama: "slg-factory", es: "/ai/factory/app-building" },
-  { slug: "age-building", rama: "slg-factory", es: "/ai/factory/age-building" },
-  { slug: "coo-as-a-service", rama: "slg-factory", es: "/ai/factory/coo-as-a-service" },
-  { slug: "slg-holdings", rama: null, es: "/holdings" },
-] as const;
+export const SERVICIOS = serviciosDeLaOferta().map((s) => ({
+  slug: s.slug,
+  slugEn: enIdioma(s.pagina, "en"),
+  nombre: s.nombre,
+  rama: s.linea ? s.linea.pagina.es : null,
+  es: s.ruta.es,
+  en: enIdioma(s.ruta, "en"),
+  foto: s.foto,
+}));
 
 export type Servicio = (typeof SERVICIOS)[number];
 
-/** La ruta en inglés de un servicio: la misma, bajo `/en`. */
-export const rutaEnDeServicio = (s: Servicio) => `/en${s.es}`;
-/** El slug del registro en inglés: el mismo con sufijo, como los creó FU-03. */
-export const slugEnDeServicio = (s: Servicio) => `${s.slug}-en`;
+/** La ruta en inglés de un servicio. */
+export const rutaEnDeServicio = (s: Servicio) => s.en;
+/** El slug del registro en inglés de un servicio. */
+export const slugEnDeServicio = (s: Servicio) => s.slugEn;
+
+/** Doctrina no es destino del menú: se llega desde Servicios, el mapa y el pie. */
+export const DOCTRINA = PAGINAS_DEL_MOTOR.doctrina.ruta;
+
+/** La biblioteca de descargas. */
+export const DESCARGAS = PAGINAS_DEL_MOTOR.descargas.ruta;
+
+/** La página de Servicios, la casa comercial. */
+export const PAGINA_DE_SERVICIOS = PAGINAS_DEL_MOTOR.servicios.ruta;
+
+/** La portada. */
+export const INICIO = PAGINAS_DEL_MOTOR.inicio.ruta;
+
+/**
+ * El botón de acceso va aparte de los destinos: es un botón, no un destino de
+ * menú, y su peso visual es secundario a propósito (§10-8). **Nunca es rojo**:
+ * el CTA de la capa pública es la descarga.
+ */
+export const ACCESO = { clave: "nav.signin", ...PAGINAS_DEL_MOTOR.acceder.ruta } as const;
 
 /**
  * Las dos páginas legales, con la ruta ANIDADA del Anexo A.2.
@@ -91,57 +119,82 @@ export const slugEnDeServicio = (s: Servicio) => `${s.slug}-en`;
  * responda sin sesión (F.2-1, R-13). Si dejan de responder 200, el inicio de
  * sesión social deja de poder configurarse.
  */
-export const LEGALES = [
-  { slug: "legal-privacidad", slugEn: "legal-privacy", es: "/legal/privacidad", en: "/en/legal/privacy" },
-  { slug: "legal-terminos", slugEn: "legal-terms", es: "/legal/terminos", en: "/en/legal/terms" },
-] as const;
+export const LEGALES = [PAGINAS_DEL_MOTOR.legalPrivacidad, PAGINAS_DEL_MOTOR.legalTerminos].map((l) => ({
+  slug: l.registro.es,
+  slugEn: l.registro.en,
+  es: l.ruta.es,
+  en: l.ruta.en,
+}));
 
 /**
- * Páginas que NO se sirven desde `/[slug]` porque tienen ruta propia. Si una
+ * Páginas que NO se sirven como página suelta en `/<slug>` porque las pinta
+ * otra ruta: las del motor y los índices de los ejes y las líneas. Si una
  * página aparece en las dos partes, el mismo contenido queda en dos URL: los
  * enlaces se dividen y los buscadores ven contenido duplicado.
  */
-export const PAGINAS_CON_RUTA_PROPIA = new Set([
-  "servicios",
-  "services",
-  "ai",
-  ...RAMAS.map((r) => r.slug),
-  ...RAMAS.map((r) => r.slugEn),
-  ...LEGALES.map((l) => l.slug),
-  ...LEGALES.map((l) => l.slugEn),
-  "doctrina",
-  "doctrine",
-  "nosotros",
-  "about",
-  "descargas",
-  "downloads",
-  "gracias",
-  "thank-you",
-  "contacto",
-  "contact",
-  "empieza-aqui",
-  "start-here",
+export const PAGINAS_CON_RUTA_PROPIA = new Set<string>([
+  ...Object.values(PAGINAS_DEL_MOTOR).flatMap((p) => ("registro" in p ? [p.registro.es, p.registro.en] : [])),
+  ...EJES.flatMap((e) => [e.slug, e.slugEn]),
+  ...RAMAS.flatMap((r) => [r.slug, r.slugEn]),
 ]);
-
-/** Pares declarados a mano: los que no salen de una colección. */
-const PARES_FIJOS: ReadonlyArray<readonly [string, string]> = [
-  ["/", "/en"],
-  ["/servicios", "/en/services"],
-  ["/ai", "/en/ai"],
-  ["/blog", "/en/blog"],
-  ["/doctrina", "/en/doctrine"],
-  ["/nosotros", "/en/about"],
-  ["/descargas", "/en/downloads"],
-  ["/gracias", "/en/thank-you"],
-  ["/contacto", "/en/contact"],
-  ["/acceder", "/en/sign-in"],
-  ["/recuperar", "/en/recover"],
-];
 
 /** El idioma es una propiedad de la RUTA, no una negociación (RF-03). */
 export function idiomaDeLaRuta(ruta: string): Lang {
   return ruta === "/en" || ruta.startsWith("/en/") ? "en" : "es";
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * Lo que sirve `app/(public)/[...ruta]`
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Lo que hay que pintar en una ruta de la ficha. Cuatro clases, y ninguna más:
+ * el índice de un eje, el de una línea, la página de un servicio —de línea o
+ * suelto— y una página suelta de `content/pages` sin ruta propia.
+ */
+export type DestinoDeLaFicha =
+  | { tipo: "eje"; lang: Lang; eje: Eje }
+  | { tipo: "linea"; lang: Lang; linea: Rama }
+  | { tipo: "servicio"; lang: Lang; servicio: Servicio }
+  | { tipo: "pagina"; lang: Lang; slug: string };
+
+let destinos: Map<string, DestinoDeLaFicha> | null = null;
+
+/**
+ * La tabla ruta → destino. **La oferta se registra antes que las páginas
+ * sueltas y gana si chocan**: una página que se llamara como un eje no puede
+ * quitarle la ruta. Que no choquen lo exige `check:sitio`.
+ */
+function tablaDeDestinos(): Map<string, DestinoDeLaFicha> {
+  if (destinos) return destinos;
+  const m = new Map<string, DestinoDeLaFicha>();
+  for (const lang of ["es", "en"] as const) {
+    for (const eje of EJES) if (eje[lang]) m.set(eje[lang], { tipo: "eje", lang, eje });
+    for (const linea of RAMAS) if (linea[lang]) m.set(linea[lang], { tipo: "linea", lang, linea });
+    for (const servicio of SERVICIOS) if (servicio[lang]) m.set(servicio[lang], { tipo: "servicio", lang, servicio });
+    for (const p of loadCollection("page", lang)) {
+      if (PAGINAS_CON_RUTA_PROPIA.has(p.slug)) continue;
+      const ruta = lang === "en" ? `/en/${p.slug}` : `/${p.slug}`;
+      if (!m.has(ruta)) m.set(ruta, { tipo: "pagina", lang, slug: p.slug });
+    }
+  }
+  destinos = m;
+  return m;
+}
+
+/** Qué pintar en esta ruta, o `null` si la ficha no la declara. */
+export function resolverRuta(ruta: string): DestinoDeLaFicha | null {
+  return tablaDeDestinos().get(normaliza(ruta)) ?? null;
+}
+
+/** Todas las rutas que resuelve la ficha en un idioma: el `generateStaticParams` de `[...ruta]`. */
+export function rutasDeLaFicha(lang: Lang): string[] {
+  return [...tablaDeDestinos()].filter(([, d]) => d.lang === lang).map(([ruta]) => ruta);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * Los pares de idioma
+ * ══════════════════════════════════════════════════════════════════════════ */
 
 let cache: Map<string, string> | null = null;
 
@@ -149,13 +202,15 @@ function mapa(): Map<string, string> {
   if (cache) return cache;
   const m = new Map<string, string>();
   const añadir = (a: string, b: string) => {
+    // Sin la otra mitad no hay par: un enlace inventado es peor que ninguno.
+    if (!a || !b) return;
     m.set(a, b);
     m.set(b, a);
   };
 
-  for (const [a, b] of PARES_FIJOS) añadir(a, b);
+  for (const p of Object.values(PAGINAS_DEL_MOTOR)) añadir(p.ruta.es, p.ruta.en);
+  for (const e of EJES) añadir(e.es, e.en);
   for (const r of RAMAS) añadir(r.es, r.en);
-  for (const l of LEGALES) añadir(l.es, l.en);
   for (const s of SERVICIOS) añadir(s.es, rutaEnDeServicio(s));
 
   /**
@@ -169,11 +224,11 @@ function mapa(): Map<string, string> {
   for (const registro of descargasEs) {
     const pareja = registro.data.pair;
     if (!pareja || !slugsDescargaEn.has(pareja)) continue;
-    añadir(`/descargas/${registro.slug}`, `/en/downloads/${pareja}`);
+    añadir(`${DESCARGAS.es}/${registro.slug}`, `${DESCARGAS.en}/${pareja}`);
   }
 
-  // Las páginas sueltas —contacto, gracias, legales— siguen saliendo del campo
-  // `pair` del frontmatter, que es el que `check:pairs` verifica.
+  // Las páginas sueltas siguen saliendo del campo `pair` del frontmatter, que
+  // es el que `check:pairs` verifica.
   const es = loadCollection<{ pair?: string }>("page", "es");
   const en = loadCollection<{ pair?: string }>("page", "en");
   const slugsEn = new Set(en.map((r) => r.slug));

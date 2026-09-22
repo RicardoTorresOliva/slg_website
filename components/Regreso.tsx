@@ -1,7 +1,16 @@
 import Link from "next/link";
 
 import { loadCollection } from "@/lib/content/loader";
-import { DESCARGAS, DESTINOS, EJES, RAMAS, SERVICIOS, rutaEnDeServicio } from "@/lib/content/rutas";
+import {
+  DESCARGAS,
+  EJES,
+  INICIO,
+  PAGINA_DE_SERVICIOS,
+  RAMAS,
+  SERVICIOS,
+  rutaEnDeServicio,
+} from "@/lib/content/rutas";
+import { PAGINAS_DEL_MOTOR } from "@/lib/sitio/motor";
 
 /**
  * El regreso al nivel inmediato anterior (decisión de Ricardo, 2026-09-18).
@@ -12,10 +21,11 @@ import { DESCARGAS, DESTINOS, EJES, RAMAS, SERVICIOS, rutaEnDeServicio } from "@
  * navegador. Una sola línea, siempre en el mismo sitio, que dice A DÓNDE vuelve:
  * «Volver a VoltAi by SLG», no un «Atrás» genérico.
  *
- * **El padre sale de la tabla de rutas**, no de partir la URL: `/holdings` no
- * cuelga de `/ai` aunque ambos sean servicios, y `/ai/academy/phoenix-peex`
- * vuelve a su línea y no a `/ai`. Es la misma tabla que dibuja la barra y el
- * mapa (`lib/content/rutas.ts`).
+ * **El padre sale de la tabla de rutas**, no de partir la URL: un servicio
+ * suelto (`/holdings`) no cuelga de un eje (`/ai`) aunque ambos sean oferta, y
+ * `/ai/academy/phoenix-peex` vuelve a su línea y no al eje. Es la misma tabla
+ * que dibuja la barra y el mapa (`lib/content/rutas.ts`), y la tabla sale de la
+ * ficha del sitio.
  *
  * NI UNA CADENA DE TEXTO ESCRITA AQUÍ (RF-16): «Volver a» viene de `content/ui`
  * y el nombre del destino, del registro de contenido o de la propia barra.
@@ -24,18 +34,18 @@ type Lang = "es" | "en";
 
 type Padre = { href: string; nombre: string };
 
-const BLOG = { es: "/blog", en: "/en/blog" } as const;
+const BLOG = PAGINAS_DEL_MOTOR.blog.ruta;
 
 export function padreDe(ruta: string, lang: Lang, t: Record<string, string>): Padre | null {
-  const inicio = DESTINOS[0][lang];
-  const servicios = DESTINOS[1][lang];
+  const inicio = INICIO[lang];
+  const servicios = PAGINA_DE_SERVICIOS[lang];
   if (ruta === inicio) return null;
 
   const paginas = loadCollection<{ title: string }>("page", lang);
   const tituloDePagina = (slug: string, porDefecto: string) =>
     paginas.find((p) => p.slug === slug)?.data.title ?? porDefecto;
 
-  // Un servicio vuelve a su línea; Holdings, a Servicios.
+  // Un servicio vuelve a su línea; uno suelto, a Servicios.
   for (const s of SERVICIOS) {
     const propia = lang === "en" ? rutaEnDeServicio(s) : s.es;
     if (ruta !== propia) continue;
@@ -43,12 +53,17 @@ export function padreDe(ruta: string, lang: Lang, t: Record<string, string>): Pa
     if (!rama) return { href: servicios, nombre: t["nav.services"] };
     return { href: rama[lang], nombre: tituloDePagina(lang === "en" ? rama.slugEn : rama.slug, rama.slug) };
   }
-  // Una línea vuelve al eje de inteligencia artificial.
-  if (RAMAS.some((r) => r[lang] === ruta)) {
-    return { href: EJES.voltai[lang], nombre: tituloDePagina("ai", t["nav.services"]) };
+  // Una línea vuelve a su eje.
+  const linea = RAMAS.find((r) => r[lang] === ruta);
+  const suEje = linea ? EJES.find((e) => e.clave === linea.eje) : undefined;
+  if (suEje) {
+    return {
+      href: suEje[lang],
+      nombre: tituloDePagina(lang === "en" ? suEje.slugEn : suEje.slug, t["nav.services"]),
+    };
   }
-  // Los dos ejes vuelven a Servicios.
-  if (ruta === EJES.voltai[lang] || ruta === EJES.holdings[lang]) {
+  // Los ejes vuelven a Servicios.
+  if (EJES.some((e) => e[lang] === ruta)) {
     return { href: servicios, nombre: t["nav.services"] };
   }
   // Un artículo o una etiqueta vuelven al blog; un documento, a la biblioteca.

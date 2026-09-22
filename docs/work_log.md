@@ -3687,3 +3687,49 @@ las siete comparaciones dan igual. Limitación declarada en el tipo: un sitio **
 está soportado (el principal vive en la raíz y es español).
 
 **Verificado**: `check:types`, `lint`, y el cotejo de las siete tablas.
+
+## Plantilla, paso 3: la estructura sale de la ficha (2026-09-22)
+
+Tercer paso de `docs/PLAYBOOK_REPLICACION.md` §3 (D-165) y decisión **D-166**. La oferta de SLG
+—un eje, tres líneas, once servicios y un servicio suelto— dejó de estar escrita a mano en cinco
+sitios y en dieciocho carpetas: la declara `site.config.ts` y el motor la lee por `lib/sitio`.
+
+**Hecho.** `lib/content/rutas.ts` deriva de la ficha `DESTINOS`, `EJES`, `RAMAS`, `SERVICIOS` y los
+pares de idioma, con los mismos nombres exportados; las páginas fijas del motor (portada, Servicios,
+blog, doctrina, nosotros, descargas, contacto, gracias, legales, acceso) se listan una sola vez en
+`lib/sitio/motor.ts`, con su par, su registro y su módulo. **Las rutas**: se borran
+`app/(public)/[slug]`, `ai/**`, `holdings` y su copia bajo `en/`, y las sustituyen
+`app/(public)/[...ruta]` y `app/(public)/en/[...ruta]`, que con `resolverRuta()` sirven el índice de
+un eje, el de una línea, la página de un servicio o una página suelta, desde
+`components/PaginaDeLaFicha.tsx`, con `generateStaticParams` desde la ficha y `dynamicParams =
+false`. Las carpetas fijas siguen ganando porque Next resuelve lo estático antes que el comodín.
+`PuertaDeAI` recibe el eje, `OverviewDeRama` lee su enlace externo de la ficha
+(`enlaceExterno` → `dominio.enlaces`), `MapaDelSitio`, `Regreso` y `Portada` recorren ejes, líneas y
+sueltos sin nombrar ninguno —la página de Servicios pinta los bloques de `sitio.bloquesDeServicios`,
+y Holdings es un bloque «suelto desarrollado» con su `id`—, `Fotografia` deriva su tabla de las
+`foto` de la oferta y de `sitio.fotos`, y el sitemap sale de la misma tabla en el mismo orden.
+`BRANCHES` es `nombresDeRama()`; `LITERAL_TERMS`, `FORBIDDEN_VARIANTS` y `DAL_OS_FORBIDDEN` leen
+`sitio.nomenclatura` (`PUBLIC_BRAND` no se ha tocado); `PROJECT_SERVICES` es `nombresDeServicio()`, y
+el formulario de HQ (`lib/hq/servicios.ts`) lee la misma lista. **La base**: la migración
+`0024_servicio_desde_la_ficha` retira `project_service_literal`, que listaba los once servicios de
+SLG y habría impedido a cualquier otro cliente crear un proyecto; ahora lo validan el catálogo de la
+API, la escritura justo antes del `INSERT` (defensa nueva: ya no hay capa detrás) y HQ.
+`test:gestion` deja de leer el `CHECK` y comprueba que HQ y la API aceptan exactamente la ficha y que
+la contención ya no está. **Freno nuevo `check:sitio`**, en `check:ci` y en el trabajo `gates`: cada
+servicio con su registro en cada idioma, con el `name` de la ficha y el `branch` de su línea, ningún
+registro sin declarar, cada eje y línea con su página, cada foto en `public/fotos/`, rutas bien
+formadas, sin duplicados y sin caer bajo una carpeta fija de `app/` (lo calcula recorriendo `app/`),
+cada destino del menú existente. Su prueba negativa es una ficha rota
+(`scripts/ci/negative/sitio/site.config.ts`) con las seis formas de romperla, registrada en
+`check:brakes`.
+
+**Verificado.** Antes de tocar nada se compiló `develop` intacto y se guardó el HTML de las 117 URL
+que se alcanzan rastreando desde la portada, el sitemap y una lista de rutas inexistentes (404
+incluidos), sin scripts ni rutas de chunks. Tras el cambio, las 117 dan **el mismo código y el mismo
+HTML**; la única diferencia es `<lastmod>` del sitemap, que es la fecha de compilación. En verde:
+`check:types`, `lint`, `check:content`, `check:cadenas`, `check:migrations`, `check:fronteras`,
+`check:alcance`, `check:secrets`, `check:env`, `check:playbook`, `check:sitio` (389
+comprobaciones, y rojo contra su ficha negativa por los seis motivos), y, sobre la compilación
+autocontenida con las variables de CI, `check:paginas` (142), `check:seo` (226), `check:armazon`
+(60), `check:produccion`, `check:runtime`, `check:blog` y `check:js-budget`. `test:gestion` y
+`check:brakes` necesitan PostgreSQL y no corren en esta máquina: los corre el trabajo `datos` de CI.

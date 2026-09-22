@@ -89,6 +89,8 @@ export const sitio: FichaDelSitio = {
             pagina: { es: "slg-academy", en: "slg-academy-en" },
             ruta: { es: "/ai/academy", en: "/en/ai/academy" },
             foto: "academy",
+            // La Academy anterior, en otro proyecto (frontera (e)).
+            enlaceExterno: { enlace: "academiaExterna", etiqueta: "overview.phoenixAcademy" },
             servicios: [
               servicio("phoenix-peex", "Phoenix PEEx", "/ai/academy/phoenix-peex", "phoenix-peex"),
               servicio("phoenix-teax", "Phoenix TEAx", "/ai/academy/phoenix-teax", "phoenix-teax"),
@@ -135,7 +137,14 @@ export const sitio: FichaDelSitio = {
     contacto: "contacto",
   },
 
-  bloquesDeServicios: ["puertas", "lineas", "holdings", "doctrina", "articulos", "descarga"],
+  bloquesDeServicios: [
+    "puertas",
+    "lineas",
+    { id: "holdings", suelto: "slg-holdings", etiqueta: "home.seeHoldings" },
+    "doctrina",
+    "articulos",
+    "descarga",
+  ],
 
   nomenclatura: {
     literales: [

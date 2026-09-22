@@ -343,9 +343,9 @@ export function proyectoDelContrato(
     id: p.id,
     organization_id: p.organizationId,
     name: p.name,
-    // Literal e intraducible (RF-14). Un agente que reciba `SLG Readiness`
-    // sin guion bajo está leyendo un dato corrupto — y la base lo habría
-    // rechazado antes, con `project_service_literal`.
+    // Literal e intraducible (RF-14). Un agente que reciba un nombre de
+    // servicio mal escrito está leyendo un dato corrupto — y la aplicación lo
+    // habría rechazado antes, contra la ficha (D-166).
     service: p.service,
     status: p.status,
     owner,
