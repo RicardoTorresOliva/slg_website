@@ -193,7 +193,15 @@ C = Claude · R = Ricardo · Cl = cliente. Presupone la plantilla del §3 termin
 3. **Claves de Resend y UptimeRobot** (10 min) — se crean ahora, se pegan cuando el comando de secretos las pida la primera vez:
    1. Resend: abre `https://resend.com/api-keys` → **Create API Key** → nombre `slg-sitios`, permiso **Full access** → **Add**. Copia la clave (empieza por `re_`) a tu gestor de contraseñas. Solo se muestra una vez.
    2. UptimeRobot: abre `https://dashboard.uptimerobot.com/integrations` → **API** → **Main API key** → **Create**. Cópiala a tu gestor de contraseñas.
-4. **El comando de secretos, la primera vez** (5 min) — cuando Claude termine el paso 8 del §3, te dará la línea exacta para pegar en **Terminal** (Aplicaciones → Utilidades → Terminal). El comando te pedirá las dos claves del punto 3 y las guardará en el **Llavero** de tu Mac; en los clientes siguientes ya no las pide.
+4. **El comando de secretos, la primera vez** (5 min) — `scripts/sitio/secretos.ts` (§3 paso 8). Genera las contraseñas y claves del sitio en tu Mac y las carga directamente en Vercel, Supabase, Resend y UptimeRobot; ningún valor sale por la pantalla ni pasa por el chat. En cada cliente, Claude te da esta misma línea **con los cuatro datos ya puestos** (paso 6 de `commands/crear-sitio.md`); si la pegas tal cual, sin datos, te los pregunta uno a uno.
+   1. Abre **Terminal** (Aplicaciones → Utilidades → Terminal).
+   2. Pega exactamente esto y pulsa Enter:
+      `cd ~/Dev/slg_website && npm run sitio:secretos`
+   3. Contesta las cuatro preguntas con los datos que Claude te dio en el chat: nombre corto del cliente, referencia de Supabase, proyecto de Vercel y dominio.
+   4. Te pide la clave de **Resend** y luego la de **UptimeRobot** (las del punto 3). Pégala (`Cmd + V`) y pulsa Enter: **no se ve nada al pegar**, es a propósito. Las comprueba y las guarda en el **Llavero** (servicio `slg-sitios`); en los clientes siguientes ya no las pide.
+   5. Tiene que ver ocho bloques `── 1/8` … `── 8/8` con ✓, un **Resumen** y, al final, `✓ Listo. Ningún secreto ha pasado por la pantalla.` Selecciona desde `── Resumen` hasta el final, cópialo y pégalo en la sesión de Claude: son nombres de variables y registros DNS, nada secreto.
+   6. Si macOS pregunta si `security` puede usar el Llavero: **Permitir siempre**.
+   7. Si sale una línea con **✗**: haz lo que dice la línea **Qué hacer** que va debajo (por ejemplo, `vercel login` o `npx --yes supabase login` si una sesión caducó) y vuelve a pegar la misma línea: lo ya hecho no se repite. Si la clave de Resend o UptimeRobot dejó de valer, pega la línea añadiendo al final un espacio y `-- --cambiar-claves`.
 5. **Permisos de Claude Code para no preguntarte en cada paso** (5 min) — Claude prepara la lista de permisos del proyecto (crear repositorios `web_*`, empujar a ellos, usar los conectores de Supabase, Vercel y Drive) y te la muestra para que la apruebes una vez. Lo que nunca queda permitido de antemano: enviar correos, gastar dinero y manejar secretos.
 
 ### 7.4 Lo que ya se hizo el 22-09

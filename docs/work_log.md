@@ -3723,3 +3723,60 @@ comprobación *b* del paso 3 lo detecta) y el efecto del `REVOKE` sobre los avis
 
 **Verificado**: `check:secrets`, `check:env`, `check:literacy` y `check:playbook`. Nada se ha creado
 en GitHub, Supabase ni Vercel.
+
+## Plantilla, paso 8: `npm run sitio:secretos`, el comando único de secretos (2026-09-22)
+
+Paso 8 del §3. **`scripts/sitio/secretos.ts`** es lo único del montaje de un cliente que ejecuta
+Ricardo: una línea en Terminal, una vez por cliente. Genera en su Mac los valores secretos y los
+entrega directamente a cada plataforma; **ninguno sale por pantalla ni pasa por el chat**. Partido en
+`nucleo.ts` (lo que se decide, sin red) y `plataformas.ts` (las conversaciones reales y su doble para
+`--simular`), para que la prueba ejecute el mismo recorrido que Ricardo con plataformas de memoria.
+
+Qué va a cada sitio. **A Vercel** (Production y Preview, como *sensitive*): `APP_DB_PASSWORD`,
+`DATABASE_URL`, `DATABASE_URL_MIGRATIONS`, `BETTER_AUTH_SECRET`, `DELIVERABLE_VIEWER_SECRET`,
+`CRON_SECRET`, `WEBHOOK_SIGNING_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, `MAIL_SMTP_USERNAME`,
+`MAIL_SMTP_PASSWORD`; y `SUPABASE_URL`, legible. **A la base**: contraseñas nuevas de `slg_app` y de
+`postgres`. **A Resend**: el dominio `mailweb.<dominio>` y una clave de solo envío para ese sitio. **A
+UptimeRobot**: el monitor de `/api/health`. **Al Llavero** (servicio `slg-sitios`): las claves de cuenta
+de Resend y UptimeRobot, pedidas con entrada oculta la primera vez y comprobadas antes de guardarlas.
+
+Decisiones que no son obvias:
+
+- **La contraseña del dueño no hace falta conocerla.** `supabase db query --linked` va por la API de
+  gestión con la sesión de la CLI de Ricardo, así que el `ALTER ROLE` no necesita conectarse como
+  nadie. Y lo que viaja no es la contraseña sino su **verificador SCRAM-SHA-256**: la orden puede
+  quedar en los registros de Supabase, y un verificador con sal de una cadena de 192 bits no se
+  invierte. El cálculo se coteja con el vector del RFC 7677.
+- **El pooler no se adivina.** `aws-0` es el de SLG, pero Supabase asigna proyectos nuevos también a
+  `aws-1`. Se prueba la conexión con la contraseña recién puesta —con el paquete `postgres` del
+  repositorio— y el que acepta es el que va a `DATABASE_URL`. De paso, eso comprueba que el sitio
+  entra como `slg_app` y no como superusuario **antes** de cargarlo en Vercel.
+- **Las tres de la base cambian juntas o ninguna**: si una ejecución anterior se cortó entre medias,
+  se regeneran las tres para que digan lo mismo que la base.
+- **Ningún valor en la línea de comandos**: `vercel env add` y `security -i` lo reciben por la entrada;
+  `supabase db query`, por un archivo 0600 que se borra. Nada que aparezca en `ps` ni en el historial.
+- **Idempotente**: lo que ya está en Vercel no se regenera (regenerar `BETTER_AUTH_SECRET` cerraría
+  todas las sesiones). El monitor nace **en pausa** mientras el dominio no responde, y la misma línea,
+  pegada el día del lanzamiento, lo activa.
+- **Se niega** a tocar la base y el proyecto de producción de SLG.
+
+**`scripts/sitio/test-secretos.ts`** (`npm run test:sitio-secretos`), sin red: 66 comprobaciones.
+Ningún secreto en la salida —tampoco cuando una plataforma falla repitiéndolo—; ningún valor en los
+argumentos de `vercel`, `npx` ni `security` (dobles que los apuntan); `--simular` ejecutado como
+proceso aparte con procesos, `fetch` y *sockets* trampeados, sin que salte ninguno; coherencia entre
+`DATABASE_URL`, `APP_DB_PASSWORD` y el verificador enviado; idempotencia; cambio de pooler. La trampa
+se comprobó en rojo: el mismo comando sin `--simular` la dispara en la primera llamada a `vercel`.
+
+`docs/PLAYBOOK_REPLICACION.md` §7.3 punto 4 lleva ya la línea exacta.
+
+**Sin resolver**, con su motivo: (1) **plan de Resend** — el gratuito admite un solo dominio y ya lo
+ocupa `mailweb.softlandingglobal.com`; el comando lo detecta y lo presenta como compra, pero decidirlo
+es de Ricardo. (2) Tres supuestos que solo confirma la primera ejecución real: que `--scope` de la CLI
+de Vercel acepta el id del equipo, que `supabase db query --linked --project-ref` no exige un
+`supabase link` previo, y que `supabase projects api-keys` sigue devolviendo la `service_role` en
+proyectos nuevos (si solo trae la `sb_secret_…`, se usa esa, pero `lib/files/supabase.ts` no se ha
+probado con ella). (3) Las claves de Google/Microsoft y las del CRM, si un cliente las necesita,
+siguen fuera del comando.
+
+**Verificado**: `check:types`, `lint`, `check:secrets`, `check:env`, `check:literacy`,
+`check:playbook` y `test:sitio-secretos`. Solo en simulación: nada se ha llamado de verdad.
