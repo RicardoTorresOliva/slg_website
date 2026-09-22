@@ -3920,3 +3920,96 @@ entrega al CRM quedaba en `failed` **sin avisar a nadie**, que es justo lo que R
 **Verificado aquí**: `check:types`, `lint`. La prueba de la cola necesita PostgreSQL; la corre CI.
 `scripts/mail/test-correo.ts` ya componía esta plantilla con las claves correctas, y por eso nunca lo
 vio: probaba la plantilla, no a quien la llama.
+
+## Plantilla, paso 7: `commands/crear-sitio.md`, la infraestructura por conectores (2026-09-22)
+
+Paso 7 del §3 de `docs/PLAYBOOK_REPLICACION.md`. **`commands/crear-sitio.md`** es el playbook que
+Claude sigue para montar un sitio de cliente sin tocar un secreto (envoltorio en
+`.claude/commands/crear-sitio.md`): comprobaciones previas; repositorio `web_<cliente>` desde
+`website_template` con `gh` y `main` como rama por defecto —Vercel toma de ahí la de producción—;
+proyecto Supabase con `get_cost` primero y parada ante cualquier coste; migraciones y buckets por la
+API; proyecto Vercel y variables no secretas; la línea del comando de secretos para Ricardo, y la
+comprobación de `/api/health` en la vista previa. Cada paso lleva herramienta, qué tiene que salir y
+qué hacer si falla.
+
+**Las migraciones por `apply_migration` funcionan tal cual**, revisadas una a una: el
+`--> statement-breakpoint` es un comentario; Drizzle ya las ejecuta en una sola transacción, así que
+ninguna exige salir de ella; los `CREATE/ALTER ROLE` de 0001–0002 necesitan `CREATEROLE` y
+`BYPASSRLS`, que el `postgres` de Supabase tiene (así se migró SLG). **Lo que sí necesita
+tratamiento es el diario**: `apply_migration` anota en `supabase_migrations`, no en
+`drizzle.__drizzle_migrations`, y sin esas filas `scripts/db/migrar.ts` intentaría repetir la 0000. El
+playbook trae la orden que calcula los *hash* igual que `drizzle-orm/migrator` (SHA-256 del archivo
+entero, `created_at` = `when` del diario, comprobado en su código).
+
+**Hallazgo de seguridad, fuera del alcance de este paso**: Supabase publica `public` por su API REST y
+concede su uso a `anon` y `authenticated`; con la clave anónima —pública— se leerían las tablas sin
+RLS y se llamarían por RPC las funciones `SECURITY DEFINER`. El sitio no usa esa API, así que el
+playbook la cierra con `REVOKE USAGE ON SCHEMA public FROM PUBLIC, anon, authenticated` (`slg_app`
+tiene `USAGE` explícito desde 0001). **Producción de SLG probablemente está igual y no se ha tocado**:
+queda para que Ricardo decida.
+
+Los buckets se crean por SQL sobre `storage.buckets`: `lib/files/aprovisionar.ts` solo habla S3, y la
+REST de Storage exige la clave de servicio.
+
+**[POR CONFIRMAR en la prueba en frío, §3 paso 16]**: que `apply_migration` corre como `postgres` (la
+comprobación *b* del paso 3 lo detecta) y el efecto del `REVOKE` sobre los avisos de `get_advisors`.
+
+**Verificado**: `check:secrets`, `check:env`, `check:literacy` y `check:playbook`. Nada se ha creado
+en GitHub, Supabase ni Vercel.
+
+## Plantilla, paso 8: `npm run sitio:secretos`, el comando único de secretos (2026-09-22)
+
+Paso 8 del §3. **`scripts/sitio/secretos.ts`** es lo único del montaje de un cliente que ejecuta
+Ricardo: una línea en Terminal, una vez por cliente. Genera en su Mac los valores secretos y los
+entrega directamente a cada plataforma; **ninguno sale por pantalla ni pasa por el chat**. Partido en
+`nucleo.ts` (lo que se decide, sin red) y `plataformas.ts` (las conversaciones reales y su doble para
+`--simular`), para que la prueba ejecute el mismo recorrido que Ricardo con plataformas de memoria.
+
+Qué va a cada sitio. **A Vercel** (Production y Preview, como *sensitive*): `APP_DB_PASSWORD`,
+`DATABASE_URL`, `DATABASE_URL_MIGRATIONS`, `BETTER_AUTH_SECRET`, `DELIVERABLE_VIEWER_SECRET`,
+`CRON_SECRET`, `WEBHOOK_SIGNING_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, `MAIL_SMTP_USERNAME`,
+`MAIL_SMTP_PASSWORD`; y `SUPABASE_URL`, legible. **A la base**: contraseñas nuevas de `slg_app` y de
+`postgres`. **A Resend**: el dominio `mailweb.<dominio>` y una clave de solo envío para ese sitio. **A
+UptimeRobot**: el monitor de `/api/health`. **Al Llavero** (servicio `slg-sitios`): las claves de cuenta
+de Resend y UptimeRobot, pedidas con entrada oculta la primera vez y comprobadas antes de guardarlas.
+
+Decisiones que no son obvias:
+
+- **La contraseña del dueño no hace falta conocerla.** `supabase db query --linked` va por la API de
+  gestión con la sesión de la CLI de Ricardo, así que el `ALTER ROLE` no necesita conectarse como
+  nadie. Y lo que viaja no es la contraseña sino su **verificador SCRAM-SHA-256**: la orden puede
+  quedar en los registros de Supabase, y un verificador con sal de una cadena de 192 bits no se
+  invierte. El cálculo se coteja con el vector del RFC 7677.
+- **El pooler no se adivina.** `aws-0` es el de SLG, pero Supabase asigna proyectos nuevos también a
+  `aws-1`. Se prueba la conexión con la contraseña recién puesta —con el paquete `postgres` del
+  repositorio— y el que acepta es el que va a `DATABASE_URL`. De paso, eso comprueba que el sitio
+  entra como `slg_app` y no como superusuario **antes** de cargarlo en Vercel.
+- **Las tres de la base cambian juntas o ninguna**: si una ejecución anterior se cortó entre medias,
+  se regeneran las tres para que digan lo mismo que la base.
+- **Ningún valor en la línea de comandos**: `vercel env add` y `security -i` lo reciben por la entrada;
+  `supabase db query`, por un archivo 0600 que se borra. Nada que aparezca en `ps` ni en el historial.
+- **Idempotente**: lo que ya está en Vercel no se regenera (regenerar `BETTER_AUTH_SECRET` cerraría
+  todas las sesiones). El monitor nace **en pausa** mientras el dominio no responde, y la misma línea,
+  pegada el día del lanzamiento, lo activa.
+- **Se niega** a tocar la base y el proyecto de producción de SLG.
+
+**`scripts/sitio/test-secretos.ts`** (`npm run test:sitio-secretos`), sin red: 66 comprobaciones.
+Ningún secreto en la salida —tampoco cuando una plataforma falla repitiéndolo—; ningún valor en los
+argumentos de `vercel`, `npx` ni `security` (dobles que los apuntan); `--simular` ejecutado como
+proceso aparte con procesos, `fetch` y *sockets* trampeados, sin que salte ninguno; coherencia entre
+`DATABASE_URL`, `APP_DB_PASSWORD` y el verificador enviado; idempotencia; cambio de pooler. La trampa
+se comprobó en rojo: el mismo comando sin `--simular` la dispara en la primera llamada a `vercel`.
+
+`docs/PLAYBOOK_REPLICACION.md` §7.3 punto 4 lleva ya la línea exacta.
+
+**Sin resolver**, con su motivo: (1) **plan de Resend** — el gratuito admite un solo dominio y ya lo
+ocupa `mailweb.softlandingglobal.com`; el comando lo detecta y lo presenta como compra, pero decidirlo
+es de Ricardo. (2) Tres supuestos que solo confirma la primera ejecución real: que `--scope` de la CLI
+de Vercel acepta el id del equipo, que `supabase db query --linked --project-ref` no exige un
+`supabase link` previo, y que `supabase projects api-keys` sigue devolviendo la `service_role` en
+proyectos nuevos (si solo trae la `sb_secret_…`, se usa esa, pero `lib/files/supabase.ts` no se ha
+probado con ella). (3) Las claves de Google/Microsoft y las del CRM, si un cliente las necesita,
+siguen fuera del comando.
+
+**Verificado**: `check:types`, `lint`, `check:secrets`, `check:env`, `check:literacy`,
+`check:playbook` y `test:sitio-secretos`. Solo en simulación: nada se ha llamado de verdad.

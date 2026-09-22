@@ -49,6 +49,8 @@
     "test:respaldos": "node scripts/backup/test-respaldos.ts",
     "db:seed": "node scripts/db/seed.ts",
     "auth:primer-admin": "node scripts/auth/primer-admin.ts",
+    "sitio:secretos": "node scripts/sitio/secretos.ts",
+    "test:sitio-secretos": "node scripts/sitio/test-secretos.ts",
     "auth:revisar-cuenta": "node scripts/auth/revisar-cuenta.ts",
     "test:isolation": "node scripts/db/test-isolation.ts",
     "test:contracts": "node scripts/db/test-contratos.ts",
