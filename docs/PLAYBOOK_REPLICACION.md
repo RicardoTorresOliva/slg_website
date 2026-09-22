@@ -44,89 +44,154 @@ Base de trabajo: `docs/plantilla-de-sitios.md` (inventario línea a línea del 1
 
 > **E-commerce no está cubierto**: no hay carrito, pagos ni catálogo en el núcleo. Si un cliente lo pide, es un proyecto distinto (o una tienda externa enlazada).
 
+
 ## 3. Plan para convertir `slg_website` en plantilla de cliente
 
-Orden estricto: cada paso depende del anterior. Total estimado: **3 días de Claude + 2 horas de Ricardo**, antes del primer cliente.
+Orden estricto: cada paso depende del anterior. Total: **4 días de Claude + 45 min de Ricardo**, antes del primer cliente.
 
-| # | Paso | Quién | Salida | Tiempo |
-|---|---|---|---|---|
-| 0 | **Decidir §4.1**: la estructura de ejes/líneas/servicios ¿se declara en un archivo (`site.config.ts`) o cada cliente tiene su `rutas.ts`? **Recomendación: archivo.** Cuesta un generador y paga desde el segundo cliente; con cinco encargos, paga | Ricardo | Una línea en `docs/decision_log.md` | 10 min |
-| 1 | Crear `site.config.ts` con: nombre, dominio, idiomas, colores, logo, remitente, módulos activos (blog/descargas/portal/crm/analítica) y la estructura de la oferta | Claude | Archivo + tipos | 3 h |
-| 2 | Sustituir los 26 sitios de marca y dominio (§3.1, §3.2 del inventario) por lecturas del config | Claude | 0 apariciones de «SLG Agency» / `softlandingglobal.com` fuera de `content/` y `site.config.ts` | 3 h |
-| 3 | Derivar `rutas.ts`, `schema.ts` (`PROJECT_SERVICES`), `nomenclature.ts` y `POR_RUTA` del config (o generarlos con `npm run sitio:generar`) | Claude | Generador + freno `check:sitio` que falla si el config y los derivados no coinciden | 6 h |
-| 4 | Parametrizar los cinco frenos que validan contra la oferta de SLG (`nomenclature`, `armazon`, `paginas`, `seo`, `copy`) para que lean el config | Claude | CI en verde con un config de prueba «Cliente Demo» | 4 h |
-| 5 | Módulos apagables: portal, blog, descargas, CRM, analítica; cada uno con su flag y sus rutas retiradas del mapa y del sitemap cuando está apagado | Claude | Config `portal: false` → `/portal` y `/hq/*` no existen; `check:paginas` lo entiende | 4 h |
-| 6 | Perfil `marketing-website` en `profiles/` (gates D1–D6 + captura; sin identidad ni API) para que el intake sea corto | Claude | `profiles/marketing-website/profile.md` | 2 h |
-| 7 | Playbook `crear-sitio` en `commands/`: crea Supabase, aplica migraciones, aprovisiona bucket, crea Vercel, carga variables desde `ops/<cliente>.env`, crea primer admin, verifica DNS y `/api/health` | Claude | `commands/crear-sitio.md` + `scripts/sitio/crear.ts` | 4 h |
-| 8 | Vaciar lo específico de SLG: contenido, PDF, blog, `conexiones.json`, mapa; dejar un «Cliente Demo» bilingüe con 3 servicios de ejemplo | Claude | Repo arranca con contenido de demostración | 2 h |
-| 9 | Crear el repositorio **`website_template`** en GitHub (desde la rama resultante, historia limpia) y marcarlo como *Template repository* | Ricardo | github.com/RicardoTorresOliva/website_template | 15 min |
-| 10 | Prueba en frío: crear «Cliente Demo» con el playbook, de cero a `https://demo-….vercel.app` en línea | Claude + Ricardo | Tiempo real medido; defectos al `work_log` | 2 h |
-| 11 | `slg_website` pasa a ser **un cliente más** de la plantilla (o se queda como está, congelado) — decisión posterior | Ricardo | — | — |
-
-Cómo hace Ricardo el paso 9:
-1. Abre `https://github.com/new/import` en el navegador.
-2. En **Your old repository's clone URL** pega `https://github.com/RicardoTorresOliva/slg_website.git`. En **Repository name** escribe `website_template`. Marca **Private**. Clic en **Begin import**. Debe verse «Importing…» y luego el repositorio abierto.
-3. En el repositorio nuevo: **Settings** → marca la casilla **Template repository** (arriba, bajo el nombre). Debe verse un botón verde **Use this template** en la portada del repositorio.
-4. Si el import falla por tamaño: avisa en la sesión de Claude; se crea desde una rama con historia limpia.
+| # | Paso | Quién | Salida | Tiempo | Estado |
+|---|---|---|---|---|---|
+| 0 | Estructura de la oferta **declarada en un archivo** (`site.config.ts`), no un `rutas.ts` por cliente | Ricardo | **D-165** en `docs/decision_log.md` | — | ✅ 22-09 |
+| 1 | Crear `site.config.ts`: nombre, dominio, idiomas, colores, logo, remitente, módulos activos y estructura de la oferta | Claude | Archivo + tipos | 3 h | |
+| 2 | Sustituir los 26 sitios de marca y dominio (§3.1, §3.2 de `plantilla-de-sitios.md`) por lecturas del config | Claude | 0 «SLG Agency» / `softlandingglobal.com` fuera de `content/` y del config | 3 h | |
+| 3 | Derivar `rutas.ts`, `PROJECT_SERVICES`, `nomenclature.ts` y `POR_RUTA` del config | Claude | Generador + freno `check:sitio` | 6 h | |
+| 4 | Parametrizar los cinco frenos que validan contra la oferta de SLG | Claude | CI verde con un config «Cliente Demo» | 4 h | |
+| 5 | Módulos apagables: portal, blog, descargas, CRM, analítica | Claude | `portal: false` → sin `/portal` ni `/hq/*` | 4 h | |
+| 6 | Perfil `marketing-website` en `profiles/` | Claude | `profiles/marketing-website/profile.md` | 2 h | |
+| 7 | **Aprovisionamiento por MCP**: `commands/crear-sitio.md` — repo con `gh`, proyecto Supabase, migraciones y bucket por la API de Supabase (sin contraseña ni IPv6), proyecto Vercel conectado a GitHub, variables no secretas | Claude | Playbook ejecutable por Claude | 4 h | |
+| 8 | **Comando único de secretos** `npm run sitio:secretos`: genera los secretos, los carga en Vercel y Supabase, da de alta el dominio en Resend y el monitor en UptimeRobot, sin que ningún valor pase por la conversación. Las claves de Resend y UptimeRobot las pide la primera vez y las guarda en el Llavero de macOS | Claude (lo escribe) | `scripts/sitio/secretos.ts` | 4 h | |
+| 9 | `auth:primer-admin` en modo invitación: manda el enlace al responsable en vez de imprimir una contraseña | Claude | Script cambiado + prueba | 1 h | |
+| 10 | Lector del intake: hoja de respuestas + carpeta de Drive → borrador de `site.config.ts` y del contenido | Claude | `commands/leer-intake.md` | 3 h | |
+| 11 | Plantillas de los cuatro correos al cliente (formulario, faltantes, revisión, entrega) | Claude | `docs/intake/correos.md` | 1 h | |
+| 12 | Vaciar lo específico de SLG y dejar un «Cliente Demo» bilingüe con 3 servicios | Claude | La plantilla arranca con demo | 2 h | |
+| 13 | Repositorio `website_template` privado y marcado como *template* | Ricardo | github.com/RicardoTorresOliva/website_template | — | ✅ 22-09 · rama por defecto cambiada a `develop` por Claude: «Use this template» solo copia la rama por defecto y `main` iba 102 commits atrás |
+| 14 | Llevar los pasos 1–12 a `website_template` y limpiar sus ramas viejas | Claude | Plantilla al día | 30 min | |
+| 15 | Configuración única de Ricardo (§7.3) | Ricardo | Permisos y cuentas listos | 45 min | |
+| 16 | Prueba en frío con «Cliente Demo»: del formulario a `https://…vercel.app` en línea, midiendo el tiempo de Ricardo | Claude + Ricardo | Tiempo real al `work_log` | 2 h | |
 
 ## 4. Checklist de intake por cliente
 
-Se pide **todo antes de empezar**; sin los ítems marcados ★ no arranca el reloj de los 5 días.
+Se pide **todo antes de empezar**; sin los ítems ★ no arranca el reloj de los 5 días.
 
-| # | Ítem | ★ | Formato que se pide |
+| # | Ítem | ★ | Dónde lo da el cliente |
 |---|---|---|---|
-| 1 | Nombre legal y nombre comercial; país y entidad que factura | ★ | Texto |
-| 2 | **Dominio**: ¿ya lo tiene? ¿dónde está registrado? Acceso al panel DNS **o** que Ricardo quede como colaborador | ★ | Usuario invitado en el registrador (Hostinger, GoDaddy, Namecheap…). Nunca contraseñas por correo |
-| 3 | Idiomas del sitio (uno o dos) y cuál es el principal | ★ | ES / EN / ambos |
-| 4 | **Marca**: logo en SVG y PNG, favicon, colores (hex), tipografías, imagen Open Graph 1200×630 | ★ | Carpeta compartida |
-| 5 | **Estructura de la oferta**: ejes → líneas → servicios, con nombre exacto y una frase por servicio | ★ | Tabla (plantilla que se le manda) |
-| 6 | **Contenido** por página: portada, quiénes somos, cada servicio (6 secciones: qué es, para quién, qué incluye, cómo se trabaja, resultado, CTA), contacto, legales | ★ | Documento por página; sin contenido no hay web |
-| 7 | Correo: dominio de envío (subdominio `mail.` o `notificaciones.`), dirección remitente visible, dirección de respuesta, quién recibe los avisos | ★ | Texto + acceso DNS para SPF/DKIM |
-| 8 | Módulos: ¿blog? ¿descargas (PDF)? ¿intranet/portal para sus clientes? ¿login con Google/Microsoft? | ★ | Sí/No por módulo |
-| 9 | CRM: ¿tiene? ¿cuál? ¿clave de API o usuario técnico? Si no, las capturas viven en HQ | | Nombre del CRM + acceso |
-| 10 | Analítica: ¿acepta un script de terceros (Vercel Analytics)? ¿o sin analítica? | | Sí/No |
-| 11 | Texto legal: política de privacidad y términos redactados por su asesor, o autorización para usar plantilla | ★ | Documento |
-| 12 | Cuentas: ¿usa su cuenta de Vercel/Supabase o la de SLG? (recomendado: **la de SLG**, facturada en el fee) | ★ | Decisión |
-| 13 | Primer administrador: nombre y correo corporativo (será `slg_admin` de su sitio) | ★ | Correo |
-| 14 | Redes y enlaces externos (LinkedIn, calendario de citas, WhatsApp) | | URLs |
-| 15 | Fecha de lanzamiento deseada y persona que aprueba | ★ | Fecha + nombre |
+| 1 | Nombre comercial, razón social, país | ★ | Formulario §1 |
+| 2 | Dominio: si lo tiene, dónde está registrado, y si autoriza que SLG gestione el DNS | ★ | Formulario §2 |
+| 3 | Qué correo usa hoy (Microsoft 365, Google, hosting) — para no romperlo | ★ | Formulario §2 |
+| 4 | Idiomas del sitio | ★ | Formulario §4 |
+| 5 | Marca: logo SVG/PNG, favicon, colores, tipografías, fotos, imagen para redes 1200×630 | ★ | Carpeta de Drive (+ colores y tipografías en el formulario §3) |
+| 6 | Servicios o productos: nombre, para quién, una frase; y cómo se agrupan | ★ | Formulario §4 |
+| 7 | Páginas que necesita | ★ | Formulario §4 |
+| 8 | Contenido de cada página, o material para que SLG lo redacte | ★ | Carpeta de Drive |
+| 9 | Correo que recibe los contactos de la web | ★ | Formulario §2 |
+| 10 | Funciones: contacto, descargas, blog, área privada, login Google/Microsoft | ★ | Formulario §5 |
+| 11 | CRM que usa (si alguno) | | Formulario §5 |
+| 12 | Si quiere medir visitas (implica un script de terceros) | | Formulario §5 |
+| 13 | Legales: redactados, o plantilla revisada por su asesor | ★ | Formulario §6 + carpeta |
+| 14 | Responsable (será el primer administrador) y quién aprueba | ★ | Formulario §1 |
+| 15 | Fecha deseada de lanzamiento | ★ | Formulario §1 |
+
+### 4.1 Cómo se recoge: Google Forms + carpeta de Drive
+
+| Opción analizada | Subida de archivos | ¿El cliente necesita cuenta? | ¿Claude lo lee solo? | Veredicto |
+|---|---|---|---|---|
+| **Google Forms (preguntas) + carpeta de Drive compartida (archivos)** | Sí, sin límite práctico, cualquier formato | **No** | **Sí**: la hoja de respuestas y la carpeta, por el conector de Google Drive (comprobado el 22-09) | ✅ **Elegida** |
+| Google Forms con pregunta «subir archivo» | Sí | **Sí, cuenta de Google** — un cliente con Microsoft 365 se atasca | Sí | ❌ |
+| Tally / Jotform / Typeform | Sí | No | **No**: no hay conector; habría que copiar y pegar | ❌ |
+| Formulario propio en el portal de SLG | Sí, con URL firmada | Sí, una invitación | Sí, por la base | ⏳ A medio plazo: cuando el portal abra en producción (M3/M4), el intake se muda ahí y se convierte en la sala del proyecto |
+
+**Configuración única — Ricardo, una sola vez, 10 minutos:**
+1. Abre `https://github.com/RicardoTorresOliva/slg_website/blob/develop/docs/intake/crear-formulario-intake.gs` en el navegador. Arriba a la derecha del código, clic en el icono **Copy raw file** (dos cuadraditos). Debe aparecer «Copied!».
+2. Abre `https://script.google.com` con la cuenta `torresoliva.ricardo@gmail.com`. Clic en **Nuevo proyecto** (arriba a la izquierda).
+3. En el editor, selecciona todo el texto que aparece (`Cmd + A`), bórralo y pega (`Cmd + V`). Clic en el icono de disquete **Guardar**.
+4. En la barra de arriba, junto a **Depurar**, debe decir `crearFormularioIntake`. Clic en **Ejecutar**.
+5. Aparece «Se necesita autorización» → **Revisar permisos** → elige tu cuenta → **Configuración avanzada** → **Ir a Proyecto sin título (no seguro)** → **Permitir**. Es tu propio script: es seguro.
+6. Abajo se abre el **Registro de ejecución**. Debe terminar con `LISTO.` y cuatro enlaces: el del cliente, el de editar, la hoja y la carpeta.
+7. Pega esos cuatro enlaces en la sesión de Claude. Claude los guarda y a partir de ahí los usa solo.
+8. Si sale un error en rojo: cópialo entero y pégalo en la sesión de Claude. No ejecutes el script dos veces (crearía un segundo formulario).
+
+**Por cliente, Claude:** redacta el correo con el enlace del formulario (borrador en Gmail), lee la respuesta en la hoja, crea la carpeta `Intake · <cliente>` dentro de «SLG · Intake webs», la comparte con el correo del responsable (con tu «sí» en el chat) y comprueba los ★ antes de arrancar.
 
 ## 5. Procedimiento de lanzamiento de una web nueva (≤ 5 días hábiles)
 
-Presupone la plantilla del §3 terminada. R = Ricardo, C = Claude.
+C = Claude · R = Ricardo · Cl = cliente. Presupone la plantilla del §3 terminada.
 
-| Día | # | Paso | Resp. | Tiempo | Resultado visible |
+| Día | # | Paso | Hace | Tiempo de Ricardo | Resultado visible |
 |---|---|---|---|---|---|
-| 0 | 1 | Intake completo (§4) firmado por el cliente | R | 1 h de reunión | Carpeta del cliente con los 15 ítems |
-| 1 | 2 | En GitHub: **Use this template** → repo `web_<cliente>` privado | R | 5 min | Repositorio nuevo |
-| 1 | 3 | En supabase.com: **New project** → nombre `<cliente>-web`, región `us-east-1`, contraseña generada y guardada en el gestor de contraseñas | R | 10 min | Proyecto con estado *Active* |
-| 1 | 4 | En vercel.com: **Add New → Project → Import** `web_<cliente>` → Framework Next.js → **Deploy** (fallará por variables: es esperado) | R | 10 min | Proyecto creado |
-| 1 | 5 | Rellenar `ops/<cliente>.env` (fuera del repo) con las variables del §6 del manual; C indica cuáles, R pone los valores | R + C | 30 min | Archivo local |
-| 1 | 6 | Ejecutar el playbook `crear-sitio`: migraciones, bucket, variables a Vercel, primer admin, verificación | C | 30 min | `https://web-<cliente>.vercel.app` responde `ok` en `/api/health` |
-| 1 | 7 | Escribir `site.config.ts` con marca, dominio, idiomas, módulos y estructura de la oferta | C | 1 h | Mapa del sitio generado con los servicios del cliente |
-| 2 | 8 | Cargar contenido: páginas, servicios, legales, descargas; frenos de contenido en verde | C | 4–6 h | Vista previa de Vercel completa |
-| 2 | 9 | Marca: colores, logo, favicon, Open Graph; `check:contraste` en verde | C | 2 h | Vista previa con la identidad del cliente |
-| 3 | 10 | Correo: subdominio de envío en Resend, registros DNS (R los pega donde C le diga), prueba de bandeja de entrada | R + C | 1 h | Correo de prueba recibido en Gmail y Outlook |
-| 3 | 11 | Revisión del cliente sobre la vista previa; lista de cambios | Cliente + R | 1 día de espera | Lista firmada |
-| 4 | 12 | Aplicar cambios; `check:ci` completo en verde; Lighthouse ≥ 90 | C | 3 h | CI verde |
-| 4 | 13 | Intranet (si aplica): crear empresa del cliente, invitar administrador, recorrer portal con él | R + C | 1 h | Cliente dentro del portal |
-| 5 | 14 | DNS: en el registrador, `A @ → 76.76.21.21` y `CNAME www → cname.vercel-dns.com`; en Vercel → Settings → Domains → añadir dominio | R | 20 min + propagación | Vercel muestra *Valid Configuration* |
-| 5 | 15 | Despliegue de producción (`vercel --prod` o **Promote** desde el panel), monitor en UptimeRobot, comprobación en incógnito | R | 20 min | Dominio del cliente en línea |
-| 5 | 16 | Entrega: `README` del cliente (las 7 tareas desde el navegador), accesos, factura | R | 30 min | Cliente autónomo para textos, blog y descargas |
+| 0 | 1 | Correo al cliente con el enlace del formulario | C redacta el borrador en Gmail · R pulsa **Enviar** | 1 min | Cliente recibe el formulario |
+| 0 | 2 | Cliente responde; C crea la carpeta `Intake · <cliente>` y la comparte con el responsable | C, con «sí» de R en el chat | 10 s | Cliente recibe la carpeta |
+| 0 | 3 | C revisa los ★ y redacta el correo de faltantes, si los hay | C · R pulsa **Enviar** | 1 min | Intake completo |
+| 1 | 4 | Repositorio `web_<cliente>` desde `website_template` (`gh repo create --template`) | C | 0 | Repositorio privado |
+| 1 | 5 | Proyecto Supabase por MCP: consulta el coste; si es 0 lo crea, si no pide «sí» | C (+ «sí» de R si cuesta) | 0–10 s | Proyecto activo |
+| 1 | 6 | 24 migraciones y bucket privado por la API de Supabase (sin contraseña, sin el problema de IPv6) | C | 0 | Base lista |
+| 1 | 7 | Proyecto Vercel conectado al repositorio + variables no secretas | C | 0 | Una vista previa por cada cambio |
+| 1 | 8 | **Comando único de secretos** (§7.3, paso 4 explica cómo) | R | 5 min | `…/api/health` responde `ok` |
+| 1–2 | 9 | `site.config.ts`, contenido y marca a partir de la hoja y la carpeta | C | 0 | Vista previa completa |
+| 2 | 10 | Invitación al responsable como primer administrador | C, con «sí» de R | 10 s | El responsable recibe el enlace |
+| 3 | 11 | Correo de revisión con el enlace a la vista previa | C redacta · R pulsa **Enviar** | 1 min | Lista de cambios del cliente |
+| 4 | 12 | Cambios, `check:ci` completo, Lighthouse ≥ 90 | C | 0 | CI verde |
+| 5 | 13 | DNS. Si el cliente autorizó: C copia a Vercel DNS los registros actuales (correo incluido) y el cliente cambia los *nameservers* en su registrador. Si no: C le manda los dos registros exactos | C + Cl | 0 | Vercel: *Valid Configuration* |
+| 5 | 14 | Lanzamiento: `develop` → `main` despliega producción por la integración con GitHub; monitor activo | C, con «sí» de R | 10 s | Dominio del cliente en línea |
+| 5 | 15 | Correo de entrega con accesos y el `README` del cliente | C redacta · R pulsa **Enviar** | 1 min | Cliente autónomo |
+| 5 | 16 | Factura | R | 10 min | — |
 
-Tiempo de Claude por sitio (opción A): **~12 h**. Tiempo de Ricardo: **~5 h** repartidas en cinco días. Camino crítico: el contenido del cliente (paso 1) y su revisión (paso 11).
+**Tiempo de Ricardo por cliente: ~25 minutos** (antes ~5 h). Camino crítico: lo que tarda el cliente en responder el formulario, subir archivos y revisar.
 
 ## 6. Estimación para los 5 encargos
 
 | Concepto | Estimación |
 |---|---|
-| Preparar la plantilla (§3) | 3 días de trabajo (Claude) + 2 h (Ricardo). **Se hace una vez, antes del cliente 1** |
-| Un sitio, opción A (informativa) | 5 días hábiles de calendario; ~12 h Claude, ~5 h Ricardo |
-| Un sitio, opción B (con intranet) | 5–7 días hábiles; ~18 h Claude, ~7 h Ricardo |
-| **Paralelismo real** | El límite es **Ricardo**: intake, DNS, cuentas, revisión con el cliente. Claude puede llevar 2–3 sitios a la vez en sesiones separadas (un repo por sesión, sin cruzar worktrees) |
-| **Cinco sitios, en serie** | 5 × 5 días = 25 días hábiles + 3 de plantilla = **~6 semanas** |
-| **Cinco sitios, escalonados de dos en dos** (recomendado) | Plantilla (semana 1) → clientes 1-2 (semana 2) → 3-4 (semana 3) → 5 (semana 4) = **~4 semanas**, con cada cliente entregado dentro de sus 5 días |
-| Condición para que se cumpla | Los cinco intakes completos **antes** de empezar el primero; el contenido tarde es lo único que rompe el calendario |
-| Coste mensual recurrente para SLG (5 clientes en la cuenta de SLG) | Vercel Pro (1 asiento) + Supabase Free ×5 + Resend Free ×5 + UptimeRobot Free = **~20 USD/mes** [POR CONFIRMAR precios vigentes]; con intranet y Supabase Pro por cliente, +25 USD/mes cada uno |
+| Preparar la plantilla (§3) | 4 días de Claude + 45 min de Ricardo. **Una vez, antes del cliente 1** |
+| Un sitio, opción A (informativa) | 5 días hábiles de calendario; ~12 h de Claude; **~25 min de Ricardo** |
+| Un sitio, opción B (con área privada) | 5–7 días hábiles; ~18 h de Claude; ~40 min de Ricardo |
+| Paralelismo | Ricardo deja de ser el cuello de botella. El límite pasa a ser **el cliente** (respuestas y revisión) y el número de sesiones de Claude: 2–3 sitios a la vez, una sesión y un repositorio por sitio |
+| **Cinco sitios** | Plantilla (semana 1) → clientes 1–3 en paralelo (semana 2) → clientes 4–5 (semana 3) = **~3 semanas**, cada cliente dentro de sus 5 días |
+| Condición | Los cinco formularios enviados **el día 1**; la plantilla se construye mientras los clientes responden |
+| Coste recurrente para SLG | Vercel Pro (1 asiento) + Supabase + Resend + UptimeRobot. El siguiente proyecto de Supabase **cuesta 0** (comprobado el 22-09 con la API); a partir del tercero, Claude consulta el coste antes de crear y pide tu «sí» [POR CONFIRMAR precios vigentes] |
 
-**Pregunta abierta que cambia el plan**: si alguno de los cinco es **e-commerce**, no cabe en esta plantilla y hay que cotizarlo aparte.
+**Pregunta abierta que cambia el plan**: si alguno de los cinco es **e-commerce**, no cabe en esta plantilla y se cotiza aparte.
+
+## 7. Automatización máxima: qué hace Claude y qué queda para Ricardo
+
+### 7.1 Herramientas que Claude ya puede usar (comprobado el 22-09-2026)
+
+| Herramienta | Estado | Para qué en el procedimiento |
+|---|---|---|
+| GitHub por `gh` (terminal) | ✅ sesión activa, permisos `repo` y `workflow` | Crear `web_<cliente>` desde la plantilla, empujar, fusionar |
+| Conector MCP de GitHub | ❌ falla al conectar (error 400 de autorización) | No hace falta: `gh` hace lo mismo |
+| Conector MCP de Supabase | ✅ ve la organización «Softlanding Global»; `get_cost` = 0 para el próximo proyecto | Crear proyecto, migraciones, bucket, consultas |
+| Conector MCP de Vercel | ✅ ve el equipo `ricardotorresolivas-projects` | Crear proyecto conectado a GitHub, variables no secretas, dominios, registros DNS |
+| Conector de Google Drive | ✅ lista los formularios de la cuenta | Leer respuestas y archivos del intake; crear y compartir carpetas |
+| Conector de Gmail | [POR CONFIRMAR en el primer cliente] | Dejar borradores de correo listos para enviar |
+
+### 7.2 Lo que queda para Ricardo, y por qué no lo hace Claude
+
+| Acción | Cuándo | Por qué es suya |
+|---|---|---|
+| Pulsar **Enviar** en cada correo al cliente | 4 veces por cliente | Un mensaje en su nombre necesita su confirmación, mensaje a mensaje |
+| Escribir «sí» en el chat | Al compartir la carpeta, invitar al responsable, lanzar, y si algo cuesta dinero | Compartir y publicar son acciones hacia fuera; una compra usa su medio de pago |
+| Ejecutar el comando de secretos | 1 vez por cliente | Claude no maneja contraseñas, claves de API ni tokens: el comando los genera en el Mac de Ricardo y los manda directo a cada plataforma, sin pasar por la conversación |
+| Facturar | 1 vez por cliente | Dinero |
+| Cambiar los *nameservers* | Solo si el cliente no puede | Credenciales del registrador del cliente |
+
+### 7.3 Configuración única (Ricardo, ~45 min en total, una sola vez)
+
+1. **Formulario de intake** — pasos del §4.1 (10 min).
+2. **Vercel conectado a todos tus repositorios** (5 min):
+   1. Abre `https://github.com/settings/installations`. Debe aparecer **Vercel** en la lista.
+   2. Clic en **Configure** junto a Vercel. En **Repository access** marca **All repositories**. Clic en **Save**.
+   3. Si Vercel no aparece en la lista: abre `https://vercel.com/new`, clic en **Continue with GitHub** / **Install**, elige **All repositories** y **Install**.
+3. **Claves de Resend y UptimeRobot** (10 min) — se crean ahora, se pegan cuando el comando de secretos las pida la primera vez:
+   1. Resend: abre `https://resend.com/api-keys` → **Create API Key** → nombre `slg-sitios`, permiso **Full access** → **Add**. Copia la clave (empieza por `re_`) a tu gestor de contraseñas. Solo se muestra una vez.
+   2. UptimeRobot: abre `https://dashboard.uptimerobot.com/integrations` → **API** → **Main API key** → **Create**. Cópiala a tu gestor de contraseñas.
+4. **El comando de secretos, la primera vez** (5 min) — cuando Claude termine el paso 8 del §3, te dará la línea exacta para pegar en **Terminal** (Aplicaciones → Utilidades → Terminal). El comando te pedirá las dos claves del punto 3 y las guardará en el **Llavero** de tu Mac; en los clientes siguientes ya no las pide.
+5. **Permisos de Claude Code para no preguntarte en cada paso** (5 min) — Claude prepara la lista de permisos del proyecto (crear repositorios `web_*`, empujar a ellos, usar los conectores de Supabase, Vercel y Drive) y te la muestra para que la apruebes una vez. Lo que nunca queda permitido de antemano: enviar correos, gastar dinero y manejar secretos.
+
+### 7.4 Lo que ya se hizo el 22-09
+
+| Qué | Resultado |
+|---|---|
+| D-165 registrada | Estructura de la oferta en `site.config.ts` |
+| `website_template` comprobada | Privada, marcada como *template*; **rama por defecto cambiada de `main` a `develop`** |
+| Script del formulario | `docs/intake/crear-formulario-intake.gs`, listo para pegar |
+| Conectores probados | Supabase, Vercel y Google Drive responden; GitHub MCP no, cubierto por `gh` |

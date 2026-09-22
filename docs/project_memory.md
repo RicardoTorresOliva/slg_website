@@ -691,6 +691,11 @@ Cierre del 2026-09-21, noche. **`develop` = `92903ba`**, empujado; nada vive sol
 estaba en el remoto y no está fusionada). **Producción = `slg-website-hpx6scn2i`**, desde `1e55868`.
 **Base de producción = 23 de 23: falta aplicar 0023.**
 
+### Plantilla de clientes (22-09)
+- **D-165**: la oferta de cada cliente se declara en `site.config.ts`. Plantilla en `github.com/RicardoTorresOliva/website_template` (privada, *template*, rama por defecto `develop`).
+- Plan y reparto Claude/Ricardo en `docs/PLAYBOOK_REPLICACION.md` §3 y §5–§7; intake por Google Forms + carpeta de Drive (`docs/intake/crear-formulario-intake.gs`, pendiente de que Ricardo lo ejecute una vez).
+- Siguiente trabajo de Claude: pasos 1–12 del §3 del playbook, en `slg_website` y llevados después a `website_template`.
+
 ### 0 · Lo primero al abrir, en este orden
 1. **Mirar el CI de `92903ba`** (`gh run list --branch develop --limit 1`). Quedó en marcha al cerrar.
    Es el tercer intento de dejar D-164 en verde: los dos anteriores fallaron y los dos fallos eran
