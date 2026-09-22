@@ -344,7 +344,11 @@ async function main() {
       const r = await fetch(`${base}${ruta}`, {
         method: "POST",
         headers: { "content-type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams(campos),
+        // La trampa VACÍA por delante, igual que en `enviar` (RF-33): es lo que
+        // manda un navegador real, y desde que la ausencia también descarta un
+        // envío sin ella no llega. El spread va después para que el caso del bot
+        // pueda seguir rellenándola.
+        body: new URLSearchParams({ empresa_web: "", ...campos }),
         redirect: "manual",
       });
       return { status: r.status, destino: r.headers.get("location") ?? "" };
@@ -407,6 +411,42 @@ async function main() {
         (await dueno`select id from lead_capture where email = 'bot-contacto@empresa-real-slg.test'`).length === 0,
       `destino: ${trampaContacto.destino}`,
     );
+    /**
+     * D-164 · EL CAMPO QUE NO VIENE, que es la puerta por la que entraron los
+     * cinco registros basura del 17-18 de septiembre de 2026.
+     *
+     * Aquí NO se usa `enviarA`: ese ayudante pinta la trampa vacía por delante
+     * justamente porque es lo que hace un navegador. Este envío es el del bot
+     * que arma el cuerpo a mano y omite el campo que nunca vio, así que va con
+     * `fetch` pelado. Se comprueban las dos mitades: que responde **como si
+     * hubiera funcionado** —dos respuestas distintas le dirían al bot cuál de
+     * las dos cosas corregir— y que no queda fila.
+     */
+    await reiniciarLimite();
+    const sinTrampa = await fetch(`${base}/api/contacto`, {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        origen: "contact",
+        idioma: "es",
+        email: "bot-sin-trampa@empresa-real-slg.test",
+        nombre: "Bot",
+        apellido: "Sin Trampa",
+        mensaje: "Posteo directo a la API, nunca vi el formulario.",
+      }),
+      redirect: "manual",
+    });
+    const destinoSinTrampa = sinTrampa.headers.get("location") ?? "";
+    check(
+      "un envío que NI SIQUIERA MANDA la trampa se descarta, y en silencio (D-164)",
+      destinoSinTrampa.includes("/gracias") &&
+        !destinoSinTrampa.includes("error=") &&
+        (await dueno`select id from lead_capture where email = 'bot-sin-trampa@empresa-real-slg.test'`)
+          .length === 0,
+      `destino: ${destinoSinTrampa}`,
+    );
+
+    await reiniciarLimite();
     const gratuitoContacto = await enviarA("/api/contacto", {
       origen: "contact",
       idioma: "es",

@@ -3631,3 +3631,21 @@ documento.
 lo corre CI. Y la migración 0023 **está pendiente de aplicar en producción** — la lista de dominios
 ya se amplió en caliente el mismo día, así que la migración devuelve al repositorio lo aprendido,
 pero la base recreada desde cero la necesita.
+
+## Lo que CI encontró en D-164: la puerta de contacto y la prueba que faltaba (2026-09-21)
+
+La corrida de `c939519` falló: **5 de 18 comprobaciones de `test-descargas.ts`**, todas en el bloque
+DU-10 de contacto. El commit de D-164 había puesto la trampa vacía por delante en el ayudante
+`enviar` —el de `/api/descargas`— y se dejó `enviarA`, el de `/api/contacto` y la solicitud de
+doctrina, que seguía posteando sin el campo. Con la regla nueva, esos envíos legítimos se
+descartaban: la prueba estaba diciendo la verdad. Mismo arreglo en los dos ayudantes, con el spread
+después para que el caso del bot pueda seguir rellenando la trampa.
+
+**Y faltaba lo más importante: D-164 no tenía ni una prueba que ejerciera lo que decide.** Las que
+tocó el commit solo dejaban de fallar; ninguna enviaba un formulario **sin** el campo, que es
+exactamente el envío que se coló cinco veces en producción. Añadida: un `fetch` pelado contra
+`/api/contacto` —sin `enviarA`, que pinta la trampa por ser lo que hace un navegador— que comprueba
+las dos mitades de la decisión, que responde como si hubiera funcionado y que no queda fila.
+
+**Verificado aquí**: `check:types`, `lint`, `check:cadenas`, `check:migrations` y `check:playbook`.
+La prueba necesita PostgreSQL; la corre CI.
