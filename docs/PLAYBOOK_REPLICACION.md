@@ -29,7 +29,7 @@ Base de trabajo: `docs/plantilla-de-sitios.md` (inventario línea a línea del 1
 | MinIO | **Sí** | Supabase Storage (ya soportado por `FILES_DRIVER=supabase`) |
 | Umami autoalojado | **Sí**, salvo que el cliente pida analítica sin terceros | Nada (informativa simple) o Umami Cloud / Vercel Web Analytics si el cliente acepta un script de terceros (decisión de intake) |
 | n8n + webhooks | **Sí**, salvo que el cliente tenga automatizaciones | Nada; la cola del CRM basta |
-| CRM propio + `lib/crm` | **Depende** | Sin `CRM_*` la captura queda en `lead_capture` y HQ → Capturas la muestra: para muchos clientes eso **es** el CRM. Si tiene HubSpot/Pipedrive, un adaptador nuevo en `lib/crm` (el puerto ya existe) |
+| CRM propio + `lib/crm` | **Depende** | **Con `CRM_Template`**: conecta sin tocar código — expone las mismas rutas (`/api/v1/contacts`, `/api/v1/notes`) que el CRM de SLG, comprobado el 22-09. **Con HubSpot, Pipedrive u otro**: un adaptador nuevo en `lib/crm` (el puerto ya existe), ~1 día. **Sin CRM**: hoy **no** hay aviso por captura — la cola intenta entregar, falla cinco veces y a las ~31 h manda un aviso de *fallo*; lo arregla el paso 5b del §3 |
 | Cloudflare R2 (copias) | **Sí** en tramo gratuito de Supabase | Copias automáticas de Supabase (7 días en Free, 30 en Pro). R2 solo si el contrato exige retención larga |
 | UptimeRobot | No sobra: gratis y cinco minutos | Se mantiene, un monitor por cliente |
 | Google / Microsoft login | **Sí** para informativas; **depende** para intranet | Invitación + contraseña ya funciona; social solo si el cliente lo pide y entrega las credenciales en el intake |
@@ -57,6 +57,7 @@ Orden estricto: cada paso depende del anterior. Total: **4 días de Claude + 45 
 | 3 | Derivar `rutas.ts`, `PROJECT_SERVICES`, `nomenclature.ts` y `POR_RUTA` del config | Claude | Generador + freno `check:sitio` | 6 h | |
 | 4 | Parametrizar los cinco frenos que validan contra la oferta de SLG | Claude | CI verde con un config «Cliente Demo» | 4 h | |
 | 5 | Módulos apagables: portal, blog, descargas, CRM, analítica | Claude | `portal: false` → sin `/portal` ni `/hq/*` | 4 h | |
+| 5b | **Modo sin CRM**: cada captura manda un aviso al correo del cliente con los datos del contacto, y la cola no intenta entregar a ningún CRM (sin avisos de fallo falsos) | Claude | Aviso por correo + prueba | 2 h | |
 | 6 | Perfil `marketing-website` en `profiles/` | Claude | `profiles/marketing-website/profile.md` | 2 h | |
 | 7 | **Aprovisionamiento por MCP**: `commands/crear-sitio.md` — repo con `gh`, proyecto Supabase, migraciones y bucket por la API de Supabase (sin contraseña ni IPv6), proyecto Vercel conectado a GitHub, variables no secretas | Claude | Playbook ejecutable por Claude | 4 h | |
 | 8 | **Comando único de secretos** `npm run sitio:secretos`: genera los secretos, los carga en Vercel y Supabase, da de alta el dominio en Resend y el monitor en UptimeRobot, sin que ningún valor pase por la conversación. Las claves de Resend y UptimeRobot las pide la primera vez y las guarda en el Llavero de macOS | Claude (lo escribe) | `scripts/sitio/secretos.ts` | 4 h | |
