@@ -3739,3 +3739,27 @@ carpeta; y el resultado, con `docs/intake/pendientes.md`.
 - La convención de rutas de la oferta (todo bajo `/servicios`) queda a confirmar por el paso 3.
 
 **Verificado**: `check:types`, `lint`, `check:playbook`, `check:literacy`, `check:secrets`.
+
+## Plantilla, paso 11: los cuatro correos al cliente (`docs/intake/correos.md`) (2026-09-22)
+
+Undécimo paso del plan de `docs/PLAYBOOK_REPLICACION.md` §3. **`docs/intake/correos.md`** trae las
+cuatro plantillas del §5 —envío del formulario, faltantes, revisión de la vista previa y entrega con
+accesos— en texto plano para Gmail, firmadas por Ricardo Torres Oliva, Softlanding Global, con el
+tagline del kit.
+
+Lo que fija además: el tono que pidió Ricardo, con la lista de fórmulas que no entran; los **16
+campos variables** entre dobles llaves, cada uno con su origen (columna de la hoja, ficha, plan o
+conector) y los correos en que aparece; las líneas condicionales `[solo si …]`; que ninguna
+contraseña viaja por correo; cuándo se escribe en inglés —por el idioma de la persona, no el de la
+web—; y la nota de estilo HTML con los colores del kit y una estructura mínima con estilos en línea.
+
+**Dos cosas que el paso destapó**, anotadas en el documento:
+
+- `#50B4DC`, el color de enlace del kit para correos, mide 2,4:1 sobre blanco: se exige subrayado
+  siempre.
+- El brief está solo en español: a un cliente que no lo lee no se le puede mandar el correo 1.
+
+**Y una incoherencia del formulario**: la ayuda de la pregunta del CRM promete que los contactos
+«quedan guardados en tu panel», y una web sin área privada (variante A) no tiene panel.
+
+**Verificado**: `check:types`, `lint`, `check:playbook`, `check:literacy`, `check:secrets`.
