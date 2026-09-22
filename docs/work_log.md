@@ -3687,3 +3687,39 @@ las siete comparaciones dan igual. Limitación declarada en el tipo: un sitio **
 está soportado (el principal vive en la raíz y es español).
 
 **Verificado**: `check:types`, `lint`, y el cotejo de las siete tablas.
+
+## Plantilla, paso 7: `commands/crear-sitio.md`, la infraestructura por conectores (2026-09-22)
+
+Paso 7 del §3 de `docs/PLAYBOOK_REPLICACION.md`. **`commands/crear-sitio.md`** es el playbook que
+Claude sigue para montar un sitio de cliente sin tocar un secreto (envoltorio en
+`.claude/commands/crear-sitio.md`): comprobaciones previas; repositorio `web_<cliente>` desde
+`website_template` con `gh` y `main` como rama por defecto —Vercel toma de ahí la de producción—;
+proyecto Supabase con `get_cost` primero y parada ante cualquier coste; migraciones y buckets por la
+API; proyecto Vercel y variables no secretas; la línea del comando de secretos para Ricardo, y la
+comprobación de `/api/health` en la vista previa. Cada paso lleva herramienta, qué tiene que salir y
+qué hacer si falla.
+
+**Las migraciones por `apply_migration` funcionan tal cual**, revisadas una a una: el
+`--> statement-breakpoint` es un comentario; Drizzle ya las ejecuta en una sola transacción, así que
+ninguna exige salir de ella; los `CREATE/ALTER ROLE` de 0001–0002 necesitan `CREATEROLE` y
+`BYPASSRLS`, que el `postgres` de Supabase tiene (así se migró SLG). **Lo que sí necesita
+tratamiento es el diario**: `apply_migration` anota en `supabase_migrations`, no en
+`drizzle.__drizzle_migrations`, y sin esas filas `scripts/db/migrar.ts` intentaría repetir la 0000. El
+playbook trae la orden que calcula los *hash* igual que `drizzle-orm/migrator` (SHA-256 del archivo
+entero, `created_at` = `when` del diario, comprobado en su código).
+
+**Hallazgo de seguridad, fuera del alcance de este paso**: Supabase publica `public` por su API REST y
+concede su uso a `anon` y `authenticated`; con la clave anónima —pública— se leerían las tablas sin
+RLS y se llamarían por RPC las funciones `SECURITY DEFINER`. El sitio no usa esa API, así que el
+playbook la cierra con `REVOKE USAGE ON SCHEMA public FROM PUBLIC, anon, authenticated` (`slg_app`
+tiene `USAGE` explícito desde 0001). **Producción de SLG probablemente está igual y no se ha tocado**:
+queda para que Ricardo decida.
+
+Los buckets se crean por SQL sobre `storage.buckets`: `lib/files/aprovisionar.ts` solo habla S3, y la
+REST de Storage exige la clave de servicio.
+
+**[POR CONFIRMAR en la prueba en frío, §3 paso 16]**: que `apply_migration` corre como `postgres` (la
+comprobación *b* del paso 3 lo detecta) y el efecto del `REVOKE` sobre los avisos de `get_advisors`.
+
+**Verificado**: `check:secrets`, `check:env`, `check:literacy` y `check:playbook`. Nada se ha creado
+en GitHub, Supabase ni Vercel.
