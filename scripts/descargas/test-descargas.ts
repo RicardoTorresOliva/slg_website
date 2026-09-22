@@ -116,7 +116,10 @@ async function enviar(
   base: string,
   campos: Record<string, string>,
 ): Promise<{ status: number; destino: string }> {
-  const cuerpo = new URLSearchParams(campos);
+  // La trampa VACIA por delante: es lo que manda un navegador real, y desde
+  // que la ausencia tambien descarta (RF-33) un envio sin ella no llega. El
+  // spread va despues para que el bloque del bot pueda seguir rellenandola.
+  const cuerpo = new URLSearchParams({ empresa_web: "", ...campos });
   const r = await fetch(`${base}/api/descargas`, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },

@@ -39,3 +39,7 @@ npm-debug.log*
 .vercel
 # Restos del CLI de Supabase: el enlace con el proyecto y la versión descargada.
 supabase/.temp/
+# Configuración local de las herramientas del portátil, no del proyecto: este
+# repositorio es público (D-164).
+.claude/launch.json
+.claude/settings.local.json
