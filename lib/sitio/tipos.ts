@@ -46,6 +46,18 @@ export type ServicioDeLaOferta = {
   readonly foto?: string;
 };
 
+/**
+ * Un destino que vive FUERA de este sitio y que una línea enlaza en su índice
+ * (p. ej. otra web del mismo cliente). Se enlaza y se señala como externo: sin
+ * integración, sin sesión compartida y sin contenido incrustado.
+ */
+export type EnlaceExterno = {
+  /** Clave de `dominio.enlaces`: la URL se declara una sola vez en la ficha. */
+  readonly enlace: string;
+  /** Clave de `content/ui` con el texto del enlace. */
+  readonly etiqueta: string;
+};
+
 /** Una línea agrupa servicios dentro de un eje y tiene su propia página de índice. */
 export type LineaDeLaOferta = {
   readonly clave: string;
@@ -55,6 +67,8 @@ export type LineaDeLaOferta = {
   readonly ruta: PorIdioma;
   readonly foto?: string;
   readonly servicios: readonly ServicioDeLaOferta[];
+  /** Enlace a un destino externo al pie del índice de la línea. */
+  readonly enlaceExterno?: EnlaceExterno;
 };
 
 /** Un eje es el nivel más alto de la oferta: una página de índice y sus líneas. */
@@ -140,8 +154,31 @@ export type DestinoDelMenu = { readonly clave: string; readonly ruta: PorIdioma 
 /** Una regla de nomenclatura: el patrón prohibido y cómo se dice bien. */
 export type VarianteProhibida = { readonly pattern: RegExp; readonly correct: string; readonly why: string };
 
-/** Una regla de contenido que no es un nombre (p. ej. «Destrucción», no «Disrupción»). */
-export type ReglaDeContenido = { readonly pattern: RegExp; readonly why: string };
+/**
+ * Una regla de contenido que no es un nombre (p. ej. «Destrucción», no
+ * «Disrupción»). `correct` es la forma buena, cuando la hay: la cita el freno.
+ */
+export type ReglaDeContenido = { readonly pattern: RegExp; readonly why: string; readonly correct?: string };
+
+/**
+ * Los bloques que la página de Servicios sabe pintar. Cada uno toma su texto de
+ * la sección del registro `servicios` que ocupa su misma posición (RF-09):
+ *
+ *   · `puertas`   — una tarjeta por eje y por servicio suelto, en ese orden;
+ *   · `lineas`    — una tarjeta por línea, con su número de servicios;
+ *   · `doctrina`  — la franja con cita y enlace (módulo `doctrina`);
+ *   · `articulos` — los últimos artículos (módulo `blog`);
+ *   · `descarga`  — tres documentos y la biblioteca (módulo `descargas`);
+ *   · un **servicio suelto desarrollado**: su texto, y un enlace a su página
+ *     con la etiqueta `etiqueta` de `content/ui`. `id` es el ancla del bloque.
+ */
+export type BloqueDeServicios =
+  | "puertas"
+  | "lineas"
+  | "doctrina"
+  | "articulos"
+  | "descarga"
+  | { readonly id: string; readonly suelto: string; readonly etiqueta: string };
 
 export type FichaDelSitio = {
   readonly marca: Marca;
@@ -164,11 +201,16 @@ export type FichaDelSitio = {
    * Bloques de la página de Servicios, en orden (RF-09). Los que dependen de un
    * módulo apagado se omiten solos.
    */
-  readonly bloquesDeServicios: readonly string[];
+  readonly bloquesDeServicios: readonly BloqueDeServicios[];
   readonly nomenclatura: {
     /** Nombres que se escriben siempre igual. Vacío es válido. */
     readonly literales: readonly string[];
     readonly variantesProhibidas: readonly VarianteProhibida[];
     readonly reglasDeContenido: readonly ReglaDeContenido[];
+    /**
+     * Lo que ningún texto público puede ofrecer (`check:copy`): nombres de
+     * servicios que solo existen dentro del portal, por ejemplo. Vacío es válido.
+     */
+    readonly prohibidasEnPublico: readonly ReglaDeContenido[];
   };
 };

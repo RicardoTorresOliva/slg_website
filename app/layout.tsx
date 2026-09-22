@@ -4,6 +4,9 @@ import { cssDeLaMarca, sitio } from "@/lib/sitio";
 
 import "./globals.css";
 
+import { ProveedorDeSalidas } from "@/components/SalidasDeError";
+import { salidasDeError } from "@/lib/content/rutas";
+
 /**
  * Armazón raíz.
  *
@@ -49,7 +52,11 @@ export default function RootLayout({
       <head>
         <style dangerouslySetInnerHTML={{ __html: COLORES_DE_MARCA }} />
       </head>
-      <body>{children}</body>
+      <body>
+        {/* Las salidas de la 500 salen de la ficha y llegan por contexto: ver
+            `components/SalidasDeError.tsx`. No añade nada al DOM. */}
+        <ProveedorDeSalidas salidas={salidasDeError()}>{children}</ProveedorDeSalidas>
+      </body>
     </html>
   );
 }

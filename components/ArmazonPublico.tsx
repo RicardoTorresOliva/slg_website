@@ -3,7 +3,8 @@ import Link from "next/link";
 import { loadUiStrings } from "@/lib/content/loader";
 import { ACCESO, DESTINOS, idiomaDeLaRuta, rutaEnElOtroIdioma } from "@/lib/content/rutas";
 import { organizacionJsonLd } from "@/lib/content/seo";
-import { sitio } from "@/lib/sitio";
+import { idiomaActivo, moduloActivo, sitio } from "@/lib/sitio";
+import { PAGINAS_DEL_MOTOR, paginaDelMotorActiva, type ClaveDelMotor } from "@/lib/sitio/motor";
 
 import { Analitica } from "./Analitica";
 import { BarraDeNavegacion } from "./BarraDeNavegacion";
@@ -27,6 +28,10 @@ import { Regreso } from "./Regreso";
  *
  * NO ENLAZA `/hq` NI `/portal` (RF-87, criterio 5). Mientras M3 y M4 sigan
  * abiertos, esas superficies no se anuncian: existen, responden, y no se dicen.
+ *
+ * LO QUE LA FICHA APAGA NO SE DIBUJA (D-166): sin intranet no hay botón de
+ * acceso; sin un segundo idioma no hay conmutador; el menú y el pie solo
+ * enlazan páginas de módulos encendidos.
  */
 export function ArmazonPublico({
   ruta,
@@ -56,18 +61,22 @@ export function ArmazonPublico({
       <BarraDeNavegacion
         enlaces={enlaces}
         activo={ruta}
-        acceso={{ href: ACCESO[idioma], etiqueta: t["nav.signin"] }}
-        inicio={idioma === "en" ? "/en" : "/"}
+        acceso={moduloActivo("intranet") ? { href: ACCESO[idioma], etiqueta: t["nav.signin"] } : undefined}
+        inicio={PAGINAS_DEL_MOTOR.inicio.ruta[idioma]}
         marca={{ nombre: sitio.marca.nombre, isotipo: sitio.marca.isotipo }}
-        conmutador={{
-          href: otra,
-          etiqueta: t["nav.lang"],
-          etiquetaNoDisponible: t["nav.langUnavailable"],
-          idiomaDestino: idioma === "es" ? "en" : "es",
-          idiomaActual: idioma,
-          nombreActual: t["nav.langName"],
-          textoActual: t["nav.langCurrent"],
-        }}
+        conmutador={
+          idiomaActivo("en")
+            ? {
+                href: otra,
+                etiqueta: t["nav.lang"],
+                etiquetaNoDisponible: t["nav.langUnavailable"],
+                idiomaDestino: idioma === "es" ? "en" : "es",
+                idiomaActual: idioma,
+                nombreActual: t["nav.langName"],
+                textoActual: t["nav.langCurrent"],
+              }
+            : undefined
+        }
         textos={{ menu: t["nav.menu"], navegacion: t["nav.aria"], inicio: t["nav.home"] }}
       />
 
@@ -97,25 +106,22 @@ export function ArmazonPublico({
  * («Empieza aquí»), que vive en el pie y no en la barra para que los destinos
  * del menú sigan siendo cinco (RF-01).
  */
+/** Los enlaces del pie, en orden: páginas del motor y su etiqueta de `content/ui`. */
+const PIE: ReadonlyArray<{ pagina: ClaveDelMotor; clave: string }> = [
+  { pagina: "inicio", clave: "footer.startHere" },
+  { pagina: "doctrina", clave: "footer.doctrine" },
+  { pagina: "descargas", clave: "footer.downloads" },
+  { pagina: "contacto", clave: "footer.contact" },
+  { pagina: "legalTerminos", clave: "footer.legalTerms" },
+  { pagina: "legalPrivacidad", clave: "footer.legalPrivacy" },
+];
+
 function PiePublico({ idioma, t }: { idioma: "es" | "en"; t: Record<string, string> }) {
-  const enlaces =
-    idioma === "en"
-      ? [
-          { href: "/en", etiqueta: t["footer.startHere"] },
-          { href: "/en/doctrine", etiqueta: t["footer.doctrine"] },
-          { href: "/en/downloads", etiqueta: t["footer.downloads"] },
-          { href: "/en/contact", etiqueta: t["footer.contact"] },
-          { href: "/en/legal/terms", etiqueta: t["footer.legalTerms"] },
-          { href: "/en/legal/privacy", etiqueta: t["footer.legalPrivacy"] },
-        ]
-      : [
-          { href: "/", etiqueta: t["footer.startHere"] },
-          { href: "/doctrina", etiqueta: t["footer.doctrine"] },
-          { href: "/descargas", etiqueta: t["footer.downloads"] },
-          { href: "/contacto", etiqueta: t["footer.contact"] },
-          { href: "/legal/terminos", etiqueta: t["footer.legalTerms"] },
-          { href: "/legal/privacidad", etiqueta: t["footer.legalPrivacy"] },
-        ];
+  const M = PAGINAS_DEL_MOTOR;
+  const enlaces = PIE.filter(({ pagina }) => paginaDelMotorActiva(pagina)).map(({ pagina, clave }) => ({
+    href: M[pagina].ruta[idioma],
+    etiqueta: t[clave],
+  }));
 
   return (
     <footer style={pie} aria-label={t["footer.aria"]}>

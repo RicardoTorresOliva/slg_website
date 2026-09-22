@@ -3,7 +3,7 @@
  *
  * DU-02 promete cinco cosas que solo se pueden comprobar pidiendo las páginas:
  *
- *   · **criterio 1** — cuatro destinos y un botón. Ni uno más. Y ninguna
+ *   · **criterio 1** — los destinos de la ficha y un botón. Ni uno más. Y ninguna
  *     etiqueta genérica de «Inicio/Home» como destino de menú (RF-01).
  *   · **criterio 2** — desde CADA ruta, el conmutador lleva a **esa misma
  *     página** en el otro idioma, esa página responde 200, y el viaje de
@@ -24,15 +24,40 @@ import { spawn, type ChildProcess } from "node:child_process";
 import net from "node:net";
 import path from "node:path";
 
+import { loadCollection } from "../../lib/content/loader.ts";
+import { ACCESO, DESTINOS, EJES, LEGALES, RAMAS, SERVICIOS } from "../../lib/content/rutas.ts";
+import { idiomaActivo, moduloActivo } from "../../lib/sitio/index.ts";
+import { PAGINAS_DEL_MOTOR, rutaDisponible } from "../../lib/sitio/motor.ts";
+
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 const SERVER = path.join(REPO_ROOT, ".next", "standalone", "server.js");
 
 /**
- * Los cuatro destinos del menú desde el 2026-09-18 (decisión de Ricardo):
- * Empieza aquí (la portada), Servicios, Blog y Nosotros. RF-01 decía cinco.
+ * Los destinos del menú, **de la ficha del sitio** (`sitio.menu`, D-165): este
+ * freno comprueba los que el sitio declara, sean cuatro o seis.
  */
-const DESTINOS_ES = ["/", "/servicios", "/blog", "/nosotros"];
-const DESTINOS_EN = ["/en", "/en/services", "/en/blog", "/en/about"];
+const DESTINOS_ES = DESTINOS.map((d) => d.es);
+const DESTINOS_EN = DESTINOS.map((d) => d.en).filter(Boolean);
+
+const M = PAGINAS_DEL_MOTOR;
+
+/**
+ * Las rutas cuyo conmutador se recorre: las páginas del motor con par, cada eje,
+ * cada línea, cada servicio suelto y **el primer servicio de cada línea** —uno
+ * por línea basta para probar la ruta anidada sin pedir la oferta entera, que
+ * ya recorren `check:paginas` y `check:seo`—.
+ */
+function rutasDelArmazon(): string[] {
+  const porLinea = RAMAS.map((r) => SERVICIOS.find((s) => s.rama === r.slug)).filter((s) => s !== undefined);
+  const sueltos = SERVICIOS.filter((s) => s.rama === null);
+  const delMotor = [M.contacto, M.descargas, M.doctrina, M.nosotros, M.gracias].map((p) => p.ruta);
+  const pares = [...delMotor, ...EJES, ...sueltos, ...LEGALES, ...RAMAS, ...porLinea];
+  // Lo de un módulo o un idioma apagados no existe: no se recorre (D-166).
+  return [...pares.map((p) => p.es), ...pares.map((p) => p.en)].filter((r) => r && rutaDisponible(r));
+}
+
+/** Sin segundo idioma no hay conmutador, ni barra inglesa, ni `/en`. */
+const CON_INGLES = idiomaActivo("en");
 
 /** Etiquetas que NO pueden ser destino de menú (RF-01). */
 const PROHIBIDAS = [/^inicio$/i, /^home$/i, /^portada$/i];
@@ -140,50 +165,21 @@ async function main() {
   const { base, parar } = externo ? { base: externo, parar: () => {} } : await arrancar();
   try {
     // Todas las rutas públicas, de las dos mitades del sitio.
-    const rutas = [
-      "/",
-      "/en",
-      ...DESTINOS_ES,
-      ...DESTINOS_EN,
-      "/contacto",
-      "/descargas",
-      "/doctrina",
-      "/nosotros",
-      "/ai",
-      "/holdings",
-      "/gracias",
-      "/legal/terminos",
-      "/legal/privacidad",
-      "/ai/academy",
-      "/ai/enterprise",
-      "/ai/factory",
-      "/ai/academy/phoenix-peex",
-      "/ai/enterprise/readiness",
-      "/ai/factory/app-building",
-      "/en/contact",
-      "/en/downloads",
-      "/en/doctrine",
-      "/en/about",
-      "/en/ai",
-      "/en/holdings",
-      "/en/thank-you",
-      "/en/legal/terms",
-      "/en/legal/privacy",
-      "/en/ai/academy",
-      "/en/ai/enterprise",
-      "/en/ai/factory",
-      "/en/ai/academy/phoenix-peex",
-      "/en/ai/enterprise/readiness",
-      "/en/ai/factory/app-building",
-    ];
+    const rutas = [M.inicio.ruta.es, M.inicio.ruta.en, ...DESTINOS_ES, ...DESTINOS_EN, ...rutasDelArmazon()].filter(
+      rutaDisponible,
+    );
 
-    console.log(`\nCriterio 1 — cuatro destinos y un botón, en las ${rutas.length} rutas públicas:\n`);
+    console.log(`\nCriterio 1 — ${DESTINOS.length} destinos y un botón, en las ${rutas.length} rutas públicas:\n`);
     const portada = await (await fetch(`${base}/`)).text();
     const barraEs = hrefsDeLaBarra(portada);
     for (const d of DESTINOS_ES) {
       check(`la barra en español enlaza ${d}`, barraEs.includes(d), `href vistos: ${barraEs.join(", ")}`);
     }
-    check("la barra en español lleva el botón de acceso", barraEs.includes("/acceder"));
+    if (moduloActivo("intranet")) {
+      check("la barra en español lleva el botón de acceso", barraEs.includes(ACCESO.es));
+    } else {
+      check("sin intranet, la barra no lleva botón de acceso", !barraEs.includes(ACCESO.es));
+    }
     check(
       "el logo vuelve a la portada",
       barraEs.includes("/"),
@@ -196,14 +192,26 @@ async function main() {
       `textos de la barra: ${textos.join(" · ")}`,
     );
 
-    const portadaEn = await (await fetch(`${base}/en`)).text();
-    const barraEn = hrefsDeLaBarra(portadaEn);
-    for (const d of DESTINOS_EN) {
-      check(`la barra en inglés enlaza ${d}`, barraEn.includes(d), `href vistos: ${barraEn.join(", ")}`);
+    const respuestaEn = await fetch(`${base}${M.inicio.ruta.en}`);
+    const portadaEn = CON_INGLES ? await respuestaEn.text() : "";
+    if (CON_INGLES) {
+      const barraEn = hrefsDeLaBarra(portadaEn);
+      for (const d of DESTINOS_EN) {
+        check(`la barra en inglés enlaza ${d}`, barraEn.includes(d), `href vistos: ${barraEn.join(", ")}`);
+      }
+    } else {
+      check(
+        `sin inglés, ${M.inicio.ruta.en} no existe`,
+        respuestaEn.status === 404,
+        `status ${respuestaEn.status}`,
+      );
     }
 
     console.log("\nCriterio 5 — ni la barra ni el pie anuncian `/hq` ni `/portal` (RF-87):\n");
-    for (const [nombre, html] of [["español", portada], ["inglés", portadaEn]] as const) {
+    const portadas = CON_INGLES
+      ? ([["español", portada], ["inglés", portadaEn]] as const)
+      : ([["español", portada]] as const);
+    for (const [nombre, html] of portadas) {
       const todos = [...hrefsDeLaBarra(html), ...hrefsDelPie(html)];
       const filtrados = todos.filter((h) => h.startsWith("/hq") || h.startsWith("/portal"));
       check(`${nombre}: cero enlaces a superficies cerradas`, filtrados.length === 0, filtrados.join(", "));
@@ -218,6 +226,10 @@ async function main() {
       }
       const html = await r.text();
       const destino = rutaDelConmutador(html);
+      if (!CON_INGLES) {
+        check(`${ruta} · sin segundo idioma, sin conmutador`, destino === null, `el conmutador lleva a ${destino}`);
+        continue;
+      }
       if (!destino) {
         check(`${ruta} → el conmutador existe`, false, "ningún enlace con hreflang en la página");
         continue;
@@ -238,10 +250,15 @@ async function main() {
     }
 
     console.log("\nCriterio 3 — el idioma es la RUTA, no la cabecera del navegador (RF-03):\n");
-    for (const [ruta, marca, idioma] of [
-      ["/doctrina", "Doctrina", "en-US,en;q=0.9"],
-      ["/en/doctrine", "Doctrine", "es-ES,es;q=0.9"],
-    ] as const) {
+    // Una página del motor con registro y par; la marca es su propio título, que
+    // solo sale en su idioma.
+    const titulo = (lang: "es" | "en") =>
+      loadCollection<{ title: string }>("page", lang).find((p) => p.slug === M.servicios.registro[lang])?.data.title ?? "";
+    const porIdioma = [
+      [M.servicios.ruta.es, titulo("es"), "en-US,en;q=0.9"],
+      [M.servicios.ruta.en, titulo("en"), "es-ES,es;q=0.9"],
+    ] as const;
+    for (const [ruta, marca, idioma] of porIdioma.filter(([ruta]) => rutaDisponible(ruta))) {
       const r = await fetch(`${base}${ruta}`, { headers: { "Accept-Language": idioma } });
       const html = await r.text();
       check(

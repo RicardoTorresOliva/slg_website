@@ -89,6 +89,8 @@ export const sitio: FichaDelSitio = {
             pagina: { es: "slg-academy", en: "slg-academy-en" },
             ruta: { es: "/ai/academy", en: "/en/ai/academy" },
             foto: "academy",
+            // La Academy anterior, en otro proyecto (frontera (e)).
+            enlaceExterno: { enlace: "academiaExterna", etiqueta: "overview.phoenixAcademy" },
             servicios: [
               servicio("phoenix-peex", "Phoenix PEEx", "/ai/academy/phoenix-peex", "phoenix-peex"),
               servicio("phoenix-teax", "Phoenix TEAx", "/ai/academy/phoenix-teax", "phoenix-teax"),
@@ -135,7 +137,14 @@ export const sitio: FichaDelSitio = {
     contacto: "contacto",
   },
 
-  bloquesDeServicios: ["puertas", "lineas", "holdings", "doctrina", "articulos", "descarga"],
+  bloquesDeServicios: [
+    "puertas",
+    "lineas",
+    { id: "holdings", suelto: "slg-holdings", etiqueta: "home.seeHoldings" },
+    "doctrina",
+    "articulos",
+    "descarga",
+  ],
 
   nomenclatura: {
     literales: [
@@ -191,9 +200,26 @@ export const sitio: FichaDelSitio = {
       { pattern: /\bPhoenix\s+Retx\b/g, correct: "Phoenix RETx", why: "capitalización alterada" },
     ],
     reglasDeContenido: [
-      { pattern: /\bDisrupci[óo]n\s+Creativa\b/gi, why: "la «D» de DAL OS es «Destrucción Creativa», no «Disrupción Creativa»" },
-      { pattern: /\bDAL\s+OS[^.\n]{0,40}\bDisrupci[óo]n\b/gi, why: "la «D» de DAL OS es «Destrucción Creativa»" },
-      { pattern: /\bCreative\s+Disruption\b/gi, why: "la «D» de DAL OS es «Destrucción Creativa» / «Creative Destruction»" },
+      {
+        pattern: /\bDisrupci[óo]n\s+Creativa\b/gi,
+        correct: "Destrucción Creativa",
+        why: "la «D» de DAL OS es «Destrucción Creativa», no «Disrupción Creativa»",
+      },
+      {
+        pattern: /\bDAL\s+OS[^.\n]{0,40}\bDisrupci[óo]n\b/gi,
+        correct: "Destrucción Creativa",
+        why: "la «D» de DAL OS es «Destrucción Creativa»",
+      },
+      {
+        pattern: /\bCreative\s+Disruption\b/gi,
+        correct: "Destrucción Creativa",
+        why: "la «D» de DAL OS es «Destrucción Creativa» / «Creative Destruction»",
+      },
+    ],
+    prohibidasEnPublico: [
+      // La Sesión Cero es del portal: la capa pública no la ofrece (RF-96).
+      { pattern: /sesi[oó]n\s+cero/gi, why: "«Sesión Cero» en texto público (RF-96)" },
+      { pattern: /zero\s+session/gi, why: "«Zero Session» en texto público (RF-96)" },
     ],
   },
 };

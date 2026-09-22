@@ -9,6 +9,8 @@
  * FU-03, criterio 1.
  */
 
+import { nombresDeRama } from "../sitio/index.ts";
+
 export const LANGS = ["es", "en"] as const;
 export type Lang = (typeof LANGS)[number];
 
@@ -20,13 +22,13 @@ export type CollectionName =
   | "doctrine"
   | "ui";
 
-/** Ramas de la oferta a las que puede pertenecer un servicio (A.1, A.2). */
-export const BRANCHES = [
-  "VoltAi Academy",
-  "VoltAi Enterprise",
-  "VoltAi Factory",
-  "Holdings by SLG",
-] as const;
+/**
+ * Ramas de la oferta a las que puede pertenecer un servicio (A.1, A.2): el
+ * nombre de cada línea y el de cada servicio suelto, **tal como los declara la
+ * ficha del sitio** (D-165). Un registro de servicio con otra rama rompe el
+ * build; que la rama sea además la de SU línea lo comprueba `check:sitio`.
+ */
+export const BRANCHES: readonly string[] = nombresDeRama();
 
 export const DOWNLOAD_STATUS = ["draft", "coming-soon", "published"] as const;
 export const POST_STATUS = ["draft", "published"] as const;

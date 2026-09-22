@@ -16,6 +16,8 @@ import { spawn, type ChildProcess } from "node:child_process";
 import net from "node:net";
 import path from "node:path";
 
+import { moduloActivo } from "../../lib/sitio/index.ts";
+
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 const SERVER = path.join(REPO_ROOT, ".next", "standalone", "server.js");
 
@@ -239,7 +241,7 @@ async function politicaPorSuperficie(base: string, publica: Response) {
   );
 
   // Superficie dinámica: ahí manda la política estricta.
-  const uno = await fetch(`${base}/acceder`);
+  const uno = await fetch(`${base}${SUPERFICIE_DINAMICA}`);
   const cspUno = uno.headers.get("content-security-policy") ?? "";
   const scriptUno = /script-src ([^;]*)/.exec(cspUno)?.[1] ?? "";
   const nonceUno = /'nonce-([^']+)'/.exec(scriptUno)?.[1] ?? "";
@@ -261,7 +263,7 @@ async function politicaPorSuperficie(base: string, publica: Response) {
     "la cabecera promete un nonce que el HTML no lleva: el navegador bloquearía los scripts",
   );
 
-  const dos = await fetch(`${base}/acceder`);
+  const dos = await fetch(`${base}${SUPERFICIE_DINAMICA}`);
   const nonceDos =
     /'nonce-([^']+)'/.exec(dos.headers.get("content-security-policy") ?? "")?.[1] ?? "";
   check(
@@ -333,6 +335,12 @@ async function staging(base: string) {
  * staging. Si alguna comprobación sigue en verde ahí, esa comprobación no
  * comprueba.
  */
+/**
+ * La superficie dinámica donde se mide la política estricta: el acceso, o el
+ * prototipo si la ficha apaga la intranet (D-166) y `/acceder` no existe.
+ */
+const SUPERFICIE_DINAMICA = moduloActivo("intranet") ? "/acceder" : "/prototipo";
+
 async function main() {
   const externo = process.env.RUNTIME_BASE;
   if (externo) {

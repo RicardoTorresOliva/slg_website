@@ -4,10 +4,12 @@
  * DOS REGLAS QUE NO SE PUEDEN DEJAR A LA REVISIÓN, porque son justo las que se
  * cuelan cuando hay prisa por publicar:
  *
- *   · **Criterio 4 (RF-96, RF-07)**: ningún texto público ofrece «Sesión Cero»
- *     ni agenda. El único llamado a la acción de una página de servicio es su
- *     descarga. Una agenda embebida convierte una página de autoridad en una
- *     página de venta, y eso es exactamente lo que el contrato A.3 evita.
+ *   · **Criterio 4 (RF-96, RF-07)**: ningún texto público ofrece agenda ni lo
+ *     que la ficha del sitio declara reservado al portal
+ *     (`sitio.nomenclatura.prohibidasEnPublico`). El
+ *     único llamado a la acción de una página de servicio es su descarga. Una
+ *     agenda embebida convierte una página de autoridad en una página de venta,
+ *     y eso es exactamente lo que el contrato A.3 evita.
  *
  *   · **Criterio 3 (RF-11, RNF-18)**: cero cifras, premios, casos o nombres de
  *     cliente sin respaldo. O hay dato verificado y autorización explícita, o va
@@ -18,13 +20,17 @@
  * nadie publique uno **sin declarar de dónde sale**, que es la parte
  * mecanizable. La veracidad la firma Ricardo en la compuerta.
  */
+import { sitio } from "../../lib/sitio/index.ts";
 import { walkContent, report, type Failure } from "./lib.ts";
 
-/* ── Criterio 4 · sin Sesión Cero ni agenda en la capa pública ───────────── */
+/* ── Criterio 4 · sin agenda ni lo reservado al portal en la capa pública ── */
 
+/**
+ * Las agendas son del motor: ningún sitio de la plantilla vende por agenda en su
+ * capa pública. Lo reservado al portal es de cada sitio, y viene de la ficha.
+ */
 const PROHIBIDO_EN_PUBLICO: ReadonlyArray<{ re: RegExp; que: string }> = [
-  { re: /sesi[oó]n\s+cero/gi, que: "«Sesión Cero» en texto público (RF-96)" },
-  { re: /zero\s+session/gi, que: "«Zero Session» en texto público (RF-96)" },
+  ...sitio.nomenclatura.prohibidasEnPublico.map((r) => ({ re: r.pattern, que: r.why })),
   { re: /\b(?:calendly|cal\.com|savvycal|hubspot\s*meetings)\b/gi, que: "agenda embebida de terceros" },
   { re: /\bagenda\s+(?:tu|una|aquí|ahora)\b/gi, que: "llamada a agendar (RF-07: el único CTA es la descarga)" },
   { re: /\bbook\s+(?:a|your)\s+(?:call|meeting|slot)\b/gi, que: "llamada a agendar en inglés" },

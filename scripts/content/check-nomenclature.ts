@@ -1,9 +1,15 @@
 /**
  * check-nomenclature.ts — Gate 3 de 4.
  *
- * La nomenclatura de la oferta es literal e intraducible, y la «D» de DAL OS
- * se expande SIEMPRE como «Destrucción Creativa». Un texto que las altere no
- * llega a producción.
+ * La nomenclatura de la oferta es literal e intraducible, y las reglas de
+ * contenido del sitio —una sigla que se expande siempre igual, un término que no
+ * se usa— se cumplen en todo el texto. Un texto que las altere no llega a
+ * producción.
+ *
+ * **Las reglas son de la ficha del sitio** (`sitio.nomenclatura`, D-165), no de
+ * este freno: aquí no se nombra ninguna oferta. Con las listas vacías —un
+ * cliente sin nombres compuestos— el freno recorre el contenido igual y pasa
+ * sin hallazgos.
  *
  * Revisa frontmatter y cuerpo de todo el contenido, y también `content/ui/*.json`:
  * las cadenas de interfaz son el sitio donde más fácil se cuela una traducción.

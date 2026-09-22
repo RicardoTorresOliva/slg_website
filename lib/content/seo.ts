@@ -15,7 +15,19 @@ import type { Metadata } from "next";
 
 import { sitio } from "../sitio/index.ts";
 import { loadCollection } from "./loader.ts";
-import { idiomaDeLaRuta, rutaEnElOtroIdioma, SERVICIOS, rutaEnDeServicio } from "./rutas.ts";
+import { idiomaActivo } from "../sitio/index.ts";
+import { PAGINAS_DEL_MOTOR, rutaDisponible, type ClaveDelMotor } from "../sitio/motor.ts";
+import {
+  DESCARGAS,
+  EJES,
+  idiomaDeLaRuta,
+  RAMAS,
+  rutaEnDeServicio,
+  rutaEnElOtroIdioma,
+  rutasDeLaFicha,
+  resolverRuta,
+  SERVICIOS,
+} from "./rutas.ts";
 import type { Lang } from "./schema.ts";
 import { baseDelSitio } from "./sitio.ts";
 
@@ -50,7 +62,9 @@ export function metadatosDe({
     description: descripcion,
     alternates: {
       canonical: `${base}${ruta}`,
-      languages: idiomas,
+      // Un sitio de un solo idioma no declara `hreflang`: no hay pareja que
+      // anunciar, y un `x-default` sin alternativas no le dice nada a nadie.
+      ...(idiomaActivo("en") ? { languages: idiomas } : {}),
     },
     openGraph: {
       type: "website",
@@ -123,45 +137,49 @@ export function servicioJsonLd({
   };
 }
 
-/** Todas las rutas públicas indexables, para el `sitemap.xml`. */
-export function rutasDelSitemap(): string[] {
-  const fijas = [
-    "/",
-    "/en",
-    "/ai",
-    "/en/ai",
-    "/ai/academy",
-    "/en/ai/academy",
-    "/ai/enterprise",
-    "/en/ai/enterprise",
-    "/ai/factory",
-    "/en/ai/factory",
-    "/doctrina",
-    "/en/doctrine",
-    "/nosotros",
-    "/en/about",
-    "/blog",
-    "/en/blog",
-    "/descargas",
-    "/en/downloads",
-    "/contacto",
-    "/en/contact",
-    "/servicios",
-    "/en/services",
-    "/legal/privacidad",
-    "/en/legal/privacy",
-    "/legal/terminos",
-    "/en/legal/terms",
-  ];
-  const servicios = SERVICIOS.flatMap((s) => [s.es, rutaEnDeServicio(s)]);
+/**
+ * Las páginas del motor que entran en el sitemap, en este orden. Quedan fuera
+ * `gracias` —recibe a quien acaba de enviar algo; indexarla no sirve a nadie—
+ * y el acceso, que es del grupo `(auth)` y no se indexa nunca (§2.3).
+ */
+const DEL_MOTOR_EN_EL_SITEMAP: readonly ClaveDelMotor[] = [
+  "doctrina",
+  "nosotros",
+  "blog",
+  "descargas",
+  "contacto",
+  "servicios",
+  "legalPrivacidad",
+  "legalTerminos",
+];
 
-  // Las once páginas de documento, en los dos idiomas. Los `draft` no entran:
-  // no tienen ruta, y un sitemap que las nombre manda al buscador a un 404.
+/**
+ * Todas las rutas públicas indexables, para el `sitemap.xml`: la portada, los
+ * índices de la oferta, las páginas del motor, los servicios, las páginas
+ * sueltas de la ficha y los documentos. Cada una seguida de su par.
+ */
+export function rutasDelSitemap(): string[] {
+  const par = (r: { es: string; en: string }) => [r.es, r.en].filter(Boolean);
+
+  const fijas = [
+    ...par(PAGINAS_DEL_MOTOR.inicio.ruta),
+    ...EJES.flatMap(par),
+    ...RAMAS.flatMap(par),
+    ...DEL_MOTOR_EN_EL_SITEMAP.flatMap((c) => par(PAGINAS_DEL_MOTOR[c].ruta)),
+  ];
+  const servicios = SERVICIOS.flatMap((s) => [s.es, rutaEnDeServicio(s)].filter(Boolean));
+  const sueltas = (["es", "en"] as const).flatMap((lang) =>
+    rutasDeLaFicha(lang).filter((r) => resolverRuta(r)?.tipo === "pagina"),
+  );
+
+  // Las páginas de documento, en los dos idiomas. Los `draft` no entran: no
+  // tienen ruta, y un sitemap que las nombre manda al buscador a un 404.
   const documentos = (["es", "en"] as const).flatMap((lang) =>
     loadCollection<{ status: string }>("download", lang)
       .filter((d) => d.data.status !== "draft")
-      .map((d) => `${lang === "en" ? "/en/downloads" : "/descargas"}/${d.slug}`),
+      .map((d) => `${DESCARGAS[lang]}/${d.slug}`),
   );
 
-  return [...fijas, ...servicios, ...documentos];
+  // Lo de un idioma o un módulo apagado responde 404: no se anuncia.
+  return [...fijas, ...servicios, ...sueltas, ...documentos].filter(rutaDisponible);
 }

@@ -1,8 +1,9 @@
 import Link from "next/link";
 
 import { loadCollection, loadUiStrings } from "@/lib/content/loader";
-import { DESTINOS, DOCTRINA, EJES, RAMAS, SERVICIOS, rutaEnDeServicio, slugEnDeServicio } from "@/lib/content/rutas";
+import { EJES, RAMAS, SERVICIOS, rutaEnDeServicio, slugEnDeServicio } from "@/lib/content/rutas";
 import { secciones } from "@/lib/content/secciones";
+import { PAGINAS_DEL_MOTOR, paginaDelMotorActiva } from "@/lib/sitio/motor";
 
 import { Markdown } from "./Markdown";
 import { HeroTipografico } from "./piezas";
@@ -11,19 +12,19 @@ import { HeroTipografico } from "./piezas";
  * «Empieza aquí» / «Start here»: el mapa del sitio en una página.
  *
  * **EL ÁRBOL SE GENERA DESDE LA ESTRUCTURA REAL, Y ESO ES LA DECISIÓN.** Los
- * nodos salen de `DESTINOS`, `EJES`, `RAMAS` y `SERVICIOS` —la misma tabla que
- * dibuja la barra y que `check:paginas` compara con el Anexo A.2— y cada línea
- * de explicación sale del `title`/`description` del registro de contenido. No
- * hay una segunda lista escrita a mano que se pueda desincronizar de la
- * primera: añadir un servicio es añadir su fila a la tabla de rutas y su `.md`,
- * y el mapa lo recoge solo.
+ * nodos salen de `EJES`, `RAMAS` y `SERVICIOS` —la tabla de rutas, que sale de
+ * la ficha del sitio y que `check:paginas` compara con lo servido— y de las
+ * páginas fijas del motor; cada línea de explicación sale del
+ * `title`/`description` del registro de contenido. No hay una segunda lista
+ * escrita a mano que se pueda desincronizar de la primera: añadir un servicio
+ * es añadir su fila a la ficha y su `.md`, y el mapa lo recoge solo.
  *
  * **EL ÁRBOL CRECE DE IZQUIERDA A DERECHA** (Ricardo, 2026-09-21). La raíz a la
  * izquierda; a su derecha, los destinos apilados; y cada nivel se abre hacia la
  * derecha con un conector. Antes era un árbol vertical con cuatro columnas, y
  * como solo una tenía descendencia, tres quedaban vacías y la cuarta era un
- * pozo. Y **las tres líneas cuelgan de `VoltAi by SLG`**, que es donde están en
- * la oferta: antes eran hermanas del eje.
+ * pozo. Y **las líneas cuelgan de su eje**, que es donde están en la oferta:
+ * antes eran hermanas del eje.
  *
  * ES UN COMPONENTE DE SERVIDOR: CSS puro con conectores (`app/mapa.css`), sin
  * JavaScript de cliente, sin librerías y sin nada animado. Un mapa que se mueve
@@ -41,29 +42,15 @@ import { HeroTipografico } from "./piezas";
 type Nodo = { nombre: string; linea: string; href: string; nota?: string };
 type Rama = Nodo & { hijos: Rama[] };
 
-/** Los slugs de los registros de página, por idioma. */
-const SLUGS = {
-  es: { servicios: "servicios", ai: "ai", doctrina: "doctrina", nosotros: "nosotros" },
-  en: { servicios: "services", ai: "ai", doctrina: "doctrine", nosotros: "about" },
-} as const;
+const M = PAGINAS_DEL_MOTOR;
 
 /** Descargas y Contacto: accesos transversales, con la ruta del pie. */
-const TRANSVERSALES = {
-  es: [
-    { slug: "descargas", href: "/descargas" },
-    { slug: "contacto", href: "/contacto" },
-  ],
-  en: [
-    { slug: "downloads", href: "/en/downloads" },
-    { slug: "contact", href: "/en/contact" },
-  ],
-} as const;
+const TRANSVERSALES = (["descargas", "contacto"] as const).filter(paginaDelMotorActiva).map((c) => M[c]);
 
 export function MapaDelSitio({ slug, lang }: { slug: string; lang: "es" | "en" }) {
   const t = loadUiStrings()[lang];
   const paginas = loadCollection<{ title: string; description: string }>("page", lang);
   const servicios = loadCollection<{ name: string; tagline?: string }>("service", lang);
-  const S = SLUGS[lang];
 
   const pagina = (s: string) => paginas.find((p) => p.slug === s);
   const nodoDePagina = (s: string, href: string, nombrePorDefecto: string): Nodo => {
@@ -77,64 +64,72 @@ export function MapaDelSitio({ slug, lang }: { slug: string; lang: "es" | "en" }
   // La raíz enlaza a Servicios, la casa comercial: el mapa ES esta página.
   const raiz: Nodo = {
     nombre: t["mapa.root"],
-    linea: pagina(S.servicios)?.data.description ?? "",
-    href: DESTINOS[1][lang],
+    linea: pagina(M.servicios.registro[lang])?.data.description ?? "",
+    href: M.servicios.ruta[lang],
   };
 
-  /** Las tres líneas, cada una con sus servicios y la frase de cada uno. */
-  const lineas: Rama[] = RAMAS.map((r) => {
-    const hijos = SERVICIOS.filter((s) => s.rama === r.slug)
-      .map((s): Rama | null => {
-        const registro = servicios.find(
-          (x) => x.slug === (lang === "en" ? slugEnDeServicio(s) : s.slug),
-        );
-        if (!registro) return null;
-        return {
-          nombre: registro.data.name,
-          linea: "",
-          nota: registro.data.tagline,
-          href: lang === "en" ? rutaEnDeServicio(s) : s.es,
-          hijos: [],
-        };
-      })
-      .filter((h): h is Rama => h !== null);
-    return { ...nodoDePagina(lang === "en" ? r.slugEn : r.slug, r[lang], r.slug), hijos };
-  });
-
-  const holdings = servicios.find(
-    (x) => x.slug === (lang === "en" ? "slg-holdings-en" : "slg-holdings"),
-  );
+  /** Las líneas de un eje, cada una con sus servicios y la frase de cada uno. */
+  const lineasDe = (eje: string): Rama[] =>
+    RAMAS.filter((r) => r.eje === eje).map((r) => {
+      const hijos = SERVICIOS.filter((s) => s.rama === r.slug)
+        .map((s): Rama | null => {
+          const registro = servicios.find(
+            (x) => x.slug === (lang === "en" ? slugEnDeServicio(s) : s.slug),
+          );
+          if (!registro) return null;
+          return {
+            nombre: registro.data.name,
+            linea: "",
+            nota: registro.data.tagline,
+            href: lang === "en" ? rutaEnDeServicio(s) : s.es,
+            hijos: [],
+          };
+        })
+        .filter((h): h is Rama => h !== null);
+      return { ...nodoDePagina(lang === "en" ? r.slugEn : r.slug, r[lang], r.slug), hijos };
+    });
 
   /**
-   * Los dos ejes cuelgan de la raíz: el de inteligencia artificial —con sus
-   * tres líneas debajo, y los servicios debajo de cada línea— y Holdings.
-   * Doctrina, Blog y Nosotros van al lado. «Empieza aquí» no aparece como nodo:
-   * es esta página.
+   * Los ejes cuelgan de la raíz —cada uno con sus líneas debajo, y los
+   * servicios debajo de cada línea—, y a continuación los servicios sueltos
+   * (en SLG, Holdings). Doctrina, Blog y Nosotros van al lado. «Empieza aquí»
+   * no aparece como nodo: es esta página.
    *
    * **SERVICIOS NO ES UN NODO, Y NO ES UN OLVIDO** (Ricardo, 2026-09-21). Lo
-   * era, entre la raíz y los dos ejes, y decía **exactamente la misma frase que
+   * era, entre la raíz y los ejes, y decía **exactamente la misma frase que
    * la raíz**: las dos leían la `description` del registro `servicios`, porque
    * la raíz enlaza ahí —el mapa ES la portada, y la casa comercial vive en
    * `/servicios`—. Un nodo que repite a su padre no ordena nada; se retira y
-   * los dos ejes suben un nivel, que es donde el lector los buscaba. La página
+   * los ejes suben un nivel, que es donde el lector los buscaba. La página
    * sigue existiendo y sigue siendo el destino de la raíz.
    */
-  const voltai: Rama = { ...nodoDePagina(S.ai, EJES.voltai[lang], t["nav.services"]), hijos: lineas };
-  const holdingsNodo: Rama = {
-    nombre: holdings?.data.name ?? "",
-    linea: holdings ? primeraLinea(holdings.body) : "",
-    href: EJES.holdings[lang],
-    hijos: [],
-  };
+  const ejes: Rama[] = EJES.map((e) => ({
+    ...nodoDePagina(lang === "en" ? e.slugEn : e.slug, e[lang], t["nav.services"]),
+    hijos: lineasDe(e.clave),
+  }));
+  const sueltos: Rama[] = SERVICIOS.filter((s) => s.rama === null).map((s) => {
+    const registro = servicios.find((x) => x.slug === (lang === "en" ? slugEnDeServicio(s) : s.slug));
+    return {
+      nombre: registro?.data.name ?? "",
+      linea: registro ? primeraLinea(registro.body) : "",
+      href: lang === "en" ? rutaEnDeServicio(s) : s.es,
+      hijos: [],
+    };
+  });
+  // Doctrina y Blog solo si su módulo está encendido: un nodo a un 404 no orienta.
   const destinos: Rama[] = [
-    voltai,
-    holdingsNodo,
-    { ...nodoDePagina(S.doctrina, DOCTRINA[lang], t["footer.doctrine"]), hijos: [] },
-    { nombre: t["nav.blog"], linea: t["blog.metaDescription"], href: DESTINOS[2][lang], hijos: [] },
-    { ...nodoDePagina(S.nosotros, DESTINOS[3][lang], t["nav.about"]), hijos: [] },
+    ...ejes,
+    ...sueltos,
+    ...(paginaDelMotorActiva("doctrina")
+      ? [{ ...nodoDePagina(M.doctrina.registro[lang], M.doctrina.ruta[lang], t["footer.doctrine"]), hijos: [] }]
+      : []),
+    ...(paginaDelMotorActiva("blog")
+      ? [{ nombre: t["nav.blog"], linea: t["blog.metaDescription"], href: M.blog.ruta[lang], hijos: [] }]
+      : []),
+    { ...nodoDePagina(M.nosotros.registro[lang], M.nosotros.ruta[lang], t["nav.about"]), hijos: [] },
   ];
 
-  const transversales = TRANSVERSALES[lang].map((x) => nodoDePagina(x.slug, x.href, x.slug));
+  const transversales = TRANSVERSALES.map((x) => nodoDePagina(x.registro[lang], x.ruta[lang], x.registro[lang]));
 
   return (
     <div className="slg-mapa" lang={lang}>

@@ -3,6 +3,8 @@ import Link from "next/link";
 import { loadCollection, loadUiStrings } from "@/lib/content/loader";
 import { servicioJsonLd } from "@/lib/content/seo";
 import { secciones } from "@/lib/content/secciones";
+import { moduloActivo } from "@/lib/sitio";
+import { PAGINAS_DEL_MOTOR } from "@/lib/sitio/motor";
 
 import { Markdown } from "./Markdown";
 import { DatosEstructurados } from "./DatosEstructurados";
@@ -44,13 +46,16 @@ export function PaginaDeServicio({
   const bloques = secciones(registro?.body ?? "");
   const [paraQuien, queEs, queIncluye, comoTrabajamos, descarga, siguiente] = bloques;
 
-  const documento = loadCollection<{ title: string; audience: string; status: string }>(
-    "download",
-    lang,
-  ).find((d) => d.slug === registro?.data.download);
+  // Sin el módulo de descargas no hay documento que ofrecer: la sección 5 dice
+  // que no lo hay, igual que un servicio sin documento asociado.
+  const documento = moduloActivo("descargas")
+    ? loadCollection<{ title: string; audience: string; status: string }>("download", lang).find(
+        (d) => d.slug === registro?.data.download,
+      )
+    : undefined;
 
-  const contacto = lang === "en" ? "/en/contact" : "/contacto";
-  const descargas = lang === "en" ? "/en/downloads" : "/descargas";
+  const contacto = moduloActivo("contacto") ? PAGINAS_DEL_MOTOR.contacto.ruta[lang] : null;
+  const descargas = PAGINAS_DEL_MOTOR.descargas.ruta[lang];
 
   return (
     <div style={{ maxWidth: "44rem", margin: "0 auto", padding: "0 1.25rem" }}>
@@ -118,9 +123,12 @@ export function PaginaDeServicio({
       {/* 6 · Siguiente paso — sin venta y SIN widget de terceros (RF-08). */}
       <Seccion titulo={siguiente?.titulo}>
         <p style={{ margin: "0 0 1rem" }}>{primeraLinea(siguiente?.cuerpo ?? "")}</p>
-        <Link href={contacto} style={{ color: "var(--slg-link)" }}>
-          {t["service.contact"]}
-        </Link>
+        {/* Sin el módulo de contacto, el siguiente paso es solo su texto. */}
+        {contacto ? (
+          <Link href={contacto} style={{ color: "var(--slg-link)" }}>
+            {t["service.contact"]}
+          </Link>
+        ) : null}
       </Seccion>
     </div>
   );

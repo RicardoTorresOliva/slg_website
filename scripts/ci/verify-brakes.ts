@@ -225,6 +225,21 @@ const CASOS: Caso[] = [
     env: { MIGRATIONS_DIR: path.join(HERE, "negative/migrations") },
   },
   {
+    // D-166: la estructura pública sale de la ficha, y una ficha incoherente
+    // compila. Una sola ficha rota, las seis formas de romperla.
+    freno: "ficha del sitio incoherente con el contenido y con app/",
+    script: "check-sitio.ts",
+    espera: [
+      "falta content/services/es/no-existe.md",
+      "pero la ficha lo cuelga de «Otra línea»",
+      "public/fotos/foto-inexistente.webp no existe",
+      "slug de servicio: «readiness» está repetido",
+      "que Next sirve antes",
+      "no existe ni en app/ ni en la ficha",
+    ],
+    env: { SITIO_FICHA: path.join(HERE, "negative/sitio/site.config.ts") },
+  },
+  {
     freno: ".env.example con un valor",
     script: "check-env-example.ts",
     espera: "lleva VALOR",
@@ -341,7 +356,7 @@ for (const c of CASOS) {
   }
 }
 
-console.log("\nContraprueba — contra el repositorio real, los nueve deben PASAR:\n");
+console.log("\nContraprueba — contra el repositorio real, los diez deben PASAR:\n");
 for (const script of [
   "check-secrets.ts",
   "check-js-budget.ts",
@@ -352,6 +367,7 @@ for (const script of [
   "check-contraste.ts",
   "check-motion.ts",
   "check-cadenas.ts",
+  "check-sitio.ts",
 ]) {
   const res = spawnSync(process.execPath, [path.join(HERE, script)], {
     encoding: "utf8",

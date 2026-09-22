@@ -3,8 +3,8 @@
  *
  * Tres cosas que se rompen solas y no avisan:
  *
- *   · **`hreflang` recíproco** (RF-05, gate D4). Si `/ai` declara que su
- *     versión inglesa es `/en/ai` pero `/en/ai` no declara la española, los
+ *   · **`hreflang` recíproco** (RF-05, gate D4). Si una página declara que su
+ *     versión inglesa es `/en/…` pero esa no declara la española, los
  *     buscadores **ignoran las dos**. Es un fallo silencioso: la página se ve
  *     perfecta y el par no existe para nadie más.
  *   · **Metadatos únicos**. Dos páginas con el mismo `<title>` compiten entre
@@ -16,13 +16,18 @@
  *
  * Y además: `sitemap.xml`, `robots.txt`, `schema.org` y las páginas 404 y 500.
  *
+ * Las rutas salen de la ficha del sitio (`rutasDelSitemap`, `SERVICIOS`,
+ * `salidasDeError`): este freno no nombra ninguna oferta (D-165).
+ *
  * Requiere `npm run build:standalone`.
  */
 import { spawn, type ChildProcess } from "node:child_process";
 import net from "node:net";
 import path from "node:path";
 
+import { salidasDeError, SERVICIOS } from "../../lib/content/rutas.ts";
 import { rutasDelSitemap } from "../../lib/content/seo.ts";
+import { idiomaActivo, moduloActivo } from "../../lib/sitio/index.ts";
 import { baseDelSitio } from "../../lib/content/sitio.ts";
 
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
@@ -67,8 +72,8 @@ async function arrancar() {
       BETTER_AUTH_URL: base,
       BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? "solo-para-comprobar-el-seo",
       /**
-       * SIN RESPALDO, igual que en el sitio. Aquí había escrito a mano
-       * `?? "https://softlandingglobal.com"`, y eso hacía que el freno midiera
+       * SIN RESPALDO, igual que en el sitio. Aquí había escrito a mano un
+       * dominio de producción por defecto, y eso hacía que el freno midiera
        * los `canonical` de OTRO dominio cuando la variable faltaba: el freno
        * pasaba en verde comprobando algo que no era este sitio. `baseDelSitio()`
        * falla con el nombre de la variable delante, que es lo que hay que leer.
@@ -120,7 +125,7 @@ async function main() {
     /**
      * Los títulos se comparan **dentro de cada idioma**, no entre idiomas.
      *
-     * `/ai` y `/en/ai` se llaman los dos «SLG_AI» y eso es correcto: la
+     * Un eje y su par inglés se llaman igual y eso es correcto: la
      * nomenclatura **no se traduce** (RF-14), y el par lo declara `hreflang`.
      * Exigir títulos distintos entre idiomas obligaría a inventar una
      * traducción de un nombre propio, que es justo lo que el proyecto prohíbe.
@@ -173,6 +178,10 @@ async function main() {
 
       // hreflang recíproco: si declara pareja, la pareja declara la vuelta.
       const alt = alternativas(html);
+      // Un sitio de un solo idioma no declara hreflang: no hay pareja (D-166).
+      if (!idiomaActivo("en")) {
+        check(`${ruta} · sin segundo idioma, sin hreflang`, Object.keys(alt).length === 0, JSON.stringify(alt));
+      }
       const enOtroIdioma = ruta.startsWith("/en") ? alt.es : alt.en;
       if (enOtroIdioma) {
         const rutaPar = enOtroIdioma.replace(origen, "") || "/";
@@ -239,7 +248,9 @@ async function main() {
     const txt = await robots.text();
     check("robots.txt responde", robots.ok, `status ${robots.status}`);
     check("robots.txt apunta al sitemap", txt.includes("/sitemap.xml"), txt.slice(0, 120));
-    for (const privada of ["/hq", "/portal", "/api"]) {
+    // Sin intranet, `/hq` y `/portal` no existen y no se nombran.
+    const privadas = [...(moduloActivo("intranet") ? ["/hq", "/portal"] : []), "/api"];
+    for (const privada of privadas) {
       check(`robots.txt mantiene ${privada} fuera del índice`, txt.includes(`Disallow: ${privada}`));
     }
 
@@ -248,7 +259,7 @@ async function main() {
       portada.includes('"@type":"Organization"') || portada.includes('"@type": "Organization"'),
       "sin datos estructurados de organización",
     );
-    const servicio = paginas.get("/ai/enterprise/readiness") ?? "";
+    const servicio = SERVICIOS[0] ? (paginas.get(SERVICIOS[0].es) ?? "") : "";
     check(
       "una página de servicio publica schema.org Service",
       servicio.includes('"@type":"Service"') || servicio.includes('"@type": "Service"'),
@@ -259,12 +270,14 @@ async function main() {
     const cuatrocuatro = await fetch(`${base}/esta-ruta-no-existe`);
     const html404 = await cuatrocuatro.text();
     check("una ruta inexistente devuelve 404", cuatrocuatro.status === 404, `status ${cuatrocuatro.status}`);
+    // Las salidas son las de la ficha: la portada, la oferta y el blog.
+    const salidas = salidasDeError().es.map((x) => `href="${x.href}"`);
     check(
       "la 404 es nuestra y no la del framework",
-      html404.includes("404") && /href="\/ai"/.test(html404),
-      "sin las tres salidas de vuelta",
+      html404.includes("404") && salidas.length > 1 && html404.includes(salidas[1]),
+      "sin las salidas de vuelta",
     );
-    for (const salida of ['href="/"', 'href="/ai"', 'href="/blog"']) {
+    for (const salida of salidas) {
       check(`la 404 ofrece la salida ${salida}`, html404.includes(salida));
     }
   } finally {

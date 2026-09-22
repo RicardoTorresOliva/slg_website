@@ -370,6 +370,8 @@ export const RUTAS: readonly RutaDeApi[] = [
         tipo: "enum",
         valores: PROJECT_SERVICES,
         obligatorio: true,
+        // La lista es la de la ficha del sitio (D-166): desde 0024 la base ya no
+        // la contiene, así que esta es la primera validación y no un espejo.
         descripcion: "Servicio, literal e intraducible (RF-14). Fuera de la lista, 422.",
       },
       {

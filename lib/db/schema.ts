@@ -25,6 +25,8 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
+import { nombresDeServicio } from "../sitio/index.ts";
+
 /* ══════════════════════════════════════════════════════════════════════════
  * Vocabularios cerrados
  * Se expresan como CHECK sobre `text`, no como ENUM nativo (D-27): se revisan
@@ -36,31 +38,19 @@ export const ORG_TYPES = ["slg", "client"] as const;
 export const ORG_STATUS = ["active", "archived"] as const;
 export const PROJECT_STATUS = ["active", "paused", "closed"] as const;
 /**
- * Los once servicios de A.2, tal como los admite `project_service_literal`
- * (0001, reescrito por 0021). **Espejo del CHECK, no de la colección de
- * contenido**: es lo que la base acepta en la inserción, y un valor que la API
- * anunciara y la base rechazara sería un 500 donde el contrato promete un 422
- * (D-162).
+ * Los servicios con los que se crea un proyecto: **los de la ficha del sitio**
+ * (`nombresDeServicio()`, D-166), con su nombre literal.
  *
- * Ser espejo del `CHECK` no autoriza a discrepar del contenido: cuando 0001
- * decía `SLG_Holdings` y la oferta ya decía `Holdings by SLG`, esta lista
- * copiaba fielmente a la base y el servicio entero era inoperante —HQ lo
- * ofrecía, el servidor lo aceptaba y PostgreSQL lo rechazaba—. El arreglo
- * nunca es tocar solo esta lista: es la migración, y esta constante detrás.
+ * Fue el espejo del `CHECK project_service_literal` (0001, reescrito por 0021),
+ * que listaba los once servicios de SLG dentro de PostgreSQL. Un sitio de otro
+ * cliente no habría podido crear un solo proyecto con sus servicios, y cada
+ * cambio de la oferta era una migración. Desde 0024 la base ya no lo contiene:
+ * lo valida la aplicación contra esta lista —el catálogo de la API
+ * (`lib/api/catalogo.ts`, un 422 fuera de ella), las escrituras que lo usan y
+ * el formulario de HQ (`lib/hq/servicios.ts`)—, y `test:gestion` comprueba que
+ * las tres dicen exactamente lo que dice la ficha.
  */
-export const PROJECT_SERVICES = [
-  "Phoenix PEEx",
-  "Phoenix TEAx",
-  "Phoenix RETx",
-  "Customize Programs",
-  "AI Coaching for Directors",
-  "SLG_Readiness",
-  "SLG_Implement",
-  "APP_Building",
-  "AGE_Building",
-  "CoO as a Service",
-  "Holdings by SLG",
-] as const;
+export const PROJECT_SERVICES: readonly string[] = nombresDeServicio();
 export const LEAD_SOURCES = ["download", "contact", "doctrine-request"] as const;
 export const QUEUE_STATUS = ["pending", "delivered", "failed"] as const;
 /**
@@ -469,7 +459,7 @@ export const project = pgTable(
       .notNull()
       .references(() => organization.id, { onDelete: "restrict" }),
     name: text("name").notNull(),
-    /** Nomenclatura literal: el CHECK lo fija la migración (RF-14). */
+    /** Nomenclatura literal (RF-14): la valida la aplicación contra la ficha (D-166). */
     service: text("service").notNull(),
     status: text("status").notNull().default("active"),
     ownerUserId: text("owner_user_id").references(() => user.id, { onDelete: "set null" }),

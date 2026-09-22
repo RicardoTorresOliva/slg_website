@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { tieneCookieDeSesion } from "@/lib/auth/edge";
+import { rutaDisponible } from "@/lib/sitio/motor";
 
 /**
  * Middleware — FU-05 (compuerta de staging) y FU-06 (clasificación de §2).
@@ -296,7 +297,8 @@ function puertaDelVisor(request: NextRequest): NextResponse | null {
   const esRutaDeVisor = request.nextUrl.pathname.startsWith("/visor/");
 
   if (visor && host === visor) {
-    if (!esRutaDeVisor) {
+    // Sin intranet no hay entregables que ver: el visor tampoco existe.
+    if (!esRutaDeVisor || !rutaDisponible(request.nextUrl.pathname)) {
       return new NextResponse(null, {
         status: 404,
         headers: { "X-Robots-Tag": "noindex, nofollow", "Cache-Control": "no-store" },
@@ -394,8 +396,45 @@ const GRUPO_AUTH = [
   "/prototipo",
 ];
 
+/* ══════════════════════════════════════════════════════════════════════════
+ * D-166 · Módulos e idiomas apagados
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * **UN MÓDULO APAGADO NO EXISTE, Y SE DICE CON UN 404.** Si la ficha apaga el
+ * blog, la intranet o el inglés, sus rutas responden como cualquier ruta que
+ * nunca existió: no un 403, que confirma que ahí hay algo, ni una página vacía.
+ * La tabla de qué ruta es de qué módulo es `lib/sitio/motor.ts`.
+ *
+ * Las páginas se reescriben a una ruta que no existe, para que Next sirva la
+ * 404 propia (RF-17) con su armazón y sus salidas; los manejadores —`/api/**`,
+ * los `.xml`— reciben un 404 sin cuerpo, que es lo que espera quien los llama.
+ * Va DESPUÉS de la compuerta de staging, como toda la clasificación.
+ */
+const RUTA_INEXISTENTE = "/_apagado";
+
+function moduloApagado(request: NextRequest): NextResponse | null {
+  const { pathname } = request.nextUrl;
+  if (rutaDisponible(pathname)) return null;
+  if (pathname.startsWith("/api/") || pathname.endsWith(".xml")) {
+    return new NextResponse(null, {
+      status: 404,
+      headers: { "X-Robots-Tag": "noindex, nofollow", "Cache-Control": "no-store" },
+    });
+  }
+  const destino = request.nextUrl.clone();
+  destino.pathname = RUTA_INEXISTENTE;
+  const respuesta = NextResponse.rewrite(destino);
+  respuesta.headers.set("Content-Security-Policy", politicaPublica());
+  respuesta.headers.set("X-Robots-Tag", "noindex, nofollow");
+  return respuesta;
+}
+
 function clasificar(request: NextRequest, respuesta: NextResponse): NextResponse {
   const { pathname } = request.nextUrl;
+
+  const apagado = moduloApagado(request);
+  if (apagado) return apagado;
 
   if (pathname === ALTA_PUBLICA || pathname.startsWith(`${ALTA_PUBLICA}/`)) {
     return new NextResponse(null, {

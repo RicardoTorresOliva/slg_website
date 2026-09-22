@@ -19,6 +19,8 @@ import fs from "node:fs";
 import net from "node:net";
 import path from "node:path";
 
+import { idiomaActivo, moduloActivo } from "../../lib/sitio/index.ts";
+
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 const SERVER = path.join(REPO_ROOT, ".next", "standalone", "server.js");
 
@@ -98,15 +100,23 @@ function articulosEnDisco(lang: string) {
 }
 
 async function main() {
+  // Un sitio sin blog no tiene nada que medir aquí: sus rutas responden 404, y
+  // eso lo comprueba el middleware, no este freno (D-166).
+  if (!moduloActivo("blog") && !process.env.BLOG_BASE) {
+    console.log("✓ blog: el módulo está apagado en la ficha del sitio; no hay blog que medir.");
+    return;
+  }
   // `BLOG_BASE` apunta el medidor a otro servidor: lo usa su prueba negativa,
   // que sirve un blog donde el borrador SÍ se publica.
   const externo = process.env.BLOG_BASE;
   const { base, parar } = externo ? { base: externo, parar: () => {} } : await arrancar();
   try {
-    for (const [lang, ruta, segmento] of [
-      ["es", "", "etiqueta"],
-      ["en", "/en", "tag"],
-    ] as const) {
+    for (const [lang, ruta, segmento] of (
+      [
+        ["es", "", "etiqueta"],
+        ["en", "/en", "tag"],
+      ] as const
+    ).filter(([lang]) => idiomaActivo(lang))) {
       const enDisco = articulosEnDisco(lang);
       const publicados = enDisco.filter((a) => !a.borrador);
       const borradores = enDisco.filter((a) => a.borrador);

@@ -4032,3 +4032,125 @@ existen, porque en PostgreSQL local y en CI no son roles.
 
 **No aplicada en producción**: va por el camino de siempre (`scripts/db/migrar.ts`, Ricardo), junto con
 0024 y 0025.
+
+## Plantilla, paso 3: la estructura sale de la ficha (2026-09-22)
+
+Tercer paso de `docs/PLAYBOOK_REPLICACION.md` §3 (D-165) y decisión **D-166**. La oferta de SLG
+—un eje, tres líneas, once servicios y un servicio suelto— dejó de estar escrita a mano en cinco
+sitios y en dieciocho carpetas: la declara `site.config.ts` y el motor la lee por `lib/sitio`.
+
+**Hecho.** `lib/content/rutas.ts` deriva de la ficha `DESTINOS`, `EJES`, `RAMAS`, `SERVICIOS` y los
+pares de idioma, con los mismos nombres exportados; las páginas fijas del motor (portada, Servicios,
+blog, doctrina, nosotros, descargas, contacto, gracias, legales, acceso) se listan una sola vez en
+`lib/sitio/motor.ts`, con su par, su registro y su módulo. **Las rutas**: se borran
+`app/(public)/[slug]`, `ai/**`, `holdings` y su copia bajo `en/`, y las sustituyen
+`app/(public)/[...ruta]` y `app/(public)/en/[...ruta]`, que con `resolverRuta()` sirven el índice de
+un eje, el de una línea, la página de un servicio o una página suelta, desde
+`components/PaginaDeLaFicha.tsx`, con `generateStaticParams` desde la ficha y `dynamicParams =
+false`. Las carpetas fijas siguen ganando porque Next resuelve lo estático antes que el comodín.
+`PuertaDeAI` recibe el eje, `OverviewDeRama` lee su enlace externo de la ficha
+(`enlaceExterno` → `dominio.enlaces`), `MapaDelSitio`, `Regreso` y `Portada` recorren ejes, líneas y
+sueltos sin nombrar ninguno —la página de Servicios pinta los bloques de `sitio.bloquesDeServicios`,
+y Holdings es un bloque «suelto desarrollado» con su `id`—, `Fotografia` deriva su tabla de las
+`foto` de la oferta y de `sitio.fotos`, y el sitemap sale de la misma tabla en el mismo orden.
+`BRANCHES` es `nombresDeRama()`; `LITERAL_TERMS`, `FORBIDDEN_VARIANTS` y `DAL_OS_FORBIDDEN` leen
+`sitio.nomenclatura` (`PUBLIC_BRAND` no se ha tocado); `PROJECT_SERVICES` es `nombresDeServicio()`, y
+el formulario de HQ (`lib/hq/servicios.ts`) lee la misma lista. **La base**: la migración
+`0024_servicio_desde_la_ficha` retira `project_service_literal`, que listaba los once servicios de
+SLG y habría impedido a cualquier otro cliente crear un proyecto; ahora lo validan el catálogo de la
+API, la escritura justo antes del `INSERT` (defensa nueva: ya no hay capa detrás) y HQ.
+`test:gestion` deja de leer el `CHECK` y comprueba que HQ y la API aceptan exactamente la ficha y que
+la contención ya no está. **Freno nuevo `check:sitio`**, en `check:ci` y en el trabajo `gates`: cada
+servicio con su registro en cada idioma, con el `name` de la ficha y el `branch` de su línea, ningún
+registro sin declarar, cada eje y línea con su página, cada foto en `public/fotos/`, rutas bien
+formadas, sin duplicados y sin caer bajo una carpeta fija de `app/` (lo calcula recorriendo `app/`),
+cada destino del menú existente. Su prueba negativa es una ficha rota
+(`scripts/ci/negative/sitio/site.config.ts`) con las seis formas de romperla, registrada en
+`check:brakes`.
+
+**Verificado.** Antes de tocar nada se compiló `develop` intacto y se guardó el HTML de las 117 URL
+que se alcanzan rastreando desde la portada, el sitemap y una lista de rutas inexistentes (404
+incluidos), sin scripts ni rutas de chunks. Tras el cambio, las 117 dan **el mismo código y el mismo
+HTML**; la única diferencia es `<lastmod>` del sitemap, que es la fecha de compilación. En verde:
+`check:types`, `lint`, `check:content`, `check:cadenas`, `check:migrations`, `check:fronteras`,
+`check:alcance`, `check:secrets`, `check:env`, `check:playbook`, `check:sitio` (389
+comprobaciones, y rojo contra su ficha negativa por los seis motivos), y, sobre la compilación
+autocontenida con las variables de CI, `check:paginas` (142), `check:seo` (226), `check:armazon`
+(60), `check:produccion`, `check:runtime`, `check:blog` y `check:js-budget`. `test:gestion` y
+`check:brakes` necesitan PostgreSQL y no corren en esta máquina: los corre el trabajo `datos` de CI.
+
+## Plantilla, paso 4: los cinco frenos de la oferta leen la ficha (2026-09-22)
+
+Cuarto paso de `docs/PLAYBOOK_REPLICACION.md` §3. Los cinco frenos que validaban contra la oferta de
+SLG escrita a mano la leen ahora de la ficha, y **ninguno nombra a SLG ni a sus servicios**: medirían
+igual el sitio de cualquier cliente.
+
+**Hecho.** `check:nomenclature` ya recorría `lib/content/nomenclature.ts`, que desde el paso 3 lee
+`sitio.nomenclatura`; faltaba la forma buena de las reglas de contenido, que el motor escribía a
+mano («Destrucción Creativa»): ahora es el campo opcional `correct` de cada regla en la ficha. Con
+las tres listas **vacías** el freno recorre el contenido y pasa sin hallazgos —se probó vaciándolas
+un momento—. `check:copy` toma lo reservado al portal de `sitio.nomenclatura.prohibidasEnPublico`
+(en la ficha de SLG, la Sesión Cero, con el mismo mensaje de siempre); las agendas de terceros siguen
+en el freno, porque son del motor. `check:armazon` lee los destinos del menú y el botón de acceso de
+la tabla de rutas y recorre las páginas del motor, los ejes, las líneas, los sueltos y el primer
+servicio de cada línea —el mismo conjunto que tenía escrito—; el criterio 3 (el idioma es la ruta)
+usa Servicios y su propio título en vez de Doctrina, que es un módulo que un sitio puede apagar.
+`check:paginas` toma los bloques de `sitio.bloquesDeServicios`, mide el bloque de artículos hasta el
+bloque siguiente sea cual sea, y el criterio del enlace externo recorre las líneas con
+`enlaceExterno` y su URL de `dominio.enlaces`. `check:seo` mide el `schema.org` del primer servicio
+de la ficha y las salidas de la 404 de `salidasDeError()`. Esas salidas eran `/ai` y `/blog` escritos
+en `PaginaDeError`: ahora llegan por props, y a la 500 —un límite de error, de cliente por
+obligación— por un contexto que pone el layout raíz (`components/SalidasDeError.tsx`), para no
+mandar la ficha entera al navegador con el presupuesto de JS a 142,9 KB de 150.
+
+**Verificado.** Las 117 URL rastreadas siguen sirviendo el mismo código y el mismo HTML que `develop`
+(solo cambia `<lastmod>`). Los frenos del servidor hacen **el mismo número de comprobaciones** que
+sobre `develop` —`check:paginas` 142, `check:seo` 226, `check:armazon` 60— y todas en verde; las
+únicas líneas distintas son los textos que ya no nombran la oferta y el cambio de Doctrina a
+Servicios en el criterio 3. `check:gates` ve en rojo sus cinco fixtures negativos de contenido, y en
+verde: `check:types`, `lint`, `check:content`, `check:cadenas`, `check:migrations`,
+`check:fronteras`, `check:alcance`, `check:secrets`, `check:env`, `check:playbook`, `check:sitio`,
+`check:produccion`, `check:runtime`, `check:blog` y `check:js-budget`. `check:brakes` necesita
+PostgreSQL: lo corre CI.
+
+## Plantilla, paso 5: módulos e idiomas apagables (2026-09-22)
+
+Quinto paso de `docs/PLAYBOOK_REPLICACION.md` §3. `sitio.modulos` y `sitio.idiomas` dejan de ser
+declaración y pasan a mandar: lo que la ficha apaga no existe en el sitio servido.
+
+**Hecho.** `lib/sitio/motor.ts` gana la tabla de qué rutas son de qué módulo —las páginas del motor
+y los prefijos que no tienen página: `/api/contacto`, `/api/descargas`, `/hq`, `/portal`, el acceso,
+el visor, `/api/auth`, `/api/v1`— y `rutaDisponible()`, que además da por inexistente todo `/en/**`
+si el inglés está apagado; la API exige también la intranet. **El middleware es la puerta**, porque
+es lo único por lo que pasan a la vez páginas y manejadores (`rss.xml`, `/api/**`): tras la
+compuerta de staging, una ruta apagada responde 404 —las páginas, reescritas a una ruta inexistente
+para que salga la 404 propia con sus salidas; los manejadores, 404 sin cuerpo— y en el host del
+visor lo mismo. Además: el menú, el pie y el mapa solo enlazan páginas de módulos encendidos; el
+botón de acceso desaparece sin intranet y el conmutador sin segundo idioma (`BarraDeNavegacion`
+los recibe opcionales); sin inglés no se emite `hreflang` ni se generan rutas `/en` de la ficha;
+la página de Servicios omite los bloques de doctrina, artículos y descarga si su módulo está
+apagado (`bloquesDeServiciosActivos()`) sin desplazar el texto de los demás; la página de servicio
+no ofrece documento sin descargas ni enlace a contacto sin contacto; el sitemap filtra rutas y
+artículos, `robots.txt` deja de nombrar `/hq` y `/portal` sin intranet y las salidas de la 404 no
+llevan al blog si no lo hay. `crm` y `analitica` quedan expuestos por `moduloActivo()`; su
+comportamiento es del paso 5b. **Los frenos que miden esas rutas las saltan**: `check:blog` sale en
+verde sin blog, `check:armazon` comprueba que sin intranet no hay botón y que sin inglés no hay
+conmutador y `/en` da 404, `check:paginas` y `check:seo` recorren solo lo encendido (y el segundo
+exige que sin inglés no haya `hreflang`), `check:runtime` mide la política estricta en `/prototipo`
+si `/acceder` no existe, y `check:terceros` y `test:gesto` filtran sus páginas.
+
+**Verificado.** Con la ficha de SLG, las 117 URL rastreadas sirven el mismo código y el mismo HTML
+que `develop`, y los frenos del servidor hacen el mismo número de comprobaciones (142, 226, 60).
+Con una ficha de prueba —sin inglés, blog, doctrina, contacto, intranet ni API, solo en la copia de
+trabajo y devuelta después— se compiló y: `/blog`, `/blog/rss.xml`, `/doctrina`, `/contacto`, `/en`,
+`/en/about`, `/acceder`, `/hq`, `/portal`, `/api/v1/…`, `/api/contacto` y `/visor/…` responden 404
+(las páginas con la 404 propia, CSP y `noindex`); `/gracias` y `/descargas` siguen en 200; la barra
+enlaza solo `/servicios` y `/nosotros`, sin acceso ni conmutador ni `hreflang`; el pie, el mapa, el
+sitemap, `robots.txt`, los bloques de Servicios y las salidas de la 404 se recortan como se espera;
+y `check:sitio`, `check:paginas` (58), `check:seo` (141), `check:armazon` (30), `check:produccion`,
+`check:runtime`, `check:blog` y `check:js-budget` pasan sobre ese sitio. Las pruebas negativas de
+armazón, páginas y SEO siguen en rojo por sus motivos. En verde con la ficha de SLG: `check:types`,
+`lint`, `check:content`, `check:cadenas`, `check:migrations`, `check:fronteras`, `check:alcance`,
+`check:secrets`, `check:env`, `check:playbook`, `check:sitio` y los siete del servidor.
+`check:terceros`, `test:gesto` y `check:lighthouse` necesitan Chromium, y `check:brakes` PostgreSQL:
+no corren en esta máquina.

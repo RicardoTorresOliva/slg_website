@@ -1,22 +1,24 @@
 import { loadCollection, loadUiStrings } from "@/lib/content/loader";
-import { RAMAS, SERVICIOS } from "@/lib/content/rutas";
+import { RAMAS, SERVICIOS, type Eje } from "@/lib/content/rutas";
 import { secciones } from "@/lib/content/secciones";
 
 import { Markdown } from "./Markdown";
 import { HeroTipografico, TarjetaDeServicio } from "./piezas";
 
 /**
- * `VoltAi by SLG` — el overview de la rama, que es **la puerta a las tres líneas**
- * (DU-04, criterio 2).
+ * El índice de un EJE de la oferta —en SLG, `VoltAi by SLG` en `/ai`—: la
+ * puerta a sus líneas (DU-04, criterio 2). El nombre del archivo es el de
+ * cuando solo existía ese eje; el componente sirve a cualquiera que declare la
+ * ficha.
  *
- * Enlaza a las tres y a ninguna más. La cuenta de servicios de cada tarjeta
- * sale de la tabla de rutas, no de un número escrito a mano: si mañana entra un
- * servicio nuevo, la cuenta cambia sola.
+ * Enlaza a las líneas de ESTE eje y a ninguna más. La cuenta de servicios de
+ * cada tarjeta sale de la tabla de rutas, no de un número escrito a mano: si
+ * mañana entra un servicio nuevo, la cuenta cambia sola.
  */
-export function PuertaDeAI({ lang }: { lang: "es" | "en" }) {
+export function PuertaDeAI({ eje, lang }: { eje: Eje; lang: "es" | "en" }) {
   const t = loadUiStrings()[lang];
   const idx = lang === "en" ? "en" : "es";
-  const slug = lang === "en" ? "ai" : "ai";
+  const slug = lang === "en" ? eje.slugEn : eje.slug;
   const pagina = loadCollection<{ title: string; description: string }>("page", lang).find(
     (p) => p.slug === slug,
   );
@@ -25,9 +27,10 @@ export function PuertaDeAI({ lang }: { lang: "es" | "en" }) {
   // La entrada es lo que va ANTES del primer `##`: se pinta siempre. Antes solo
   // se pintaba el cuerpo cuando no había ninguna sección, así que añadir una
   // («Por qué VoltAi») hizo desaparecer también el párrafo de entrada. Las
-  // secciones van después de las tres líneas: primero la oferta, luego el
-  // nombre y su historia.
+  // secciones van después de las líneas: primero la oferta, luego el nombre y
+  // su historia.
   const entrada = cuerpo.split(/\n##\s+/)[0]?.trim() ?? "";
+  const lineas = RAMAS.filter((r) => r.eje === eje.clave);
 
   return (
     <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "0 1.25rem" }}>
@@ -44,7 +47,7 @@ export function PuertaDeAI({ lang }: { lang: "es" | "en" }) {
           {t["overview.lines"]}
         </h2>
         <ul style={rejilla}>
-          {RAMAS.map((r) => {
+          {lineas.map((r) => {
             const registro = loadCollection<{ title: string; description: string }>(
               "page",
               lang,

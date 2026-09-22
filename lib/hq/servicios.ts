@@ -10,36 +10,24 @@
  * nomenclatura es **literal e intraducible**: media docena de proyectos con el
  * nombre mal escrito son media docena de sitios donde la marca aparece rota.
  *
- * DE DÓNDE SALE LA LISTA, Y POR QUÉ NO DE `LITERAL_TERMS`. La primera versión
- * la derivaba de los términos literales, y dejaba fuera **dos de los once
- * servicios de A.2**: «AI Coaching for Directors» y «Customize Programs» no son
- * marcas registradas, así que no están en esa lista — y un proyecto de esos dos
- * servicios no se habría podido dar de alta. Se derivan de la **colección de
- * contenido**, que es la fuente de la oferta: añadir un servicio es añadir un
- * `.md` (RF-27) y el desplegable de HQ lo recoge solo, sin tocar este archivo.
+ * DE DÓNDE SALE LA LISTA. La primera versión la derivaba de los términos
+ * literales, y dejaba fuera dos servicios que no son marca registrada —un
+ * proyecto de esos dos no se habría podido dar de alta—. La segunda la derivaba
+ * de la colección de contenido. Desde D-166 sale de la **ficha del sitio**
+ * (`nombresDeServicio()`), que es la que declara la oferta: es la misma lista
+ * que el catálogo de la API anuncia (`PROJECT_SERVICES`), así que HQ y la API
+ * no pueden discrepar. Que cada servicio de la ficha tenga su registro de
+ * contenido con ese mismo `name` lo exige `check:sitio`, y que ese `name` se
+ * escriba bien, `check:nomenclature`.
  *
- * El nombre que se guarda es el del frontmatter `name`, y ese ya está vigilado:
- * `check:nomenclature` recorre todo el contenido y falla si alguno se escribe
- * mal. O sea que la lista es literal **porque el freno de contenido la mantiene
- * literal**, no porque aquí se repita a mano.
+ * Y es LA validación: desde la migración 0024 la base ya no lleva la lista en
+ * un `CHECK`. Lo que esta función rechaza no llega a PostgreSQL.
  */
-import { loadCollection } from "../content/loader.ts";
+import { nombresDeServicio } from "../sitio/index.ts";
 
-type FrontmatterDeServicio = { name: string };
-
-/**
- * Los servicios de A.2, con su nombre literal, en español.
- *
- * **Solo el español**: el nombre es intraducible (RF-14), así que las dos
- * versiones traen el mismo `name` y listar los dos idiomas daría la lista
- * duplicada. Si alguna vez difirieran, el freno de nomenclatura lo diría antes
- * de que llegara aquí.
- */
+/** Los servicios de la oferta, con su nombre literal, en orden alfabético. */
 export function serviciosLiterales(): string[] {
-  const nombres = loadCollection<FrontmatterDeServicio>("service", "es")
-    .map((s) => s.data.name)
-    .filter((n): n is string => typeof n === "string" && n.length > 0);
-  return [...new Set(nombres)].sort((a, b) => a.localeCompare(b, "es"));
+  return [...new Set(nombresDeServicio())].sort((a, b) => a.localeCompare(b, "es"));
 }
 
 /** `true` solo si el valor es **exactamente** uno de los nombres de la oferta. */
