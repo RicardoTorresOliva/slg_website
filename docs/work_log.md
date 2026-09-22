@@ -3585,3 +3585,21 @@ comprueba la clave. `NEXT_PUBLIC_SITE_URL` queda documentada como obligatoria y 
 `check:seo` (226 comprobaciones sobre el servidor real), todos en verde. Y las dos mitades del
 arreglo, a mano: `npm run build` **sin** la variable muere en `/ai/factory` con el mensaje entero y
 la línea de `sitio.ts` señalada; con ella puesta, `build:standalone` termina y sirve las 58 rutas.
+
+## «Empieza aquí»: fuera el nodo «Servicios», que repetía a la raíz (2026-09-21)
+
+Ricardo, mirando la portada: el cuadro **SLG Agency** y el nodo **Servicios** que colgaba de él decían
+la misma frase. No era casualidad ni copia pegada: los dos leían la `description` del registro
+`servicios`. La raíz lo hace porque el mapa **es** la portada y su enlace va a `/servicios`, la casa
+comercial; el nodo lo hacía por ser ese mismo registro. Padre e hijo con el mismo texto y el mismo
+destino: el nodo no ordenaba nada, solo metía un escalón.
+
+**Hecho**: el nodo desaparece y los dos ejes —`VoltAi by SLG`, con sus tres líneas y los servicios
+de cada una, y `Holdings by SLG`— suben un nivel, al lado de Doctrina, Blog y Nosotros. La página
+`/servicios` no se toca: sigue existiendo y sigue siendo el destino de la raíz y de la barra. Ni una
+cadena nueva: el árbol se sigue generando desde la tabla de rutas y los registros de contenido, así
+que el cambio son tres líneas de estructura, no una lista escrita a mano.
+
+**Verificado**: `check:types`, `lint`, `check:cadenas`, `check:paginas` y `check:copy` en verde, y la
+portada leída en el servidor local — el texto aparece una sola vez y el árbol conserva los tres
+niveles de VoltAi.

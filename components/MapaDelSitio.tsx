@@ -19,11 +19,11 @@ import { HeroTipografico } from "./piezas";
  * y el mapa lo recoge solo.
  *
  * **EL ÁRBOL CRECE DE IZQUIERDA A DERECHA** (Ricardo, 2026-09-21). La raíz a la
- * izquierda; a su derecha, los cuatro destinos apilados; y cada nivel se abre
- * hacia la derecha con un conector. Antes era un árbol vertical con cuatro
- * columnas, y como solo Servicios tiene descendencia, tres columnas quedaban
- * vacías y la cuarta era un pozo. Y **las tres líneas cuelgan de `VoltAi by
- * SLG`**, que es donde están en la oferta: antes eran hermanas del eje.
+ * izquierda; a su derecha, los destinos apilados; y cada nivel se abre hacia la
+ * derecha con un conector. Antes era un árbol vertical con cuatro columnas, y
+ * como solo una tenía descendencia, tres quedaban vacías y la cuarta era un
+ * pozo. Y **las tres líneas cuelgan de `VoltAi by SLG`**, que es donde están en
+ * la oferta: antes eran hermanas del eje.
  *
  * ES UN COMPONENTE DE SERVIDOR: CSS puro con conectores (`app/mapa.css`), sin
  * JavaScript de cliente, sin librerías y sin nada animado. Un mapa que se mueve
@@ -106,10 +106,18 @@ export function MapaDelSitio({ slug, lang }: { slug: string; lang: "es" | "en" }
   );
 
   /**
-   * Bajo Servicios cuelgan los dos ejes: el de inteligencia artificial —con
-   * sus tres líneas debajo, y los servicios debajo de cada línea— y Holdings.
+   * Los dos ejes cuelgan de la raíz: el de inteligencia artificial —con sus
+   * tres líneas debajo, y los servicios debajo de cada línea— y Holdings.
    * Doctrina, Blog y Nosotros van al lado. «Empieza aquí» no aparece como nodo:
    * es esta página.
+   *
+   * **SERVICIOS NO ES UN NODO, Y NO ES UN OLVIDO** (Ricardo, 2026-09-21). Lo
+   * era, entre la raíz y los dos ejes, y decía **exactamente la misma frase que
+   * la raíz**: las dos leían la `description` del registro `servicios`, porque
+   * la raíz enlaza ahí —el mapa ES la portada, y la casa comercial vive en
+   * `/servicios`—. Un nodo que repite a su padre no ordena nada; se retira y
+   * los dos ejes suben un nivel, que es donde el lector los buscaba. La página
+   * sigue existiendo y sigue siendo el destino de la raíz.
    */
   const voltai: Rama = { ...nodoDePagina(S.ai, EJES.voltai[lang], t["nav.services"]), hijos: lineas };
   const holdingsNodo: Rama = {
@@ -119,7 +127,8 @@ export function MapaDelSitio({ slug, lang }: { slug: string; lang: "es" | "en" }
     hijos: [],
   };
   const destinos: Rama[] = [
-    { ...nodoDePagina(S.servicios, DESTINOS[1][lang], t["nav.services"]), hijos: [voltai, holdingsNodo] },
+    voltai,
+    holdingsNodo,
     { ...nodoDePagina(S.doctrina, DOCTRINA[lang], t["footer.doctrine"]), hijos: [] },
     { nombre: t["nav.blog"], linea: t["blog.metaDescription"], href: DESTINOS[2][lang], hijos: [] },
     { ...nodoDePagina(S.nosotros, DESTINOS[3][lang], t["nav.about"]), hijos: [] },
