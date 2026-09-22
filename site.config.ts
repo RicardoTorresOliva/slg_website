@@ -200,9 +200,26 @@ export const sitio: FichaDelSitio = {
       { pattern: /\bPhoenix\s+Retx\b/g, correct: "Phoenix RETx", why: "capitalización alterada" },
     ],
     reglasDeContenido: [
-      { pattern: /\bDisrupci[óo]n\s+Creativa\b/gi, why: "la «D» de DAL OS es «Destrucción Creativa», no «Disrupción Creativa»" },
-      { pattern: /\bDAL\s+OS[^.\n]{0,40}\bDisrupci[óo]n\b/gi, why: "la «D» de DAL OS es «Destrucción Creativa»" },
-      { pattern: /\bCreative\s+Disruption\b/gi, why: "la «D» de DAL OS es «Destrucción Creativa» / «Creative Destruction»" },
+      {
+        pattern: /\bDisrupci[óo]n\s+Creativa\b/gi,
+        correct: "Destrucción Creativa",
+        why: "la «D» de DAL OS es «Destrucción Creativa», no «Disrupción Creativa»",
+      },
+      {
+        pattern: /\bDAL\s+OS[^.\n]{0,40}\bDisrupci[óo]n\b/gi,
+        correct: "Destrucción Creativa",
+        why: "la «D» de DAL OS es «Destrucción Creativa»",
+      },
+      {
+        pattern: /\bCreative\s+Disruption\b/gi,
+        correct: "Destrucción Creativa",
+        why: "la «D» de DAL OS es «Destrucción Creativa» / «Creative Destruction»",
+      },
+    ],
+    prohibidasEnPublico: [
+      // La Sesión Cero es del portal: la capa pública no la ofrece (RF-96).
+      { pattern: /sesi[oó]n\s+cero/gi, why: "«Sesión Cero» en texto público (RF-96)" },
+      { pattern: /zero\s+session/gi, why: "«Zero Session» en texto público (RF-96)" },
     ],
   },
 };

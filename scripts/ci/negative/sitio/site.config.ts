@@ -81,5 +81,5 @@ export const sitio: FichaDelSitio = {
   },
   fotos: {},
   bloquesDeServicios: ["puertas", "lineas"],
-  nomenclatura: { literales: [], variantesProhibidas: [], reglasDeContenido: [] },
+  nomenclatura: { literales: [], variantesProhibidas: [], reglasDeContenido: [], prohibidasEnPublico: [] },
 };

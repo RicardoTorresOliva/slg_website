@@ -152,8 +152,11 @@ export type DestinoDelMenu = { readonly clave: string; readonly ruta: PorIdioma 
 /** Una regla de nomenclatura: el patrón prohibido y cómo se dice bien. */
 export type VarianteProhibida = { readonly pattern: RegExp; readonly correct: string; readonly why: string };
 
-/** Una regla de contenido que no es un nombre (p. ej. «Destrucción», no «Disrupción»). */
-export type ReglaDeContenido = { readonly pattern: RegExp; readonly why: string };
+/**
+ * Una regla de contenido que no es un nombre (p. ej. «Destrucción», no
+ * «Disrupción»). `correct` es la forma buena, cuando la hay: la cita el freno.
+ */
+export type ReglaDeContenido = { readonly pattern: RegExp; readonly why: string; readonly correct?: string };
 
 /**
  * Los bloques que la página de Servicios sabe pintar. Cada uno toma su texto de
@@ -202,5 +205,10 @@ export type FichaDelSitio = {
     readonly literales: readonly string[];
     readonly variantesProhibidas: readonly VarianteProhibida[];
     readonly reglasDeContenido: readonly ReglaDeContenido[];
+    /**
+     * Lo que ningún texto público puede ofrecer (`check:copy`): nombres de
+     * servicios que solo existen dentro del portal, por ejemplo. Vacío es válido.
+     */
+    readonly prohibidasEnPublico: readonly ReglaDeContenido[];
   };
 };

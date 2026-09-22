@@ -42,7 +42,7 @@ export const FORBIDDEN_VARIANTS: ReadonlyArray<{
  * SIEMPRE como «Destrucción Creativa». El nombre de la constante es el de
  * cuando esa era la única regla.
  */
-export const DAL_OS_FORBIDDEN: ReadonlyArray<{ pattern: RegExp; why: string }> =
+export const DAL_OS_FORBIDDEN: ReadonlyArray<{ pattern: RegExp; why: string; correct?: string }> =
   sitio.nomenclatura.reglasDeContenido;
 
 /** Marca pública: SLG Agency. «Softlanding Global» solo en contexto SLG_Holdings (§10-4). */
@@ -68,11 +68,12 @@ export function findNomenclatureIssues(text: string): NomenclatureIssue[] {
         issues.push({ line: i + 1, found: m[0], correct, why });
       }
     }
-    for (const { pattern, why } of DAL_OS_FORBIDDEN) {
+    for (const { pattern, why, correct } of DAL_OS_FORBIDDEN) {
       const re = new RegExp(pattern.source, pattern.flags);
       let m: RegExpExecArray | null;
       while ((m = re.exec(lineText)) !== null) {
-        issues.push({ line: i + 1, found: m[0], correct: "Destrucción Creativa", why });
+        // Sin forma buena declarada, el motivo ya dice qué escribir.
+        issues.push({ line: i + 1, found: m[0], correct: correct ?? "(ver motivo)", why });
       }
     }
   });

@@ -3733,3 +3733,37 @@ comprobaciones, y rojo contra su ficha negativa por los seis motivos), y, sobre 
 autocontenida con las variables de CI, `check:paginas` (142), `check:seo` (226), `check:armazon`
 (60), `check:produccion`, `check:runtime`, `check:blog` y `check:js-budget`. `test:gestion` y
 `check:brakes` necesitan PostgreSQL y no corren en esta máquina: los corre el trabajo `datos` de CI.
+
+## Plantilla, paso 4: los cinco frenos de la oferta leen la ficha (2026-09-22)
+
+Cuarto paso de `docs/PLAYBOOK_REPLICACION.md` §3. Los cinco frenos que validaban contra la oferta de
+SLG escrita a mano la leen ahora de la ficha, y **ninguno nombra a SLG ni a sus servicios**: medirían
+igual el sitio de cualquier cliente.
+
+**Hecho.** `check:nomenclature` ya recorría `lib/content/nomenclature.ts`, que desde el paso 3 lee
+`sitio.nomenclatura`; faltaba la forma buena de las reglas de contenido, que el motor escribía a
+mano («Destrucción Creativa»): ahora es el campo opcional `correct` de cada regla en la ficha. Con
+las tres listas **vacías** el freno recorre el contenido y pasa sin hallazgos —se probó vaciándolas
+un momento—. `check:copy` toma lo reservado al portal de `sitio.nomenclatura.prohibidasEnPublico`
+(en la ficha de SLG, la Sesión Cero, con el mismo mensaje de siempre); las agendas de terceros siguen
+en el freno, porque son del motor. `check:armazon` lee los destinos del menú y el botón de acceso de
+la tabla de rutas y recorre las páginas del motor, los ejes, las líneas, los sueltos y el primer
+servicio de cada línea —el mismo conjunto que tenía escrito—; el criterio 3 (el idioma es la ruta)
+usa Servicios y su propio título en vez de Doctrina, que es un módulo que un sitio puede apagar.
+`check:paginas` toma los bloques de `sitio.bloquesDeServicios`, mide el bloque de artículos hasta el
+bloque siguiente sea cual sea, y el criterio del enlace externo recorre las líneas con
+`enlaceExterno` y su URL de `dominio.enlaces`. `check:seo` mide el `schema.org` del primer servicio
+de la ficha y las salidas de la 404 de `salidasDeError()`. Esas salidas eran `/ai` y `/blog` escritos
+en `PaginaDeError`: ahora llegan por props, y a la 500 —un límite de error, de cliente por
+obligación— por un contexto que pone el layout raíz (`components/SalidasDeError.tsx`), para no
+mandar la ficha entera al navegador con el presupuesto de JS a 142,9 KB de 150.
+
+**Verificado.** Las 117 URL rastreadas siguen sirviendo el mismo código y el mismo HTML que `develop`
+(solo cambia `<lastmod>`). Los frenos del servidor hacen **el mismo número de comprobaciones** que
+sobre `develop` —`check:paginas` 142, `check:seo` 226, `check:armazon` 60— y todas en verde; las
+únicas líneas distintas son los textos que ya no nombran la oferta y el cambio de Doctrina a
+Servicios en el criterio 3. `check:gates` ve en rojo sus cinco fixtures negativos de contenido, y en
+verde: `check:types`, `lint`, `check:content`, `check:cadenas`, `check:migrations`,
+`check:fronteras`, `check:alcance`, `check:secrets`, `check:env`, `check:playbook`, `check:sitio`,
+`check:produccion`, `check:runtime`, `check:blog` y `check:js-budget`. `check:brakes` necesita
+PostgreSQL: lo corre CI.

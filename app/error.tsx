@@ -1,6 +1,9 @@
 "use client";
 
+import { useContext } from "react";
+
 import { PaginaDeError } from "@/components/PaginaDeError";
+import { SalidasDelSitio } from "@/components/SalidasDeError";
 
 /**
  * 500 (RF-17).
@@ -11,5 +14,7 @@ import { PaginaDeError } from "@/components/PaginaDeError";
  * variable de entorno (RNF-32).
  */
 export default function Error500() {
-  return <PaginaDeError codigo="500" />;
+  // Sin proveedor —no debería pasar: lo pone el layout raíz— queda la portada.
+  const salidas = useContext(SalidasDelSitio)?.es ?? [{ href: "/", clave: "error.home" }];
+  return <PaginaDeError codigo="500" salidas={salidas} />;
 }

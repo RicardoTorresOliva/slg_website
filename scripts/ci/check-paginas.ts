@@ -3,18 +3,23 @@
  *
  * Tres cosas que ninguna revisión manual sostiene en el tiempo:
  *
- *   · **El ORDEN de los bloques.** RF-09 fija siete en la portada y RF-06 fija
- *     seis en cada página de servicio. «Falta o desorden de una sección =
- *     página rechazada» no es una frase de estilo: es una condición que hay que
- *     comprobar en las 22 páginas de servicio cada vez que alguien edita un
- *     `.md`, porque el orden viaja en el contenido.
+ *   · **El ORDEN de los bloques.** RF-09 fija los de la página de Servicios
+ *     —cuáles y en qué orden lo dice la ficha, `sitio.bloquesDeServicios`— y
+ *     RF-06 fija seis en cada página de servicio. «Falta o desorden de una
+ *     sección = página rechazada» no es una frase de estilo: es una condición
+ *     que hay que comprobar en todas las páginas de servicio cada vez que
+ *     alguien edita un `.md`, porque el orden viaja en el contenido.
  *   · **El CTA ÚNICO.** RF-07: la descarga es el único llamado a la acción de
  *     una página de servicio. No hay segundo botón, ni agenda, ni formulario de
  *     contacto. Es la regla que se rompe sola en cuanto alguien «solo añade»
  *     un botón de contacto arriba.
  *   · **Que cada overview enlaza a TODOS sus servicios y a ninguno ajeno**
  *     (DU-04 criterio 2). Una lista escrita a mano se desincroniza; esta se
- *     comprueba contra la tabla de rutas.
+ *     comprueba contra la tabla de rutas, que sale de la ficha del sitio.
+ *
+ * Este freno no nombra ninguna oferta: servicios, líneas, bloques y enlaces
+ * externos salen de la ficha (D-165), así que mide igual el sitio de cualquier
+ * cliente.
  *
  * Requiere `npm run build:standalone`.
  */
@@ -22,13 +27,25 @@ import { spawn, type ChildProcess } from "node:child_process";
 import net from "node:net";
 import path from "node:path";
 
-import { RAMAS, SERVICIOS, rutaEnDeServicio } from "../../lib/content/rutas.ts";
+import {
+  DESCARGAS,
+  DOCTRINA,
+  PAGINA_DE_SERVICIOS,
+  RAMAS,
+  SERVICIOS,
+  rutaEnDeServicio,
+} from "../../lib/content/rutas.ts";
+import { sitio } from "../../lib/sitio/index.ts";
+import { PAGINAS_DEL_MOTOR } from "../../lib/sitio/motor.ts";
 
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 const SERVER = path.join(REPO_ROOT, ".next", "standalone", "server.js");
 
-/** Los siete bloques de la portada (RF-09), en orden. El séptimo es el pie. */
-const BLOQUES_DE_PORTADA = ["puertas", "lineas", "holdings", "doctrina", "articulos", "descarga"];
+/**
+ * Los bloques de la página de Servicios (RF-09), en orden, por su ancla: los de
+ * la ficha. Antes de ellos va el hero y después el pie, que no llevan ancla.
+ */
+const BLOQUES_DE_PORTADA = sitio.bloquesDeServicios.map((b) => (typeof b === "string" ? b : b.id));
 
 let fallos = 0;
 let comprobaciones = 0;
@@ -105,9 +122,9 @@ async function main() {
   const { base, parar } = externo ? { base: externo, parar: () => {} } : await arrancar();
   try {
     /* ── DU-03 · la portada ─────────────────────────────────────────────── */
-    console.log("\nDU-03 — los siete bloques de la portada, en orden (RF-09):\n");
-    // Desde el 2026-09-18 los bloques de RF-09 viven en /servicios; la portada es el mapa.
-    for (const ruta of ["/servicios", "/en/services"]) {
+    console.log("\nDU-03 — los bloques de Servicios, en el orden de la ficha (RF-09):\n");
+    // Desde el 2026-09-18 los bloques de RF-09 viven en Servicios; la portada es el mapa.
+    for (const ruta of [PAGINA_DE_SERVICIOS.es, PAGINA_DE_SERVICIOS.en]) {
       const r = await fetch(`${base}${ruta}`);
       const html = await r.text();
       const dentro = cuerpo(html);
@@ -119,26 +136,35 @@ async function main() {
           (b, i) => `${b}=${posiciones(dentro, BLOQUES_DE_PORTADA.map((x) => `id="${x}"`))[i]}`,
         ).join(" ")}`,
       );
-      check(
-        `${ruta} · la franja Doctrina lleva pull-quote y enlace`,
-        dentro.includes("<blockquote") && /href="\/(en\/doctrine|doctrina)"/.test(dentro),
-        "la doctrina es una franja con cita y enlace, no un bloque de texto (A.3)",
-      );
+      if (BLOQUES_DE_PORTADA.includes("doctrina")) {
+        check(
+          `${ruta} · la franja Doctrina lleva pull-quote y enlace`,
+          dentro.includes("<blockquote") && [DOCTRINA.es, DOCTRINA.en].some((d) => dentro.includes(`href="${d}"`)),
+          "la doctrina es una franja con cita y enlace, no un bloque de texto (A.3)",
+        );
+      }
       check(
         `${ruta} · cero fotografía de stock (RNF-44)`,
         !/<img[^>]+src="https?:\/\//.test(dentro),
         "una imagen servida desde fuera del dominio en la portada",
       );
-      // Criterio 2: los dos bloques vacíos están REDACTADOS, no huecos.
-      const bloqueArticulos = dentro.slice(dentro.indexOf('id="articulos"'), dentro.indexOf('id="descarga"'));
-      check(
-        `${ruta} · «últimos artículos» resuelve su estado con texto`,
-        bloqueArticulos.replace(/<[^>]+>/g, "").trim().length > 40,
-        "un bloque vacío sin redacción es un hueco (criterio 2)",
-      );
+      // Criterio 2: el bloque de artículos, si lo hay, está REDACTADO aunque
+      // esté vacío: va de su ancla a la del bloque siguiente, o al final.
+      const iArticulos = BLOQUES_DE_PORTADA.indexOf("articulos");
+      if (iArticulos >= 0) {
+        const desde = dentro.indexOf('id="articulos"');
+        const siguiente = BLOQUES_DE_PORTADA[iArticulos + 1];
+        const hasta = siguiente ? dentro.indexOf(`id="${siguiente}"`) : dentro.length;
+        const bloqueArticulos = dentro.slice(desde, hasta);
+        check(
+          `${ruta} · «últimos artículos» resuelve su estado con texto`,
+          bloqueArticulos.replace(/<[^>]+>/g, "").trim().length > 40,
+          "un bloque vacío sin redacción es un hueco (criterio 2)",
+        );
+      }
     }
 
-    /* ── DU-04 · los cuatro overviews ───────────────────────────────────── */
+    /* ── DU-04 · los índices de las líneas ──────────────────────────────── */
     console.log("\nDU-04 — cada overview enlaza a TODOS sus servicios y a ninguno ajeno:\n");
     for (const rama of RAMAS) {
       for (const [lang, ruta] of [["es", rama.es], ["en", rama.en]] as const) {
@@ -166,24 +192,30 @@ async function main() {
       }
     }
 
-    // Criterio 3: Phoenix Academy es externo y está señalado como tal.
-    for (const ruta of ["/ai/academy", "/en/ai/academy"]) {
-      const dentro = cuerpo(await (await fetch(`${base}${ruta}`)).text());
-      const enlace = /<a[^>]+academy\.softlandingglobal\.com[^>]*>/.exec(dentro)?.[0] ?? "";
-      check(
-        `${ruta} · el enlace a Phoenix Academy es externo y señalado`,
-        enlace.includes('target="_blank"') && enlace.includes("noopener"),
-        enlace ? `atributos: ${enlace}` : "no hay enlace a academy.softlandingglobal.com",
-      );
-      check(
-        `${ruta} · Phoenix Academy no se incrusta`,
-        !/<iframe/i.test(dentro),
-        "frontera (e): sin integración, sin sesión compartida y sin contenido embebido",
-      );
+    // Criterio 3: el destino externo de una línea (`enlaceExterno` en la ficha) se
+    // enlaza y se señala como externo, y no se incrusta.
+    for (const rama of RAMAS.filter((r) => r.enlaceExterno)) {
+      const url = sitio.dominio.enlaces[rama.enlaceExterno!.enlace] ?? "";
+      const host = url ? new URL(url).host : "(sin URL en dominio.enlaces)";
+      for (const ruta of [rama.es, rama.en]) {
+        const dentro = cuerpo(await (await fetch(`${base}${ruta}`)).text());
+        const enlace = [...dentro.matchAll(/<a[^>]+>/g)].map((m) => m[0]).find((a) => a.includes(`//${host}`)) ?? "";
+        check(
+          `${ruta} · el enlace externo a ${host} está señalado`,
+          enlace.includes('target="_blank"') && enlace.includes("noopener"),
+          enlace ? `atributos: ${enlace}` : `no hay enlace a ${host}`,
+        );
+        check(
+          `${ruta} · ${host} no se incrusta`,
+          !/<iframe/i.test(dentro),
+          "frontera (e): sin integración, sin sesión compartida y sin contenido embebido",
+        );
+      }
     }
 
-    /* ── DU-05 · las once páginas de servicio ───────────────────────────── */
+    /* ── DU-05 · las páginas de servicio ─────────────────────────────────── */
     console.log("\nDU-05 — las seis secciones en orden fijo, y un solo CTA (RF-06, RF-07):\n");
+    const CONTACTO = PAGINAS_DEL_MOTOR.contacto.ruta;
     for (const s of SERVICIOS) {
       for (const [lang, ruta] of [["es", s.es], ["en", rutaEnDeServicio(s)]] as const) {
         const r = await fetch(`${base}${ruta}`);
@@ -205,9 +237,9 @@ async function main() {
         );
 
         // Criterio 2: UN solo llamado a la acción.
-        const enlaceContacto = lang === "en" ? "/en/contact" : "/contacto";
+        const enlaceContacto = CONTACTO[lang];
         const botones = [...dentro.matchAll(/<a[^>]+href="([^"]+)"/g)].map((m) => m[1]);
-        const aDescargas = botones.filter((h) => h.includes("/descargas/") || h.includes("/downloads/"));
+        const aDescargas = botones.filter((h) => h.startsWith(`${DESCARGAS.es}/`) || h.startsWith(`${DESCARGAS.en}/`));
         check(
           `${ruta} · un solo enlace a su documento`,
           aDescargas.length <= 1,

@@ -138,6 +138,22 @@ export const PAGINAS_CON_RUTA_PROPIA = new Set<string>([
   ...RAMAS.flatMap((r) => [r.slug, r.slugEn]),
 ]);
 
+/** Una salida de la página de error: a dónde, y la clave de `content/ui/error.*.json`. */
+export type SalidaDeError = { href: string; clave: string };
+
+/**
+ * Las tres salidas de la 404 y la 500 (RF-17), por idioma: la portada, la
+ * oferta —el primer eje, o Servicios si el sitio no tiene ejes— y el blog.
+ */
+export function salidasDeError(): Record<Lang, SalidaDeError[]> {
+  const para = (lang: Lang): SalidaDeError[] => [
+    { href: INICIO[lang], clave: "error.home" },
+    { href: EJES[0]?.[lang] || PAGINA_DE_SERVICIOS[lang], clave: "error.ai" },
+    { href: PAGINAS_DEL_MOTOR.blog.ruta[lang], clave: "error.blog" },
+  ];
+  return { es: para("es"), en: para("en") };
+}
+
 /** El idioma es una propiedad de la RUTA, no una negociación (RF-03). */
 export function idiomaDeLaRuta(ruta: string): Lang {
   return ruta === "/en" || ruta.startsWith("/en/") ? "en" : "es";
