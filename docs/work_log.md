@@ -3905,3 +3905,18 @@ pasos que hace la persona que recibe el correo), `docs/plantilla-de-sitios.md` �
 (faltan variables de correo · `PRIMER_ADMIN_PASSWORD` sin el modificador · aviso del modo de
 emergencia), ejecutados a mano. El camino completo necesita PostgreSQL **vacío** y un SMTP: no tiene
 prueba automática, porque la base de CI ya tiene usuarios y el guion, a propósito, se niega.
+
+## El aviso de captura fallida no salía nunca (2026-09-22)
+
+Lo encontró el agente del paso 5b al leer `lib/crm/cola.ts`, y es un defecto de producción, no de la
+plantilla: `avisarDelFallo` pasaba a la plantilla `capture_failed_alert` las claves `urlCrm` y `error`,
+pero la plantilla exige `urlHq` y lee `ultimoError`. `exigir(datos, "urlHq")` lanzaba antes de encolar
+el correo y el `catch` vacío se lo tragaba. Resultado: una captura que agotaba los cinco intentos de
+entrega al CRM quedaba en `failed` **sin avisar a nadie**, que es justo lo que RF-50 pide impedir.
+
+**Hecho**: se pasan las claves que la plantilla pide —`urlHq` a la captura en HQ, donde se reintenta, y
+`ultimoError`— y el `catch` escribe el fallo en el registro del servidor en vez de desaparecerlo.
+
+**Verificado aquí**: `check:types`, `lint`. La prueba de la cola necesita PostgreSQL; la corre CI.
+`scripts/mail/test-correo.ts` ya componía esta plantilla con las claves correctas, y por eso nunca lo
+vio: probaba la plantilla, no a quien la llama.

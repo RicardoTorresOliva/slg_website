@@ -30,7 +30,7 @@ import { emitir } from "../webhooks/index.ts";
 
 import { adaptadorContactNote } from "./contact-note.ts";
 import { adaptadorLeadAdmission } from "./lead-admission.ts";
-import { enlaceAlContacto, MODOS_DE_CRM, type CapturaParaCrm, type ModoDeCrm, type PuertoDeCrm } from "./port.ts";
+import { MODOS_DE_CRM, type CapturaParaCrm, type ModoDeCrm, type PuertoDeCrm } from "./port.ts";
 import { crmEncendido, datosDelAviso, destinatarioDeContactos, idiomaDelAviso } from "./sin-crm.ts";
 
 /** Los cinco escalones de RF-50, en minutos. El sexto no existe: es `failed`. */
@@ -223,6 +223,18 @@ async function entregarUna(fila: Fila, puerto: PuertoDeCrm): Promise<void> {
  * un problema menor que no puede propagarse hacia atrás.
  */
 async function avisarDelFallo(fila: Fila, error: string | null): Promise<void> {
+  /**
+   * **ESTE AVISO NO HABÍA SALIDO NUNCA** (2026-09-22). Se le pasaban `urlCrm` y
+   * `error`, pero la plantilla `capture_failed_alert` exige `urlHq` y lee
+   * `ultimoError`: `exigir(datos, "urlHq")` lanzaba antes de encolar el correo, y
+   * el `catch` de abajo se lo tragaba sin dejar rastro. Una captura que agotaba
+   * los cinco intentos quedaba en `failed` sin que nadie se enterara, que es
+   * exactamente lo que RF-50 existe para impedir. Ahora se pasan las claves que
+   * la plantilla pide —el enlace a la captura en HQ, que es donde se reintenta—,
+   * y si el correo falla igualmente, el fallo se escribe en el registro del
+   * servidor en vez de desaparecer.
+   */
+  const base = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
   try {
     await enviarCorreo({
       tipo: "capture_failed_alert",
@@ -231,12 +243,14 @@ async function avisarDelFallo(fila: Fila, error: string | null): Promise<void> {
       datos: {
         correo: fila.email,
         origen: fila.source,
-        error: error ?? "sin detalle",
-        urlCrm: enlaceAlContacto(null) ?? (process.env.CRM_BASE_URL ?? ""),
+        urlHq: `${base}/hq/capturas#${fila.id}`,
+        ultimoError: error ?? "sin detalle",
       },
     });
-  } catch {
-    // Deliberado: nada que hacer aquí, y nada que revertir.
+  } catch (e) {
+    // La captura ya está guardada y en `failed`, visible en HQ: no hay nada que
+    // revertir. Pero un aviso que no sale tiene que verse en algún sitio.
+    console.error(`[crm] el aviso de captura fallida (${fila.id}) no se pudo enviar:`, e);
   }
 }
 
