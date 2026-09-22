@@ -101,17 +101,25 @@ Se pide **todo antes de empezar**; sin los ítems ★ no arranca el reloj de los
 | Tally / Jotform / Typeform | Sí | No | **No**: no hay conector; habría que copiar y pegar | ❌ |
 | Formulario propio en el portal de SLG | Sí, con URL firmada | Sí, una invitación | Sí, por la base | ⏳ A medio plazo: cuando el portal abra en producción (M3/M4), el intake se muda ahí y se convierte en la sala del proyecto |
 
-**Configuración única — Ricardo, una sola vez, 10 minutos:**
+**Configuración única — Ricardo, una sola vez, 15 minutos:**
 1. Abre `https://github.com/RicardoTorresOliva/slg_website/blob/develop/docs/intake/crear-formulario-intake.gs` en el navegador. Arriba a la derecha del código, clic en el icono **Copy raw file** (dos cuadraditos). Debe aparecer «Copied!».
 2. Abre `https://script.google.com` con la cuenta `torresoliva.ricardo@gmail.com`. Clic en **Nuevo proyecto** (arriba a la izquierda).
 3. En el editor, selecciona todo el texto que aparece (`Cmd + A`), bórralo y pega (`Cmd + V`). Clic en el icono de disquete **Guardar**.
 4. En la barra de arriba, junto a **Depurar**, debe decir `crearFormularioIntake`. Clic en **Ejecutar**.
-5. Aparece «Se necesita autorización» → **Revisar permisos** → elige tu cuenta → **Configuración avanzada** → **Ir a Proyecto sin título (no seguro)** → **Permitir**. Es tu propio script: es seguro.
+5. Aparece «Se necesita autorización» → **Revisar permisos** → elige tu cuenta → **Configuración avanzada** → **Ir a Proyecto sin título (no seguro)** → **Permitir**. Entre los permisos aparece «Conectarse a un servicio externo»: es para descargar el logo. Es tu propio script: es seguro.
 6. Abajo se abre el **Registro de ejecución**. Debe terminar con `LISTO.` y cuatro enlaces: el del cliente, el de editar, la hoja y la carpeta.
-7. Pega esos cuatro enlaces en la sesión de Claude. Claude los guarda y a partir de ahí los usa solo.
-8. Si sale un error en rojo: cópialo entero y pégalo en la sesión de Claude. No ejecutes el script dos veces (crearía un segundo formulario).
+7. **Colores y tipografía de la marca** (Google no deja ponerlos por script):
+   1. Abre el enlace **Editar el formulario** del registro. Arriba debe verse el logo de Softlanding Global.
+   2. Arriba a la derecha, clic en el icono de la **paleta** («Personalizar tema»).
+   3. En **Color**, clic en **+** → pega `#2878B4` → **Aceptar**.
+   4. En **Color de fondo**, elige el tono **más claro** de la fila (el casi blanco azulado).
+   5. En **Estilo del texto**: Encabezado → **Montserrat**, 24 · Pregunta → **Montserrat**, 12 · Texto → **Montserrat**, 11. Si Montserrat no aparece en la lista, elige **Roboto**.
+   6. Deja **Encabezado** (la imagen de la franja superior) **sin imagen**: el logo ya está dentro del formulario.
+   7. Cierra el panel con la **X**. Se guarda solo. Debe verse el formulario con acentos azules y fondo casi blanco.
+8. Pega los cuatro enlaces del paso 6 en la sesión de Claude. Claude los guarda y a partir de ahí los usa solo.
+9. Si sale un error en rojo: cópialo entero y pégalo en la sesión de Claude. No ejecutes el script dos veces: crearía un segundo formulario. Si ya lo ejecutaste con la versión anterior, borra antes en Google Drive la carpeta «SLG · Intake webs».
 
-**Por cliente, Claude:** redacta el correo con el enlace del formulario (borrador en Gmail), lee la respuesta en la hoja, crea la carpeta `Intake · <cliente>` dentro de «SLG · Intake webs», la comparte con el correo del responsable (con tu «sí» en el chat) y comprueba los ★ antes de arrancar.
+**Por cliente, Claude:** redacta el correo con el enlace del formulario (borrador en Gmail), lee la respuesta en la hoja, crea la carpeta `Intake · <cliente>` dentro de «Softlanding Global · Intake webs», la comparte con el correo del responsable (con tu «sí» en el chat) y comprueba los ★ antes de arrancar.
 
 ## 5. Procedimiento de lanzamiento de una web nueva (≤ 5 días hábiles)
 

@@ -2,11 +2,22 @@
  * crear-formulario-intake.gs — El brief de una web de cliente, en Google Forms.
  *
  * SE EJECUTA UNA SOLA VEZ, NO POR CLIENTE. Crea:
- *   · la carpeta de Drive «SLG · Intake webs»;
- *   · el formulario «SLG Agency · Brief de tu nueva web», con las 15 preguntas
- *     del checklist de intake (docs/PLAYBOOK_REPLICACION.md §4);
- *   · la hoja «SLG · Intake webs — respuestas», donde caen todas las respuestas
- *     de todos los clientes. Claude la lee por el conector de Google Drive.
+ *   · la carpeta de Drive «Softlanding Global · Intake webs»;
+ *   · el formulario «Softlanding Global · Brief de tu nueva web», con las 15
+ *     preguntas del checklist de intake (docs/PLAYBOOK_REPLICACION.md §4);
+ *   · la hoja «Softlanding Global · Intake webs — respuestas», donde caen todas
+ *     las respuestas de todos los clientes. Claude la lee por el conector de
+ *     Google Drive.
+ *
+ * LA MARCA (Kit de Marca SLG, v1). Lo que un script PUEDE poner, lo pone: el
+ * logotipo oficial con tagline arriba del todo, el nombre oficial en el
+ * título, el tagline en la descripción y las secciones numeradas «01 · …»
+ * como los bloques del kit. Lo que NO puede —el color del tema, el fondo y la
+ * tipografía—: Google no los expone ni a Apps Script ni a su API, y se ponen
+ * a mano una vez en «Personalizar tema» (PLAYBOOK_REPLICACION.md §4.1, paso 7).
+ * El logo se descarga del repositorio público: `docs/intake/logo-softlanding-global.png`,
+ * copia exacta de `SLG-Horizontal-Tagline-2023.png`, fondo transparente sobre
+ * el blanco del formulario, que es el fondo que el kit admite.
  *
  * LOS ARCHIVOS NO VAN EN EL FORMULARIO, Y NO ES UN OLVIDO. Una pregunta de
  * «subir archivo» obliga al cliente a entrar con una cuenta de Google —medio
@@ -21,20 +32,22 @@
  * Cómo se ejecuta: docs/PLAYBOOK_REPLICACION.md §4.1.
  */
 function crearFormularioIntake() {
-  const carpeta = DriveApp.createFolder('SLG · Intake webs');
+  const carpeta = DriveApp.createFolder('Softlanding Global · Intake webs');
 
-  const form = FormApp.create('SLG Agency · Brief de tu nueva web');
+  const form = FormApp.create('Softlanding Global · Brief de tu nueva web');
   form
     .setDescription(
-      'Con esto construimos tu web. Son unos 15 minutos. Si no sabes una respuesta, ' +
-        'elige «No sé»: te ayudamos después. Al terminar te llega un enlace para ' +
+      'The discipline of going global.\n\n' +
+        'Con este brief construimos tu web. Son unos 15 minutos. Si no sabes una respuesta, ' +
+        'elige «No sé»: lo resolvemos contigo después. Al terminar recibes un enlace para ' +
         'corregir lo que quieras, y una carpeta compartida para subir logos, fotos y documentos.'
     )
     .setProgressBar(true)
     .setAllowResponseEdits(true)
     .setConfirmationMessage(
-      'Gracias. En menos de 24 horas te llega por correo una carpeta compartida de ' +
-        'Google Drive para subir tu logo, fotos y documentos. No necesitas cuenta de Google.'
+      'Gracias. En menos de 24 horas recibes por correo una carpeta compartida de ' +
+        'Google Drive para subir tu logo, fotos y documentos. No necesitas cuenta de Google.\n\n' +
+        '— Softlanding Global · The discipline of going global'
     );
 
   const correo = FormApp.createTextValidation()
@@ -62,8 +75,18 @@ function crearFormularioIntake() {
       .setRequired(!!obligatorio);
   const seccion = (titulo, ayuda) => form.addPageBreakItem().setTitle(titulo).setHelpText(ayuda || '');
 
-  /* ── 1 · Empresa y contacto ─────────────────────────────────────────────── */
-  form.addSectionHeaderItem().setTitle('1 · Tu empresa');
+  /* ── El logotipo, lo primero que se ve ──────────────────────────────────── */
+  const LOGO =
+    'https://raw.githubusercontent.com/RicardoTorresOliva/slg_website/develop/docs/intake/logo-softlanding-global.png';
+  const logo = UrlFetchApp.fetch(LOGO).getBlob().setName('logo-softlanding-global.png');
+  form.addImageItem().setImage(logo).setAlignment(FormApp.Alignment.CENTER).setWidth(540);
+  form.moveItem(form.getItems().length - 1, 0);
+  // Copia en la carpeta: es la que se elige como imagen de encabezado si algún
+  // día se quiere el logo en la franja superior del tema en vez de dentro.
+  carpeta.createFile(logo);
+
+  /* ── 01 · Empresa y contacto ────────────────────────────────────────────── */
+  form.addSectionHeaderItem().setTitle('01 · Tu empresa');
   texto('Nombre comercial', 'Como quieres que aparezca en la web.', true);
   texto('Razón social', 'El nombre legal que aparece en tus facturas.', true);
   texto('País y ciudad', '', true);
@@ -78,7 +101,7 @@ function crearFormularioIntake() {
     .setRequired(true);
 
   /* ── 2 · Dominio y correo ───────────────────────────────────────────────── */
-  seccion('2 · Dominio y correo', 'El dominio es la dirección de tu web, por ejemplo tuempresa.com.');
+  seccion('02 · Dominio y correo', 'El dominio es la dirección de tu web, por ejemplo tuempresa.com.');
   unaOpcion('¿Ya tienes dominio?', ['Sí', 'No, quiero que lo gestionen ustedes', 'No sé'], true);
   texto('¿Cuál es tu dominio?', 'Por ejemplo: tuempresa.com', false);
   unaOpcion(
@@ -105,7 +128,7 @@ function crearFormularioIntake() {
   texto('Correo que debe recibir los mensajes del formulario de contacto de la web', '', true).setValidation(correo);
 
   /* ── 3 · Marca ──────────────────────────────────────────────────────────── */
-  seccion('3 · Tu marca', 'El logo, las fotos y el manual de marca los subirás a la carpeta compartida.');
+  seccion('03 · Tu marca', 'El logo, las fotos y el manual de marca los subirás a la carpeta compartida.');
   parrafo('Colores de tu marca', 'Si los tienes en código (por ejemplo #0A2540), mejor. Si no, descríbelos.', false);
   texto('Tipografías de tu marca', 'Si no lo sabes, déjalo en blanco.', false);
   variasOpciones(
@@ -117,7 +140,7 @@ function crearFormularioIntake() {
   parrafo('Webs de tu competencia', 'Una por línea.', false);
 
   /* ── 4 · Idiomas y estructura ───────────────────────────────────────────── */
-  seccion('4 · Idiomas y lo que ofreces');
+  seccion('04 · Idiomas y lo que ofreces');
   unaOpcion('Idiomas de la web', ['Solo español', 'Solo inglés', 'Español e inglés'], true);
   parrafo(
     'Tus servicios o productos',
@@ -146,7 +169,7 @@ function crearFormularioIntake() {
   );
 
   /* ── 5 · Funciones ──────────────────────────────────────────────────────── */
-  seccion('5 · Funciones');
+  seccion('05 · Funciones');
   variasOpciones(
     '¿Qué funciones necesitas?',
     [
@@ -174,12 +197,12 @@ function crearFormularioIntake() {
   parrafo('Redes sociales y otros enlaces', 'LinkedIn, Instagram, WhatsApp, enlace para agendar citas… uno por línea.', false);
 
   /* ── 6 · Contenido y legales ────────────────────────────────────────────── */
-  seccion('6 · Textos y legales');
+  seccion('06 · Textos y legales');
   unaOpcion(
     '¿Quién escribe los textos de la web?',
     [
       'Los entregamos nosotros',
-      'Que los redacte SLG a partir de nuestro material',
+      'Que los redacte Softlanding Global a partir de nuestro material',
       'Una parte cada uno',
     ],
     true
@@ -201,7 +224,7 @@ function crearFormularioIntake() {
   parrafo('¿Algo más que debamos saber?', '', false);
 
   /* ── Respuestas a una hoja, y todo dentro de la carpeta ─────────────────── */
-  const hoja = SpreadsheetApp.create('SLG · Intake webs — respuestas');
+  const hoja = SpreadsheetApp.create('Softlanding Global · Intake webs — respuestas');
   form.setDestination(FormApp.DestinationType.SPREADSHEET, hoja.getId());
   DriveApp.getFileById(form.getId()).moveTo(carpeta);
   DriveApp.getFileById(hoja.getId()).moveTo(carpeta);
