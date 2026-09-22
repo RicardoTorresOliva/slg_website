@@ -12,7 +12,7 @@ import { sql } from "drizzle-orm";
 import { withSystemScope } from "../db/scope.ts";
 
 import { limitar } from "./limite.ts";
-import { campoTrampaRelleno } from "./trampa.ts";
+import { campoTrampaAusente, campoTrampaRelleno } from "./trampa.ts";
 
 export type Veredicto =
   | { ok: true; email: string; dominio: string }
@@ -63,8 +63,14 @@ export async function verificarEnvio(entrada: {
   /** IP del cliente, si el despliegue la expone. Vacía no rompe nada. */
   ip?: string;
 }): Promise<Veredicto> {
-  // 1 · Trampa. Gratis, y antes de tocar la base.
-  if (campoTrampaRelleno(entrada.datos)) return RESULTADO_TRAMPA;
+  // 1 · Trampa. Gratis, y antes de tocar la base. Dos formas de caer en ella:
+  // RELLENA delata al rellenador automatico que no vio el `left:-9999px`;
+  // AUSENTE delata al script que postea a mano contra la API sin haber leido
+  // nunca el formulario. Las dos responden igual, porque distinguirlas en la
+  // respuesta seria decirle al bot por donde volver a entrar (RF-33).
+  if (campoTrampaRelleno(entrada.datos) || campoTrampaAusente(entrada.datos)) {
+    return RESULTADO_TRAMPA;
+  }
 
   const email = entrada.email.trim().toLowerCase();
 
