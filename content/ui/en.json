@@ -215,6 +215,7 @@
   "hq.form.error": "Check this field",
   "hq.form.errorFor": "We could not save it: check the field",
   "hq.captures.title": "Web captures",
+  "hq.captures.withoutCrm": "No CRM: each capture is emailed to the client's inbox",
   "hq.captures.all": "All",
   "hq.captures.filterStatus": "Status",
   "hq.captures.filterDocument": "Document",

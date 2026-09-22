@@ -11,6 +11,8 @@
  * **nombres, nunca valores**: los nombres ya están en `.env.example`, que es
  * público, y saber cuál falta es justo lo que desatasca un despliegue.
  */
+import { moduloActivo } from "../sitio/index.ts";
+
 export type Variable = {
   readonly nombre: string;
   readonly para: string;
@@ -20,6 +22,13 @@ export type Variable = {
 
 const SOBRE_SUPABASE = process.env.FILES_DRIVER === "supabase";
 const SOBRE_S3 = !SOBRE_SUPABASE;
+
+/**
+ * Sin CRM, el correo al buzón del cliente es el único aviso de una captura
+ * (plantilla, paso 5b): faltar `MAIL_LEADS_TO` es perder contactos en silencio.
+ * Con CRM no se usa, y pedirla sería reclamar lo que no hace falta.
+ */
+const SIN_CRM = !moduloActivo("crm");
 
 export const VARIABLES: readonly Variable[] = [
   { nombre: "DATABASE_URL", para: "Cómo se conecta el sitio a la base (rol slg_app)", secreta: true, obligatoria: true },
@@ -44,6 +53,7 @@ export const VARIABLES: readonly Variable[] = [
   { nombre: "MAIL_SMTP_PASSWORD", para: "Contraseña SMTP", secreta: true, obligatoria: true },
   { nombre: "MAIL_FROM_ADDRESS", para: "Desde qué dirección se manda", secreta: false, obligatoria: true },
   { nombre: "OPS_MAIL_TO", para: "A quién va el correo de prueba de esta página", secreta: false, obligatoria: true },
+  { nombre: "MAIL_LEADS_TO", para: "El buzón del cliente que recibe los contactos de la web (sitio sin CRM)", secreta: false, obligatoria: SIN_CRM },
   { nombre: "CRON_SECRET", para: "Testigo de /api/colas: barre las colas desde un planificador externo (opcional)", secreta: true, obligatoria: false },
   { nombre: "CRM_BASE_URL", para: "La API del CRM", secreta: false, obligatoria: false },
   { nombre: "CRM_API_KEY_CAPTURE", para: "Clave del CRM que escribe", secreta: true, obligatoria: false },

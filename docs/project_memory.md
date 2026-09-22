@@ -839,7 +839,7 @@ fusionados y con los frenos en verde tras cada fusión:
   los vales solo los firman HQ y el portal, cerrados en producción; pero la ventana existió.
 
 ### Herramientas que existen y conviene recordar
-- `npm run auth:primer-admin` (arranque; `--rehacer` mientras nadie haya entrado).
+- `npm run auth:primer-admin` (arranque; la cuenta nace sin contraseña y recibe el enlace para elegirla; `--rehacer` mientras nadie haya entrado; `--imprimir-contrasena` solo de emergencia).
 - `npm run auth:revisar-cuenta -- --correo X --password Y`: por qué no entra una cuenta, sin
   escribir nada.
 - `node --env-file=<ops>.env scripts/db/migrar.ts`: dice qué aplicó.

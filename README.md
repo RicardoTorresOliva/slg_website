@@ -179,6 +179,28 @@ Esto **no pasa por GitHub**: se hace dentro del sitio.
 > pantalla. Es a propósito: un fallo del correo no puede dejar a un cliente sin acceso y a ti sin
 > saberlo.
 
+### Antes de la primera invitación: la primera cuenta
+
+Invitar exige estar dentro, así que la **primera** cuenta de un sitio nuevo (rol `slg_admin`) no se
+invita: la crea una sola vez el guion `npm run auth:primer-admin`, que ejecuta Claude —o quien tenga
+el archivo de variables del despliegue— al montar el sitio. **No te da ninguna contraseña**: la
+cuenta nace sin ella y te llega un correo para que la elijas tú.
+
+1. Abre tu correo y busca uno con el asunto **«Restablecer tu contraseña»**. Es el enlace de alta:
+   sirve **una vez** y **caduca en una hora**.
+2. Pulsa **Restablecer la contraseña**. Se abre `…/restablecer` en el sitio.
+3. Escribe tu contraseña (**12 caracteres como mínimo**) y confírmala.
+4. Entra en `…/acceder` con tu correo y esa contraseña. Deberías ver el panel de HQ.
+
+**Si el enlace caducó o el correo no llegó** (mira también la carpeta de spam): entra en
+`…/recuperar`, escribe **el mismo correo** y pulsa enviar; llega otro enlace igual. Si tampoco llega,
+el correo del sitio no está funcionando: díselo a Claude, que puede repetir el arranque mientras
+nadie haya entrado (`--rehacer`).
+
+> Existe un modo de emergencia, `--imprimir-contrasena`, que enseña la contraseña en la terminal en
+> vez de mandar el enlace. Es solo para cuando el correo del sitio no funciona todavía, lo avisa al
+> ejecutarse, y esa contraseña hay que cambiarla nada más entrar: ha pasado por una pantalla.
+
 ---
 
 ## Tarea 5 · Crear una clave de API
@@ -281,6 +303,12 @@ Si alguna sale **`failed`** (cinco intentos agotados), esa pantalla tiene un bot
 > El día que el CRM permita crear oportunidades por API, esto cambia de modo con **una variable**
 > (`CRM_MODE`) y sin desplegar código nuevo. Hasta entonces, el paso manual es el paso.
 
+**Un sitio sin CRM** (la ficha `site.config.ts` con `crm: false`) no entrega a ningún sitio: cada
+captura llega **por correo al buzón del cliente** (`MAIL_LEADS_TO`) con nombre, apellido, correo,
+origen, página, documento y mensaje. En **Capturas** sale como **`notified`** si el correo salió, o
+**`notify_failed`** si tras cinco intentos no salió; en ese caso lee el error de la fila (casi siempre
+falta `MAIL_LEADS_TO` o falla el correo), arréglalo y pulsa **Reintentar**.
+
 ### Rotar el secreto de Microsoft (Entra ID)
 
 El secreto que permite entrar con la cuenta de Microsoft **caduca**. Cuando caduque, nadie podrá
@@ -331,6 +359,7 @@ Los valores se ponen en **Easypanel → proyecto `slg_website` → el servicio �
 | `MAIL_SMTP_HOST` · `MAIL_SMTP_PORT` · `MAIL_SMTP_USERNAME` · `MAIL_SMTP_PASSWORD` | Resend → *SMTP* | Tú, en Resend |
 | `MAIL_FROM_ADDRESS` · `MAIL_FROM_NAME` · `MAIL_REPLY_TO` | Los eliges tú. El remitente vive en el **subdominio de envío**, no en la raíz | Tú |
 | `MAIL_ALERTS_TO` | El buzón que recibe los avisos de captura y de fallo | Tú |
+| `MAIL_LEADS_TO` | El buzón **del cliente** que recibe los contactos de la web. Solo en un sitio **sin CRM**, y ahí es obligatoria: cada captura le llega por correo con los datos de la persona | El cliente te la da en el formulario de intake |
 | `S3_ENDPOINT` · `S3_REGION` · `S3_BUCKET_DOWNLOADS` · `S3_BUCKET_DELIVERABLES` | El servicio `minio`: dirección interna y los dos buckets | Tú, en Easypanel |
 | `S3_ACCESS_KEY_ID` · `S3_SECRET_ACCESS_KEY` | Son `MINIO_ROOT_USER` y `MINIO_ROOT_PASSWORD` del servicio `minio` | Tú, en Easypanel → `minio` → `Environment` |
 | `SIGNED_URL_TTL_DOWNLOAD_MINUTES` · `SIGNED_URL_TTL_DELIVERABLE_MINUTES` · `SIGNED_URL_TTL_UPLOAD_MINUTES` | Cuánto dura un enlace de archivo. Tienen defecto: solo se ponen para cambiarlo | Tú |

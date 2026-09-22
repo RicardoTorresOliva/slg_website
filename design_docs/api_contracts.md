@@ -348,7 +348,7 @@ de leads: el lead se trabaja en el CRM por su propio MCP (frontera (a) de `scope
 | `since` | fecha-hora RFC 3339 | — | `created_at >= since` |
 | `until` | fecha-hora RFC 3339 | — | `created_at < until` |
 | `source` | `download` · `contact` · `doctrine-request` | todas | `lead_capture.source` (`data_model` §3.7) |
-| `crm_sync_status` | `pending` · `delivered` · `failed` | todos | `lead_capture.crm_sync_status` (§3.8) |
+| `crm_sync_status` | `pending` · `delivered` · `failed` · `notified` · `notify_failed` (los dos últimos, solo en un sitio sin CRM: migración 0025) | todos | `lead_capture.crm_sync_status` (§3.8) |
 | `doc_code` | `D-01` … `D-11` | todos | Filtra por el documento a través de `download.doc_code` |
 | `limit` · `cursor` | §2.7 | | |
 

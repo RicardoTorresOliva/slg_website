@@ -63,6 +63,15 @@ export const PROJECT_SERVICES = [
 ] as const;
 export const LEAD_SOURCES = ["download", "contact", "doctrine-request"] as const;
 export const QUEUE_STATUS = ["pending", "delivered", "failed"] as const;
+/**
+ * El estado de una captura es el de las colas MÁS DOS, y los dos solo existen
+ * en un sitio sin CRM (plantilla, paso 5b · migración 0025). Allí no hay a quién
+ * «entregar»: la captura se avisa por correo al buzón del cliente, y su estado
+ * tiene que decir si ese aviso salió (`notified`) o se agotó sin salir
+ * (`notify_failed`). Reutilizar `delivered` mentiría —diría que llegó a un CRM
+ * que no existe— y dejarla en `pending` la tendría en cola para siempre.
+ */
+export const CAPTURE_SYNC_STATUS = [...QUEUE_STATUS, "notified", "notify_failed"] as const;
 export const CRM_MODES = ["contact_note", "lead_admission"] as const;
 export const DOWNLOAD_STATUS = ["draft", "coming-soon", "published"] as const;
 export const DELIVERABLE_TYPES = ["pdf", "html", "md", "link", "material"] as const;
@@ -388,6 +397,7 @@ export const leadCapture = pgTable(
     crmContactId: text("crm_contact_id"),
     crmCompanyId: text("crm_company_id"),
     crmOpportunityId: text("crm_opportunity_id"),
+    /** `CAPTURE_SYNC_STATUS`: con CRM, entrega; sin CRM, aviso por correo (0025). */
     crmSyncStatus: text("crm_sync_status").notNull().default("pending"),
     crmAttempts: integer("crm_attempts").notNull().default(0),
     crmCycle: integer("crm_cycle").notNull().default(1),

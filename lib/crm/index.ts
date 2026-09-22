@@ -7,6 +7,7 @@
 export {
   adaptadorDelModo,
   arrancarBarrendero,
+  barrerSinCrmUnaVez,
   barrerUnaVez,
   ESCALERA_MINUTOS,
   INTERVALO_MS,
@@ -14,4 +15,5 @@ export {
   modoActivo,
   pararBarrendero,
 } from "./cola.ts";
+export { crmEncendido, datosDelAviso, destinatarioDeContactos } from "./sin-crm.ts";
 export { enlaceAlContacto, MODOS_DE_CRM, type CapturaParaCrm, type ModoDeCrm, type PuertoDeCrm } from "./port.ts";

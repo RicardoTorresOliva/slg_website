@@ -19,6 +19,7 @@
  *   · **4** — las que piden abrir la oportunidad a mano vienen señaladas.
  *   · **6** — sin capturas · sin fallidas · **CRM caído durante el reintento** ·
  *     **reintento sobre una ya entregada: idempotente**.
+ *   · **paso 5b** — sin CRM, `notify_failed` se reabre y `notified` no.
  *
  * Necesita `bash scripts/db/local-pg.sh up`.
  */
@@ -302,6 +303,42 @@ async function main() {
       "una entregada por `lead_admission` NO pide trabajo manual: ahí el CRM sí abre el hueco",
       yaNo?.pideTrabajoManual === false,
       JSON.stringify(yaNo),
+    );
+
+    /* ── Plantilla, paso 5b · el reintento en un sitio sin CRM ──────────── */
+    // Los estados se ponen a mano: el aviso por correo se prueba en
+    // `scripts/crm/test-crm.ts`; aquí, solo lo que hace el botón de HQ con los
+    // dos estados nuevos (migración 0025).
+    console.log("\nPaso 5b — sin CRM, HQ reabre el aviso agotado y no repite el que salió:\n");
+    const avisoAgotado = await crearCaptura(`aviso-agotado@${DOMINIO}`);
+    await dueno`update lead_capture
+                   set crm_sync_status = 'notify_failed', crm_attempts = 5,
+                       crm_last_error = 'aviso por correo: red: el proveedor no contesta'
+                 where id = ${avisoAgotado}`;
+    const rAviso = await reintentarCaptura(admin(), avisoAgotado);
+    const trasAviso = await estadoDe(avisoAgotado);
+    check(
+      "una `notify_failed` se reabre como una `failed`: `pending`, contador a cero, ciclo 2 y sin el error viejo",
+      rAviso.ok === true &&
+        trasAviso?.crm_sync_status === "pending" &&
+        trasAviso?.crm_attempts === 0 &&
+        trasAviso?.crm_cycle === 2 &&
+        trasAviso?.crm_last_error === null,
+      `${JSON.stringify(rAviso)} · ${JSON.stringify(trasAviso)}`,
+    );
+    const avisada = await crearCaptura(`avisada@${DOMINIO}`);
+    await dueno`update lead_capture set crm_sync_status = 'notified', crm_attempts = 1 where id = ${avisada}`;
+    const rAvisada = await reintentarCaptura(admin(), avisada);
+    check(
+      "una `notified` contesta «ya entregada»: el cliente ya tiene ese correo",
+      rAvisada.ok === false && rAvisada.motivo === "ya_entregada",
+      JSON.stringify(rAvisada),
+    );
+    const filtradas = await capturasDeHq(admin(), { todosLosDias: true, estado: "notified" });
+    check(
+      "y el filtro de HQ la encuentra por su estado",
+      filtradas.some((c) => c.id === avisada) && filtradas.every((c) => c.estado === "notified"),
+      `${filtradas.length} capturas`,
     );
 
     await limpiar();
