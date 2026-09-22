@@ -202,5 +202,5 @@ C = Claude · R = Ricardo · Cl = cliente. Presupone la plantilla del §3 termin
 |---|---|
 | D-165 registrada | Estructura de la oferta en `site.config.ts` |
 | `website_template` comprobada | Privada, marcada como *template*; **rama por defecto cambiada de `main` a `develop`** |
-| Script del formulario | `docs/intake/crear-formulario-intake.gs`, listo para pegar |
+| Formulario de intake | **Creado y con la marca**: enlace para el cliente `https://forms.gle/PdrXV9Jay9Re79wQ8`. Hoja de respuestas y carpeta «Softlanding Global · Intake webs» en el Drive de Ricardo; Claude las localiza por el conector (sus enlaces no van a este repositorio, que es público) |
 | Conectores probados | Supabase, Vercel y Google Drive responden; GitHub MCP no, cubierto por `gh` |
