@@ -1,8 +1,8 @@
 ---
 type: service
-name: Phoenix PEEx
-branch: VoltAi Academy
-parent: slg-academy
+name: Producto Uno
+branch: Una línea
+parent: una-linea
 download: algo
 lang: es
 pair: x

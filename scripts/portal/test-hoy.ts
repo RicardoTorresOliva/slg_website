@@ -38,6 +38,15 @@ import postgres from "postgres";
 import { contextoDeSesion } from "../../lib/db/context.ts";
 import type { UserRole } from "../../lib/db/schema.ts";
 import { generarTestigo } from "../../lib/invitations/token.ts";
+import { nombresDeServicio } from "../../lib/sitio/index.ts";
+/**
+ * Los servicios con los que se siembran los proyectos salen de la ficha
+ * (`site.config.ts`): la base no restringe `project.service` (0024), pero la
+ * aplicación solo acepta los literales de la oferta, y una prueba que sembrara
+ * el nombre de un servicio de otro sitio probaría datos que este sitio no
+ * puede producir.
+ */
+const [SERVICIO, OTRO_SERVICIO = SERVICIO] = nombresDeServicio();
 
 let fallos = 0;
 let comprobaciones = 0;
@@ -128,10 +137,10 @@ async function sembrar() {
     await dueno`insert into membership (id, user_id, organization_id, org_role)
                 values (${crypto.randomUUID()}, ${lado.user}, ${lado.org}, 'client_member')`;
     await dueno`insert into project (id, organization_id, name, service, status)
-                values (${lado.activo}, ${lado.org}, ${`Proyecto ${lado.slug}`}, 'Phoenix PEEx', 'active')`;
+                values (${lado.activo}, ${lado.org}, ${`Proyecto ${lado.slug}`}, ${SERVICIO}, 'active')`;
   }
   await dueno`insert into project (id, organization_id, name, service, status)
-              values (${A.pausado}, ${A.org}, 'Proyecto pausado', 'SLG_Readiness', 'paused')`;
+              values (${A.pausado}, ${A.org}, 'Proyecto pausado', ${OTRO_SERVICIO}, 'paused')`;
 
   // Noticias de A: dos de hoy con importancia distinta —insertadas al revés—,
   // una de ayer, un borrador. Y una de hoy en B, que A no puede ver.
@@ -297,9 +306,9 @@ async function portadaPorHttp(): Promise<{ status: number; html: string }> {
     MAIL_SMTP_PORT: "1",
     MAIL_SMTP_USERNAME: "u",
     MAIL_SMTP_PASSWORD: CLAVE_DEL_BUZON_LOCAL,
-    MAIL_FROM_ADDRESS: "no-reply@mailweb.softlandingglobal.com",
-    MAIL_REPLY_TO: "support@softlandingglobal.com",
-    MAIL_ALERTS_TO: "support@softlandingglobal.com",
+    MAIL_FROM_ADDRESS: "no-reply@mail.demo.example.com",
+    MAIL_REPLY_TO: "hola@demo.example.com",
+    MAIL_ALERTS_TO: "hola@demo.example.com",
   }));
   try {
     const navegador = new Navegador(base, basica);

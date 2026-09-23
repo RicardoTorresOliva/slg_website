@@ -38,17 +38,16 @@ export const FORBIDDEN_VARIANTS: ReadonlyArray<{
 
 /**
  * Reglas de contenido que no son un nombre: expansiones obligatorias de una
- * sigla, términos que el sitio no usa. En SLG, la «D» de DAL OS se expande
- * SIEMPRE como «Destrucción Creativa». El nombre de la constante es el de
- * cuando esa era la única regla.
+ * sigla, términos que el sitio no usa. En el primer sitio, una sigla que se
+ * expandía siempre igual; el nombre de la constante es el de cuando esa era la
+ * única regla.
  */
 export const DAL_OS_FORBIDDEN: ReadonlyArray<{ pattern: RegExp; why: string; correct?: string }> =
   sitio.nomenclatura.reglasDeContenido;
 
 /**
- * Marca pública del sitio, desde la ficha (`sitio.marca.nombre`, D-165). Para
- * SLG, «SLG Agency»; «Softlanding Global» solo en contexto SLG_Holdings (§10-4).
- * Se conserva el nombre porque es el que citan los frenos y la documentación.
+ * Marca pública del sitio, desde la ficha (`sitio.marca.nombre`, D-165). Se
+ * conserva el nombre porque es el que citan los frenos y la documentación.
  */
 export const PUBLIC_BRAND = sitio.marca.nombre;
 
@@ -59,20 +58,36 @@ export type NomenclatureIssue = {
   why: string;
 };
 
-/** Busca variantes prohibidas en un texto. Devuelve una entrada por hallazgo. */
-export function findNomenclatureIssues(text: string): NomenclatureIssue[] {
+/** Las reglas que se aplican: las de la ficha, salvo que se pasen otras. */
+export type ReglasDeNomenclatura = {
+  readonly variantes: typeof FORBIDDEN_VARIANTS;
+  readonly contenido: typeof DAL_OS_FORBIDDEN;
+};
+
+/**
+ * Busca variantes prohibidas en un texto. Devuelve una entrada por hallazgo.
+ *
+ * `reglas` existe para la prueba negativa del freno: con las reglas de la ficha
+ * de ESTE sitio, un fixture fijo solo fallaría mientras la ficha fuera la de
+ * quien lo escribió. Con sus propias reglas, la prueba vale para cualquier
+ * cliente.
+ */
+export function findNomenclatureIssues(
+  text: string,
+  reglas: ReglasDeNomenclatura = { variantes: FORBIDDEN_VARIANTS, contenido: DAL_OS_FORBIDDEN },
+): NomenclatureIssue[] {
   const issues: NomenclatureIssue[] = [];
   const lines = text.split("\n");
 
   lines.forEach((lineText, i) => {
-    for (const { pattern, correct, why } of FORBIDDEN_VARIANTS) {
+    for (const { pattern, correct, why } of reglas.variantes) {
       const re = new RegExp(pattern.source, pattern.flags);
       let m: RegExpExecArray | null;
       while ((m = re.exec(lineText)) !== null) {
         issues.push({ line: i + 1, found: m[0], correct, why });
       }
     }
-    for (const { pattern, why, correct } of DAL_OS_FORBIDDEN) {
+    for (const { pattern, why, correct } of reglas.contenido) {
       const re = new RegExp(pattern.source, pattern.flags);
       let m: RegExpExecArray | null;
       while ((m = re.exec(lineText)) !== null) {

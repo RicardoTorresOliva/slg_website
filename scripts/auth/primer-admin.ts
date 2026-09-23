@@ -93,13 +93,15 @@
  * primer nivel, así que pegarlo tal cual no crea nada y lo dice. Un ejemplo que
  * parece una dirección se pega, y esto sólo se puede hacer una vez.
  *
- * Opcionales: `--empresa` (por defecto «SLG Agency»), `--slug` (por defecto
- * `slg`), `--idioma es|en` (el del correo), `--rehacer` (ver
+ * Opcionales: `--empresa` (por defecto la marca de la ficha, `sitio.marca.nombre`),
+ * `--slug` (por defecto `slg`, el espacio de nombres técnico del operador), `--idioma es|en` (el del correo), `--rehacer` (ver
  * `exigirArranqueSinConsumir`) y `--imprimir-contrasena` (arriba).
  */
 import { randomUUID, randomInt } from "node:crypto";
 
 import postgres from "postgres";
+
+import { sitio } from "../../lib/sitio/index.ts";
 
 /**
  * **Por qué la librería se importa abajo y no aquí.** `lib/auth/better-auth.ts`
@@ -120,7 +122,7 @@ function argumento(nombre: string): string | undefined {
 
 const CORREO = (argumento("correo") ?? "").trim().toLowerCase();
 const NOMBRE = (argumento("nombre") ?? "").trim();
-const EMPRESA = (argumento("empresa") ?? "SLG Agency").trim();
+const EMPRESA = (argumento("empresa") ?? sitio.marca.nombre).trim();
 const SLUG = (argumento("slug") ?? "slg").trim();
 const IDIOMA = (argumento("idioma") ?? "es").trim() === "en" ? "en" : "es";
 /** Ver §«El arranque que salió mal» en la cabecera de `main`. */
@@ -136,7 +138,7 @@ function abortar(mensaje: string): never {
 const USO =
   "Uso: node --env-file=<archivo.env> scripts/auth/primer-admin.ts \\\n" +
   "       --correo tu@correo --nombre \"Tu Nombre\"\n" +
-  "     [--empresa \"SLG Agency\"] [--slug slg] [--idioma es|en] [--rehacer]\n" +
+  `     [--empresa "${sitio.marca.nombre}"] [--slug slg] [--idioma es|en] [--rehacer]\n` +
   "     [--imprimir-contrasena]   (emergencia: sin correo, la contraseña sale en pantalla)";
 
 if (!CORREO || !NOMBRE) abortar(`Falta --correo o --nombre.\n\n${USO}`);
