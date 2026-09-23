@@ -33,6 +33,8 @@
  *
  *   --simular         recorre todo y dice qué haría; no llama a nada.
  *   --cambiar-claves  vuelve a pedir las claves de Resend y UptimeRobot.
+ *   --sin-correo      salta Resend (paso 7); --sin-monitor salta UptimeRobot
+ *                     (paso 8). Ninguno de los dos pide su clave.
  */
 import readline from "node:readline/promises";
 import { parseArgs } from "node:util";
@@ -46,6 +48,8 @@ Uso:  npm run sitio:secretos -- --cliente <nombre> --supabase <ref> --vercel <pr
 
   --simular          dice qué haría con cada plataforma y no llama a ninguna
   --cambiar-claves   vuelve a pedir las claves de Resend y UptimeRobot
+  --sin-correo       no da de alta el correo en Resend (sitio sin dominio real todavía)
+  --sin-monitor      no crea el monitor en UptimeRobot (mismo caso)
   --ayuda            esto
 `;
 
@@ -66,6 +70,8 @@ const { values } = parseArgs({
     dominio: { type: "string" },
     simular: { type: "boolean", default: false },
     "cambiar-claves": { type: "boolean", default: false },
+    "sin-correo": { type: "boolean", default: false },
+    "sin-monitor": { type: "boolean", default: false },
     ayuda: { type: "boolean", default: false },
   },
   strict: true,
@@ -113,6 +119,8 @@ const opciones: Opciones = {
   dominio: dato("dominio").toLowerCase().replace(/^https?:\/\//, "").replace(/\/+$/, ""),
   simular: values.simular ?? false,
   cambiarClaves: values["cambiar-claves"] ?? false,
+  sinCorreo: values["sin-correo"] ?? false,
+  sinMonitor: values["sin-monitor"] ?? false,
 };
 
 const salida = (linea: string): void => console.log(linea);

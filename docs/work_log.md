@@ -4216,3 +4216,28 @@ elige por la ficha. Sin variable de entorno que fuerce el modo: sería una segun
 
 **Verificado aquí**: `check:types`, `lint`, `check:fronteras`, `check:alcance`. La prueba necesita
 PostgreSQL: la corre CI en los dos repositorios.
+
+## Prueba en frío (paso 16), primera tanda: lo que la realidad corrigió (2026-09-22)
+
+Montaje de «Cliente Demo» desde `website_template`, con `crear-sitio`: repositorio `web_demo` (privado,
+`main` por defecto), proyecto Supabase `web-demo` (`emzuigrgbcihjoxssfqd`, coste 0) con las 27
+migraciones aplicadas por la API de gestión —las cuatro comprobaciones del paso 3 en verde: diario de
+Drizzle con 27 filas, tablas de `postgres`, `slg_app` con LOGIN y sin BYPASSRLS ni superusuario, `anon`
+sin uso de `public`— y los dos buckets privados; proyecto Vercel `web-demo` conectado a GitHub con 14
+variables no secretas. Cuatro cosas que el papel no sabía:
+
+- **El conector MCP de Supabase no puede confirmar costes**: su esquema no llega al cliente, los
+  parámetros viajan como texto y `confirm_cost` exige `amount` numérico. El proyecto se creó con la CLI
+  (`supabase projects create`), con una contraseña generada en la propia orden y que nadie ve.
+- **Las migraciones van mejor por la CLI que por `apply_migration`**: `supabase db query --linked
+  --file` aplica cada archivo sin cargar 144 KB de SQL en la conversación.
+- **Supabase no deja cambiar la contraseña de `postgres`** desde su CLI («Only superusers can alter
+  privileged roles»): la CLI entra con un rol temporal. El comando de secretos ya no lo intenta ni
+  carga `DATABASE_URL_MIGRATIONS`, que un sitio montado así no necesita (sus migraciones van por la
+  API); la variable deja de ser obligatoria en `lib/ops/variables.ts`.
+- **`--sin-correo` y `--sin-monitor`** en el comando de secretos, para un sitio sin dominio real
+  todavía. Y dos pruebas (`test-crm`, `test-capturas`) llamaban a `barrerUnaVez` dando por hecho que el
+  sitio tiene CRM: ahora ejercen `barrerConCrmUnaVez` por su nombre. Lo cazó el CI de la plantilla.
+
+**Verificado aquí**: `check:types`, `lint`, `test:sitio-secretos` (66/66), `check:env`,
+`check:literacy`, `check:secrets`, `check:playbook`, `check:fronteras`.

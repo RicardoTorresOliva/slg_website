@@ -73,6 +73,15 @@ export type Opciones = {
   readonly dominio: string;
   readonly simular: boolean;
   readonly cambiarClaves: boolean;
+  /**
+   * Salta el alta del dominio de envío en Resend (paso 7) y no pide su clave.
+   * Para un sitio sin dominio real todavía —la demo de la plantilla, o un
+   * cliente que aún no ha delegado su DNS—: el resto queda cargado y el correo
+   * se completa el día que se vuelve a pegar la línea sin esta opción.
+   */
+  readonly sinCorreo?: boolean;
+  /** Salta el monitor de UptimeRobot (paso 8) y no pide su clave. Mismo caso. */
+  readonly sinMonitor?: boolean;
 };
 
 export type RegistroDns = {
@@ -205,15 +214,6 @@ export function urlDeAplicacion(host: string, ref: string, clave: string): strin
   return cadena("slg_app." + ref, clave, host, 6543);
 }
 
-/**
- * La cadena del dueño: rol `postgres`, *pooler* en modo **sesión** (5432). Las
- * migraciones necesitan sesión: el modo transacción no garantiza que dos
- * sentencias seguidas caigan en la misma conexión.
- */
-export function urlDelDueno(host: string, ref: string, clave: string): string {
-  return cadena("postgres." + ref, clave, host, 5432);
-}
-
 const RE_CLIENTE = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
 const RE_REF = /^[a-z]{20}$/;
 const RE_VERCEL = /^(?:prj_[A-Za-z0-9]{10,}|[a-z0-9](?:[a-z0-9._-]{0,98}[a-z0-9])?)$/;
@@ -262,7 +262,17 @@ export const SECRETOS_PROPIOS: readonly { nombre: string; para: string }[] = [
 ];
 
 /** Las tres que tienen que cambiar JUNTAS: la contraseña y las dos cadenas que la llevan. */
-export const GRUPO_BASE = ["APP_DB_PASSWORD", "DATABASE_URL_MIGRATIONS", "DATABASE_URL"] as const;
+/**
+ * **SIN LA CADENA DEL DUEÑO** (prueba en frío, 2026-09-22). La primera versión
+ * cambiaba también la contraseña de `postgres` para cargar
+ * `DATABASE_URL_MIGRATIONS`, y Supabase lo rechaza: la CLI entra con un rol de
+ * acceso temporal que no es superusuario, y `postgres` es un rol privilegiado
+ * («Only superusers can alter privileged roles»). Tampoco hace falta: en un
+ * sitio montado con `crear-sitio` las migraciones van por la API de gestión de
+ * Supabase (`supabase db query --linked`), que ni pide la contraseña del dueño
+ * ni depende del IPv6 del host directo. El sitio solo necesita a `slg_app`.
+ */
+export const GRUPO_BASE = ["APP_DB_PASSWORD", "DATABASE_URL"] as const;
 
 const TOTAL_PASOS = 8;
 
@@ -310,7 +320,8 @@ export async function ejecutar(o: Opciones, d: Dependencias): Promise<number> {
 
     // ── 2 · Claves de cuenta (Llavero) ──────────────────────────────────────
     paso(2, "Claves de Resend y UptimeRobot (Llavero del Mac)");
-    const claveResend = guardar(
+    if (o.sinCorreo && o.sinMonitor) decir("  · Nada que pedir: --sin-correo y --sin-monitor saltan las dos plataformas.");
+    const claveResend = o.sinCorreo ? null : guardar(
       await claveDeCuenta(d, decir, o, {
         cuenta: "resend-api-key",
         nombre: "Resend",
@@ -319,7 +330,7 @@ export async function ejecutar(o: Opciones, d: Dependencias): Promise<number> {
         comprobar: (v) => d.resend.comprobarClave(v),
       }),
     );
-    const claveUptime = guardar(
+    const claveUptime = o.sinMonitor ? null : guardar(
       await claveDeCuenta(d, decir, o, {
         cuenta: "uptimerobot-api-key",
         nombre: "UptimeRobot",
@@ -351,33 +362,21 @@ export async function ejecutar(o: Opciones, d: Dependencias): Promise<number> {
       for (const n of GRUPO_BASE) yaEstaba(n, "Vercel");
     } else {
       /**
-       * LAS TRES O NINGUNA. Si una ejecución anterior se cortó entre medias, lo
+       * LAS DOS O NINGUNA. Si una ejecución anterior se cortó entre medias, lo
        * que hay en Vercel puede llevar una contraseña que ya no es la de la
-       * base. Regenerar el grupo entero es la única forma de que las tres
+       * base. Regenerar el grupo entero es la única forma de que las dos
        * digan lo mismo que la base.
        */
       const claveApp = guardar(claveDeBase(d.aleatorio));
-      const claveDueno = guardar(claveDeBase(d.aleatorio));
-      const sql =
-        `ALTER ROLE slg_app WITH LOGIN PASSWORD '${verificadorScram(claveApp, d.aleatorio(16))}';\n` +
-        `ALTER ROLE postgres WITH PASSWORD '${verificadorScram(claveDueno, d.aleatorio(16))}';\n`;
+      const sql = `ALTER ROLE slg_app WITH LOGIN PASSWORD '${verificadorScram(claveApp, d.aleatorio(16))}';\n`;
       await d.supabase.ejecutarSql(o.supabase, sql);
-      decir("  ✓ Contraseñas nuevas puestas a slg_app (el sitio) y a postgres (migraciones), por la CLI de Supabase.");
+      decir("  ✓ Contraseña nueva puesta a slg_app (el sitio), por la CLI de Supabase.");
 
       const host = await elegirPooler(d, decir, o.supabase, claveApp);
       const urlApp = guardar(urlDeAplicacion(host, o.supabase, claveApp));
-      const urlDueno = guardar(urlDelDueno(host, o.supabase, claveDueno));
-      const dueno = await conReintentos(d, () => d.base.probar(urlDueno));
-      if (dueno.usuario !== "postgres") {
-        throw new ErrorGuiado(
-          `La cadena del dueño entra como «${dueno.usuario}», no como «postgres».`,
-          "No sigas. Copia estas líneas y pégalas en la sesión de Claude.",
-        );
-      }
-      decir(`  ✓ La base acepta las dos contraseñas (por ${host}).`);
+      decir(`  ✓ La base acepta la contraseña (por ${host}).`);
 
       await cargar("APP_DB_PASSWORD", claveApp, true, "Vercel");
-      await cargar("DATABASE_URL_MIGRATIONS", urlDueno, true, "Vercel");
       await cargar("DATABASE_URL", urlApp, true, "Vercel");
     }
 
@@ -401,51 +400,61 @@ export async function ejecutar(o: Opciones, d: Dependencias): Promise<number> {
 
     // ── 7 · Correo (Resend) ─────────────────────────────────────────────────
     paso(7, "Correo: dominio de envío en Resend");
-    const subdominio = `mailweb.${o.dominio}`;
-    const dominio = await d.resend.buscarOCrearDominio(claveResend, subdominio, REGION_RESEND);
-    decir(`  ✓ ${subdominio} ${dominio.creado ? "dado de alta" : "ya estaba dado de alta"} en Resend (estado: ${dominio.estado}).`);
-    registrosDns = dominio.registros;
-    if (completa(presentes, "MAIL_SMTP_PASSWORD") && completa(presentes, "MAIL_SMTP_USERNAME")) {
-      yaEstaba("MAIL_SMTP_USERNAME", "Vercel");
-      yaEstaba("MAIL_SMTP_PASSWORD", "Vercel");
+    if (claveResend === null) {
+      decir("  · Saltado (--sin-correo): el sitio no enviará correo hasta que vuelvas a pegar la línea sin esa opción.");
+      resumen.push({ nombre: "MAIL_SMTP_USERNAME", donde: "Vercel", estado: "pendiente (--sin-correo)" });
+      resumen.push({ nombre: "MAIL_SMTP_PASSWORD", donde: "Vercel", estado: "pendiente (--sin-correo)" });
     } else {
-      /**
-       * UNA CLAVE DE ENVÍO POR SITIO, NO LA DE CUENTA. La clave que está en el
-       * Llavero puede crear y borrar dominios de todos los clientes; la que va
-       * al servidor del sitio solo puede **enviar**, y solo desde su dominio.
-       * Si un sitio se ve comprometido, se revoca la suya y los demás siguen.
-       */
-      const token = guardar(await d.resend.crearClaveDeEnvio(claveResend, `web_${o.cliente} · envío`, dominio.id));
-      await cargar("MAIL_SMTP_USERNAME", "resend", true, "Vercel");
-      await cargar("MAIL_SMTP_PASSWORD", token, true, "Vercel");
+      const subdominio = `mailweb.${o.dominio}`;
+      const dominio = await d.resend.buscarOCrearDominio(claveResend, subdominio, REGION_RESEND);
+      decir(`  ✓ ${subdominio} ${dominio.creado ? "dado de alta" : "ya estaba dado de alta"} en Resend (estado: ${dominio.estado}).`);
+      registrosDns = dominio.registros;
+      if (completa(presentes, "MAIL_SMTP_PASSWORD") && completa(presentes, "MAIL_SMTP_USERNAME")) {
+        yaEstaba("MAIL_SMTP_USERNAME", "Vercel");
+        yaEstaba("MAIL_SMTP_PASSWORD", "Vercel");
+      } else {
+        /**
+         * UNA CLAVE DE ENVÍO POR SITIO, NO LA DE CUENTA. La clave que está en el
+         * Llavero puede crear y borrar dominios de todos los clientes; la que va
+         * al servidor del sitio solo puede **enviar**, y solo desde su dominio.
+         * Si un sitio se ve comprometido, se revoca la suya y los demás siguen.
+         */
+        const token = guardar(await d.resend.crearClaveDeEnvio(claveResend, `web_${o.cliente} · envío`, dominio.id));
+        await cargar("MAIL_SMTP_USERNAME", "resend", true, "Vercel");
+        await cargar("MAIL_SMTP_PASSWORD", token, true, "Vercel");
+      }
     }
 
     // ── 8 · Monitor (UptimeRobot) ───────────────────────────────────────────
     paso(8, "Monitor de caída: UptimeRobot");
-    const urlSonda = `https://${o.dominio}/api/health`;
-    const monitor = await d.uptime.buscarMonitor(claveUptime, urlSonda);
-    const enLinea = await d.sitioEnLinea(urlSonda);
-    if (!monitor) {
-      /**
-       * EN PAUSA HASTA EL LANZAMIENTO. El dominio del cliente no apunta a
-       * Vercel hasta el día 5; un monitor activo desde hoy mandaría un aviso de
-       * caída cada cinco minutos durante una semana, y eso enseña a ignorar
-       * los avisos justo antes de que empiecen a importar.
-       */
-      await d.uptime.crearMonitor(claveUptime, { url: urlSonda, nombre: `web_${o.cliente} · producción`, pausado: !enLinea });
-      decir(
-        enLinea
-          ? `  ✓ Monitor creado y activo sobre ${urlSonda}.`
-          : `  ✓ Monitor creado EN PAUSA sobre ${urlSonda}: el dominio aún no responde.`,
-      );
-    } else if (monitor.pausado && enLinea) {
-      await d.uptime.reanudar(claveUptime, monitor.id);
-      decir(`  ✓ El dominio ya responde: monitor activado.`);
+    if (claveUptime === null) {
+      decir("  · Saltado (--sin-monitor): nadie vigila el sitio hasta que vuelvas a pegar la línea sin esa opción.");
     } else {
-      decir(`  · El monitor ya existía (${monitor.pausado ? "en pausa: el dominio aún no responde" : "activo"}).`);
-    }
-    if (!enLinea) {
-      decir("    El día del lanzamiento vuelve a pegar esta misma línea: verá el dominio en línea y lo activará.");
+      const urlSonda = `https://${o.dominio}/api/health`;
+      const monitor = await d.uptime.buscarMonitor(claveUptime, urlSonda);
+      const enLinea = await d.sitioEnLinea(urlSonda);
+      if (!monitor) {
+        /**
+         * EN PAUSA HASTA EL LANZAMIENTO. El dominio del cliente no apunta a
+         * Vercel hasta el día 5; un monitor activo desde hoy mandaría un aviso de
+         * caída cada cinco minutos durante una semana, y eso enseña a ignorar
+         * los avisos justo antes de que empiecen a importar.
+         */
+        await d.uptime.crearMonitor(claveUptime, { url: urlSonda, nombre: `web_${o.cliente} · producción`, pausado: !enLinea });
+        decir(
+          enLinea
+            ? `  ✓ Monitor creado y activo sobre ${urlSonda}.`
+            : `  ✓ Monitor creado EN PAUSA sobre ${urlSonda}: el dominio aún no responde.`,
+        );
+      } else if (monitor.pausado && enLinea) {
+        await d.uptime.reanudar(claveUptime, monitor.id);
+        decir(`  ✓ El dominio ya responde: monitor activado.`);
+      } else {
+        decir(`  · El monitor ya existía (${monitor.pausado ? "en pausa: el dominio aún no responde" : "activo"}).`);
+      }
+      if (!enLinea) {
+        decir("    El día del lanzamiento vuelve a pegar esta misma línea: verá el dominio en línea y lo activará.");
+      }
     }
   } catch (e) {
     decir("");

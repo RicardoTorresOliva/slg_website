@@ -186,7 +186,7 @@ y repetir la comprobación. Un bucket público sirve los entregables de un clien
 | `NEXT_PUBLIC_UMAMI_SCRIPT_URL`, `NEXT_PUBLIC_UMAMI_WEBSITE_ID` | De Umami | **Solo** si el cliente aceptó analítica |
 
 **Secretas — NO las carga Claude**; las carga el comando del paso 6: `DATABASE_URL`,
-`DATABASE_URL_MIGRATIONS`, `APP_DB_PASSWORD`, `BETTER_AUTH_SECRET`, `DELIVERABLE_VIEWER_SECRET`,
+`APP_DB_PASSWORD`, `BETTER_AUTH_SECRET`, `DELIVERABLE_VIEWER_SECRET`,
 `CRON_SECRET`, `WEBHOOK_SIGNING_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, `MAIL_SMTP_USERNAME`,
 `MAIL_SMTP_PASSWORD`, y `SUPABASE_URL` (esta no es secreta, pero el comando ya tiene la referencia).
 
@@ -220,6 +220,9 @@ repite el punto 1.
    > «── Resumen» hasta el final, cópialo y pégalo aquí. Si sale una línea con ✗, haz lo que dice
    > «Qué hacer»; si dice que me lo pegues, pégamelo.
 
+   **Sitio sin dominio real todavía** (la demo de la plantilla, o un cliente que aún no delegó su DNS):
+   añadir `--sin-correo --sin-monitor` al final de la línea. Salta Resend y UptimeRobot y no pide sus
+   claves; el día que el dominio exista se pega la línea sin esas dos opciones y completa lo que falta.
 3. Lo que pega Ricardo son nombres de variables y registros DNS: **no son secretos**. Los registros
    DNS se guardan para el paso 13 del §5 (DNS).
 
