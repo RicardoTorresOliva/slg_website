@@ -250,25 +250,23 @@ const primera = dobles();
 
   const esperadas = [...GRUPO_BASE, ...SECRETOS_PROPIOS.map((s) => s.nombre), "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "MAIL_SMTP_USERNAME", "MAIL_SMTP_PASSWORD"];
   const faltan = esperadas.filter((n) => !primera.almacen.get(n)?.entornos.has("production") || !primera.almacen.get(n)?.entornos.has("preview"));
-  check("carga las 13 variables en Production y Preview", faltan.length === 0, `faltan: ${faltan.join(", ")}`);
+  check("carga las 12 variables en Production y Preview", faltan.length === 0, `faltan: ${faltan.join(", ")}`);
   check("solo SUPABASE_URL va como no secreta", [...primera.almacen].filter(([, v]) => !v.sensible).map(([k]) => k).join() === "SUPABASE_URL");
 
   const filtrados = filtradosEn(texto, valoresSecretos(primera));
   check("NINGÚN valor secreto aparece en la salida", filtrados.length === 0, filtrados.join(", "));
 
   const app = primera.almacen.get("DATABASE_URL")?.valor ?? "";
-  const dueno = primera.almacen.get("DATABASE_URL_MIGRATIONS")?.valor ?? "";
   const clave = primera.almacen.get("APP_DB_PASSWORD")?.valor ?? "";
   const uApp = new URL(app);
-  const uDueno = new URL(dueno);
   check("DATABASE_URL: slg_app.<ref> por el pooler en modo transacción (6543)", uApp.username === "slg_app.abcdefghijklmnopqrst" && uApp.port === "6543" && uApp.hostname === POOLERS[0], app.replace(uApp.password, "***"));
-  check("DATABASE_URL_MIGRATIONS: postgres.<ref> en modo sesión (5432)", uDueno.username === "postgres.abcdefghijklmnopqrst" && uDueno.port === "5432");
+  check("no carga la cadena del dueño: las migraciones van por la API de Supabase", !primera.almacen.has("DATABASE_URL_MIGRATIONS"));
   check("la contraseña de DATABASE_URL es APP_DB_PASSWORD", uApp.password === clave && clave.length >= 32);
-  check("las contraseñas son solo hexadecimales (no rompen la URL)", /^[0-9a-f]{48}$/.test(uApp.password) && /^[0-9a-f]{48}$/.test(uDueno.password));
-  check("la del sitio y la del dueño son distintas", uApp.password !== uDueno.password);
+  check("la contraseña es solo hexadecimal (no rompe la URL)", /^[0-9a-f]{48}$/.test(uApp.password));
   const sql = primera.sqls.join("\n");
-  check("la orden a la base lleva verificadores SCRAM, no contraseñas", /slg_app WITH LOGIN PASSWORD 'SCRAM-SHA-256\$4096:/.test(sql) && /postgres WITH PASSWORD 'SCRAM-SHA-256\$4096:/.test(sql));
-  check("…y ninguna contraseña en claro", !sql.includes(uApp.password) && !sql.includes(uDueno.password));
+  check("la orden a la base lleva un verificador SCRAM, no la contraseña", /slg_app WITH LOGIN PASSWORD 'SCRAM-SHA-256\$4096:/.test(sql));
+  check("…y no toca el rol postgres (Supabase no deja: es privilegiado)", !/ROLE postgres/i.test(sql));
+  check("…y ninguna contraseña en claro", !sql.includes(uApp.password));
   check("pide las dos claves de cuenta la primera vez y las guarda", primera.pedidas.length === 2 && primera.llavero.size === 2);
   check("el monitor se crea en pausa (el dominio aún no responde)", primera.monitores.length === 1 && primera.monitores[0]?.pausado === true && primera.monitores[0]?.url === "https://demo-cliente.com/api/health");
   check("imprime los registros DNS (no son secretos)", texto.includes("feedback-smtp.sa-east-1.amazonses.com"));
@@ -298,7 +296,7 @@ console.log("\n4 · Idempotencia");
   parcial.claves.resendCuenta = primera.claves.resendCuenta;
   await ejecutar(OPCIONES, parcial.d);
   const nuevas = parcial.llamadas.filter((l) => l.startsWith("vercel.anadir")).map((l) => l.split(" ")[1]);
-  check("si falta una del grupo de la base, regenera las tres juntas", nuevas.sort().join() === [...GRUPO_BASE].sort().join(), nuevas.join());
+  check("si falta una del grupo de la base, regenera las dos juntas", nuevas.sort().join() === [...GRUPO_BASE].sort().join(), nuevas.join());
   const u = new URL(almacen.get("DATABASE_URL")?.valor ?? "");
   check("…y quedan coherentes entre sí", u.password === almacen.get("APP_DB_PASSWORD")?.valor);
 }

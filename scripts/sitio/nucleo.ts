@@ -214,15 +214,6 @@ export function urlDeAplicacion(host: string, ref: string, clave: string): strin
   return cadena("slg_app." + ref, clave, host, 6543);
 }
 
-/**
- * La cadena del dueño: rol `postgres`, *pooler* en modo **sesión** (5432). Las
- * migraciones necesitan sesión: el modo transacción no garantiza que dos
- * sentencias seguidas caigan en la misma conexión.
- */
-export function urlDelDueno(host: string, ref: string, clave: string): string {
-  return cadena("postgres." + ref, clave, host, 5432);
-}
-
 const RE_CLIENTE = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
 const RE_REF = /^[a-z]{20}$/;
 const RE_VERCEL = /^(?:prj_[A-Za-z0-9]{10,}|[a-z0-9](?:[a-z0-9._-]{0,98}[a-z0-9])?)$/;
@@ -271,7 +262,17 @@ export const SECRETOS_PROPIOS: readonly { nombre: string; para: string }[] = [
 ];
 
 /** Las tres que tienen que cambiar JUNTAS: la contraseña y las dos cadenas que la llevan. */
-export const GRUPO_BASE = ["APP_DB_PASSWORD", "DATABASE_URL_MIGRATIONS", "DATABASE_URL"] as const;
+/**
+ * **SIN LA CADENA DEL DUEÑO** (prueba en frío, 2026-09-22). La primera versión
+ * cambiaba también la contraseña de `postgres` para cargar
+ * `DATABASE_URL_MIGRATIONS`, y Supabase lo rechaza: la CLI entra con un rol de
+ * acceso temporal que no es superusuario, y `postgres` es un rol privilegiado
+ * («Only superusers can alter privileged roles»). Tampoco hace falta: en un
+ * sitio montado con `crear-sitio` las migraciones van por la API de gestión de
+ * Supabase (`supabase db query --linked`), que ni pide la contraseña del dueño
+ * ni depende del IPv6 del host directo. El sitio solo necesita a `slg_app`.
+ */
+export const GRUPO_BASE = ["APP_DB_PASSWORD", "DATABASE_URL"] as const;
 
 const TOTAL_PASOS = 8;
 
@@ -361,33 +362,21 @@ export async function ejecutar(o: Opciones, d: Dependencias): Promise<number> {
       for (const n of GRUPO_BASE) yaEstaba(n, "Vercel");
     } else {
       /**
-       * LAS TRES O NINGUNA. Si una ejecución anterior se cortó entre medias, lo
+       * LAS DOS O NINGUNA. Si una ejecución anterior se cortó entre medias, lo
        * que hay en Vercel puede llevar una contraseña que ya no es la de la
-       * base. Regenerar el grupo entero es la única forma de que las tres
+       * base. Regenerar el grupo entero es la única forma de que las dos
        * digan lo mismo que la base.
        */
       const claveApp = guardar(claveDeBase(d.aleatorio));
-      const claveDueno = guardar(claveDeBase(d.aleatorio));
-      const sql =
-        `ALTER ROLE slg_app WITH LOGIN PASSWORD '${verificadorScram(claveApp, d.aleatorio(16))}';\n` +
-        `ALTER ROLE postgres WITH PASSWORD '${verificadorScram(claveDueno, d.aleatorio(16))}';\n`;
+      const sql = `ALTER ROLE slg_app WITH LOGIN PASSWORD '${verificadorScram(claveApp, d.aleatorio(16))}';\n`;
       await d.supabase.ejecutarSql(o.supabase, sql);
-      decir("  ✓ Contraseñas nuevas puestas a slg_app (el sitio) y a postgres (migraciones), por la CLI de Supabase.");
+      decir("  ✓ Contraseña nueva puesta a slg_app (el sitio), por la CLI de Supabase.");
 
       const host = await elegirPooler(d, decir, o.supabase, claveApp);
       const urlApp = guardar(urlDeAplicacion(host, o.supabase, claveApp));
-      const urlDueno = guardar(urlDelDueno(host, o.supabase, claveDueno));
-      const dueno = await conReintentos(d, () => d.base.probar(urlDueno));
-      if (dueno.usuario !== "postgres") {
-        throw new ErrorGuiado(
-          `La cadena del dueño entra como «${dueno.usuario}», no como «postgres».`,
-          "No sigas. Copia estas líneas y pégalas en la sesión de Claude.",
-        );
-      }
-      decir(`  ✓ La base acepta las dos contraseñas (por ${host}).`);
+      decir(`  ✓ La base acepta la contraseña (por ${host}).`);
 
       await cargar("APP_DB_PASSWORD", claveApp, true, "Vercel");
-      await cargar("DATABASE_URL_MIGRATIONS", urlDueno, true, "Vercel");
       await cargar("DATABASE_URL", urlApp, true, "Vercel");
     }
 

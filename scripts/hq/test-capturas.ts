@@ -126,7 +126,10 @@ async function main() {
   process.env.CRM_QUEUE_DISABLED = "1";
   process.env.CRM_CONTACT_URL_TEMPLATE = "https://crm.ejemplo.test/contacts/{id}";
 
-  const { barrerUnaVez } = await import("../../lib/crm/index.ts");
+  // El camino CON CRM por su nombre, no `barrerUnaVez`: esa elige por la ficha,
+  // y en un sitio con el CRM apagado (la plantilla) esta prueba mediría el aviso
+  // por correo en vez de la entrega que viene a comprobar.
+  const { barrerConCrmUnaVez: barrerUnaVez } = await import("../../lib/crm/index.ts");
   const { capturasDeHq } = await import("../../lib/hq/capturas.ts");
   const { intentosDeCaptura, reintentarCaptura } = await import("../../lib/hq/reintento.ts");
 

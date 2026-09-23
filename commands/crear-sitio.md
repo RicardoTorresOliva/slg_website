@@ -186,7 +186,7 @@ y repetir la comprobación. Un bucket público sirve los entregables de un clien
 | `NEXT_PUBLIC_UMAMI_SCRIPT_URL`, `NEXT_PUBLIC_UMAMI_WEBSITE_ID` | De Umami | **Solo** si el cliente aceptó analítica |
 
 **Secretas — NO las carga Claude**; las carga el comando del paso 6: `DATABASE_URL`,
-`DATABASE_URL_MIGRATIONS`, `APP_DB_PASSWORD`, `BETTER_AUTH_SECRET`, `DELIVERABLE_VIEWER_SECRET`,
+`APP_DB_PASSWORD`, `BETTER_AUTH_SECRET`, `DELIVERABLE_VIEWER_SECRET`,
 `CRON_SECRET`, `WEBHOOK_SIGNING_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, `MAIL_SMTP_USERNAME`,
 `MAIL_SMTP_PASSWORD`, y `SUPABASE_URL` (esta no es secreta, pero el comando ya tiene la referencia).
 

@@ -32,7 +32,10 @@ const SIN_CRM = !moduloActivo("crm");
 
 export const VARIABLES: readonly Variable[] = [
   { nombre: "DATABASE_URL", para: "Cómo se conecta el sitio a la base (rol slg_app)", secreta: true, obligatoria: true },
-  { nombre: "DATABASE_URL_MIGRATIONS", para: "Cómo se conectan las migraciones (rol dueño)", secreta: true, obligatoria: true },
+  // No obligatoria: en un sitio montado con `crear-sitio` las migraciones van por
+  // la API de gestión de Supabase y el sitio nunca usa la cadena del dueño. Solo
+  // la necesitan `/api/ops` (poner la clave de slg_app a mano) y `migrar.ts`.
+  { nombre: "DATABASE_URL_MIGRATIONS", para: "Cómo se conectan las migraciones (rol dueño)", secreta: true, obligatoria: false },
   { nombre: "APP_DB_PASSWORD", para: "La contraseña que el botón de abajo le pone a slg_app", secreta: true, obligatoria: true },
   { nombre: "BETTER_AUTH_SECRET", para: "Firma las sesiones", secreta: true, obligatoria: true },
   { nombre: "NEXT_PUBLIC_SITE_URL", para: "La dirección pública del sitio", secreta: false, obligatoria: true },
