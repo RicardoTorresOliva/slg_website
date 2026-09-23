@@ -691,10 +691,11 @@ Cierre del 2026-09-21, noche. **`develop` = `92903ba`**, empujado; nada vive sol
 estaba en el remoto y no está fusionada). **Producción = `slg-website-hpx6scn2i`**, desde `1e55868`.
 **Base de producción = 23 de 23: falta aplicar 0023.**
 
-### Plantilla de clientes (22-09)
-- **D-165**: la oferta de cada cliente se declara en `site.config.ts`. Plantilla en `github.com/RicardoTorresOliva/website_template` (privada, *template*, rama por defecto `develop`).
-- Plan y reparto Claude/Ricardo en `docs/PLAYBOOK_REPLICACION.md` §3 y §5–§7; intake por Google Forms + carpeta de Drive (`docs/intake/crear-formulario-intake.gs`, pendiente de que Ricardo lo ejecute una vez).
-- Siguiente trabajo de Claude: pasos 1–12 del §3 del playbook, en `slg_website` y llevados después a `website_template`.
+### Plantilla de clientes (22-09) — pasos 1–12 hechos
+- `slg_website` es ya un motor que lee su ficha (`site.config.ts`); con la de SLG sirve el mismo HTML que antes (117 URL cotejadas). CI verde en `b00db3a`.
+- `website_template` (`~/Dev/website_template`, rama por defecto `develop` = `aed4a19`) arranca como «Cliente Demo»: sin rastro de SLG en lo servido.
+- Pendiente de Ricardo: aplicar 0023–0026 y desplegar `b00db3a`; borrar 4 ramas viejas de `website_template` (el modo auto bloquea borrar ramas remotas); correcciones al formulario de intake (huecos del agente del paso 10).
+- Siguiente de Claude: paso 16, prueba en frío con «Cliente Demo» (`crear-sitio` + `sitio:secretos`), y vaciar la documentación de SLG del template (`docs/PLANTILLA.md` §4).
 
 ### 0 · Lo primero al abrir, en este orden
 1. **Mirar el CI de `92903ba`** (`gh run list --branch develop --limit 1`). Quedó en marcha al cerrar.

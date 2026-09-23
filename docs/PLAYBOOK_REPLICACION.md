@@ -64,9 +64,9 @@ Orden estricto: cada paso depende del anterior. Total: **4 días de Claude + 45 
 | 9 | `auth:primer-admin` en modo invitación: manda el enlace al responsable en vez de imprimir una contraseña | Claude | Script cambiado + prueba | 1 h || ✅ 22-09 |
 | 10 | Lector del intake: hoja de respuestas + carpeta de Drive → borrador de `site.config.ts` y del contenido | Claude | `commands/leer-intake.md` | 3 h || ✅ 22-09 · skill `leer-intake` |
 | 11 | Plantillas de los cuatro correos al cliente (formulario, faltantes, revisión, entrega) | Claude | `docs/intake/correos.md` | 1 h || ✅ 22-09 · `docs/intake/correos.md` |
-| 12 | Vaciar lo específico de SLG y dejar un «Cliente Demo» bilingüe con 3 servicios | Claude | La plantilla arranca con demo | 2 h | |
+| 12 | Vaciar lo específico de SLG y dejar un «Cliente Demo» bilingüe con 3 servicios | Claude | La plantilla arranca con demo | 2 h || ✅ 22-09 · en `website_template` (`aed4a19`): ficha, contenido ES/EN, logo e iconos de «Cliente Demo»; 45 rutas servidas sin rastro de SLG |
 | 13 | Repositorio `website_template` privado y marcado como *template* | Ricardo | github.com/RicardoTorresOliva/website_template | — | ✅ 22-09 · rama por defecto cambiada a `develop` por Claude: «Use this template» solo copia la rama por defecto y `main` iba 102 commits atrás |
-| 14 | Llevar los pasos 1–12 a `website_template` y limpiar sus ramas viejas | Claude | Plantilla al día | 30 min | |
+| 14 | Llevar los pasos 1–12 a `website_template` y limpiar sus ramas viejas | Claude | Plantilla al día | 30 min || 🟡 22-09 · `develop` de la plantilla al día con los pasos 1–12; faltan borrar 4 ramas viejas (Ricardo, desde GitHub) y vaciar la documentación de SLG (`docs/PLANTILLA.md` §4) |
 | 15 | Configuración única de Ricardo (§7.3) | Ricardo | Permisos y cuentas listos | 45 min | |
 | 16 | Prueba en frío con «Cliente Demo»: del formulario a `https://…vercel.app` en línea, midiendo el tiempo de Ricardo | Claude + Ricardo | Tiempo real al `work_log` | 2 h | |
 
