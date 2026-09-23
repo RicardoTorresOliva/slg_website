@@ -30,6 +30,12 @@ Constantes: organización Supabase **Softlanding Global** `isojilkgmlbhvfwxiflj`
 equipo Vercel `team_NVmg2F1svT5W7CKrSInHh5VD` (`ricardotorresolivas-projects`); plantilla
 `RicardoTorresOliva/website_template`.
 
+> **Verificado en la prueba en frío del 22-09 («Cliente Demo», `web_demo`).** Los pasos 2, 3, 5 y 7
+> describen el camino que **funcionó**, no el que se había previsto: el conector MCP de Supabase no
+> puede confirmar costes (sus parámetros llegan como texto y `confirm_cost` exige un número), el de
+> Vercel no ve los proyectos del equipo, y `apply_migration` metería 144 KB de SQL en la conversación.
+> Todo lo que sigue va por las CLI de Supabase y de Vercel, con la sesión del Mac de Ricardo.
+
 ## Paso 0 · Comprobaciones previas (1 min)
 
 | Herramienta | Qué | Qué tiene que salir | Si falla |
@@ -65,41 +71,36 @@ un intento anterior (no se borra nada). 403 → falta el permiso `repo`: ver Pas
 
 ## Paso 2 · Proyecto Supabase (3 min)
 
-1. `get_cost` con `type: "project"` y `organization_id: "isojilkgmlbhvfwxiflj"`.
-2. **Si el importe es 0** → `confirm_cost` con el mismo tipo, la recurrencia que devolvió y
-   `amount: 0`; guardar el id de confirmación.
-   **Si es mayor que 0** → **parar**. Es una compra. Escribir a Ricardo, literal: «Crear la base de
-   <cliente> cuesta <importe> USD/<recurrencia>. ¿La creo? Responde sí o no.» Solo con un «sí» suyo en
-   el chat se sigue con `confirm_cost`.
-3. `create_project` con `name: "web-<cliente>"`, `region: "us-east-1"`,
-   `organization_id: "isojilkgmlbhvfwxiflj"` y el id de confirmación.
-4. `get_project` cada poco hasta `status: ACTIVE_HEALTHY` (2–3 min). El `id` es la **referencia**
-   (20 letras): se usa en los pasos 3, 4 y 6.
+1. Coste: `get_cost` del conector MCP con `type: "project"` y `organization_id: "isojilkgmlbhvfwxiflj"`.
+   **Si es mayor que 0 → parar**: es una compra. Escribir a Ricardo, literal: «Crear la base de
+   <cliente> cuesta <importe> USD/<recurrencia>. ¿La creo? Responde sí o no.» Solo con su «sí» se sigue.
+2. Crear por la CLI, con una contraseña generada en la propia orden que nadie ve (el comando de
+   secretos del paso 6 no la necesita):
+   `cd ~/Dev/slg_website && npx --no-install supabase projects create web-<cliente> --org-id isojilkgmlbhvfwxiflj --region us-east-1 --db-password "$(openssl rand -base64 36 | tr -dc 'A-Za-z0-9' | head -c 40)" --agent no`
+   La salida trae la **referencia** (20 letras): se usa en los pasos 3, 4 y 6.
+3. `get_project` del conector MCP con esa referencia → `status: ACTIVE_HEALTHY`.
 
-**Comprobar**: `get_project_url` → `https://<ref>.supabase.co`.
-
-**Si falla**: límite de proyectos gratuitos de la organización → es el caso «coste > 0» del punto 2.
+**Si falla**: «Access token not provided» → Ricardo pega en Terminal `npx --yes supabase login`.
 Nombre repetido → parar y preguntar.
 
 ## Paso 3 · Migraciones por la API de Supabase (5 min)
 
-Sin contraseña y sin el problema de IPv6 del host directo: `apply_migration` va por la API de
-gestión.
+1. Aplicar las migraciones en orden por la CLI (va por la API de gestión: sin contraseña, sin IPv6 y
+   sin cargar el SQL en la conversación). Se para en la primera que falle:
 
-1. Leer `~/Dev/web_<cliente>/drizzle/meta/_journal.json`. Para **cada** entrada, en el orden de
-   `idx`: `apply_migration` con `project_id: <ref>`, `name: <tag>` y `query:` **el archivo
-   `drizzle/<tag>.sql` entero, sin tocar**.
-2. Si una falla: **parar**. Cada `apply_migration` es una transacción, así que la que falló no dejó
-   nada a medias; se corrige la causa y se repite esa misma, nunca se salta.
+   ```bash
+   cd ~/Dev/web_<cliente> && python3 -c "import json;[print(e['tag']) for e in sorted(json.load(open('drizzle/meta/_journal.json'))['entries'],key=lambda e:e['idx'])]" | while read tag; do npx --no-install supabase db query --linked --project-ref <ref> --file "drizzle/$tag.sql" --agent no --output-format json >/tmp/m.out 2>&1 && ! grep -qiE '"error"|ERROR:' /tmp/m.out && echo "✓ $tag" || { echo "✗ $tag"; tail -5 /tmp/m.out; break; }; done
+   ```
+2. Si una falla: **parar**. Se corrige la causa y se repite esa misma, nunca se salta.
 
 **Por qué funcionan tal cual (revisado el 22-09 sobre 0000–0023):**
 
 | Cuestión | Veredicto |
 |---|---|
 | `--> statement-breakpoint` | Es un comentario SQL (`--`): el archivo entero se ejecuta como un bloque. Drizzle también ejecuta todas en una sola transacción, así que no hay nada que exija ir fuera de ella (ni `CONCURRENTLY` ni `ALTER TYPE … ADD VALUE`) |
-| Roles (0001 `CREATE ROLE slg_app`, 0002 `ALTER ROLE … NOBYPASSRLS`) | Exigen `CREATEROLE` y `BYPASSRLS` en quien ejecuta. El rol `postgres` de Supabase tiene los dos; así se migró producción de SLG. La comprobación **b** de abajo confirma que `apply_migration` corre como `postgres` [POR CONFIRMAR en la prueba en frío, §3 paso 16] |
+| Roles (0001 `CREATE ROLE slg_app`, 0002 `ALTER ROLE … NOBYPASSRLS`) | Exigen `CREATEROLE` y `BYPASSRLS` en quien ejecuta. El rol `postgres` de Supabase tiene los dos; así se migró producción de SLG. Confirmado en la prueba en frío: las 27 pasaron y la comprobación **b** dio `postgres` |
 | `COMMENT ON` (0004, 0006, 0008–0011, 0013, 0015) | Válido para el dueño del objeto; sin tratamiento |
-| **El diario de Drizzle** | **Necesita tratamiento.** `apply_migration` anota en `supabase_migrations.schema_migrations`, no en `drizzle.__drizzle_migrations`. Sin filas ahí, `scripts/db/migrar.ts` y `/api/ops` creerían la base vacía y volverían a lanzar la 0000 (que falla con «ya existe»). Se rellena en el punto 3 |
+| **El diario de Drizzle** | **Necesita tratamiento.** Aplicarlas por la API no anota nada en `drizzle.__drizzle_migrations`. Sin filas ahí, `scripts/db/migrar.ts` y `/api/ops` creerían la base vacía y volverían a lanzar la 0000 (que falla con «ya existe»). Se rellena en el punto 3 |
 | Datos de SLG en migraciones (0021 vocabulario, 0023 dominios desechables) | No bloquean: el vocabulario de servicios lo vacía el §3 paso 12; los dominios desechables sirven a cualquier cliente |
 
 3. Rellenar el diario de Drizzle. Generar la orden (hash = SHA-256 del archivo, `created_at` = su
@@ -109,23 +110,15 @@ gestión.
    cd ~/Dev/web_<cliente> && node -e 'const fs=require("fs"),c=require("crypto");const j=JSON.parse(fs.readFileSync("drizzle/meta/_journal.json","utf8"));const h=t=>c.createHash("sha256").update(fs.readFileSync("drizzle/"+t+".sql").toString()).digest("hex");console.log("CREATE SCHEMA IF NOT EXISTS drizzle;\nCREATE TABLE IF NOT EXISTS drizzle.__drizzle_migrations (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at bigint);\nINSERT INTO drizzle.__drizzle_migrations (hash, created_at) VALUES\n"+j.entries.map(e=>"  (\x27"+h(e.tag)+"\x27, "+e.when+")").join(",\n")+";")'
    ```
 
-   y pasar su salida a `execute_sql`.
+   guardar su salida en un archivo y pasarlo con `npx --no-install supabase db query --linked --project-ref <ref> --file <archivo> --agent no`. Las comprobaciones de abajo van por la misma vía.
 
-4. **Cerrar la API de datos sobre `public`** (hallazgo del 22-09). Supabase publica el esquema
-   `public` por su API REST y da a `anon` y `authenticated` permiso de uso: con la clave anónima
-   —que es pública— se leerían las tablas sin RLS y se podrían llamar por RPC las funciones
-   `SECURITY DEFINER`. El sitio **no usa** esa API (entra como `slg_app` y usa Storage por su REST), así
-   que se cierra. `execute_sql`:
+4. **La API de datos sobre `public` ya queda cerrada**: lo hace la migración `0026_cerrar_la_api_rest`
+   (hallazgo del 22-09 — Supabase publica `public` por su API REST a `anon` y `authenticated`, y el
+   sitio no la usa). Aquí solo se comprueba: es la consulta **d** de abajo. `slg_app` conserva su
+   `USAGE` explícito, y **no** se revoca `EXECUTE` de las funciones a `PUBLIC`: las políticas de fila
+   llaman a `app_organization_id()` y otras con el permiso de `slg_app`, que lo hereda de `PUBLIC`.
 
-   ```sql
-   REVOKE USAGE ON SCHEMA public FROM PUBLIC, anon, authenticated;
-   ```
-
-   `slg_app` no se ve afectado: las migraciones 0001 y 0002 le dan `USAGE` explícito. **No** se
-   revoca `EXECUTE` de las funciones a `PUBLIC`: las políticas de fila llaman a `app_organization_id()`
-   y otras con el permiso de `slg_app`, que lo hereda de `PUBLIC`.
-
-**Comprobar** (`execute_sql`, cada una por separado):
+**Comprobar** (por la CLI, como el punto 3, o `execute_sql` del conector, cada una por separado):
 
 | | Consulta | Tiene que salir |
 |---|---|---|
@@ -141,7 +134,7 @@ Y `get_advisors` con `type: "security"`: anotar lo que diga en el resumen del pa
 
 `lib/files/aprovisionar.ts` crea buckets por la API S3 (MinIO); con `FILES_DRIVER=supabase` no hay
 ruta de código que los cree, y la REST de Storage exige la clave de servicio, que Claude no maneja.
-Se crean por SQL. `execute_sql`:
+Se crean por SQL (CLI o `execute_sql` del conector):
 
 ```sql
 INSERT INTO storage.buckets (id, name, public)
@@ -158,14 +151,16 @@ y repetir la comprobación. Un bucket público sirve los entregables de un clien
 
 ## Paso 5 · Proyecto Vercel y variables no secretas (3 min)
 
-1. `create_project` en el equipo `team_NVmg2F1svT5W7CKrSInHh5VD`: nombre `web-<cliente>`, *framework*
-   `nextjs`, repositorio Git `RicardoTorresOliva/web_<cliente>` (GitHub).
-2. `get_project` → la rama de producción tiene que ser `main` y el repositorio tiene que figurar como
-   conectado. Si la rama no es `main`: `update_project` para fijarla; si la herramienta no lo admite,
-   pedir a Ricardo: vercel.com → proyecto `web-<cliente>` → **Settings** → **Environments** →
-   **Production** → **Branch Tracking** → `main` → **Save**.
-3. Variables **no secretas** con `create_project_env`, destino **Production y Preview**, tipo legible
-   (`encrypted`, no `sensitive`: se tienen que poder revisar en el panel):
+1. Crear, enlazar y conectar a GitHub por la CLI de Vercel, desde el clon del paso 1:
+   `cd ~/Dev/web_<cliente> && vercel project add web-<cliente> --scope ricardotorresolivas-projects && vercel link --yes --project web-<cliente> --scope ricardotorresolivas-projects && vercel git connect https://github.com/RicardoTorresOliva/web_<cliente>.git --yes --scope ricardotorresolivas-projects`
+2. **`vercel project add` crea el proyecto con el preset «Other»** (sirve `public/` como estático, no
+   la aplicación). Fijar Next.js por la API:
+   `vercel api "/v9/projects/web-<cliente>?teamId=team_NVmg2F1svT5W7CKrSInHh5VD" -X PATCH --input <(echo '{"framework":"nextjs"}')`
+   y comprobar con un GET a la misma ruta: `framework: nextjs` y `link.productionBranch: main`.
+   **`vercel link` añade `.env*` al `.gitignore`**, que ignoraría también `.env.example`: cambiar esa
+   línea por `.env.local` antes del primer commit.
+3. Variables **no secretas**, destino **Production y Preview**, legibles, con
+   `printf '%s' "<valor>" | vercel env add <NOMBRE> production,preview --project web-<cliente> --scope team_NVmg2F1svT5W7CKrSInHh5VD --no-sensitive --force --yes --non-interactive`:
 
 | Variable | Valor | Por qué / cuándo |
 |---|---|---|
@@ -231,11 +226,11 @@ repite el punto 1.
 1. Las variables solo entran en despliegues **nuevos**: provocar uno de `develop`
    (`git -C ~/Dev/web_<cliente> commit --allow-empty -m "Arranque: variables cargadas"` y
    `git -C ~/Dev/web_<cliente> push origin develop`), o el primer cambio real de contenido.
-2. `list_deployments` del proyecto → el último de `develop` en `READY`. Si sale `ERROR`: leer su
+2. `vercel api "/v6/deployments?projectId=<id>&teamId=team_NVmg2F1svT5W7CKrSInHh5VD&limit=1"` → el último de `develop` en `READY`. Si sale `ERROR`: leer su
    registro de compilación (`get_deployment` / eventos). El caso típico es una variable del paso 5 mal
    escrita.
-3. `web_fetch_vercel_url` sobre `https://<url del despliegue>/api/health` (las vistas previas están
-   protegidas; esta herramienta entra con la sesión del equipo). Tiene que devolver
+3. `vercel curl https://<url del despliegue>/api/health --scope ricardotorresolivas-projects` (las
+   vistas previas están protegidas; `vercel curl` entra con la sesión del equipo). Tiene que devolver
    `"status":"ok"`, `"app":"slg_website"`, `"migraciones"` igual al número del paso 3 a, y
    `"faltan":[]`.
 4. Si `faltan` nombra variables: las de la tabla del paso 5 las añade Claude; las secretas, Ricardo
