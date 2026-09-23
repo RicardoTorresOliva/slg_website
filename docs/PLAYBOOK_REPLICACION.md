@@ -69,6 +69,7 @@ Orden estricto: cada paso depende del anterior. Total: **4 días de Claude + 45 
 | 14 | Llevar los pasos 1–12 a `website_template` y limpiar sus ramas viejas | Claude | Plantilla al día | 30 min | 🟡 22-09 · `develop` de la plantilla al día con los pasos 1–12; faltan borrar 4 ramas viejas (Ricardo, desde GitHub) y vaciar la documentación de SLG (`docs/PLANTILLA.md` §4) |
 | 15 | Configuración única de Ricardo (§7.3) | Ricardo | Permisos y cuentas listos | 45 min | |
 | 16 | Prueba en frío con «Cliente Demo»: del formulario a `https://…vercel.app` en línea, midiendo el tiempo de Ricardo | Claude + Ricardo | Tiempo real al `work_log` | 2 h | ✅ 22-09 · `web_demo` en línea; 3 min de Ricardo; hallazgo abierto: el repo del cliente nace sin la historia de la plantilla |
+| 17 | Actualizar clientes desde la plantilla (D-167): historial compartido y `npm run sitio:actualizar` | Claude | Un cambio de motor llega a cada cliente sin tocar su piel | 2 h | ✅ 23-09 · `web_demo` enganchado con `--primera-vez` y actualizado de verdad; `slg_website` trae la plantilla (89 páginas con el mismo HTML); `crear-sitio` paso 1 y 1b |
 
 ## 4. Checklist de intake por cliente
 
