@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 163" role="img" aria-label="Cliente Demo">
+  <!-- Logotipo de la demo de la plantilla: el isotipo y el nombre. Mismas
+       proporciones que espera el pie (600 × 163). El texto usa fuentes del
+       sistema porque un SVG servido como <img> no ve las del sitio; el logo de un
+       cliente real llega con el texto convertido a trazos. -->
+  <g transform="translate(8 26) scale(1.734)">
+    <rect width="64" height="64" rx="14" fill="#1e2b33"/>
+    <rect x="13" y="36" width="10" height="15" rx="2" fill="#a8c5bd"/>
+    <rect x="27" y="26" width="10" height="25" rx="2" fill="#a8c5bd"/>
+    <rect x="41" y="15" width="10" height="36" rx="2" fill="#ffffff"/>
+  </g>
+  <text x="148" y="104" fill="#1e2b33" font-family="Montserrat, 'Helvetica Neue', Arial, sans-serif" font-size="62" font-weight="700" letter-spacing="-1">Cliente Demo</text>
+</svg>

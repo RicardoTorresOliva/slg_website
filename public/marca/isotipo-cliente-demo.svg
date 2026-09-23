@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Cliente Demo">
+  <!-- Isotipo de la demo de la plantilla: tres barras que suben, sobre un cuadrado
+       en el color profundo de la ficha. Cada cliente lo sustituye por el suyo. -->
+  <rect width="64" height="64" rx="14" fill="#1e2b33"/>
+  <rect x="13" y="36" width="10" height="15" rx="2" fill="#a8c5bd"/>
+  <rect x="27" y="26" width="10" height="25" rx="2" fill="#a8c5bd"/>
+  <rect x="41" y="15" width="10" height="36" rx="2" fill="#ffffff"/>
+</svg>

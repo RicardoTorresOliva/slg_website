@@ -1,16 +1,14 @@
 ---
 type: page
 title: "Contact"
-description: "Write to us. No qualification form and no discovery call."
+description: "Write to us and tell us where your company stands."
 lang: en
 pair: "contacto"
 nav_order: 10
-updated: "2026-09-12"
+updated: "2026-09-22"
 copy: temporal
 ---
 
-Write to **support@softlandingglobal.com** and tell us what you are working on.
+Tell us where your company stands and what decision lies ahead. We reply by email within two working days.
 
-There is no qualification form and no discovery call: if you have a specific question, put it in the email and we will answer with what we know, even when the answer is that this is not for us.
-
-**SLG Agency Inc.** — Florida, United States.
+You can also write to us directly at **hola@demo.example.com**.

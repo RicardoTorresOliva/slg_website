@@ -5,18 +5,18 @@ description: "Qué datos tratamos, para qué, y qué puedes pedirnos."
 lang: es
 pair: "legal-privacy"
 nav_order: 11
-updated: "2026-09-12"
+updated: "2026-09-22"
 copy: temporal
 ---
 
-**Aviso: este texto es provisional.** El texto legal definitivo lo revisa un profesional antes del lanzamiento.
+**Aviso: esta es una plantilla genérica.** Cada sitio la sustituye por el texto que revise su asesor legal antes del lanzamiento.
 
-**Qué recogemos.** Solo lo que nos das: tu dirección de correo corporativo cuando pides un documento, y lo que escribas si nos contactas. Nada más.
+**Qué recogemos.** Solo lo que nos das: tu correo corporativo cuando pides un documento, y lo que escribas si nos contactas.
 
 **Para qué.** Para entregarte el documento que pediste y para responderte. No vendemos ni cedemos tu dirección a terceros.
 
-**Analítica.** Medimos el uso del sitio con una herramienta autoalojada y sin cookies: no te seguimos entre sitios y no construimos un perfil tuyo.
+**Cuánto tiempo.** Lo necesario para atender tu solicitud y cumplir nuestras obligaciones legales.
 
-**Tus derechos.** Puedes pedirnos acceso, corrección o borrado de tus datos escribiendo a support@softlandingglobal.com.
+**Tus derechos.** Puedes pedirnos acceso, corrección o borrado de tus datos escribiendo a hola@demo.example.com.
 
-**Responsable.** SLG Agency Inc., Florida, Estados Unidos.
+**Responsable.** Cliente Demo S.A.C., Lima, Perú.

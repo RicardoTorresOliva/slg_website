@@ -1,57 +1,69 @@
 /**
- * site.config.ts — La ficha de ESTE sitio: SLG Agency (D-165).
+ * site.config.ts — La ficha de ESTE sitio: «Cliente Demo», el ejemplo con el
+ * que arranca la plantilla (D-165).
  *
  * Todo lo que distingue a un sitio de otro y no es texto de `content/` está
  * aquí; la forma está en `lib/sitio/tipos.ts` y lo que se deriva de ella, en
  * `lib/sitio/index.ts`. Para un cliente nuevo se reescribe este archivo —a
- * mano o desde su formulario de intake— y el motor no se toca.
+ * mano o desde su formulario de intake (`commands/leer-intake.md`)— y el motor
+ * no se toca.
  *
- * **ESTA FICHA REPRODUCE EXACTAMENTE LO QUE ANTES ESTABA ESCRITO A MANO** en
- * `lib/content/rutas.ts`, `lib/content/nomenclature.ts`, `lib/content/schema.ts`,
- * `components/Fotografia.tsx`, `app/tokens.css` y los frenos. Pasar a la ficha
- * no puede cambiar ni un byte de lo que `softlandingglobal.com` sirve: los
- * frenos que miden el HTML servido (`check:paginas`, `check:seo`,
- * `check:armazon`, `check:produccion`) son la prueba.
+ * **CLIENTE DEMO NO EXISTE.** Es una consultora inventada, con la oferta más
+ * pequeña que todavía ejercita toda la estructura del motor: un eje con una
+ * línea de dos servicios, y un servicio suelto al nivel de los ejes. Si un
+ * cambio del motor rompe algo de esa estructura, lo rompe aquí primero, y los
+ * frenos lo ven antes que ningún cliente. Por eso, al copiar la plantilla, se
+ * reescribe la ficha entera: no se «ajusta» la de la demo.
+ *
+ * Los módulos están elegidos para demostrar los dos modos que más cuestan de
+ * ver: **sin doctrina** (un módulo apagado desaparece entero, rutas incluidas)
+ * y **sin CRM** (cada captura se avisa por correo al buzón del cliente).
  */
 import type { FichaDelSitio, ServicioDeLaOferta } from "./lib/sitio/tipos.ts";
 
-/** Un servicio con las convenciones del sitio: inglés en `/en…` y registro `<slug>-en`. */
-const servicio = (slug: string, nombre: string, ruta: string, foto?: string): ServicioDeLaOferta => ({
-  slug,
-  nombre,
-  pagina: { es: slug, en: `${slug}-en` },
-  ruta: { es: ruta, en: `/en${ruta}` },
-  foto,
-});
+/**
+ * Un servicio de la oferta. Los cuatro datos van explícitos —sin derivar el
+ * inglés del español— porque las rutas inglesas de la demo están en inglés
+ * (`/en/consulting/…`), y eso es lo que un cliente bilingüe suele pedir.
+ */
+const servicio = (
+  slug: string,
+  nombre: string,
+  pagina: { es: string; en: string },
+  ruta: { es: string; en: string },
+): ServicioDeLaOferta => ({ slug, nombre, pagina, ruta });
 
 export const sitio: FichaDelSitio = {
   marca: {
-    nombre: "SLG Agency",
-    razonSocial: "SLG Agency Inc.",
-    lema: "Precision with Purpose.",
-    correoPublico: "support@softlandingglobal.com",
-    logo: "/marca/logo-softlanding-global.webp",
-    isotipo: "/marca/isotipo-slg.svg",
-    remitente: "SLG Agency",
+    nombre: "Cliente Demo",
+    razonSocial: "Cliente Demo S.A.C.",
+    lema: "Decisiones claras para empresas que crecen.",
+    correoPublico: "hola@demo.example.com",
+    logo: "/marca/logo-cliente-demo.svg",
+    isotipo: "/marca/isotipo-cliente-demo.svg",
+    remitente: "Cliente Demo",
+    // Una paleta neutra, pizarra y salvia. Las cifras son el contraste contra
+    // el blanco; `check:contraste` mide además los pares cruzados y exige que
+    // el acento y el tinte NO sirvan como texto sobre papel (son de fondo).
     colores: {
-      primario: "#2878b4",
-      profundo: "#24394d",
-      acento: "#50b4dc",
-      tinte: "#78b4dc",
-      secundario: "#282878",
-      alerta: "#dc141e",
-      tinta: "#0a0a14",
-      linea: "#c8ccd3",
+      primario: "#3a5a6c", //   7,4:1 — enlaces y acciones
+      profundo: "#1e2b33", //  14,5:1 — titulares y franjas oscuras
+      acento: "#a8c5bd", //     1,8:1 — realce y texto sobre fondo oscuro, nunca texto sobre papel
+      tinte: "#94a9b5", //      2,4:1 — solo fondos y filetes
+      secundario: "#2f4150", // 10,5:1 — franjas alternativas
+      alerta: "#9e3a2c", //     6,8:1 — el botón de descarga y los avisos
+      tinta: "#15191d", //     17,7:1 — texto de cuerpo
+      linea: "#cfd4d8",
       papel: "#ffffff",
     },
   },
 
   dominio: {
-    produccion: "https://softlandingglobal.com",
-    enlaces: {
-      /** La Academy anterior, en otro proyecto (frontera (e)): se enlaza como externa. */
-      academiaExterna: "https://academy.softlandingglobal.com",
-    },
+    produccion: "https://demo.example.com",
+    // Sin destinos externos: la demo no enlaza ninguna otra web propia. Un
+    // cliente que la tenga la declara aquí y la cita desde una línea con
+    // `enlaceExterno` (ver `lib/sitio/tipos.ts`).
+    enlaces: {},
   },
 
   idiomas: { principal: "es", adicionales: ["en"] },
@@ -59,12 +71,16 @@ export const sitio: FichaDelSitio = {
   modulos: {
     blog: true,
     descargas: true,
-    doctrina: true,
+    // La doctrina es la página de posición de un sitio concreto; la demo la
+    // apaga para enseñar que un módulo apagado no deja rastro: ni ruta, ni
+    // enlace en el pie, ni bloque en Servicios.
+    doctrina: false,
     contacto: true,
     intranet: true,
     api: true,
-    crm: true,
-    analitica: true,
+    // Sin CRM: cada captura llega por correo a `MAIL_LEADS_TO` (paso 5b).
+    crm: false,
+    analitica: false,
   },
 
   menu: [
@@ -77,144 +93,75 @@ export const sitio: FichaDelSitio = {
   oferta: {
     ejes: [
       {
-        clave: "voltai",
-        nombre: "VoltAi by SLG",
-        pagina: { es: "ai", en: "ai" },
-        ruta: { es: "/ai", en: "/en/ai" },
-        foto: "ai",
+        clave: "consultoria",
+        nombre: "Consultoría",
+        pagina: { es: "consultoria", en: "consulting" },
+        ruta: { es: "/consultoria", en: "/en/consulting" },
         lineas: [
           {
-            clave: "slg-academy",
-            nombre: "VoltAi Academy",
-            pagina: { es: "slg-academy", en: "slg-academy-en" },
-            ruta: { es: "/ai/academy", en: "/en/ai/academy" },
-            foto: "academy",
-            // La Academy anterior, en otro proyecto (frontera (e)).
-            enlaceExterno: { enlace: "academiaExterna", etiqueta: "overview.phoenixAcademy" },
+            clave: "estrategia",
+            nombre: "Estrategia",
+            pagina: { es: "estrategia", en: "strategy" },
+            ruta: { es: "/consultoria/estrategia", en: "/en/consulting/strategy" },
             servicios: [
-              servicio("phoenix-peex", "Phoenix PEEx", "/ai/academy/phoenix-peex", "phoenix-peex"),
-              servicio("phoenix-teax", "Phoenix TEAx", "/ai/academy/phoenix-teax", "phoenix-teax"),
-              servicio("phoenix-retx", "Phoenix RETx", "/ai/academy/phoenix-retx", "phoenix-retx"),
-              servicio("customize-programs", "Customize Programs", "/ai/academy/customize-programs", "customize-programs"),
-              servicio("ai-coaching", "AI Coaching for Directors", "/ai/academy/ai-coaching", "ai-coaching"),
-            ],
-          },
-          {
-            clave: "slg-enterprise",
-            nombre: "VoltAi Enterprise",
-            pagina: { es: "slg-enterprise", en: "slg-enterprise-en" },
-            ruta: { es: "/ai/enterprise", en: "/en/ai/enterprise" },
-            foto: "enterprise",
-            servicios: [
-              servicio("readiness", "SLG_Readiness", "/ai/enterprise/readiness", "readiness"),
-              servicio("implement", "SLG_Implement", "/ai/enterprise/implement", "implement"),
-            ],
-          },
-          {
-            clave: "slg-factory",
-            nombre: "VoltAi Factory",
-            pagina: { es: "slg-factory", en: "slg-factory-en" },
-            ruta: { es: "/ai/factory", en: "/en/ai/factory" },
-            foto: "factory",
-            servicios: [
-              servicio("app-building", "APP_Building", "/ai/factory/app-building", "app-building"),
-              servicio("age-building", "AGE_Building", "/ai/factory/age-building", "age-building"),
-              servicio("coo-as-a-service", "CoO as a Service", "/ai/factory/coo-as-a-service", "coo-as-a-service"),
+              servicio(
+                "diagnostico",
+                "Diagnóstico",
+                { es: "diagnostico", en: "diagnosis" },
+                { es: "/consultoria/estrategia/diagnostico", en: "/en/consulting/strategy/diagnosis" },
+              ),
+              servicio(
+                "plan-de-crecimiento",
+                "Plan de crecimiento",
+                { es: "plan-de-crecimiento", en: "growth-plan" },
+                { es: "/consultoria/estrategia/plan-de-crecimiento", en: "/en/consulting/strategy/growth-plan" },
+              ),
             ],
           },
         ],
       },
     ],
-    sueltos: [servicio("slg-holdings", "Holdings by SLG", "/holdings", "holdings")],
+    // Un servicio suelto: cuelga al nivel de los ejes y su regreso es Servicios.
+    sueltos: [
+      servicio(
+        "formacion",
+        "Formación a equipos",
+        { es: "formacion", en: "team-training" },
+        { es: "/formacion", en: "/en/training" },
+      ),
+    ],
   },
 
-  fotos: {
-    servicios: "home",
-    doctrina: "doctrina",
-    nosotros: "nosotros",
-    descargas: "descargas",
-    blog: "blog",
-    contacto: "contacto",
-  },
+  // La demo va sin fotografías: el campo es opcional y una página sin foto se
+  // sirve sin imagen. Un cliente con fotos las deja en `public/fotos/<clave>.webp`
+  // y las nombra aquí (páginas del motor) o en `foto` de su eje, línea o servicio.
+  fotos: {},
 
   bloquesDeServicios: [
     "puertas",
     "lineas",
-    { id: "holdings", suelto: "slg-holdings", etiqueta: "home.seeHoldings" },
-    "doctrina",
+    // El servicio suelto, desarrollado debajo de los ejes y con su propio enlace.
+    { id: "formacion", suelto: "formacion", etiqueta: "home.seeHoldings" },
     "articulos",
     "descarga",
   ],
 
   nomenclatura: {
-    literales: [
-      "VoltAi by SLG",
-      "Holdings by SLG",
-      "VoltAi Academy",
-      "VoltAi Enterprise",
-      "VoltAi Factory",
-      "SLG_Readiness",
-      "SLG_Implement",
-      "APP_Building",
-      "AGE_Building",
-      "CoO as a Service",
-      "Phoenix PEEx",
-      "Phoenix TEAx",
-      "Phoenix RETx",
-    ],
+    // Los nombres de la oferta se escriben siempre igual, también en inglés:
+    // en `/en` se lee «Diagnóstico», no «Diagnosis». Si un cliente quiere un
+    // nombre por idioma, es una decisión de intake, no un ajuste de texto.
+    literales: ["Consultoría", "Estrategia", "Diagnóstico", "Plan de crecimiento", "Formación a equipos"],
     variantesProhibidas: [
-      // Nombres anteriores del eje y formas partidas.
-      { pattern: /\bSLG\s+VoltAi\b/g, correct: "VoltAi by SLG", why: "nombre anterior sin guion bajo" },
-      { pattern: /\bSLG-VoltAi\b/g, correct: "VoltAi by SLG", why: "nombre anterior con guion" },
-      { pattern: /\bSLG_AI\b/g, correct: "VoltAi by SLG", why: "nombre anterior del eje (hasta 2026-09-17)" },
-      { pattern: /\bSLG\s+AI\b/g, correct: "VoltAi by SLG", why: "nombre anterior del eje, además sin guion bajo" },
-      { pattern: /\bSLG-AI\b/g, correct: "VoltAi by SLG", why: "nombre anterior del eje, además con guion" },
-      { pattern: /\bSLG_VOLTAI\b/g, correct: "VoltAi by SLG", why: "capitalización alterada" },
-      { pattern: /\bSLG_VoltAI\b/g, correct: "VoltAi by SLG", why: "capitalización alterada (la i final es minúscula)" },
-      { pattern: /\bSLG_Voltai\b/g, correct: "VoltAi by SLG", why: "capitalización alterada" },
-      { pattern: /\bSLG_voltai\b/g, correct: "VoltAi by SLG", why: "capitalización alterada" },
-      { pattern: /\bVolt\s+Ai\b/gi, correct: "VoltAi by SLG", why: "espacio dentro del nombre" },
-      { pattern: /\bSLG\s+Holdings\b/g, correct: "Holdings by SLG", why: "espacio en vez de guion bajo" },
-      { pattern: /\bSLG\s+Academy\b/g, correct: "VoltAi Academy", why: "espacio en vez de guion bajo" },
-      { pattern: /\bSLG\s+Enterprise\b/g, correct: "VoltAi Enterprise", why: "espacio en vez de guion bajo" },
-      { pattern: /\bSLG\s+Factory\b/g, correct: "VoltAi Factory", why: "espacio en vez de guion bajo" },
-      { pattern: /\bSLG\s+Readiness\b/g, correct: "SLG_Readiness", why: "espacio en vez de guion bajo" },
-      { pattern: /\bSLG\s+Implement\b/g, correct: "SLG_Implement", why: "espacio en vez de guion bajo" },
-      { pattern: /\bAPP\s+Building\b/g, correct: "APP_Building", why: "espacio en vez de guion bajo" },
-      { pattern: /\bAGE\s+Building\b/g, correct: "AGE_Building", why: "espacio en vez de guion bajo" },
-      // Traducciones: los nombres no se traducen.
-      { pattern: /\bIA\s+SLG\b/g, correct: "VoltAi by SLG", why: "traducido al español" },
-      { pattern: /\bSLG_IA\b/g, correct: "VoltAi by SLG", why: "traducido al español" },
-      { pattern: /\bSLG_VoltIA\b/g, correct: "VoltAi by SLG", why: "traducido al español" },
-      { pattern: /\bAcademia\s+SLG\b/gi, correct: "VoltAi Academy", why: "traducido al español" },
-      { pattern: /\bFábrica\s+SLG\b/gi, correct: "VoltAi Factory", why: "traducido al español" },
-      { pattern: /\bSLG_Fábrica\b/gi, correct: "VoltAi Factory", why: "traducido al español" },
-      { pattern: /\bCoO\s+como\s+Servicio\b/gi, correct: "CoO as a Service", why: "traducido al español" },
-      { pattern: /\bDirector\s+de\s+Operaciones\s+como\s+Servicio\b/gi, correct: "CoO as a Service", why: "traducido al español" },
-      // Capitalización de la familia Phoenix.
-      { pattern: /\bPhoenix\s+PEEX\b/g, correct: "Phoenix PEEx", why: "capitalización alterada" },
-      { pattern: /\bPhoenix\s+Peex\b/g, correct: "Phoenix PEEx", why: "capitalización alterada" },
-      { pattern: /\bPhoenix\s+TEAX\b/g, correct: "Phoenix TEAx", why: "capitalización alterada" },
-      { pattern: /\bPhoenix\s+Teax\b/g, correct: "Phoenix TEAx", why: "capitalización alterada" },
-      { pattern: /\bPhoenix\s+RETX\b/g, correct: "Phoenix RETx", why: "capitalización alterada" },
-      { pattern: /\bPhoenix\s+Retx\b/g, correct: "Phoenix RETx", why: "capitalización alterada" },
+      // EJEMPLOS. Cada cliente trae los suyos: nombres antiguos de un servicio,
+      // capitalizaciones que su marca no admite, traducciones que no quiere.
+      // `check:nomenclature` los busca en todo `content/`, incluida la interfaz.
+      { pattern: /\bPlan\s+de\s+Crecimiento\b/g, correct: "Plan de crecimiento", why: "ejemplo: solo la primera palabra va en mayúscula" },
+      { pattern: /\bgrowth\s+plan\b/gi, correct: "Plan de crecimiento", why: "ejemplo: los nombres de la oferta no se traducen" },
     ],
     reglasDeContenido: [
-      {
-        pattern: /\bDisrupci[óo]n\s+Creativa\b/gi,
-        correct: "Destrucción Creativa",
-        why: "la «D» de DAL OS es «Destrucción Creativa», no «Disrupción Creativa»",
-      },
-      {
-        pattern: /\bDAL\s+OS[^.\n]{0,40}\bDisrupci[óo]n\b/gi,
-        correct: "Destrucción Creativa",
-        why: "la «D» de DAL OS es «Destrucción Creativa»",
-      },
-      {
-        pattern: /\bCreative\s+Disruption\b/gi,
-        correct: "Destrucción Creativa",
-        why: "la «D» de DAL OS es «Destrucción Creativa» / «Creative Destruction»",
-      },
+      // EJEMPLO de regla que no es un nombre: una fórmula que el cliente no
+      // quiere ver publicada, aunque no sea falsa.
+      { pattern: /\bconsultor[ií]a\s+integral\b/gi, why: "ejemplo: fórmula genérica que el cliente pidió no usar" },
     ],
     prohibidasEnPublico: [
       // La Sesión Cero es del portal: la capa pública no la ofrece (RF-96).

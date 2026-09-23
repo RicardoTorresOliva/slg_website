@@ -1,11 +1,11 @@
 ---
 type: page
 title: "Gracias"
-description: "Tu documento va en camino."
+description: "Hemos recibido tu solicitud."
 lang: es
 pair: "thank-you"
 nav_order: 9
-updated: "2026-09-12"
+updated: "2026-09-22"
 copy: temporal
 ---
 
