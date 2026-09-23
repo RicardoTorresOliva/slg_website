@@ -686,6 +686,62 @@ rama. `.gitignore`: el `.env*` del final **anulaba el `!.env.example`** de arrib
 
 ## PRÓXIMA SESIÓN
 
+Cierre del 2026-09-22 por límite de ventana. **`slg_website` `develop` = `fde1496`** (CI en marcha al
+cerrar). **`website_template` `develop` = `de3cb86`** (solo ramas `develop` y `main`). **Producción de
+SLG**: base en **27 de 27** (0023–0026 aplicadas el 22-09 por Claude con la CLI de Supabase y
+registradas en `drizzle.__drizzle_migrations`; API REST cerrada, verificado); código desplegado =
+`1e55868`, **pendiente de desplegar `develop`**.
+
+### 0 · Lo primero al abrir
+1. `gh run list --branch develop --limit 1` en `slg_website`. Si `fde1496` (o posterior) está en verde:
+   desplegar. `git -C .claude/worktrees/desplegar checkout --detach origin/develop` y `vercel --prod`
+   desde esa copia (si el modo auto lo bloquea, dar a Ricardo la línea exacta). Comprobar en
+   `https://softlandingglobal.com/api/health`: `status ok`, `migraciones 27`.
+2. CI de `website_template` (`gh run list -R RicardoTorresOliva/website_template --branch develop
+   --limit 1`): el último rojo era de pruebas que asumían CRM; ya corregido, falta verlo en verde.
+
+### 1 · Trabajo aprobado: D-167, opción A (actualizar clientes desde la plantilla)
+Ricardo dijo «sí, opción A» el 22-09. Cuatro pasos, sin intervención suya:
+1. `commands/crear-sitio.md` paso 1: crear el repositorio del cliente **con el historial** de la
+   plantilla (repo vacío con `gh repo create --private` + `git clone` de la plantilla + `git push` de
+   `develop` y `main`), no con `--template`.
+2. En `website_template`: `.gitattributes` con `merge=ours` para la piel (`site.config.ts`,
+   `content/**`, `public/marca/**`, `public/fotos/**`, `app/icon*`, `app/apple-icon*`,
+   `app/favicon.ico`) y `npm run sitio:actualizar` (añade el remoto `plantilla` si falta, configura
+   el driver `merge.ours`, `git fetch` + `git merge plantilla/develop`, frenos, `push` a `develop` →
+   vista previa; producción solo con el «sí» de Ricardo).
+3. `web_demo` (`~/Dev/web_demo`): engancharlo con `git merge --allow-unrelated-histories` a la
+   plantilla conservando su piel; probar una actualización real. **No borrar el repositorio.**
+4. `slg_website`: remoto `plantilla` = `website_template`; desde ahora los cambios de motor se hacen
+   en la plantilla y SLG los trae con `sitio:actualizar`.
+
+### 2 · Estado de la plantilla (pasos del §3 de `docs/PLAYBOOK_REPLICACION.md`)
+Pasos 0–13 y 16 hechos. 14 a medias (falta vaciar la documentación de SLG del template:
+`docs/PLANTILLA.md` §4). 15 (configuración única de Ricardo, §7.3) pendiente: formulario ✅, Vercel
+con acceso a todos los repos ✅ (la conexión Git de `web_demo` funcionó), claves de Resend y
+UptimeRobot pendientes. **Prueba en frío**: `web_demo` en línea
+(`web-demo-4mtfx5v7o-ricardotorresolivas-projects.vercel.app`), Supabase `emzuigrgbcihjoxssfqd`,
+Vercel `web-demo`; lecciones en `work_log` («Prueba en frío (paso 16)»).
+
+### 3 · Pendientes de Ricardo
+- Correcciones al formulario de intake (huecos detectados: correo público, «Solo inglés» no
+  soportado, CRM «panel» en web sin área privada, formulario solo en español, tipografía sin sitio en
+  la ficha). Claude puede darle un script que edite el formulario existente.
+- La pregunta del playbook: de las 5 webs, cuántas informativas / con área privada / e-commerce.
+- Decisión de analítica (Umami, propia o ninguna).
+
+### Herramientas que funcionaron (prueba en frío)
+- Supabase: `npx --no-install supabase … --agent no` con la sesión del Mac (proyectos, `db query
+  --linked --project-ref <ref> --file`). El conector MCP no confirma costes (parámetros como texto).
+- Vercel: `vercel project add` / `link` / `git connect`, `vercel api` (PATCH de `framework`),
+  `vercel curl` para vistas previas protegidas. El conector MCP no ve los proyectos del equipo.
+- `vercel project add` crea el preset «Other»; `vercel link` añade `.env*` al `.gitignore`.
+
+---
+
+### Lo anterior (22-09)
+
+
 Cierre del 2026-09-21, noche. **`develop` = `92903ba`**, empujado; nada vive solo en el portátil
 (se subió también la rama vieja `claude/wizardly-spence-6b2e2e`, del D-50 de septiembre, que no
 estaba en el remoto y no está fusionada). **Producción = `slg-website-hpx6scn2i`**, desde `1e55868`.
