@@ -73,6 +73,15 @@ export type Opciones = {
   readonly dominio: string;
   readonly simular: boolean;
   readonly cambiarClaves: boolean;
+  /**
+   * Salta el alta del dominio de envío en Resend (paso 7) y no pide su clave.
+   * Para un sitio sin dominio real todavía —la demo de la plantilla, o un
+   * cliente que aún no ha delegado su DNS—: el resto queda cargado y el correo
+   * se completa el día que se vuelve a pegar la línea sin esta opción.
+   */
+  readonly sinCorreo?: boolean;
+  /** Salta el monitor de UptimeRobot (paso 8) y no pide su clave. Mismo caso. */
+  readonly sinMonitor?: boolean;
 };
 
 export type RegistroDns = {
@@ -310,7 +319,8 @@ export async function ejecutar(o: Opciones, d: Dependencias): Promise<number> {
 
     // ── 2 · Claves de cuenta (Llavero) ──────────────────────────────────────
     paso(2, "Claves de Resend y UptimeRobot (Llavero del Mac)");
-    const claveResend = guardar(
+    if (o.sinCorreo && o.sinMonitor) decir("  · Nada que pedir: --sin-correo y --sin-monitor saltan las dos plataformas.");
+    const claveResend = o.sinCorreo ? null : guardar(
       await claveDeCuenta(d, decir, o, {
         cuenta: "resend-api-key",
         nombre: "Resend",
@@ -319,7 +329,7 @@ export async function ejecutar(o: Opciones, d: Dependencias): Promise<number> {
         comprobar: (v) => d.resend.comprobarClave(v),
       }),
     );
-    const claveUptime = guardar(
+    const claveUptime = o.sinMonitor ? null : guardar(
       await claveDeCuenta(d, decir, o, {
         cuenta: "uptimerobot-api-key",
         nombre: "UptimeRobot",
@@ -401,51 +411,61 @@ export async function ejecutar(o: Opciones, d: Dependencias): Promise<number> {
 
     // ── 7 · Correo (Resend) ─────────────────────────────────────────────────
     paso(7, "Correo: dominio de envío en Resend");
-    const subdominio = `mailweb.${o.dominio}`;
-    const dominio = await d.resend.buscarOCrearDominio(claveResend, subdominio, REGION_RESEND);
-    decir(`  ✓ ${subdominio} ${dominio.creado ? "dado de alta" : "ya estaba dado de alta"} en Resend (estado: ${dominio.estado}).`);
-    registrosDns = dominio.registros;
-    if (completa(presentes, "MAIL_SMTP_PASSWORD") && completa(presentes, "MAIL_SMTP_USERNAME")) {
-      yaEstaba("MAIL_SMTP_USERNAME", "Vercel");
-      yaEstaba("MAIL_SMTP_PASSWORD", "Vercel");
+    if (claveResend === null) {
+      decir("  · Saltado (--sin-correo): el sitio no enviará correo hasta que vuelvas a pegar la línea sin esa opción.");
+      resumen.push({ nombre: "MAIL_SMTP_USERNAME", donde: "Vercel", estado: "pendiente (--sin-correo)" });
+      resumen.push({ nombre: "MAIL_SMTP_PASSWORD", donde: "Vercel", estado: "pendiente (--sin-correo)" });
     } else {
-      /**
-       * UNA CLAVE DE ENVÍO POR SITIO, NO LA DE CUENTA. La clave que está en el
-       * Llavero puede crear y borrar dominios de todos los clientes; la que va
-       * al servidor del sitio solo puede **enviar**, y solo desde su dominio.
-       * Si un sitio se ve comprometido, se revoca la suya y los demás siguen.
-       */
-      const token = guardar(await d.resend.crearClaveDeEnvio(claveResend, `web_${o.cliente} · envío`, dominio.id));
-      await cargar("MAIL_SMTP_USERNAME", "resend", true, "Vercel");
-      await cargar("MAIL_SMTP_PASSWORD", token, true, "Vercel");
+      const subdominio = `mailweb.${o.dominio}`;
+      const dominio = await d.resend.buscarOCrearDominio(claveResend, subdominio, REGION_RESEND);
+      decir(`  ✓ ${subdominio} ${dominio.creado ? "dado de alta" : "ya estaba dado de alta"} en Resend (estado: ${dominio.estado}).`);
+      registrosDns = dominio.registros;
+      if (completa(presentes, "MAIL_SMTP_PASSWORD") && completa(presentes, "MAIL_SMTP_USERNAME")) {
+        yaEstaba("MAIL_SMTP_USERNAME", "Vercel");
+        yaEstaba("MAIL_SMTP_PASSWORD", "Vercel");
+      } else {
+        /**
+         * UNA CLAVE DE ENVÍO POR SITIO, NO LA DE CUENTA. La clave que está en el
+         * Llavero puede crear y borrar dominios de todos los clientes; la que va
+         * al servidor del sitio solo puede **enviar**, y solo desde su dominio.
+         * Si un sitio se ve comprometido, se revoca la suya y los demás siguen.
+         */
+        const token = guardar(await d.resend.crearClaveDeEnvio(claveResend, `web_${o.cliente} · envío`, dominio.id));
+        await cargar("MAIL_SMTP_USERNAME", "resend", true, "Vercel");
+        await cargar("MAIL_SMTP_PASSWORD", token, true, "Vercel");
+      }
     }
 
     // ── 8 · Monitor (UptimeRobot) ───────────────────────────────────────────
     paso(8, "Monitor de caída: UptimeRobot");
-    const urlSonda = `https://${o.dominio}/api/health`;
-    const monitor = await d.uptime.buscarMonitor(claveUptime, urlSonda);
-    const enLinea = await d.sitioEnLinea(urlSonda);
-    if (!monitor) {
-      /**
-       * EN PAUSA HASTA EL LANZAMIENTO. El dominio del cliente no apunta a
-       * Vercel hasta el día 5; un monitor activo desde hoy mandaría un aviso de
-       * caída cada cinco minutos durante una semana, y eso enseña a ignorar
-       * los avisos justo antes de que empiecen a importar.
-       */
-      await d.uptime.crearMonitor(claveUptime, { url: urlSonda, nombre: `web_${o.cliente} · producción`, pausado: !enLinea });
-      decir(
-        enLinea
-          ? `  ✓ Monitor creado y activo sobre ${urlSonda}.`
-          : `  ✓ Monitor creado EN PAUSA sobre ${urlSonda}: el dominio aún no responde.`,
-      );
-    } else if (monitor.pausado && enLinea) {
-      await d.uptime.reanudar(claveUptime, monitor.id);
-      decir(`  ✓ El dominio ya responde: monitor activado.`);
+    if (claveUptime === null) {
+      decir("  · Saltado (--sin-monitor): nadie vigila el sitio hasta que vuelvas a pegar la línea sin esa opción.");
     } else {
-      decir(`  · El monitor ya existía (${monitor.pausado ? "en pausa: el dominio aún no responde" : "activo"}).`);
-    }
-    if (!enLinea) {
-      decir("    El día del lanzamiento vuelve a pegar esta misma línea: verá el dominio en línea y lo activará.");
+      const urlSonda = `https://${o.dominio}/api/health`;
+      const monitor = await d.uptime.buscarMonitor(claveUptime, urlSonda);
+      const enLinea = await d.sitioEnLinea(urlSonda);
+      if (!monitor) {
+        /**
+         * EN PAUSA HASTA EL LANZAMIENTO. El dominio del cliente no apunta a
+         * Vercel hasta el día 5; un monitor activo desde hoy mandaría un aviso de
+         * caída cada cinco minutos durante una semana, y eso enseña a ignorar
+         * los avisos justo antes de que empiecen a importar.
+         */
+        await d.uptime.crearMonitor(claveUptime, { url: urlSonda, nombre: `web_${o.cliente} · producción`, pausado: !enLinea });
+        decir(
+          enLinea
+            ? `  ✓ Monitor creado y activo sobre ${urlSonda}.`
+            : `  ✓ Monitor creado EN PAUSA sobre ${urlSonda}: el dominio aún no responde.`,
+        );
+      } else if (monitor.pausado && enLinea) {
+        await d.uptime.reanudar(claveUptime, monitor.id);
+        decir(`  ✓ El dominio ya responde: monitor activado.`);
+      } else {
+        decir(`  · El monitor ya existía (${monitor.pausado ? "en pausa: el dominio aún no responde" : "activo"}).`);
+      }
+      if (!enLinea) {
+        decir("    El día del lanzamiento vuelve a pegar esta misma línea: verá el dominio en línea y lo activará.");
+      }
     }
   } catch (e) {
     decir("");

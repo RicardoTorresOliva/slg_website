@@ -220,6 +220,9 @@ repite el punto 1.
    > «── Resumen» hasta el final, cópialo y pégalo aquí. Si sale una línea con ✗, haz lo que dice
    > «Qué hacer»; si dice que me lo pegues, pégamelo.
 
+   **Sitio sin dominio real todavía** (la demo de la plantilla, o un cliente que aún no delegó su DNS):
+   añadir `--sin-correo --sin-monitor` al final de la línea. Salta Resend y UptimeRobot y no pide sus
+   claves; el día que el dominio exista se pega la línea sin esas dos opciones y completa lo que falta.
 3. Lo que pega Ricardo son nombres de variables y registros DNS: **no son secretos**. Los registros
    DNS se guardan para el paso 13 del §5 (DNS).
 
