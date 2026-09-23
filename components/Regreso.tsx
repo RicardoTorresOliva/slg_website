@@ -17,13 +17,13 @@ import { PAGINAS_DEL_MOTOR } from "@/lib/sitio/motor";
  *
  * El sitio está anidado —Servicios → eje → línea → servicio; Blog → artículo;
  * Descargas → documento— y la barra solo enseña cuatro destinos. Sin esto,
- * desde `/ai/academy` no había forma de volver a `/ai` salvo el botón del
+ * desde el índice de una línea no había forma de volver a su eje salvo el botón del
  * navegador. Una sola línea, siempre en el mismo sitio, que dice A DÓNDE vuelve:
- * «Volver a VoltAi by SLG», no un «Atrás» genérico.
+ * «Volver a Consultoría», no un «Atrás» genérico.
  *
  * **El padre sale de la tabla de rutas**, no de partir la URL: un servicio
- * suelto (`/holdings`) no cuelga de un eje (`/ai`) aunque ambos sean oferta, y
- * `/ai/academy/phoenix-peex` vuelve a su línea y no al eje. Es la misma tabla
+ * suelto (`/formacion`) no cuelga de un eje (`/consultoria`) aunque ambos sean
+ * oferta, y `/consultoria/estrategia/diagnostico` vuelve a su línea y no al eje. Es la misma tabla
  * que dibuja la barra y el mapa (`lib/content/rutas.ts`), y la tabla sale de la
  * ficha del sitio.
  *

@@ -6,7 +6,7 @@ import { Markdown } from "./Markdown";
 import { HeroTipografico, TarjetaDeServicio } from "./piezas";
 
 /**
- * El índice de un EJE de la oferta —en SLG, `VoltAi by SLG` en `/ai`—: la
+ * El índice de un EJE de la oferta —en la demo, `Consultoría` en `/consultoria`—: la
  * puerta a sus líneas (DU-04, criterio 2). El nombre del archivo es el de
  * cuando solo existía ese eje; el componente sirve a cualquiera que declare la
  * ficha.
@@ -26,7 +26,7 @@ export function PuertaDeAI({ eje, lang }: { eje: Eje; lang: "es" | "en" }) {
   const bloques = secciones(cuerpo);
   // La entrada es lo que va ANTES del primer `##`: se pinta siempre. Antes solo
   // se pintaba el cuerpo cuando no había ninguna sección, así que añadir una
-  // («Por qué VoltAi») hizo desaparecer también el párrafo de entrada. Las
+  // (la historia del nombre del eje) hizo desaparecer también el párrafo de entrada. Las
   // secciones van después de las líneas: primero la oferta, luego el nombre y
   // su historia.
   const entrada = cuerpo.split(/\n##\s+/)[0]?.trim() ?? "";

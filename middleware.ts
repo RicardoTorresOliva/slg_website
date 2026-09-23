@@ -29,7 +29,7 @@ const REALM = 'Basic realm="slg staging", charset="UTF-8"';
 /**
  * `/api/health` queda FUERA de la compuerta a propósito.
  *
- * UptimeRobot (D-49) vigila `staging.softlandingglobal.com` desde fuera del VPS
+ * UptimeRobot (D-49) vigila `staging.<dominio>` desde fuera del servidor
  * y no lleva credenciales: si la sonda recibiera 401 el monitor estaría midiendo
  * la compuerta, no el servicio. La sonda no devuelve ningún dato de negocio
  * —ver `app/api/health/route.ts`—, así que abrirla no filtra nada.
@@ -280,7 +280,7 @@ function hostDelVisor(): string | null {
 /**
  * **En el host del visor no vive la aplicación: vive un documento.**
  *
- * Sin esto, `visor.softlandingglobal.com/portal` serviría el portal entero desde
+ * Sin esto, `visor.<dominio>/portal` serviría el portal entero desde
  * el subdominio del visor. No habría sesión —las cookies no viajan ahí, que es
  * el mecanismo— pero sí una copia del sitio en otro dominio: contenido
  * duplicado para los buscadores, una superficie más que auditar, y sobre todo

@@ -18,8 +18,8 @@ import { PuertaDeAI } from "./PuertaDeAI";
  * Lo que sirven `app/(public)/[...ruta]` y `app/(public)/en/[...ruta]`: toda
  * ruta que declara la ficha del sitio (D-166).
  *
- * **POR QUÉ UNA RUTA COMODÍN Y NO CARPETAS.** La oferta de SLG vivía en
- * carpetas escritas a mano —`ai/academy/[servicio]`, `holdings`…, y su copia
+ * **POR QUÉ UNA RUTA COMODÍN Y NO CARPETAS.** La oferta del primer sitio vivía
+ * en carpetas escritas a mano —una por eje, línea y servicio suelto, y su copia
  * bajo `en/`—: dieciocho archivos que decían dos veces lo que ya decía la tabla
  * de rutas, y que un cliente con otra oferta no podría usar sin reescribirlos.
  * Ahora la estructura la dice la ficha y una sola ruta la sirve entera: el
@@ -94,7 +94,7 @@ export function metadatosDeLaFicha(ruta: string): Metadata {
 }
 
 /**
- * La página. Un servicio suelto —`/holdings` en SLG— es **destino Y página de
+ * La página. Un servicio suelto —`/formacion` en la demo— es **destino Y página de
  * servicio**: lo sirve su registro de `service`, con el contrato A.3, no uno de
  * `page`. Un segundo registro para la misma URL serían dos fuentes para un solo
  * texto.

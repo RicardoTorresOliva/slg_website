@@ -4,8 +4,8 @@
  *
  * POR QUÉ UNA LISTA CERRADA Y NO UN TEXTO LIBRE. `project.service` es lo que
  * después aparece en el portal del cliente, en sus entregables y en los
- * informes. Un texto libre produce «Phoenix Peex», «phoenix peex» y «Phoenix
- * PEEX» en tres proyectos distintos, y a partir de ahí **no hay forma de
+ * informes. Un texto libre produce «Plan de Crecimiento», «plan de crecimiento» y
+ * «Plan De Crecimiento» en tres proyectos distintos, y a partir de ahí **no hay forma de
  * agrupar por servicio** sin normalizar a mano cada vez. Y RF-14 dice que la
  * nomenclatura es **literal e intraducible**: media docena de proyectos con el
  * nombre mal escrito son media docena de sitios donde la marca aparece rota.
@@ -32,7 +32,7 @@ export function serviciosLiterales(): string[] {
 
 /** `true` solo si el valor es **exactamente** uno de los nombres de la oferta. */
 export function esServicioLiteral(valor: string): boolean {
-  // Comparación exacta y sin normalizar: «phoenix peex» NO es «Phoenix PEEx».
+  // Comparación exacta y sin normalizar: «plan de crecimiento» NO es «Plan de crecimiento».
   // Aceptar variantes aquí sería reintroducir por la puerta de atrás justo lo
   // que RF-14 prohíbe, y encima en la base de datos, donde ya no se corrige.
   return serviciosLiterales().includes(valor);

@@ -1,12 +1,9 @@
 /**
- * Wordmark — Marca denominativa provisional de SLG Agency.
+ * Wordmark — La marca en la barra: el isotipo del sitio y su nombre.
  *
- * Isotipo corporativo + wordmark tipográfico. El isotipo es vectorial,
- * convertido desde el `Isotipo-SLG.pdf` oficial: ni recortado de un PNG ni
- * redibujado. Se usa el ISOTIPO y no el logotipo completo por norma de marca
- * (§10-4, `naming-rules.md`): los lockups oficiales dicen «Softlanding Global»
- * o «Softlanding Global Academy», y la marca pública de este sitio es
- * **SLG Agency** — el isotipo no contradice ninguna de las dos.
+ * Isotipo + nombre tipográfico. Se usa el ISOTIPO y no el logotipo completo
+ * porque la barra es estrecha y el nombre ya va escrito al lado: el logotipo
+ * completo, con su propio texto, firma en el pie (`ArmazonPublico`).
  *
  * Está aislado en un componente y un token justamente para que sustituirlo por
  * el logo real sea cambiar un archivo, sin tocar ninguna página (R-35).
@@ -18,9 +15,6 @@
  *   · Margen de respeto = 1 altura de la «S». Se aplica con `padding`, no con
  *     márgenes externos, para que no colapse.
  *   · Nunca deformado: sin `scale` no uniforme, sin `transform` de anchura.
- *
- * Nota: la marca pública es **SLG Agency** (§10-4). «Softlanding Global» solo
- * se usa en el contexto de `Holdings by SLG`.
  *
  * **EL NOMBRE Y EL ISOTIPO LLEGAN POR PROPS**, desde la ficha (`sitio.marca`,
  * D-165), y no se leen aquí. El único que pinta este componente es

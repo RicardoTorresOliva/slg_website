@@ -7,7 +7,7 @@
  * se rechaza en revisión.
  *
  * Por qué importa más de lo que parece: §5.3 del brief deja «previsto» alojar el
- * reporte `SLG_Readiness` de forma nativa. Ese día habrá un tipo nuevo. Si el
+ * informe de un diagnóstico de forma nativa. Ese día habrá un tipo nuevo. Si el
  * tipo vive en el mapa, es una línea; si vive repartido en condicionales, es una
  * cacería por todo el código.
  */
