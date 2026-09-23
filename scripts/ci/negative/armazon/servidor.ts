@@ -4,7 +4,7 @@
  * Sirve, en TODAS las rutas, un armazón que incumple lo que DU-02 promete:
  *
  *   · «Inicio» como destino de menú, que RF-01 prohíbe expresamente;
- *   · falta `/holdings` entre los cinco destinos;
+ *   · falta `/servicios` entre los destinos del menú;
  *   · el pie enlaza `/hq`, que RF-87 prohíbe mientras M3 siga abierto;
  *   · el conmutador apunta SIEMPRE a la portada en vez de a la misma página
  *     en el otro idioma, que es el fallo que RF-04 y el DoD #2 persiguen;

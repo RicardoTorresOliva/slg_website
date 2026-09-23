@@ -26,6 +26,15 @@ import postgres from "postgres";
 
 import { contextoDeClaveApi, contextoDeSesion } from "../../lib/db/context.ts";
 import type { UserRole } from "../../lib/db/schema.ts";
+import { nombresDeServicio } from "../../lib/sitio/index.ts";
+/**
+ * Los servicios con los que se siembran los proyectos salen de la ficha
+ * (`site.config.ts`): la base no restringe `project.service` (0024), pero la
+ * aplicación solo acepta los literales de la oferta, y una prueba que sembrara
+ * el nombre de un servicio de otro sitio probaría datos que este sitio no
+ * puede producir.
+ */
+const [SERVICIO] = nombresDeServicio();
 
 let fallos = 0;
 let comprobaciones = 0;
@@ -76,7 +85,7 @@ async function sembrar() {
   await dueno`insert into "user" (id, name, email, email_verified, role, locale)
               values (${ADMIN}, 'Admin DU15', 'admin@du15.test', true, 'slg_admin', 'es')`;
   await dueno`insert into project (id, organization_id, name, service, status)
-              values (${PROYECTO}, ${ORG}, 'Proyecto DU15', 'Phoenix PEEx', 'active')`;
+              values (${PROYECTO}, ${ORG}, 'Proyecto DU15', ${SERVICIO}, 'active')`;
 }
 
 /** Apunta el adaptador de S3 a un endpoint que no existe: aquí solo se FIRMA. */

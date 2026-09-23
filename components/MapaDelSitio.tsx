@@ -92,7 +92,7 @@ export function MapaDelSitio({ slug, lang }: { slug: string; lang: "es" | "en" }
   /**
    * Los ejes cuelgan de la raíz —cada uno con sus líneas debajo, y los
    * servicios debajo de cada línea—, y a continuación los servicios sueltos
-   * (en SLG, Holdings). Doctrina, Blog y Nosotros van al lado. «Empieza aquí»
+   * (en la demo, «Formación a equipos»). Doctrina, Blog y Nosotros van al lado. «Empieza aquí»
    * no aparece como nodo: es esta página.
    *
    * **SERVICIOS NO ES UN NODO, Y NO ES UN OLVIDO** (Ricardo, 2026-09-21). Lo

@@ -28,6 +28,15 @@ import postgres from "postgres";
 
 import { contextoDeSesion } from "../../lib/db/context.ts";
 import type { UserRole } from "../../lib/db/schema.ts";
+import { nombresDeServicio } from "../../lib/sitio/index.ts";
+/**
+ * Los servicios con los que se siembran los proyectos salen de la ficha
+ * (`site.config.ts`): la base no restringe `project.service` (0024), pero la
+ * aplicación solo acepta los literales de la oferta, y una prueba que sembrara
+ * el nombre de un servicio de otro sitio probaría datos que este sitio no
+ * puede producir.
+ */
+const [SERVICIO, OTRO_SERVICIO = SERVICIO] = nombresDeServicio();
 
 let fallos = 0;
 let comprobaciones = 0;
@@ -95,9 +104,9 @@ async function sembrar() {
   }
   // Empresa A: un proyecto CON materiales y entregables, y otro SIN materiales.
   await dueno`insert into project (id, organization_id, name, service, status)
-              values (${A.p1}, ${A.org}, 'Programa Phoenix', 'Phoenix PEEx', 'active')`;
+              values (${A.p1}, ${A.org}, 'Programa de ejemplo', ${SERVICIO}, 'active')`;
   await dueno`insert into project (id, organization_id, name, service, status)
-              values (${A.p2}, ${A.org}, 'Diagnóstico', 'SLG_Readiness', 'active')`;
+              values (${A.p2}, ${A.org}, 'Diagnóstico', ${OTRO_SERVICIO}, 'active')`;
   await entregable(A.org, A.p1, "Informe de arranque", "pdf");
   await entregable(A.org, A.p1, "Manual del programa", "material");
   await entregable(A.org, A.p1, "Anexo de ejercicios", "material");
@@ -106,7 +115,7 @@ async function sembrar() {
 
   // Empresa B: un material que A no puede ver de ninguna manera (criterio 5).
   await dueno`insert into project (id, organization_id, name, service, status)
-              values (${B.p1}, ${B.org}, 'Programa ajeno', 'Phoenix TEAx', 'active')`;
+              values (${B.p1}, ${B.org}, 'Programa ajeno', ${OTRO_SERVICIO}, 'active')`;
   return { ajeno: await entregable(B.org, B.p1, "Material ajeno", "material") };
 }
 
@@ -157,7 +166,7 @@ async function main() {
     "cada material cae en el grupo de SU proyecto",
     grupos.every((g) => g.materiales.every((m) => m.projectId === g.proyecto.id)),
   );
-  check("y el grupo trae el proyecto entero, no solo su identificador", grupos[0]?.proyecto.nombre === "Programa Phoenix");
+  check("y el grupo trae el proyecto entero, no solo su identificador", grupos[0]?.proyecto.nombre === "Programa de ejemplo");
 
   const modulo = await import("../../lib/portal/materiales.ts");
   const exportaciones = Object.keys(modulo);

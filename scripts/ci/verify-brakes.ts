@@ -233,7 +233,7 @@ const CASOS: Caso[] = [
       "falta content/services/es/no-existe.md",
       "pero la ficha lo cuelga de «Otra línea»",
       "public/fotos/foto-inexistente.webp no existe",
-      "slug de servicio: «readiness» está repetido",
+      "slug de servicio: «repetido» está repetido",
       "que Next sirve antes",
       "no existe ni en app/ ni en la ficha",
     ],
@@ -409,7 +409,7 @@ console.log("\nFreno del armazón público — contra un armazón roto a propós
   const esperados = [
     // Desde el 2026-09-18 el menú tiene cuatro destinos (D de la sesión: Empieza
     // aquí · Servicios · Blog · Nosotros); el fixture roto no enlaza /servicios.
-    // Decía «/holdings», que ya no es destino: la expectativa vivía en el pasado.
+    // Decía un destino que ya no lo era: la expectativa vivía en el pasado.
     "la barra en español enlaza /servicios",
     "ninguna etiqueta genérica",
     "cero enlaces a superficies cerradas",

@@ -1,11 +1,11 @@
 /**
  * origen.ts — **El origen separado del visor** (DU-19 · D-45 · RF-90 · RNF-21).
  *
- * EL SUBDOMINIO ES `visor.softlandingglobal.com`, y con esto queda fijado el
+ * EL SUBDOMINIO ES `visor.` DEL DOMINIO DEL SITIO, y con esto queda fijado el
  * `[PENDIENTE]` que D-45 dejó abierto para M4. Se llama así y no
  * `entregables.` ni `docs.` por una razón concreta: **nombra el mecanismo, no
  * el contenido**. El día que por ahí se sirva algo que no es un entregable —un
- * informe nativo de `SLG_Readiness`, por ejemplo, que §5.3 deja «previsto»— un
+ * informe nativo de un diagnóstico, por ejemplo, que §5.3 deja «previsto»— un
  * subdominio llamado `entregables.` obligaría a elegir entre un nombre que
  * miente o una migración de URLs.
  *

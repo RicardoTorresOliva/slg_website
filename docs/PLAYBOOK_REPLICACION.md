@@ -64,7 +64,7 @@ Orden estricto: cada paso depende del anterior. Total: **4 días de Claude + 45 
 | 9 | `auth:primer-admin` en modo invitación: manda el enlace al responsable en vez de imprimir una contraseña | Claude | Script cambiado + prueba | 1 h | ✅ 22-09 |
 | 10 | Lector del intake: hoja de respuestas + carpeta de Drive → borrador de `site.config.ts` y del contenido | Claude | `commands/leer-intake.md` | 3 h | ✅ 22-09 · skill `leer-intake` |
 | 11 | Plantillas de los cuatro correos al cliente (formulario, faltantes, revisión, entrega) | Claude | `docs/intake/correos.md` | 1 h | ✅ 22-09 · `docs/intake/correos.md` |
-| 12 | Vaciar lo específico de SLG y dejar un «Cliente Demo» bilingüe con 3 servicios | Claude | La plantilla arranca con demo | 2 h | ✅ 22-09 · en `website_template` (`aed4a19`): ficha, contenido ES/EN, logo e iconos de «Cliente Demo»; 45 rutas servidas sin rastro de SLG |
+| 12 | Vaciar lo específico de SLG y dejar un «Cliente Demo» bilingüe con 3 servicios | Claude | La plantilla arranca con demo | 2 h | ✅ 22-09 · en `website_template`, rama `plantilla/p12-cliente-demo` · `docs/PLANTILLA.md` |
 | 13 | Repositorio `website_template` privado y marcado como *template* | Ricardo | github.com/RicardoTorresOliva/website_template | — | ✅ 22-09 · rama por defecto cambiada a `develop` por Claude: «Use this template» solo copia la rama por defecto y `main` iba 102 commits atrás |
 | 14 | Llevar los pasos 1–12 a `website_template` y limpiar sus ramas viejas | Claude | Plantilla al día | 30 min | 🟡 22-09 · `develop` de la plantilla al día con los pasos 1–12; faltan borrar 4 ramas viejas (Ricardo, desde GitHub) y vaciar la documentación de SLG (`docs/PLANTILLA.md` §4) |
 | 15 | Configuración única de Ricardo (§7.3) | Ricardo | Permisos y cuentas listos | 45 min | |
@@ -130,7 +130,7 @@ C = Claude · R = Ricardo · Cl = cliente. Presupone la plantilla del §3 termin
 | 0 | 1 | Correo al cliente con el enlace del formulario | C redacta el borrador en Gmail · R pulsa **Enviar** | 1 min | Cliente recibe el formulario |
 | 0 | 2 | Cliente responde; C crea la carpeta `Intake · <cliente>` y la comparte con el responsable | C, con «sí» de R en el chat | 10 s | Cliente recibe la carpeta |
 | 0 | 3 | C revisa los ★ y redacta el correo de faltantes, si los hay | C · R pulsa **Enviar** | 1 min | Intake completo |
-| 1 | 4 | Repositorio `web_<cliente>` desde `website_template` (`gh repo create --template`) | C | 0 | Repositorio privado |
+| 1 | 4 | Repositorio `web_<cliente>` con el historial de `website_template` (D-167; `commands/crear-sitio.md` paso 1) | C | 0 | Repositorio privado |
 | 1 | 5 | Proyecto Supabase por MCP: consulta el coste; si es 0 lo crea, si no pide «sí» | C (+ «sí» de R si cuesta) | 0–10 s | Proyecto activo |
 | 1 | 6 | 24 migraciones y bucket privado por la API de Supabase (sin contraseña, sin el problema de IPv6) | C | 0 | Base lista |
 | 1 | 7 | Proyecto Vercel conectado al repositorio + variables no secretas | C | 0 | Una vista previa por cada cambio |

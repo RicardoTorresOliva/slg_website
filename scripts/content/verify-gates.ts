@@ -23,6 +23,12 @@ type Case = {
   /** Fragmento que debe aparecer en la salida: prueba que falló por lo esperado. */
   expect: string;
   args?: string[];
+  /**
+   * Otra ficha para el caso (`SITIO_FICHA`): la nomenclatura es de cada sitio,
+   * y su prueba negativa trae sus propias reglas para no depender de la oferta
+   * del sitio que la ejecuta.
+   */
+  ficha?: string;
 };
 
 const CASES: Case[] = [
@@ -48,13 +54,15 @@ const CASES: Case[] = [
     gate: "nomenclatura literal",
     script: "check-nomenclature.ts",
     fixture: "negative/nomenclature",
-    expect: "VoltAi by SLG",
+    expect: "Producto Uno",
+    ficha: "negative/nomenclature/site.config.ts",
   },
   {
-    gate: "nomenclatura · DAL OS",
+    gate: "nomenclatura · regla de contenido",
     script: "check-nomenclature.ts",
     fixture: "negative/nomenclature",
-    expect: "Destrucción Creativa",
+    expect: "a medida",
+    ficha: "negative/nomenclature/site.config.ts",
   },
   {
     gate: "copy · sin Sesión Cero ni agenda",
@@ -86,7 +94,11 @@ for (const c of CASES) {
     [path.join(HERE, c.script), ...(c.args ?? [])],
     {
       encoding: "utf8",
-      env: { ...process.env, CONTENT_ROOT: path.join(HERE, c.fixture) },
+      env: {
+        ...process.env,
+        CONTENT_ROOT: path.join(HERE, c.fixture),
+        ...(c.ficha ? { SITIO_FICHA: path.join(HERE, c.ficha) } : {}),
+      },
     },
   );
 

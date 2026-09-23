@@ -73,8 +73,9 @@ function crearDoble() {
         return;
       }
 
-      // El doble imita el CONTRATO REAL de crm.softlandingglobal.com
-      // (`crm_slg/backend`, comprobado el 2026-09-17): búsqueda por `q`,
+      // El doble imita el CONTRATO REAL del CRM contra el que se escribió el
+      // adaptador (el del primer sitio, comprobado el 2026-09-17; `CRM_Template`
+      // expone el mismo): búsqueda por `q`,
       // respuestas envueltas en `{ data }`, alta que exige `firstName` y
       // `lastName` y rechaza claves desconocidas, nota atada por `contactId`.
       // La primera versión del doble aceptaba lo que el adaptador mandaba, y

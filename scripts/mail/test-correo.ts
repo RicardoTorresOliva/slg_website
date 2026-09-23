@@ -108,16 +108,16 @@ function apuntarA(buzon: Buzon, from: string) {
   process.env.MAIL_SMTP_USERNAME = buzon.usuario;
   process.env.MAIL_SMTP_PASSWORD = buzon.clave;
   process.env.MAIL_FROM_ADDRESS = from;
-  process.env.MAIL_FROM_NAME = "SLG Agency";
-  process.env.MAIL_REPLY_TO = "support@softlandingglobal.com";
-  process.env.MAIL_ALERTS_TO = "support@softlandingglobal.com";
+  process.env.MAIL_FROM_NAME = "Cliente Demo";
+  process.env.MAIL_REPLY_TO = "hola@demo.example.com";
+  process.env.MAIL_ALERTS_TO = "hola@demo.example.com";
 }
 
 const DATOS: Readonly<Record<TipoDeCorreo, Record<string, string>>> = {
-  invitation: { invitadoPor: "Ricardo", url: "https://softlandingglobal.com/invitacion/T0KEN", empresa: "Acme" },
-  password_reset: { url: "https://softlandingglobal.com/recuperar/T0KEN" },
-  capture_notice: { correo: "lead@empresa.com", origen: "/ai/academy/phoenix-peex", urlCrm: "https://crm.softlandingglobal.com/contacts/1", documento: "D-01" },
-  capture_failed_alert: { correo: "lead@empresa.com", urlHq: "https://softlandingglobal.com/hq/capturas/1", ultimoError: "timeout" },
+  invitation: { invitadoPor: "Ana", url: "https://demo.example.com/invitacion/T0KEN", empresa: "Acme" },
+  password_reset: { url: "https://demo.example.com/recuperar/T0KEN" },
+  capture_notice: { correo: "lead@empresa.com", origen: "/servicios", urlCrm: "https://crm.demo.example.com/contacts/1", documento: "D-01" },
+  capture_failed_alert: { correo: "lead@empresa.com", urlHq: "https://demo.example.com/hq/capturas/1", ultimoError: "timeout" },
   backup_failed_alert: { fecha: "2026-09-13", motivo: "pg_dump salió con 1" },
   capture_inbox_notice: {
     nombre: "Ana",
@@ -161,7 +161,7 @@ async function suite(etiqueta: string, buzon: Buzon, from: string) {
     check(`${tipo} · el remitente se persiste`, fila?.fromEmail === from, `fue ${fila?.fromEmail}`);
     check(
       `${tipo} · Reply-To a support@ se persiste (RF-117)`,
-      fila?.replyTo === "support@softlandingglobal.com",
+      fila?.replyTo === "hola@demo.example.com",
       `fue ${fila?.replyTo}`,
     );
     check(`${tipo} · se persiste la clave de plantilla, no el cuerpo`, fila?.templateKey === `mail.${tipo}`);
@@ -175,7 +175,7 @@ async function suite(etiqueta: string, buzon: Buzon, from: string) {
 
   const uno = buzon.recibidos[0];
   check("el sobre lleva el remitente del subdominio de envío (D-24)", uno.from === from, `fue ${uno.from}`);
-  check("la cabecera Reply-To viaja", /reply-to:\s*support@softlandingglobal\.com/i.test(uno.crudo));
+  check("la cabecera Reply-To viaja", /reply-to:\s*hola@demo\.example\.com/i.test(uno.crudo));
   check("lleva versión de texto y versión HTML", /content-type:\s*text\/plain/i.test(uno.crudo) && /content-type:\s*text\/html/i.test(uno.crudo));
 
   // 2 · Cero seguimiento (D-22, privacy-first).
@@ -269,7 +269,7 @@ async function suite(etiqueta: string, buzon: Buzon, from: string) {
     para: "sin-datos@ejemplo.com",
     idioma: "es",
     from,
-    replyTo: "support@softlandingglobal.com",
+    replyTo: "hola@demo.example.com",
     templateKey: "mail.invitation",
     subjectKey: "mail.invitation.subject",
   });
@@ -306,11 +306,11 @@ async function main() {
 
   try {
     // LA MISMA SUITE, DOS DESTINOS. Solo cambian variables de entorno.
-    await suite("Destino 1", A, "no-reply@mailweb.softlandingglobal.com");
+    await suite("Destino 1", A, "no-reply@mail.demo.example.com");
     await withSystemScope("limpiar entre vueltas", async (db) => {
       await db.delete(emailDelivery);
     });
-    await suite("Destino 2 — mismo código, otras variables (criterio 2)", B, "avisos@envios.softlandingglobal.com");
+    await suite("Destino 2 — mismo código, otras variables (criterio 2)", B, "avisos@envios.demo.example.com");
 
     console.log("\n── Criterio 2 ──\n");
     check(
@@ -320,7 +320,7 @@ async function main() {
     );
     check(
       "el segundo destino recibió correo, con otra credencial y otro remitente",
-      B.recibidos.length > 0 && B.recibidos[0].from === "avisos@envios.softlandingglobal.com",
+      B.recibidos.length > 0 && B.recibidos[0].from === "avisos@envios.demo.example.com",
       `recibió ${B.recibidos.length}, remitente ${B.recibidos[0]?.from}`,
     );
   } finally {

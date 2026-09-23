@@ -69,7 +69,7 @@ export function OverviewDeRama({ slug, lang }: { slug: string; lang: "es" | "en"
           ))}
         </ul>
 
-        {/* Criterio 3 · un destino de otro proyecto (en SLG, Phoenix Academy)
+        {/* Criterio 3 · un destino de otro proyecto (otra web del mismo cliente)
             está FUERA de alcance (§10-7, frontera (e)): se enlaza y se señala
             como externo. Sin integración, sin sesión compartida y sin
             contenido embebido. `rel="noopener"` porque `target="_blank"` sin él

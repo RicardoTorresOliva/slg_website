@@ -36,8 +36,8 @@ const SERVER = path.join(REPO_ROOT, ".next", "standalone", "server.js");
  * otro nombre para que todo saliera `undefined`, cayera a 0… o a `?? 100`.
  *
  * **SIN `LH_PAGINAS`, LAS TRES SALEN DE LA FICHA Y DEL CONTENIDO** (plantilla,
- * 2026-09-22). Antes eran `/ai/enterprise/readiness` y `/blog/mes-cuatro`,
- * escritas a mano: en el sitio de un cliente las dos serían 404 y el freno
+ * 2026-09-22). Antes eran una página de servicio y un artículo del primer sitio,
+ * escritos a mano: en el sitio de un cliente las dos serían 404 y el freno
  * mediría una página de error. Ahora: la portada; el primer servicio de la
  * oferta (el gate pide «una página de servicio», y todas salen de la misma
  * plantilla); y el primer artículo publicado, si el blog está encendido.

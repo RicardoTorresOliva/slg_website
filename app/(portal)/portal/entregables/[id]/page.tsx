@@ -20,7 +20,7 @@ import { urlDelVisor, visorEstaSeparado } from "@/lib/visor/origen";
  *
  * **EL TIPO NO DECIDE AQUÍ: DECIDE EL MAPA.** Esta pantalla lee
  * `especificacionDe(tipo).modo` y pinta el modo, sin saber qué tipos existen.
- * Añadir un tipo —el informe nativo de `SLG_Readiness` que §5.3 deja
+ * Añadir un tipo —el informe nativo de un diagnóstico, que §5.3 deja
  * «previsto»— es añadir una entrada a `RENDERIZADORES` y, si estrena modo, una
  * rama aquí; añadir un tipo con un modo que ya existe **no toca este archivo**.
  * Una decisión de tipo repartida por la interfaz rechaza la unidad en revisión.

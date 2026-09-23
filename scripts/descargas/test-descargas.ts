@@ -112,6 +112,20 @@ function documentoProximamente(): string | null {
   return null;
 }
 
+/**
+ * Un documento cualquiera del contenido, para los casos en los que da igual
+ * cuál: la trampa, el dominio gratuito, los datos incompletos. Se lee del
+ * contenido y no se escribe aquí porque los documentos son de cada sitio; con
+ * uno inventado, la ruta respondería «no existe» antes de llegar a lo que se
+ * prueba.
+ */
+function unDocumento(): string {
+  const carpeta = path.join(REPO_ROOT, "content", "downloads", "es");
+  const primero = fs.readdirSync(carpeta).filter((f) => f.endsWith(".md")).sort()[0];
+  if (!primero) throw new Error("test-descargas necesita al menos un documento en content/downloads/es");
+  return primero.replace(/\.md$/, "");
+}
+
 async function enviar(
   base: string,
   campos: Record<string, string>,
@@ -165,7 +179,7 @@ async function main() {
     // Sin nombre ni apellido A PROPÓSITO: la trampa tiene que responder antes
     // que la comprobación de datos, o el bot recibiría una pista de qué le faltó.
     const conTrampa = await enviar(base, {
-      documento: "d-06",
+      documento: unDocumento(),
       idioma: "es",
       email: "bot@prueba-slg.com",
       empresa_web: "soy un bot",
@@ -184,7 +198,7 @@ async function main() {
     await reiniciarLimite();
     console.log("\nDominio de correo gratuito — mensaje explícito, y sin captura (RF-31):\n");
     const gratuito = await enviar(base, {
-      documento: "d-06",
+      documento: unDocumento(),
       idioma: "es",
       email: "persona@gmail.com",
       nombre: "Persona",
@@ -208,7 +222,7 @@ async function main() {
     // comprobar que el cambio surte efecto SIN reconstruir ni reiniciar.
     await new Promise((r) => setTimeout(r, 61_000));
     const ampliado = await enviar(base, {
-      documento: "d-06",
+      documento: unDocumento(),
       idioma: "es",
       email: "alguien@prueba-slg.com",
       nombre: "Alguien",
@@ -225,8 +239,8 @@ async function main() {
     console.log("\nDocumento SIN archivo — captura igual, y no emite firma (RF-40):\n");
     /**
      * El caso exige un documento en `coming-soon`, y eso es un ESTADO DEL
-     * CONTENIDO, no de esta prueba: hasta el 2026-09-17 lo era `d-06`, y el
-     * día que los once documentos pasaron a `published` (con sus PDF) la prueba
+     * CONTENIDO, no de esta prueba: en el primer sitio lo fue uno concreto, y
+     * el día que todos pasaron a `published` (con sus PDF) la prueba
      * se puso roja por un motivo que no era un defecto. Ahora busca uno en el
      * contenido; si no hay ninguno, lo dice y no lo finge: un caso omitido con
      * su motivo escrito es verdad, y una comprobación que se acomoda para pasar
@@ -284,7 +298,7 @@ async function main() {
     await reiniciarLimite();
     console.log("\nSin nombre o sin apellido — motivo explícito, y sin captura:\n");
     const sinApellido = await enviar(base, {
-      documento: "d-06",
+      documento: unDocumento(),
       idioma: "es",
       email: "incompleta@empresa-real-slg.test",
       nombre: "Persona",
@@ -295,7 +309,7 @@ async function main() {
       `destino: ${sinApellido.destino}`,
     );
     const sinNombre = await enviar(base, {
-      documento: "d-06",
+      documento: unDocumento(),
       idioma: "es",
       email: "incompleta@empresa-real-slg.test",
       apellido: "Apellido",
@@ -316,7 +330,7 @@ async function main() {
     let cortado = "";
     for (let i = 0; i < 6; i++) {
       const r = await enviar(base, {
-        documento: "d-06",
+        documento: unDocumento(),
         idioma: "es",
         email: `tope${i}@empresa-real-slg.test`,
         nombre: "Tope",
@@ -360,7 +374,7 @@ async function main() {
       email: "contacto@empresa-real-slg.test",
       nombre: "Persona",
       apellido: "De Contacto",
-      mensaje: "Queremos hablar de SLG_Readiness.",
+      mensaje: "Queremos hablar de un proyecto.",
     });
     check(
       "el envío de contacto redirige a gracias con su variante",
@@ -370,7 +384,7 @@ async function main() {
     const leadContacto = await dueno`select source, message, name, last_name from lead_capture where email = 'contacto@empresa-real-slg.test'`;
     check(
       "crea una captura con source `contact` y guarda el mensaje",
-      leadContacto[0]?.source === "contact" && String(leadContacto[0]?.message).includes("SLG_Readiness"),
+      leadContacto[0]?.source === "contact" && String(leadContacto[0]?.message).includes("hablar de un proyecto"),
       JSON.stringify(leadContacto[0] ?? {}),
     );
     check(

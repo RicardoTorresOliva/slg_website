@@ -78,11 +78,11 @@ function apuntarCorreoA(puerto: number) {
   process.env.MAIL_SMTP_PORT = String(puerto);
   process.env.MAIL_SMTP_USERNAME = "u";
   process.env.MAIL_SMTP_PASSWORD = CLAVE_DEL_BUZON_LOCAL;
-  process.env.MAIL_FROM_ADDRESS = "no-reply@mailweb.softlandingglobal.com";
-  process.env.MAIL_FROM_NAME = "SLG Agency";
-  process.env.MAIL_REPLY_TO = "support@softlandingglobal.com";
-  process.env.MAIL_ALERTS_TO = "support@softlandingglobal.com";
-  process.env.NEXT_PUBLIC_SITE_URL = "https://softlandingglobal.com";
+  process.env.MAIL_FROM_ADDRESS = "no-reply@mail.demo.example.com";
+  process.env.MAIL_FROM_NAME = "Cliente Demo";
+  process.env.MAIL_REPLY_TO = "hola@demo.example.com";
+  process.env.MAIL_ALERTS_TO = "hola@demo.example.com";
+  process.env.NEXT_PUBLIC_SITE_URL = "https://demo.example.com";
 }
 
 /* ── Fixtures ─────────────────────────────────────────────────────────────── */

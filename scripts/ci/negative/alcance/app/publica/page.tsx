@@ -8,8 +8,8 @@
 export default function PaginaPublica() {
   return (
     <main>
-      <h1>Phoenix PEEx</h1>
-      <a href="https://calendario.example/slg">Agenda tu Sesión Cero</a>
+      <h1>Un servicio</h1>
+      <a href="https://calendario.example/agenda">Agenda tu Sesión Cero</a>
     </main>
   );
 }

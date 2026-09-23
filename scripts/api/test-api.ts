@@ -30,6 +30,15 @@ import net from "node:net";
 import path from "node:path";
 
 import postgres from "postgres";
+import { nombresDeServicio } from "../../lib/sitio/index.ts";
+/**
+ * Los servicios con los que se siembran los proyectos salen de la ficha
+ * (`site.config.ts`): la base no restringe `project.service` (0024), pero la
+ * aplicación solo acepta los literales de la oferta, y una prueba que sembrara
+ * el nombre de un servicio de otro sitio probaría datos que este sitio no
+ * puede producir.
+ */
+const [SERVICIO] = nombresDeServicio();
 
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 const SERVER = path.join(REPO_ROOT, ".next", "standalone", "server.js");
@@ -146,7 +155,7 @@ async function sembrar() {
     await dueno`insert into organization (id, name, slug, type, status)
                 values (${lado.org}, ${`Empresa ${lado.slug}`}, ${lado.slug}, 'client', 'active')`;
     await dueno`insert into project (id, organization_id, name, service, status, owner_user_id, starts_at)
-                values (${lado.proyecto}, ${lado.org}, ${`Proyecto ${lado.slug}`}, 'Phoenix PEEx',
+                values (${lado.proyecto}, ${lado.org}, ${`Proyecto ${lado.slug}`}, ${SERVICIO},
                         'active', ${A.dueno}, '2026-09-15T00:00:00Z')`;
   }
   await dueno`insert into contact (id, organization_id, name, email, is_primary)
@@ -523,7 +532,7 @@ async function main() {
      */
     const PROYECTO_REV = "p-rev-only-latest";
     await dueno`insert into project (id, organization_id, name, service, status)
-                values (${PROYECTO_REV}, ${A.org}, 'Regresión only_latest', 'Phoenix PEEx', 'active')`;
+                values (${PROYECTO_REV}, ${A.org}, 'Regresión only_latest', ${SERVICIO}, 'active')`;
     const famGorda = "fam-rev-gorda";
     for (let v = 1; v <= 6; v++) {
       await dueno`insert into deliverable (id, project_id, organization_id, title, type, version,
@@ -591,7 +600,7 @@ async function main() {
     const proyectoSembrado = (proyectos.cuerpo?.data as Json[] | undefined)?.find(
       (p: Json) => p.id === A.proyecto,
     );
-    check("con el servicio literal e intraducible (RF-14)", proyectoSembrado?.service === "Phoenix PEEx", proyectoSembrado?.service as string);
+    check("con el servicio literal e intraducible (RF-14)", proyectoSembrado?.service === SERVICIO, proyectoSembrado?.service as string);
     check("y las fechas de calendario sin hora", proyectoSembrado?.starts_at === "2026-09-15", proyectoSembrado?.starts_at as string);
 
     const ajena = await P(`/api/v1/organizations/${B.org}/projects`, VALORES.empresa);
@@ -1148,8 +1157,8 @@ async function main() {
      */
     const RUTA_PROYECTOS_A = `/api/v1/organizations/${A.org}/projects`;
     const PROYECTO = {
-      name: "Implementación Phoenix PEEx — Cohorte 1",
-      service: "Phoenix PEEx",
+      name: `Implementación ${SERVICIO} — Cohorte 1`,
+      service: SERVICIO,
       crm_project_id: "crm-d162-0001",
       starts_at: "2026-10-01T00:00:00Z",
       ends_at: "2026-12-15T00:00:00Z",
@@ -1173,7 +1182,7 @@ async function main() {
     check(
       "la respuesta lleva la empresa de la RUTA, el servicio literal y el `crm_project_id` al lado",
       proyecto.cuerpo?.data?.organization_id === A.org &&
-        proyecto.cuerpo?.data?.service === "Phoenix PEEx" &&
+        proyecto.cuerpo?.data?.service === SERVICIO &&
         proyecto.cuerpo?.data?.crm_project_id === PROYECTO.crm_project_id,
       JSON.stringify(proyecto.cuerpo?.data),
     );
@@ -1242,9 +1251,9 @@ async function main() {
       JSON.stringify(enSuCasaProyecto.cuerpo?.data ?? enSuCasaProyecto.cuerpo?.error),
     );
 
-    const servicioInventado = await postJson(RUTA_PROYECTOS_A, VALORES.escribeProyectos, { ...PROYECTO, crm_project_id: "crm-d162-0003", service: "SLG Readiness" });
+    const servicioInventado = await postJson(RUTA_PROYECTOS_A, VALORES.escribeProyectos, { ...PROYECTO, crm_project_id: "crm-d162-0003", service: SERVICIO.toLowerCase() });
     check(
-      "`service` fuera de los once literales —sin guion bajo— → 422 `not_in_vocabulary` en `service` (RF-14)",
+      "`service` fuera de los literales de la ficha —mal capitalizado— → 422 `not_in_vocabulary` en `service` (RF-14)",
       servicioInventado.status === 422 &&
         servicioInventado.cuerpo?.error?.details?.some((d: Json) => d.field === "service" && d.code === "not_in_vocabulary"),
       JSON.stringify(servicioInventado.cuerpo?.error?.details),
@@ -1279,7 +1288,7 @@ async function main() {
       "ninguno de los rechazos dejó fila con ese `crm_project_id`",
       ((await dueno`select count(*)::text as n from project where crm_project_id = 'crm-d162-0003'`) as unknown as { n: string }[])[0]?.n === "0",
     );
-    const sinFechas = await postJson(RUTA_PROYECTOS_A, VALORES.escribeProyectos, { name: "Sin fechas", service: "CoO as a Service", crm_project_id: "crm-d162-0004" });
+    const sinFechas = await postJson(RUTA_PROYECTOS_A, VALORES.escribeProyectos, { name: "Sin fechas", service: SERVICIO, crm_project_id: "crm-d162-0004" });
     check(
       "las fechas son opcionales: sin ellas, 201 con `starts_at` y `ends_at` nulos y `status: active` por defecto",
       sinFechas.status === 201 && sinFechas.cuerpo?.data?.starts_at === null && sinFechas.cuerpo?.data?.ends_at === null && sinFechas.cuerpo?.data?.status === "active",
@@ -1616,9 +1625,9 @@ async function main() {
     );
     const esquemaProyecto = proyectosEnLaSpec?.post?.requestBody?.content?.["application/json"]?.schema;
     check(
-      "la especificación anuncia `service` como enumerado de once literales y `crm_project_id` obligatorio",
-      esquemaProyecto?.properties?.service?.enum?.length === 11 &&
-        esquemaProyecto?.properties?.service?.enum?.includes("SLG_Readiness") &&
+      "la especificación anuncia `service` como enumerado de los literales de la ficha y `crm_project_id` obligatorio",
+      esquemaProyecto?.properties?.service?.enum?.length === nombresDeServicio().length &&
+        esquemaProyecto?.properties?.service?.enum?.includes(SERVICIO) &&
         esquemaProyecto?.required?.includes("crm_project_id") &&
         esquemaProyecto?.required?.includes("service"),
       JSON.stringify(esquemaProyecto?.properties?.service),

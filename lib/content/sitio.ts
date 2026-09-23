@@ -3,7 +3,7 @@
  *
  * POR QUÉ NO HAY VALOR POR DEFECTO, que es lo único que importa de este archivo.
  * Hasta hoy esto estaba escrito dos veces —`seo.ts` y `rss.ts`, más una tercera
- * copia en `/api/ops`— y las tres decían `?? "https://softlandingglobal.com"`.
+ * copia en `/api/ops`— y las tres caían al dominio del primer sitio.
  * Con ese respaldo, olvidarse de `NEXT_PUBLIC_SITE_URL` **no rompe nada**: el
  * sitio compila, despliega y sirve — publicando el dominio de OTRO en su
  * `canonical`, en sus etiquetas de Open Graph, en su `sitemap.xml`, en su
@@ -37,7 +37,7 @@ const VARIABLE = "NEXT_PUBLIC_SITE_URL";
  * La base absoluta del sitio, sin barra final.
  *
  * **También valida la forma**, no solo la presencia: un valor sin esquema
- * (`softlandingglobal.com`) o con uno que no sirve páginas produce exactamente
+ * (`demo.example.com`) o con uno que no sirve páginas produce exactamente
  * las mismas etiquetas rotas que no ponerlo, y en silencio igual. Si va a
  * fallar, que falle entero y en el mismo sitio.
  */

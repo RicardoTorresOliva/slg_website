@@ -16,6 +16,15 @@
  */
 
 import postgres from "postgres";
+import { nombresDeServicio } from "../../lib/sitio/index.ts";
+/**
+ * Los servicios con los que se siembran los proyectos salen de la ficha
+ * (`site.config.ts`): la base no restringe `project.service` (0024), pero la
+ * aplicación solo acepta los literales de la oferta, y una prueba que sembrara
+ * el nombre de un servicio de otro sitio probaría datos que este sitio no
+ * puede producir.
+ */
+const [SERVICIO, OTRO_SERVICIO = SERVICIO] = nombresDeServicio();
 
 const APP_URL = process.env.DATABASE_URL;
 const OWNER_URL = process.env.DATABASE_URL_MIGRATIONS ?? APP_URL;
@@ -75,8 +84,8 @@ async function main() {
     ('test-a','Cliente A','test-cliente-a','client','active'),
     ('test-b','Cliente B','test-cliente-b','client','active')`;
   await owner`insert into project (id,organization_id,name,service,status) values
-    ('test-pa','test-a','Readiness A','SLG_Readiness','active'),
-    ('test-pb','test-b','Readiness B','SLG_Readiness','active')`;
+    ('test-pa','test-a','Proyecto A',${OTRO_SERVICIO},'active'),
+    ('test-pb','test-b','Proyecto B',${OTRO_SERVICIO},'active')`;
 
   // ── 1. Sin contexto: cero filas, no todas ─────────────────────────────────
   const sinCtx = await conContexto(null, "", (tx) => tx`select count(*)::int as n from project`);
@@ -111,7 +120,7 @@ async function main() {
   try {
     await conContexto("test-a", "client_admin", (tx) =>
       tx`insert into project (id,organization_id,name,service,status)
-         values ('test-px','test-b','Intruso','SLG_Readiness','active')`,
+         values ('test-px','test-b','Intruso',${OTRO_SERVICIO},'active')`,
     );
   } catch {
     escrituraRechazada = true;

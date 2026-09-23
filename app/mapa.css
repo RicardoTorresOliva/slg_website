@@ -147,12 +147,12 @@
   text-decoration: none;
 }
 
-/* Nivel 1 bajo un destino: los ejes (VoltAi by SLG, Holdings by SLG). */
+/* Nivel 1 bajo un destino: los ejes y los servicios sueltos. */
 .slg-mapa-nivel-1 {
   margin-left: 1.5rem;
 }
 
-/* Nivel 2: las líneas de VoltAi. Nivel 3: los servicios, en texto de apoyo. */
+/* Nivel 2: las líneas de cada eje. Nivel 3: los servicios, en texto de apoyo. */
 .slg-mapa-nivel-2 .slg-mapa-nombre {
   font-size: 0.9375rem;
 }

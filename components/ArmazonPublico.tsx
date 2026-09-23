@@ -127,11 +127,11 @@ function PiePublico({ idioma, t }: { idioma: "es" | "en"; t: Record<string, stri
     <footer style={pie} aria-label={t["footer.aria"]}>
       <div style={pieFila}>
         <div style={{ display: "grid", gap: "0.75rem" }}>
-          {/* El logotipo corporativo completo, con lema, va en el pie por decisión
-              de Ricardo (2026-09-17). La barra sigue llevando el isotipo con la
-              marca pública «SLG Agency» (§10-4); aquí abajo firma la matriz.
-              `<img>` y no `next/image`: un WebP de 35 KB servido tal cual, sin
-              el optimizador ni un componente cliente para una imagen estática. */}
+          {/* El logotipo completo va en el pie por decisión de Ricardo
+              (2026-09-17); la barra lleva el isotipo con el nombre. Los dos
+              salen de la ficha (`sitio.marca`). `<img>` y no `next/image`: un
+              archivo pequeño servido tal cual, sin el optimizador ni un
+              componente cliente para una imagen estática. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={sitio.marca.logo}

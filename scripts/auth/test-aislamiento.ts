@@ -34,6 +34,15 @@ import postgres from "postgres";
 import { ErrorDeAutorizacion } from "../../lib/auth/matriz.ts";
 import { contextoDeSesion } from "../../lib/db/context.ts";
 import type { UserRole } from "../../lib/db/schema.ts";
+import { nombresDeServicio } from "../../lib/sitio/index.ts";
+/**
+ * Los servicios con los que se siembran los proyectos salen de la ficha
+ * (`site.config.ts`): la base no restringe `project.service` (0024), pero la
+ * aplicación solo acepta los literales de la oferta, y una prueba que sembrara
+ * el nombre de un servicio de otro sitio probaría datos que este sitio no
+ * puede producir.
+ */
+const [SERVICIO] = nombresDeServicio();
 
 let fallos = 0;
 let comprobaciones = 0;
@@ -84,7 +93,7 @@ async function sembrar() {
     await dueno`insert into membership (id, user_id, organization_id, org_role)
                 values (${crypto.randomUUID()}, ${lado.user}, ${lado.org}, 'client_member')`;
     await dueno`insert into project (id, organization_id, name, service, status)
-                values (${lado.proyecto}, ${lado.org}, ${`Proyecto ${lado.slug}`}, 'Phoenix PEEx', 'active')`;
+                values (${lado.proyecto}, ${lado.org}, ${`Proyecto ${lado.slug}`}, ${SERVICIO}, 'active')`;
     await dueno`insert into deliverable (id, project_id, organization_id, title, type, version, family_id, visibility, published_at)
                 values (${crypto.randomUUID()}, ${lado.proyecto}, ${lado.org}, ${`Entregable ${lado.slug}`},
                         'link', 1, ${crypto.randomUUID()}, 'client', now())`;

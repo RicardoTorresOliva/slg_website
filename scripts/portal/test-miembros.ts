@@ -112,7 +112,7 @@ async function main() {
    * envío falla y se comprueba de paso RF-119 —la invitación EXISTE aunque el
    * correo no salga— en vez de darlo por supuesto.
    */
-  process.env.NEXT_PUBLIC_SITE_URL = "https://softlandingglobal.com";
+  process.env.NEXT_PUBLIC_SITE_URL = "https://demo.example.com";
 
   /** Marca de agua: todo apunte de auditoría posterior a esto es de esta corrida. */
   const INICIO = new Date();
