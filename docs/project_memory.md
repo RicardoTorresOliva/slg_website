@@ -686,6 +686,49 @@ rama. `.gitignore`: el `.env*` del final **anulaba el `!.env.example`** de arrib
 
 ## PRÓXIMA SESIÓN
 
+Cierre del 2026-09-23. **Producción de SLG = `0eb6fa5`** (desplegada por Ricardo; `/api/health`: ok,
+27 de 27 migraciones). **`slg_website` `develop`** = fusión con la plantilla `7926d6d` (empujada; su CI
+es el primero que corre el motor genérico sobre la piel de SLG). **`website_template` `develop` =
+`7926d6d`**, CI en verde hasta `6edaa10`. **`web_demo` `develop`** actualizado con `sitio:actualizar`.
+
+### 0 · Lo primero al abrir
+1. CI de `slg_website` `develop` (`gh run list --branch develop --limit 1`). Es la primera vez que SLG
+   corre el motor que viene de la plantilla (tests genéricos, `conMarca` en `lib/content/loader.ts`,
+   prototipo desde la ficha). El HTML servido de las 89 páginas se cotejó en local antes y después:
+   mismo texto, mismos atributos. Si el CI sale rojo: el arreglo se hace **en `website_template`** y
+   SLG lo trae con `npm run sitio:actualizar`.
+2. Con el CI en verde, dar a Ricardo la línea de despliegue (el modo auto la bloquea):
+   `cd ~/Dev/slg_website/.claude/worktrees/desplegar && git fetch origin && git checkout --detach <sha> && vercel --prod`.
+   Si sale `Not authorized`: `vercel logout && vercel login` y repetir.
+
+### 1 · D-167 hecha (opción A)
+- `website_template`: `npm run sitio:actualizar` (`scripts/sitio/fusion.ts`, CLI `actualizar.ts`,
+  prueba `test-actualizar.ts` 35/35 en CI) y `.gitattributes` con `merge=ours`. Tras fusionar, la piel
+  (`PIEL` en `fusion.ts`: ficha, `content/`, `public/marca|fotos/`, iconos de `app/`, `README.md`,
+  `docs/project_memory|work_log|decision_log.md`) se deja **exactamente como en HEAD**, porque el
+  driver `ours` no protege de borrados ni de archivos añadidos. Conflicto de motor o frenos rojos →
+  deshace y no empuja. `--primera-vez` para repos sin historial común (`-X theirs` en el motor).
+- `commands/crear-sitio.md` paso 1: repo vacío + `git clone` de la plantilla + `push develop
+  develop:main`. Paso 1b: cómo actualizar.
+- `web_demo`: enganchado con `--primera-vez` y actualizado de verdad (`7926d6d`). Repositorio intacto.
+- `slg_website`: remoto `plantilla`. **Desde ahora, los cambios de motor se hacen en
+  `website_template`**; SLG los trae con `npm run sitio:actualizar` como un cliente más.
+
+### 2 · Estado de la plantilla (§3 de `docs/PLAYBOOK_REPLICACION.md`)
+Pasos 0–13, 16 y 17 hechos. 14 a medias (vaciar la documentación de SLG del template:
+`docs/PLANTILLA.md` §4; ojo: `docs/project_memory|work_log|decision_log.md` ya son piel y no viajan).
+15 pendiente de Ricardo: claves de Resend y UptimeRobot.
+
+### 3 · Pendientes de Ricardo
+- Correcciones al formulario de intake (correo público, «Solo inglés», CRM «panel» sin área privada,
+  formulario solo en español, tipografía). Claude puede darle un script que edite el formulario.
+- De las 5 webs: cuántas informativas / con área privada / e-commerce.
+- Analítica: Umami, propia o ninguna (RF-35 prohíbe scripts de terceros).
+
+---
+
+### Lo anterior (22-09)
+
 Cierre del 2026-09-22 por límite de ventana. **`slg_website` `develop` = `fde1496`** (CI en marcha al
 cerrar). **`website_template` `develop` = `de3cb86`** (solo ramas `develop` y `main`). **Producción de
 SLG**: base en **27 de 27** (0023–0026 aplicadas el 22-09 por Claude con la CLI de Supabase y

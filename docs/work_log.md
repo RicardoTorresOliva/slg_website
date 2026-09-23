@@ -4226,3 +4226,12 @@ unos 3 minutos. **Tiempo de Claude**: ~1,5 h, casi todo en corregir lo que la re
 solo commit, sin la historia de la plantilla**. Llevar a un cliente una corrección posterior de la
 plantilla no se puede hacer con un `git pull`; hoy fue a mano (copiar archivos). Hace falta decidir el
 mecanismo de actualización de clientes antes del segundo cliente.
+
+## 2026-09-23 · D-167 en marcha: SLG se actualiza desde la plantilla
+
+Producción desplegada en `0eb6fa5` (27 de 27). `slg_website` añade el remoto `plantilla` y trae
+`website_template` con `npm run sitio:actualizar` (`6edaa10` y `7926d6d`): llegan el motor genérico de
+los pasos 1–12 y el propio comando; la piel de SLG queda intacta. **Cotejo**: `next build` antes y
+después de la fusión; las 89 páginas prerenderizadas tienen el mismo texto visible y los mismos
+`href/src/content/alt/aria-label/title` (solo cambian los nombres de los chunks). `web_demo` enganchado
+con `--primera-vez` y actualizado de verdad a `7926d6d`.
