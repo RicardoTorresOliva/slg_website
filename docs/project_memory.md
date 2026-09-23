@@ -715,13 +715,15 @@ es el primero que corre el motor genérico sobre la piel de SLG). **`website_tem
   `website_template`**; SLG los trae con `npm run sitio:actualizar` como un cliente más.
 
 ### 2 · Estado de la plantilla (§3 de `docs/PLAYBOOK_REPLICACION.md`)
-Pasos 0–13, 16 y 17 hechos. 14 a medias (vaciar la documentación de SLG del template:
-`docs/PLANTILLA.md` §4; ojo: `docs/project_memory|work_log|decision_log.md` ya son piel y no viajan).
-15 pendiente de Ricardo: claves de Resend y UptimeRobot.
+Pasos 0–14, 16 y 17 hechos. 14 cerrado el 23-09 **sin vaciar**: `planning/`, `implementation/` y
+`knowledge/` son la spec del motor que cita el código y se comparten con los clientes
+(`docs/PLANTILLA.md` §4). 15 pendiente de Ricardo: claves de Resend y UptimeRobot.
+Producción de SLG desplegada después en `89a5694` (motor de la plantilla; CI verde).
 
 ### 3 · Pendientes de Ricardo
-- Correcciones al formulario de intake (correo público, «Solo inglés», CRM «panel» sin área privada,
-  formulario solo en español, tipografía). Claude puede darle un script que edite el formulario.
+- ~~Correcciones al formulario de intake~~: hechas el 23-09 con
+  `docs/intake/corregir-formulario-intake.gs` (Ricardo lo ejecutó). **Lección**: `pbcopy` desde la
+  shell de Claude rompe las tildes; usar `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 pbcopy`.
 - De las 5 webs: cuántas informativas / con área privada / e-commerce.
 - Analítica: Umami, propia o ninguna (RF-35 prohíbe scripts de terceros).
 
