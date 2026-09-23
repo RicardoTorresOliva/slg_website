@@ -52,21 +52,21 @@ Orden estricto: cada paso depende del anterior. Total: **4 días de Claude + 45 
 | # | Paso | Quién | Salida | Tiempo | Estado |
 |---|---|---|---|---|---|
 | 0 | Estructura de la oferta **declarada en un archivo** (`site.config.ts`), no un `rutas.ts` por cliente | Ricardo | **D-165** en `docs/decision_log.md` | — | ✅ 22-09 |
-| 1 | Crear `site.config.ts`: nombre, dominio, idiomas, colores, logo, remitente, módulos activos y estructura de la oferta | Claude | Archivo + tipos | 3 h || ✅ 22-09 |
-| 2 | Sustituir los 26 sitios de marca y dominio (§3.1, §3.2 de `plantilla-de-sitios.md`) por lecturas del config | Claude | 0 «SLG Agency» / `softlandingglobal.com` fuera de `content/` y del config | 3 h || ✅ 22-09 |
-| 3 | Derivar `rutas.ts`, `PROJECT_SERVICES`, `nomenclature.ts` y `POR_RUTA` del config | Claude | Generador + freno `check:sitio` | 6 h || ✅ 22-09 · D-166, migración 0024 |
-| 4 | Parametrizar los cinco frenos que validan contra la oferta de SLG | Claude | CI verde con un config «Cliente Demo» | 4 h || ✅ 22-09 |
-| 5 | Módulos apagables: portal, blog, descargas, CRM, analítica | Claude | `portal: false` → sin `/portal` ni `/hq/*` | 4 h || ✅ 22-09 |
-| 5b | **Modo sin CRM**: cada captura manda un aviso al correo del cliente con los datos del contacto, y la cola no intenta entregar a ningún CRM (sin avisos de fallo falsos) | Claude | Aviso por correo + prueba | 2 h || ✅ 22-09 · migración 0025, variable `MAIL_LEADS_TO` |
-| 6 | Perfil `marketing-website` en `profiles/` | Claude | `profiles/marketing-website/profile.md` | 2 h || ✅ 22-09 |
-| 7 | **Aprovisionamiento por MCP**: `commands/crear-sitio.md` — repo con `gh`, proyecto Supabase, migraciones y bucket por la API de Supabase (sin contraseña ni IPv6), proyecto Vercel conectado a GitHub, variables no secretas | Claude | Playbook ejecutable por Claude | 4 h || ✅ 22-09 |
-| 8 | **Comando único de secretos** `npm run sitio:secretos`: genera los secretos, los carga en Vercel y Supabase, da de alta el dominio en Resend y el monitor en UptimeRobot, sin que ningún valor pase por la conversación. Las claves de Resend y UptimeRobot las pide la primera vez y las guarda en el Llavero de macOS | Claude (lo escribe) | `scripts/sitio/secretos.ts` | 4 h || ✅ 22-09 · `npm run sitio:secretos` |
-| 9 | `auth:primer-admin` en modo invitación: manda el enlace al responsable en vez de imprimir una contraseña | Claude | Script cambiado + prueba | 1 h || ✅ 22-09 |
-| 10 | Lector del intake: hoja de respuestas + carpeta de Drive → borrador de `site.config.ts` y del contenido | Claude | `commands/leer-intake.md` | 3 h || ✅ 22-09 · skill `leer-intake` |
-| 11 | Plantillas de los cuatro correos al cliente (formulario, faltantes, revisión, entrega) | Claude | `docs/intake/correos.md` | 1 h || ✅ 22-09 · `docs/intake/correos.md` |
+| 1 | Crear `site.config.ts`: nombre, dominio, idiomas, colores, logo, remitente, módulos activos y estructura de la oferta | Claude | Archivo + tipos | 3 h | ✅ 22-09 |
+| 2 | Sustituir los 26 sitios de marca y dominio (§3.1, §3.2 de `plantilla-de-sitios.md`) por lecturas del config | Claude | 0 «SLG Agency» / `softlandingglobal.com` fuera de `content/` y del config | 3 h | ✅ 22-09 |
+| 3 | Derivar `rutas.ts`, `PROJECT_SERVICES`, `nomenclature.ts` y `POR_RUTA` del config | Claude | Generador + freno `check:sitio` | 6 h | ✅ 22-09 · D-166, migración 0024 |
+| 4 | Parametrizar los cinco frenos que validan contra la oferta de SLG | Claude | CI verde con un config «Cliente Demo» | 4 h | ✅ 22-09 |
+| 5 | Módulos apagables: portal, blog, descargas, CRM, analítica | Claude | `portal: false` → sin `/portal` ni `/hq/*` | 4 h | ✅ 22-09 |
+| 5b | **Modo sin CRM**: cada captura manda un aviso al correo del cliente con los datos del contacto, y la cola no intenta entregar a ningún CRM (sin avisos de fallo falsos) | Claude | Aviso por correo + prueba | 2 h | ✅ 22-09 · migración 0025, variable `MAIL_LEADS_TO` |
+| 6 | Perfil `marketing-website` en `profiles/` | Claude | `profiles/marketing-website/profile.md` | 2 h | ✅ 22-09 |
+| 7 | **Aprovisionamiento por MCP**: `commands/crear-sitio.md` — repo con `gh`, proyecto Supabase, migraciones y bucket por la API de Supabase (sin contraseña ni IPv6), proyecto Vercel conectado a GitHub, variables no secretas | Claude | Playbook ejecutable por Claude | 4 h | ✅ 22-09 |
+| 8 | **Comando único de secretos** `npm run sitio:secretos`: genera los secretos, los carga en Vercel y Supabase, da de alta el dominio en Resend y el monitor en UptimeRobot, sin que ningún valor pase por la conversación. Las claves de Resend y UptimeRobot las pide la primera vez y las guarda en el Llavero de macOS | Claude (lo escribe) | `scripts/sitio/secretos.ts` | 4 h | ✅ 22-09 · `npm run sitio:secretos` |
+| 9 | `auth:primer-admin` en modo invitación: manda el enlace al responsable en vez de imprimir una contraseña | Claude | Script cambiado + prueba | 1 h | ✅ 22-09 |
+| 10 | Lector del intake: hoja de respuestas + carpeta de Drive → borrador de `site.config.ts` y del contenido | Claude | `commands/leer-intake.md` | 3 h | ✅ 22-09 · skill `leer-intake` |
+| 11 | Plantillas de los cuatro correos al cliente (formulario, faltantes, revisión, entrega) | Claude | `docs/intake/correos.md` | 1 h | ✅ 22-09 · `docs/intake/correos.md` |
 | 12 | Vaciar lo específico de SLG y dejar un «Cliente Demo» bilingüe con 3 servicios | Claude | La plantilla arranca con demo | 2 h | ✅ 22-09 · en `website_template`, rama `plantilla/p12-cliente-demo` · `docs/PLANTILLA.md` |
 | 13 | Repositorio `website_template` privado y marcado como *template* | Ricardo | github.com/RicardoTorresOliva/website_template | — | ✅ 22-09 · rama por defecto cambiada a `develop` por Claude: «Use this template» solo copia la rama por defecto y `main` iba 102 commits atrás |
-| 14 | Llevar los pasos 1–12 a `website_template` y limpiar sus ramas viejas | Claude | Plantilla al día | 30 min | |
+| 14 | Llevar los pasos 1–12 a `website_template` y limpiar sus ramas viejas | Claude | Plantilla al día | 30 min | 🟡 22-09 · `develop` de la plantilla al día con los pasos 1–12; faltan borrar 4 ramas viejas (Ricardo, desde GitHub) y vaciar la documentación de SLG (`docs/PLANTILLA.md` §4) |
 | 15 | Configuración única de Ricardo (§7.3) | Ricardo | Permisos y cuentas listos | 45 min | |
 | 16 | Prueba en frío con «Cliente Demo»: del formulario a `https://…vercel.app` en línea, midiendo el tiempo de Ricardo | Claude + Ricardo | Tiempo real al `work_log` | 2 h | |
 

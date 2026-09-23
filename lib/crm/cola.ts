@@ -311,9 +311,10 @@ async function avisarUna(fila: Fila, puertoDeCorreo?: PuertoDeCorreo): Promise<v
 }
 
 /**
- * Una vuelta del barrido **en modo sin CRM**. Exportada aparte para que las
- * pruebas la ejerzan con la ficha de SLG, que tiene el CRM encendido: el modo
- * lo decide la ficha, y la ficha no se cambia en tiempo de ejecución.
+ * Una vuelta del barrido **en modo sin CRM**. Exportada aparte, igual que
+ * `barrerConCrmUnaVez`, para que las pruebas ejerzan cada camino **sea cual sea
+ * la ficha**: el modo lo decide la ficha, que no se cambia en tiempo de
+ * ejecución, y SLG lo tiene encendido mientras la plantilla lo tiene apagado.
  */
 export async function barrerSinCrmUnaVez(
   opciones: { readonly limite?: number; readonly puertoDeCorreo?: PuertoDeCorreo } = {},
@@ -330,7 +331,16 @@ export async function barrerSinCrmUnaVez(
  * encendido, este camino es exactamente el de siempre.
  */
 export async function barrerUnaVez(limite = LOTE): Promise<number> {
-  if (!crmEncendido()) return barrerSinCrmUnaVez({ limite });
+  return crmEncendido() ? barrerConCrmUnaVez(limite) : barrerSinCrmUnaVez({ limite });
+}
+
+/**
+ * Una vuelta del barrido **entregando al CRM**, sin mirar la ficha. La prueba
+ * del CRM la llama directamente: con `barrerUnaVez`, en un sitio con el CRM
+ * apagado (la plantilla «Cliente Demo»), la prueba del adaptador habría medido
+ * el aviso por correo y fallado por algo que no era el adaptador.
+ */
+export async function barrerConCrmUnaVez(limite = LOTE): Promise<number> {
   const filas = await reclamar(limite);
   if (filas.length === 0) return 0;
   const puerto = adaptadorDelModo();

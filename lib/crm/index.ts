@@ -7,6 +7,7 @@
 export {
   adaptadorDelModo,
   arrancarBarrendero,
+  barrerConCrmUnaVez,
   barrerSinCrmUnaVez,
   barrerUnaVez,
   ESCALERA_MINUTOS,
