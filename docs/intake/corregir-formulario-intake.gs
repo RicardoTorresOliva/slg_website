@@ -34,6 +34,15 @@ function corregirFormularioIntake() {
     return item;
   };
 
+  // 0 · Restos de una ejecución con el texto mal pegado (tildes rotas): fuera.
+  form.getItems().forEach((i) => {
+    const t = i.getTitle();
+    if (t.indexOf('Correo p') === 0 && t !== CORREO_PUBLICO) {
+      form.deleteItem(i);
+      hechos.push('Borrada una copia mal escrita de «' + CORREO_PUBLICO + '»');
+    }
+  });
+
   // 1 · Correo público, justo después del buzón de contactos.
   if (!buscar(CORREO_PUBLICO)) {
     const buzon = exigir(BUZON);
