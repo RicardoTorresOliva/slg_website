@@ -41,7 +41,7 @@ equipo Vercel `team_NVmg2F1svT5W7CKrSInHh5VD` (`ricardotorresolivas-projects`); 
 | Herramienta | Qué | Qué tiene que salir | Si falla |
 |---|---|---|---|
 | `gh auth status` | Sesión de GitHub | Cuenta `RicardoTorresOliva`, *scopes* con `repo` y `workflow` | Ricardo pega en Terminal `gh auth refresh -h github.com -s repo,workflow` y autoriza en el navegador |
-| `gh repo view RicardoTorresOliva/website_template --json isTemplate,defaultBranchRef` | La plantilla | `isTemplate: true`, rama por defecto `develop` | Parar: la plantilla no está lista (§3 pasos 13–14) |
+| `gh repo view RicardoTorresOliva/website_template --json defaultBranchRef` | La plantilla | rama por defecto `develop` | Parar: la plantilla no está lista (§3 pasos 13–14) |
 | Supabase MCP `list_organizations` | Conector | Aparece `isojilkgmlbhvfwxiflj` | El conector cayó: pedir a Ricardo que lo reconecte en la configuración de conectores de claude.ai |
 | Vercel MCP `list_teams` | Conector | Aparece `team_NVmg2F1svT5W7CKrSInHh5VD` | Igual que el anterior |
 
@@ -49,18 +49,23 @@ El conector MCP de GitHub **no se usa** (falla con error 400 de autorización); 
 
 ## Paso 1 · Repositorio `web_<cliente>` (2 min)
 
-1. Crear desde la plantilla:
-   `gh repo create RicardoTorresOliva/web_<cliente> --private --template RicardoTorresOliva/website_template`
-2. GitHub genera el repositorio en segundo plano. Consultar hasta que exista la rama (unos segundos):
-   `gh api repos/RicardoTorresOliva/web_<cliente>/branches/develop --jq .commit.sha`
-   — un 404 los primeros segundos es normal; repetir con la herramienta de espera, no con `sleep`.
-3. Crear `main` en el mismo commit y hacerla la rama por defecto. **Por qué**: Vercel toma como rama
-   de producción la rama por defecto del repositorio al conectarlo; con `main` por defecto,
-   producción sale de `main` y cada rama (`develop` incluida) da una vista previa, igual que SLG.
-   - `gh api -X POST repos/RicardoTorresOliva/web_<cliente>/git/refs -f ref=refs/heads/main -f sha=<el SHA del punto 2>`
+**Con el historial de la plantilla, no con «Use this template»** (D-167): `--template` aplana todo
+en un commit sin historia común, y después ninguna corrección del motor se puede traer con una
+fusión. Con el historial, actualizar el sitio es `npm run sitio:actualizar` (paso 1b).
+
+1. Repositorio vacío: `gh repo create RicardoTorresOliva/web_<cliente> --private`
+2. Copia de la plantilla con su historial, apuntando al repositorio nuevo:
+   - `git clone --branch develop https://github.com/RicardoTorresOliva/website_template.git ~/Dev/web_<cliente>`
+   - `git -C ~/Dev/web_<cliente> remote rename origin plantilla`
+   - `git -C ~/Dev/web_<cliente> remote add origin https://github.com/RicardoTorresOliva/web_<cliente>.git`
+3. Empujar `develop` y, del mismo commit, `main`, y hacer `main` la rama por defecto. **Por qué**:
+   Vercel toma como rama de producción la rama por defecto del repositorio al conectarlo; con `main`
+   por defecto, producción sale de `main` y cada rama (`develop` incluida) da una vista previa, igual
+   que SLG. (La `main` de la plantilla va muy por detrás: no se usa.)
+   - `git -C ~/Dev/web_<cliente> push -u origin develop develop:main`
    - `gh repo edit RicardoTorresOliva/web_<cliente> --default-branch main`
-4. Clonar para trabajar: `gh repo clone RicardoTorresOliva/web_<cliente> ~/Dev/web_<cliente>` y
-   `git -C ~/Dev/web_<cliente> checkout develop`.
+4. Configurar el driver de la piel una vez: `git -C ~/Dev/web_<cliente> config merge.ours.driver true`
+   (`sitio:actualizar` lo repite; es para quien fusione a mano).
 
 **Comprobar**: `gh repo view RicardoTorresOliva/web_<cliente> --json isPrivate,defaultBranchRef` →
 `isPrivate: true`, `main`; `gh api repos/RicardoTorresOliva/web_<cliente>/branches --jq '.[].name'` →
@@ -68,6 +73,25 @@ El conector MCP de GitHub **no se usa** (falla con error 400 de autorización); 
 
 **Si falla**: «name already exists» → el repositorio ya está: **parar** y preguntar a Ricardo si es de
 un intento anterior (no se borra nada). 403 → falta el permiso `repo`: ver Paso 0.
+
+## Paso 1b · Actualizar un sitio desde la plantilla (cuando la plantilla cambie)
+
+Los cambios de motor se hacen en `website_template`; cada cliente los trae así, desde su copia:
+`cd ~/Dev/web_<cliente> && git checkout develop && git pull && npm run sitio:actualizar`
+
+Qué hace: añade el remoto `plantilla` si falta, fusiona `plantilla/develop`, deja la piel del cliente
+(`site.config.ts`, `content/`, `public/marca/`, `public/fotos/`, iconos de `app/`, `README.md` y la
+memoria de `docs/`) **exactamente como estaba**, corre los frenos rápidos y empuja a `develop` → vista
+previa. Producción, solo con el «sí» de Ricardo (pasar `develop` a `main`).
+
+- «Ya al día» → nada que hacer.
+- «Conflictos en el motor» → el cliente tocó un archivo del motor que la plantilla también cambió.
+  La fusión queda deshecha; se resuelve a mano (`git merge plantilla/develop`) llevando el ajuste
+  del cliente a la ficha o a la plantilla, no dejándolo en el motor.
+- «Los frenos fallaron» → fusión deshecha, `develop` intacto. Casi siempre, la plantilla espera un
+  archivo de piel nuevo (una página) que el cliente no tiene: escribirlo en su `content/`.
+- Repositorio creado antes del 23-09 con «Use this template» (sin historial común): la primera vez,
+  `npm run sitio:actualizar -- --primera-vez`.
 
 ## Paso 2 · Proyecto Supabase (3 min)
 

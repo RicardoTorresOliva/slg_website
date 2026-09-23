@@ -1,0 +1,16 @@
+# La piel del sitio (D-167): en una fusión con la plantilla gana siempre la
+# versión del cliente. `npm run sitio:actualizar` configura el driver y además
+# deja estos archivos exactamente como estaban (el driver solo actúa cuando los
+# dos lados cambiaron el mismo archivo). Misma lista que PIEL en
+# scripts/sitio/fusion.ts; test-actualizar.ts comprueba que coinciden.
+site.config.ts merge=ours
+content/** merge=ours
+public/marca/** merge=ours
+public/fotos/** merge=ours
+app/icon* merge=ours
+app/apple-icon* merge=ours
+app/favicon.ico merge=ours
+README.md merge=ours
+docs/project_memory.md merge=ours
+docs/work_log.md merge=ours
+docs/decision_log.md merge=ours

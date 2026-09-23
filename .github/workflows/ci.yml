@@ -194,6 +194,11 @@ jobs:
       - name: Matriz B.3
         run: npm run test:permisos
 
+      # D-167: actualizar un cliente desde la plantilla no pisa su piel.
+      # Repositorios git locales en una carpeta temporal; sin red.
+      - name: sitio:actualizar
+        run: npm run test:sitio-actualizar
+
       # Las variables que esto necesita están arriba, en el `env` del trabajo:
       # la recolección de datos de página de Next evalúa las rutas de API, así
       # que sin `DATABASE_URL` la compilación muere en `/api/acceso/contrasena`.

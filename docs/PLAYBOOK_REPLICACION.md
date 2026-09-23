@@ -130,7 +130,7 @@ C = Claude · R = Ricardo · Cl = cliente. Presupone la plantilla del §3 termin
 | 0 | 1 | Correo al cliente con el enlace del formulario | C redacta el borrador en Gmail · R pulsa **Enviar** | 1 min | Cliente recibe el formulario |
 | 0 | 2 | Cliente responde; C crea la carpeta `Intake · <cliente>` y la comparte con el responsable | C, con «sí» de R en el chat | 10 s | Cliente recibe la carpeta |
 | 0 | 3 | C revisa los ★ y redacta el correo de faltantes, si los hay | C · R pulsa **Enviar** | 1 min | Intake completo |
-| 1 | 4 | Repositorio `web_<cliente>` desde `website_template` (`gh repo create --template`) | C | 0 | Repositorio privado |
+| 1 | 4 | Repositorio `web_<cliente>` con el historial de `website_template` (D-167; `commands/crear-sitio.md` paso 1) | C | 0 | Repositorio privado |
 | 1 | 5 | Proyecto Supabase por MCP: consulta el coste; si es 0 lo crea, si no pide «sí» | C (+ «sí» de R si cuesta) | 0–10 s | Proyecto activo |
 | 1 | 6 | 24 migraciones y bucket privado por la API de Supabase (sin contraseña, sin el problema de IPv6) | C | 0 | Base lista |
 | 1 | 7 | Proyecto Vercel conectado al repositorio + variables no secretas | C | 0 | Una vista previa por cada cambio |

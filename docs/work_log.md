@@ -4273,3 +4273,20 @@ unos 3 minutos. **Tiempo de Claude**: ~1,5 h, casi todo en corregir lo que la re
 solo commit, sin la historia de la plantilla**. Llevar a un cliente una corrección posterior de la
 plantilla no se puede hacer con un `git pull`; hoy fue a mano (copiar archivos). Hace falta decidir el
 mecanismo de actualización de clientes antes del segundo cliente.
+
+## 2026-09-23 · D-167: actualizar clientes desde la plantilla (`sitio:actualizar`)
+
+Cierra el hallazgo anterior. Un cliente nace con el **historial** de la plantilla
+(`commands/crear-sitio.md` paso 1, ya sin `--template`) y se actualiza con
+`npm run sitio:actualizar` (paso 1b): remoto `plantilla`, `git merge plantilla/develop`, piel
+restaurada tal como estaba en `HEAD`, frenos rápidos y empuje a `develop`. Producción nunca.
+
+**Por qué no basta `.gitattributes` con `merge=ours`**: el driver solo actúa cuando los dos lados
+cambiaron el archivo. Una foto de la demo que la plantilla borra, o una página que añade, pasaría al
+cliente. `scripts/sitio/fusion.ts` deja la piel exactamente como en `HEAD` después de fusionar;
+`.gitattributes` queda como segunda red para fusiones a mano.
+
+**Verificado**: `test:sitio-actualizar` (35/35, en CI), con repositorios reales en una carpeta temporal:
+motor que llega, piel cambiada/borrada/añadida por la plantilla que no llega, segunda ejecución sin
+efecto, conflicto de motor y frenos rojos que deshacen sin empujar, `--primera-vez` para un repositorio
+sin historia común.
