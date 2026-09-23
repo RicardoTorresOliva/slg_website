@@ -4241,3 +4241,35 @@ variables no secretas. Cuatro cosas que el papel no sabía:
 
 **Verificado aquí**: `check:types`, `lint`, `test:sitio-secretos` (66/66), `check:env`,
 `check:literacy`, `check:secrets`, `check:playbook`, `check:fronteras`.
+
+## Prueba en frío (paso 16): «Cliente Demo» en línea (2026-09-22)
+
+Del repositorio vacío a una vista previa en línea en Vercel, siguiendo `crear-sitio`:
+`https://web-demo-4mtfx5v7o-ricardotorresolivas-projects.vercel.app`.
+
+**Resultado**: `/api/health` → `status: ok`, 27 migraciones, faltan solo `MAIL_SMTP_USERNAME` y
+`MAIL_SMTP_PASSWORD` (esperado: se lanzó con `--sin-correo`). 19 rutas recorridas: las de la oferta de la
+demo en ES y EN a 200, `/doctrina` a 404 (módulo apagado), `/ai` y `/holdings` —las de SLG— a 404,
+`/hq/tablero` a 307 hacia el acceso; **cero** menciones a SLG, Softlanding, VoltAi o Phoenix en el HTML
+servido. Captura real por el formulario de contacto: 303 a `/gracias?estado=contact`, fila en
+`lead_capture` y la cola intentando el aviso por correo del modo sin CRM, que falla por falta de SMTP y
+queda `pending` con el error escrito — exactamente lo que tiene que pasar.
+
+**Tiempo de Ricardo**: dos ejecuciones del comando de secretos (la primera cayó en el rol `postgres`),
+unos 3 minutos. **Tiempo de Claude**: ~1,5 h, casi todo en corregir lo que la realidad enseñó:
+
+| Qué falló | Qué se hizo |
+|---|---|
+| El conector MCP de Supabase no puede confirmar costes (parámetros como texto) | Proyecto por `supabase projects create`, contraseña generada en la orden |
+| Supabase no deja alterar `postgres` desde su CLI | El comando de secretos solo pone la de `slg_app`; `DATABASE_URL_MIGRATIONS` deja de ser obligatoria |
+| El conector MCP de Vercel no ve los proyectos del equipo | Proyecto, variables, API y `curl` por la CLI de Vercel (`vercel api`, `vercel curl`) |
+| `vercel project add` crea el preset «Other» | `PATCH` de `framework: nextjs` por `vercel api` |
+| `vercel link` añade `.env*` al `.gitignore` (ignoraría `.env.example`) | Se cambia por `.env.local` |
+| Dos pruebas asumían que el sitio tiene CRM | `barrerConCrmUnaVez` por su nombre |
+
+`commands/crear-sitio.md` describe ya el camino que funcionó.
+
+**Hallazgo que queda abierto**: `gh repo create --template` crea el repositorio del cliente con **un
+solo commit, sin la historia de la plantilla**. Llevar a un cliente una corrección posterior de la
+plantilla no se puede hacer con un `git pull`; hoy fue a mano (copiar archivos). Hace falta decidir el
+mecanismo de actualización de clientes antes del segundo cliente.
