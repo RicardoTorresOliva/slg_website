@@ -4154,3 +4154,50 @@ armazón, páginas y SEO siguen en rojo por sus motivos. En verde con la ficha d
 `check:secrets`, `check:env`, `check:playbook`, `check:sitio` y los siete del servidor.
 `check:terceros`, `test:gesto` y `check:lighthouse` necesitan Chromium, y `check:brakes` PostgreSQL:
 no corren en esta máquina.
+
+## Plantilla, paso 12: Cliente Demo (2026-09-22)
+
+Duodécimo paso de `docs/PLAYBOOK_REPLICACION.md` §3, hecho en `website_template` (rama
+`plantilla/p12-cliente-demo`). La plantilla deja de servir SLG Agency y arranca como **«Cliente
+Demo»**, una consultora inventada; nada de lo que se publica nombra a SLG.
+
+**La ficha.** Marca «Cliente Demo» / «Cliente Demo S.A.C.», `hola@demo.example.com`, paleta neutra
+pizarra y salvia (pasa `check:contraste`, incluidos los pares que deben seguir prohibidos), dominio
+`https://demo.example.com` sin `enlaces`, ES + EN. Módulos: blog, descargas, contacto, intranet y API
+encendidos; **doctrina y CRM apagados** —demuestran un módulo que desaparece entero y el modo sin
+CRM—; analítica apagada. Oferta mínima que ejercita toda la estructura: el eje `Consultoría` con la
+línea `Estrategia` y sus servicios `Diagnóstico` y `Plan de crecimiento`, y el suelto `Formación a
+equipos`, con rutas inglesas propias (`/en/consulting/strategy/diagnosis`…). Sin fotos. Nomenclatura:
+los cinco nombres como literales y dos variantes y una regla de contenido marcadas como ejemplo.
+
+**El contenido.** Borrado todo el de SLG (11 servicios, 26 páginas, doctrina, 22 descargas, 10
+artículos, 21 fotos, logo e isotipo). Nuevo, con `copy: temporal`: las 10 páginas por idioma que pide
+el motor (legales como plantilla genérica marcada), los 3 servicios con sus seis secciones y un solo
+CTA, 1 documento `coming-soon` sin PDF, y el blog con 1 artículo bilingüe, 1 solo en español y 1
+borrador —los dos últimos los exigen `check:blog` (RF-26) y su prueba negativa—. Logo, isotipo e
+iconos de `app/` nuevos, dibujados en SVG y rasterizados. `content/conexiones.json`, genérico.
+
+**La interfaz no nombra la marca.** `loadUiStrings()` sustituye `{marca}`, `{razonSocial}` y
+`{correo}` con la ficha: el pie, la raíz del mapa, el logotipo, la respuesta de contacto y las
+cadenas del portal y de HQ que decían «SLG» ya no se reescriben por cliente. Claves intactas.
+`/prototipo` toma sus ejemplos de la ficha.
+
+**Frenos y pruebas.** Los fixtures que sembraban servicios, documentos o dominios de SLG leen la
+ficha o el contenido: `test-gestion`, `test-api`, `test-descargas`, `seed.ts`, las pruebas de base y
+portal, los dominios de correo y visor de las pruebas; `primer-admin` y `check:dns` toman sus
+valores por defecto de la ficha. Las pruebas negativas que dependían de la oferta de SLG dejan de
+hacerlo: la de nomenclatura trae su propia ficha (`check:nomenclature` acepta `SITIO_FICHA`, como
+`check:sitio`), la de `check:sitio` cuelga un servicio real de otra línea y la de `check:paginas`
+calcula índices y servicio ajeno desde la tabla de rutas. Ningún freno apagado ni borrado.
+
+**Verificado.** En verde: `check:types`, `lint`, `check:content`, `check:sitio`, `check:cadenas`,
+`check:copy`, `check:nomenclature`, `check:pairs`, `check:contraste`, `check:secrets`, `check:env`,
+`check:literacy`, `check:playbook`, `check:migrations`, `check:fronteras`, `check:alcance`,
+`check:archivos`, `check:anexo-d`, `check:motion`, `check:shell`, `check:hq` y `check:gates`; con
+la compilación de CI, `check:js-budget`, `check:runtime`, `check:produccion`, `check:armazon`,
+`check:paginas`, `check:seo` y `check:blog`. `check:brakes`: todo en rojo como debe salvo los cuatro
+casos que necesitan Chromium (`test:gesto`, `check:terceros`, `check:lighthouse`) o PostgreSQL
+(aislamiento), que no corren en esta máquina. Servidor compilado: las 45 rutas del sitemap y de
+control (acceso, prototipo, gracias, RSS, 404) sin «SLG», «Softlanding», «VoltAi», «Phoenix»,
+«Holdings» ni «Ricardo» fuera de atributos técnicos. Qué queda de SLG y cómo vaciarlo:
+`docs/PLANTILLA.md`.
