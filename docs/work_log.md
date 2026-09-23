@@ -4154,3 +4154,18 @@ armazón, páginas y SEO siguen en rojo por sus motivos. En verde con la ficha d
 `check:secrets`, `check:env`, `check:playbook`, `check:sitio` y los siete del servidor.
 `check:terceros`, `test:gesto` y `check:lighthouse` necesitan Chromium, y `check:brakes` PostgreSQL:
 no corren en esta máquina.
+
+## La prueba del CRM dependía de que el sitio tuviera CRM (2026-09-22)
+
+El CI de `website_template` (ficha «Cliente Demo», CRM apagado) dejó `test-crm` en 15 de 36: la prueba
+del adaptador llamaba a `barrerUnaVez`, que desde el paso 5b elige camino **según la ficha**, así que
+en la plantilla medía el aviso por correo en vez de la entrega al CRM. Y una comprobación afirmaba
+literalmente «la ficha de SLG sigue con el CRM encendido».
+
+**Hecho**: `barrerUnaVez` se queda como la única rama y delega en dos funciones exportadas,
+`barrerConCrmUnaVez` y `barrerSinCrmUnaVez`. La prueba ejerce cada camino por su nombre —igual en SLG
+que en la plantilla— y lo que antes era una afirmación sobre SLG pasa a comprobar que `barrerUnaVez`
+elige por la ficha. Sin variable de entorno que fuerce el modo: sería una segunda puerta a la ficha.
+
+**Verificado aquí**: `check:types`, `lint`, `check:fronteras`, `check:alcance`. La prueba necesita
+PostgreSQL: la corre CI en los dos repositorios.

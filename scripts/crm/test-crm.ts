@@ -164,12 +164,12 @@ const intentosDe = async (id: string) =>
 /**
  * El modo sin CRM, contra PostgreSQL real y un puerto de correo falso.
  *
- * **Se ejerce `barrerSinCrmUnaVez` y no `barrerUnaVez`** porque el modo lo
- * decide la ficha (`site.config.ts`), y la de SLG tiene el CRM encendido: no se
- * cambia en tiempo de ejecución, y una variable de entorno para forzarlo sería
- * una segunda puerta a la ficha que solo existiría para esta prueba. Lo que se
- * comprueba aquí es lo que hace la cola en ese modo; que `barrerUnaVez` elija
- * este camino es una línea que se lee.
+ * **Se ejerce `barrerSinCrmUnaVez` y no `barrerUnaVez`**, igual que arriba se
+ * ejerce `barrerConCrmUnaVez`: el modo lo decide la ficha (`site.config.ts`),
+ * que no se cambia en tiempo de ejecución, y esta prueba corre igual en SLG (CRM
+ * encendido) que en la plantilla (apagado). Una variable de entorno para
+ * forzarlo sería una segunda puerta a la ficha que solo existiría para esta
+ * prueba. Que `barrerUnaVez` elija el camino según la ficha se comprueba abajo.
  *
  * Los casos:
  *   · el aviso sale al buzón del cliente con el contacto entero, la captura
@@ -188,9 +188,14 @@ async function probarSinCrm(llamadasAlCrm: readonly Registro[]): Promise<void> {
   type Mensaje = import("../../lib/mail/index.ts").MensajeSaliente;
   type Puerto = import("../../lib/mail/index.ts").PuertoDeCorreo;
 
+  // `barrerUnaVez` es la única rama: con el CRM encendido entrega, apagado avisa.
+  // Se lee del código y no se ejerce, porque ejercerla dependería de la ficha.
+  const fuenteDeLaCola = await import("node:fs").then((fs) =>
+    fs.readFileSync(new URL("../../lib/crm/cola.ts", import.meta.url), "utf8"),
+  );
   check(
-    "la ficha de SLG sigue con el CRM encendido: su camino es el de arriba, sin cambios",
-    moduloActivo("crm") === true,
+    `barrerUnaVez elige el camino por la ficha (este sitio: CRM ${moduloActivo("crm") ? "encendido" : "apagado"})`,
+    /crmEncendido\(\)\s*\?\s*barrerConCrmUnaVez\(limite\)\s*:\s*barrerSinCrmUnaVez\(\{\s*limite\s*\}\)/.test(fuenteDeLaCola),
   );
 
   // `enviarCorreo` lee la configuración SMTP aunque se le inyecte el puerto: se
@@ -360,7 +365,7 @@ async function main() {
     /* ── Modo contact_note ──────────────────────────────────────────────── */
     console.log("\nCriterio 2 — modo `contact_note`: buscar → crear → nota:\n");
     process.env.CRM_MODE = "contact_note";
-    const { barrerUnaVez, modoActivo } = await import("../../lib/crm/index.ts");
+    const { barrerConCrmUnaVez, modoActivo } = await import("../../lib/crm/index.ts");
     check("el modo activo sale de la variable de entorno", modoActivo() === "contact_note");
 
     const id1 = await crearCaptura("uno@crm-prueba.test");
@@ -371,7 +376,7 @@ async function main() {
       JSON.stringify(antes),
     );
 
-    await barrerUnaVez();
+    await barrerConCrmUnaVez();
     const despues = await estadoDe(id1);
     check("tras el barrido queda entregada", despues?.crm_sync_status === "delivered", JSON.stringify(despues));
     check("guarda el id de contacto y el modo con el que se entregó", Boolean(despues?.crm_contact_id) && despues?.crm_mode === "contact_note");
@@ -413,7 +418,7 @@ async function main() {
     // Una captura ANTERIOR a la columna `last_name`: el repliegue provisional
     // sigue existiendo solo para ellas (RF-57), y se ve a simple vista.
     const idVieja = await crearCaptura("vieja@crm-prueba.test", null);
-    await barrerUnaVez();
+    await barrerConCrmUnaVez();
     const altaVieja = altaDeContacto("vieja@crm-prueba.test");
     check(
       "una captura sin apellido (anterior a la columna) entra por el repliegue: el nombre se parte",
@@ -427,7 +432,7 @@ async function main() {
     console.log("\nCriterio 6 — con el CRM apagado la captura espera, y al volver entra:\n");
     doble.tirar();
     const id2 = await crearCaptura("dos@crm-prueba.test");
-    await barrerUnaVez();
+    await barrerConCrmUnaVez();
     const caido = await estadoDe(id2);
     check(
       "con el CRM caído la captura sigue pendiente, no se pierde",
@@ -441,7 +446,7 @@ async function main() {
     // El siguiente intento está a un minuto: se adelanta, que es lo que hace el
     // tiempo. Lo que se prueba es que al volver el CRM la entrega ocurre.
     await dueno`update lead_capture set crm_next_attempt_at = now() - interval '1 minute' where id = ${id2}`;
-    await barrerUnaVez();
+    await barrerConCrmUnaVez();
     const recuperado = await estadoDe(id2);
     check(
       "al volver el CRM, el reintento tiene éxito (gate D7)",
@@ -455,7 +460,7 @@ async function main() {
     const id3 = await crearCaptura("tres@crm-prueba.test");
     for (let i = 0; i < 5; i++) {
       await dueno`update lead_capture set crm_next_attempt_at = now() - interval '1 minute' where id = ${id3}`;
-      await barrerUnaVez();
+      await barrerConCrmUnaVez();
     }
     const agotado = await estadoDe(id3);
     check(
@@ -472,13 +477,13 @@ async function main() {
     process.env.CRM_MODE = "lead_admission";
     check("el modo activo cambió sin tocar código", modoActivo() === "lead_admission");
     const id4 = await crearCaptura("cuatro@crm-prueba.test");
-    await barrerUnaVez();
+    await barrerConCrmUnaVez();
     const admitido = await estadoDe(id4);
     check("`lead_admission` entrega contra su endpoint", admitido?.crm_sync_status === "delivered", JSON.stringify(admitido));
     check("y registra el modo con el que se entregó, no el configurado hoy", admitido?.crm_mode === "lead_admission");
 
     const id5 = await crearCaptura("cuatro@crm-prueba.test");
-    await barrerUnaVez();
+    await barrerConCrmUnaVez();
     check(
       "es idempotente: el mismo correo y documento no duplican el lead",
       doble.leads.size === 1,
@@ -507,8 +512,8 @@ async function main() {
         "-e",
         // `process.exit` al final: el pool de PostgreSQL mantiene vivo el
         // proceso, y sin salir explícitamente el hijo no termina nunca.
-        'const { barrerUnaVez } = await import("./lib/crm/index.ts");' +
-          "const n = await barrerUnaVez(); console.log(n); process.exit(0);",
+        'const { barrerConCrmUnaVez } = await import("./lib/crm/index.ts");' +
+          "const n = await barrerConCrmUnaVez(); console.log(n); process.exit(0);",
       ],
       { cwd: process.cwd(), env: { ...process.env, CRM_MODE: "contact_note" }, stdio: ["ignore", "pipe", "pipe"] },
     );
