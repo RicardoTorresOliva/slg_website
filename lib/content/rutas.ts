@@ -3,8 +3,8 @@
  *
  * **LA TABLA ES EXPLÍCITA, Y ESO ES LA DECISIÓN.** Podría derivarse del slug del
  * registro —`/${slug}`— y así estaba hasta DU-04. No sirve: el Anexo A.2 anida
- * la oferta (`/ai/academy/phoenix-peex`) mientras que el archivo se llama
- * `phoenix-peex.md`, y un servicio suelto lo sirve un registro de servicio y no
+ * la oferta (`/consultoria/estrategia/diagnostico`) mientras que el archivo se
+ * llama `diagnostico.md`, y un servicio suelto lo sirve un registro de servicio y no
  * uno de página. Una regla implícita que necesita excepciones ya no es una
  * regla: es una tabla mal escrita.
  *
@@ -76,8 +76,8 @@ export type Rama = (typeof RAMAS)[number];
  * Todos los servicios de la oferta, con su ruta.
  *
  * `rama` es el slug de la línea de la que cuelgan, o `null` si el servicio es
- * **suelto**: vive al nivel de los ejes (en SLG, `Holdings by SLG` en
- * `/holdings`) y vuelve a Servicios, no a una línea.
+ * **suelto**: vive al nivel de los ejes (en la demo, `Formación a equipos` en
+ * `/formacion`) y vuelve a Servicios, no a una línea.
  */
 export const SERVICIOS = serviciosDeLaOferta().map((s) => ({
   slug: s.slug,

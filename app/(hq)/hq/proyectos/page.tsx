@@ -18,7 +18,7 @@ import { accionCerrarProyecto, accionCrearProyecto, accionReabrirProyecto } from
  * `/hq/proyectos` — proyectos ligados a una empresa (DU-14 · RF-79).
  *
  * **EL SERVICIO ES UNA LISTA, NO UNA CAJA DE TEXTO** (criterio 2). Con texto
- * libre salen «Phoenix Peex», «phoenix peex» y «Phoenix PEEX» en tres
+ * libre salen «Plan de Crecimiento», «plan de crecimiento» y «Plan De Crecimiento» en tres
  * proyectos, y a partir de ahí no hay forma de agrupar por servicio sin
  * normalizar a mano. Y RF-14 dice que la nomenclatura es literal e
  * intraducible: un nombre mal escrito aquí aparece después en el portal del

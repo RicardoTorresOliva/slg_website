@@ -178,6 +178,12 @@ async function main() {
   const { esServicioLiteral, serviciosLiterales } = await import("../../lib/hq/servicios.ts");
   const { PROJECT_SERVICES } = await import("../../lib/db/schema.ts");
   const { nombresDeServicio } = await import("../../lib/sitio/index.ts");
+  const { LITERAL_TERMS } = await import("../../lib/content/nomenclature.ts");
+  // Los servicios de la prueba salen de la ficha: escribir aquí el nombre de
+  // uno lo ataría a la oferta de un cliente, y la prueba fallaría en el
+  // siguiente por la razón equivocada. Hacen falta dos distintos.
+  const [SERVICIO, OTRO_SERVICIO] = nombresDeServicio();
+  if (!SERVICIO || !OTRO_SERVICIO) throw new Error("test-gestion necesita al menos dos servicios en la ficha");
   const { buscarRuta } = await import("../../lib/api/catalogo.ts");
   const { consultarTestigo } = await import("../../lib/invitations/index.ts");
   const { generarTestigo } = await import("../../lib/invitations/token.ts");
@@ -313,18 +319,21 @@ async function main() {
       oferta.length === ficha.length,
       `${oferta.length} de ${ficha.length}: ${oferta.join(" · ")}`,
     );
+    // Un servicio no tiene por qué ser un literal de nomenclatura (en el primer
+    // sitio, dos no lo eran): la lista de HQ es la de la ficha, no la de marcas.
+    const noLiterales = ficha.filter((n) => !LITERAL_TERMS.includes(n));
     check(
-      "incluidos los dos que NO son marca registrada y por eso no están en LITERAL_TERMS",
-      oferta.some((s) => s.includes("Coaching")) && oferta.some((s) => s.includes("Customize") || s.includes("Programa")),
-      oferta.join(" · "),
+      "incluidos los que NO están en LITERAL_TERMS, si los hay",
+      noLiterales.every((n) => oferta.includes(n)),
+      `faltan: ${noLiterales.filter((n) => !oferta.includes(n)).join(" · ")}`,
     );
-    check("«Phoenix PEEx» vale", esServicioLiteral("Phoenix PEEx"));
-    for (const roto of ["phoenix peex", "Phoenix PEEX", "SLG Readiness", "Consultoría IA", ""]) {
+    check(`«${SERVICIO}» vale`, esServicioLiteral(SERVICIO));
+    for (const roto of [SERVICIO.toLowerCase(), SERVICIO.toUpperCase(), ` ${SERVICIO}`, "Servicio inventado", ""]) {
       check(`«${roto || "(vacío)"}» NO vale`, !esServicioLiteral(roto));
     }
 
     // El defecto que esta comprobación existe para impedir, y que ya ocurrió:
-    // la oferta se renombró (`SLG_Holdings` → `Holdings by SLG`, 18-09) y una
+    // la oferta del primer sitio renombró una línea (18-09) y una
     // de las listas —entonces el `CHECK` de la base— se quedó con el nombre
     // viejo. Todo lo de arriba seguía en verde y aun así un proyecto de esa
     // línea era imposible de crear. Desde 0024 no hay `CHECK`: la lista es la
@@ -368,7 +377,7 @@ async function main() {
       await crearProyecto(admin(), {
         organizationId: ORG_CLIENTE,
         nombre: "Proyecto roto",
-        servicio: "phoenix peex",
+        servicio: SERVICIO.toLowerCase(),
         estado: "active",
       });
     } catch (e) {
@@ -379,7 +388,7 @@ async function main() {
     const proyectoId = await crearProyecto(admin(), {
       organizationId: ORG_CLIENTE,
       nombre: "Proyecto Demo",
-      servicio: "Phoenix PEEx",
+      servicio: SERVICIO,
       estado: "active",
       responsableId: OPERADOR,
     });
@@ -392,7 +401,7 @@ async function main() {
     const ajeno = await crearProyecto(admin(), {
       organizationId: ORG_CLIENTE,
       nombre: "Proyecto ajeno",
-      servicio: "SLG_Readiness",
+      servicio: OTRO_SERVICIO,
       estado: "active",
       responsableId: ADMIN,
     });
@@ -404,7 +413,7 @@ async function main() {
       await editarProyecto(operador(), proyectoId, {
         organizationId: ORG_CLIENTE,
         nombre: "Proyecto Demo (editado)",
-        servicio: "Phoenix PEEx",
+        servicio: SERVICIO,
         estado: "paused",
       });
     } catch {
@@ -418,7 +427,7 @@ async function main() {
       await editarProyecto(operador(), ajeno, {
         organizationId: ORG_CLIENTE,
         nombre: "Se lo quedo",
-        servicio: "SLG_Readiness",
+        servicio: OTRO_SERVICIO,
         estado: "closed",
       });
     } catch (e) {
@@ -486,7 +495,7 @@ async function main() {
     await editarProyecto(admin(), proyectoId, {
       organizationId: ORG_CLIENTE,
       nombre: "Proyecto Demo",
-      servicio: "Phoenix PEEx",
+      servicio: SERVICIO,
       estado: "active",
       responsableId: OPERADOR,
     });

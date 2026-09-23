@@ -21,7 +21,7 @@
  * Lo que **no** se comprueba aquí es la capa 1 *en funcionamiento*, porque eso
  * exige el subdominio desplegado: el criterio 3 pide que la prueba corra
  * «contra el visor servido desde su origen separado definitivo». Queda abierto
- * hasta que `visor.softlandingglobal.com` exista, y está dicho en el `work_log`
+ * hasta que el subdominio `visor.` del sitio exista, y está dicho en el `work_log`
  * en vez de darlo por hecho.
  */
 import { randomUUID } from "node:crypto";
@@ -29,6 +29,15 @@ import fs from "node:fs";
 import path from "node:path";
 
 import postgres from "postgres";
+import { nombresDeServicio } from "../../lib/sitio/index.ts";
+/**
+ * Los servicios con los que se siembran los proyectos salen de la ficha
+ * (`site.config.ts`): la base no restringe `project.service` (0024), pero la
+ * aplicación solo acepta los literales de la oferta, y una prueba que sembrara
+ * el nombre de un servicio de otro sitio probaría datos que este sitio no
+ * puede producir.
+ */
+const [SERVICIO] = nombresDeServicio();
 
 let fallos = 0;
 let comprobaciones = 0;
@@ -89,7 +98,7 @@ async function contraLaBase() {
     await dueno`insert into organization (id, name, slug, type, status)
                 values (${ORG}, 'Empresa del visor', 'du19-visor', 'client', 'active')`;
     await dueno`insert into project (id, organization_id, name, service, status)
-                values (${PROY}, ${ORG}, 'Proyecto del visor', 'Phoenix PEEx', 'active')`;
+                values (${PROY}, ${ORG}, 'Proyecto del visor', ${SERVICIO}, 'active')`;
 
     const meter = async (
       id: string,
@@ -223,12 +232,12 @@ async function main() {
   console.log("\nCapa 1 — el visor se NIEGA a servir si el origen no está separado (D-45):\n");
 
   delete process.env.DELIVERABLE_VIEWER_ORIGIN;
-  process.env.NEXT_PUBLIC_SITE_URL = "https://softlandingglobal.com";
+  process.env.NEXT_PUBLIC_SITE_URL = "https://demo.example.com";
   check("sin variable, no hay origen de visor", origenDelVisor() === null);
   check("y el visor no se da por separado", !visorEstaSeparado());
   check("así que no hay URL que enseñar", urlDelVisor("abc", "cliente") === null);
 
-  process.env.DELIVERABLE_VIEWER_ORIGIN = "https://softlandingglobal.com";
+  process.env.DELIVERABLE_VIEWER_ORIGIN = "https://demo.example.com";
   check(
     "CONFIGURADO AL MISMO DOMINIO, tampoco se da por separado: es el fallo silencioso",
     !visorEstaSeparado(),
@@ -236,7 +245,7 @@ async function main() {
   );
   check("y sigue sin haber URL", urlDelVisor("abc", "cliente") === null);
 
-  process.env.DELIVERABLE_VIEWER_ORIGIN = "https://visor.softlandingglobal.com";
+  process.env.DELIVERABLE_VIEWER_ORIGIN = "https://visor.demo.example.com";
   check("con un subdominio propio, sí", visorEstaSeparado());
 
   /**
@@ -262,7 +271,7 @@ async function main() {
   process.env.DELIVERABLE_VIEWER_SECRET = ["visor", "prueba", randomUUID()].join("-");
   const enlace = urlDelVisor("abc", "cliente");
   check("con secreto, la URL apunta al subdominio del visor, no al del sitio",
-    enlace !== null && enlace.startsWith("https://visor.softlandingglobal.com/visor/abc?"), String(enlace));
+    enlace !== null && enlace.startsWith("https://visor.demo.example.com/visor/abc?"), String(enlace));
   const parametros = new URL(enlace!).searchParams;
   check("y lleva caducidad y firma, no solo el identificador",
     Boolean(parametros.get("c")) && Boolean(parametros.get("f")), enlace!);
@@ -287,7 +296,7 @@ async function main() {
   check("`object-src 'none'` y `base-uri 'none'`", csp.includes("object-src 'none'") && csp.includes("base-uri 'none'"));
   check(
     "`frame-ancestors` deja enmarcar SOLO a la aplicación",
-    csp.includes("frame-ancestors https://softlandingglobal.com"),
+    csp.includes("frame-ancestors https://demo.example.com"),
     csp,
   );
   check("y el propio documento va en `sandbox`", csp.includes("sandbox"), csp);

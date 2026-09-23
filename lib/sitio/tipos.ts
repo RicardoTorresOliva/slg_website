@@ -83,8 +83,8 @@ export type EjeDeLaOferta = {
 
 /**
  * La oferta completa. Dos formas de colgar un servicio: dentro de una línea de
- * un eje (`/ai/academy/phoenix-peex`) o **suelto**, al nivel de los ejes
- * (`/holdings`). Un cliente pequeño puede no tener ejes y solo servicios sueltos.
+ * un eje (`/consultoria/estrategia/diagnostico`) o **suelto**, al nivel de los
+ * ejes (`/formacion`). Un cliente pequeño puede no tener ejes y solo servicios sueltos.
  */
 export type Oferta = {
   readonly ejes: readonly EjeDeLaOferta[];

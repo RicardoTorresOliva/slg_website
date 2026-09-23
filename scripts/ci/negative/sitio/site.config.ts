@@ -5,16 +5,25 @@
  * Cada fallo es uno de los que el freno promete ver:
  *
  *   · un servicio sin registro de contenido (`no-existe`);
- *   · un servicio colgado de una línea que no es la de su registro
- *     (`phoenix-peex` bajo «Otra línea»: su `branch` dice otra cosa);
+ *   · un servicio colgado de una línea que no es la de su registro (el primer
+ *     servicio de la ficha REAL bajo «Otra línea»: su `branch` dice otra cosa);
  *   · una foto que no está en `public/fotos/`;
  *   · dos servicios con el mismo slug y la misma ruta;
  *   · una ruta que cae bajo una carpeta fija de `app/` (`/blog/tapada`);
  *   · un destino del menú que no existe.
  *
+ * El servicio con registro sale de la ficha real y no se escribe aquí: el caso
+ * necesita un registro de contenido que EXISTA, y el contenido es de cada
+ * sitio. Con un nombre fijo, el fixture solo valdría para el sitio de quien lo
+ * escribió.
+ *
  * Si el freno no se pone en rojo contra esto, no está midiendo nada.
  */
+import { serviciosDeLaOferta } from "../../../../lib/sitio/index.ts";
 import type { FichaDelSitio } from "../../../../lib/sitio/tipos.ts";
+
+const real = serviciosDeLaOferta()[0];
+if (!real) throw new Error("la prueba negativa de check:sitio necesita al menos un servicio en la ficha real");
 
 export const sitio: FichaDelSitio = {
   marca: {
@@ -58,20 +67,20 @@ export const sitio: FichaDelSitio = {
       {
         clave: "eje",
         nombre: "Eje",
-        pagina: { es: "ai" },
+        pagina: { es: "eje" },
         ruta: { es: "/eje" },
         lineas: [
           {
             clave: "otra",
             nombre: "Otra línea",
-            pagina: { es: "slg-academy" },
+            pagina: { es: "otra-linea" },
             ruta: { es: "/eje/otra" },
             foto: "foto-inexistente",
             servicios: [
-              { slug: "phoenix-peex", nombre: "Phoenix PEEx", pagina: { es: "phoenix-peex" }, ruta: { es: "/eje/otra/peex" } },
+              { slug: real.slug, nombre: real.nombre, pagina: { es: real.pagina.es }, ruta: { es: "/eje/otra/real" } },
               { slug: "no-existe", nombre: "No existe", pagina: { es: "no-existe" }, ruta: { es: "/eje/otra/no-existe" } },
-              { slug: "readiness", nombre: "SLG_Readiness", pagina: { es: "readiness" }, ruta: { es: "/blog/tapada" } },
-              { slug: "readiness", nombre: "SLG_Readiness", pagina: { es: "readiness" }, ruta: { es: "/blog/tapada" } },
+              { slug: "repetido", nombre: "Repetido", pagina: { es: "repetido" }, ruta: { es: "/blog/tapada" } },
+              { slug: "repetido", nombre: "Repetido", pagina: { es: "repetido" }, ruta: { es: "/blog/tapada" } },
             ],
           },
         ],

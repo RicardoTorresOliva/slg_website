@@ -86,7 +86,7 @@ const bueno = fixture("bien.json", [
     clave: "prueba",
     nombre: { es: "Prueba", en: "Test" },
     descripcion: { es: "Una conexión de prueba.", en: "A test connection." },
-    url: "https://ejemplo.softlandingglobal.com",
+    url: "https://ejemplo.demo.example.com",
     grupo: "operacion",
   },
 ]);
@@ -99,7 +99,7 @@ const conHttp = fixture("http.json", [
     clave: "prueba",
     nombre: { es: "Prueba", en: "Test" },
     descripcion: { es: "x", en: "x" },
-    url: "http://inseguro.softlandingglobal.com",
+    url: "http://inseguro.demo.example.com",
     grupo: "operacion",
   },
 ]);

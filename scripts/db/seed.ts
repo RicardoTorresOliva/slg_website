@@ -14,7 +14,30 @@
  * Se ejecuta con el usuario DUEÑO: sembrar varias empresas a la vez es
  * precisamente lo que las políticas de fila impiden a la aplicación.
  */
+import fs from "node:fs";
+import path from "node:path";
+
 import postgres from "postgres";
+
+import { serviciosDeLaOferta, sitio } from "../../lib/sitio/index.ts";
+
+/**
+ * LA SEMILLA SALE DEL SITIO, NO DE UN SITIO. El operador se llama como la
+ * marca de la ficha; los proyectos llevan servicios de su oferta —la base no
+ * restringe `project.service` (0024), pero la aplicación solo acepta esos
+ * literales—; y las capturas apuntan a una página de servicio y a un documento
+ * que existen. Una semilla con los nombres de otro cliente enseñaría en HQ
+ * datos que este sitio no puede producir.
+ */
+const OFERTA = serviciosDeLaOferta();
+const SERVICIO = OFERTA[0]?.nombre ?? "";
+const OTRO_SERVICIO = OFERTA[1]?.nombre ?? SERVICIO;
+const PAGINA_DE_SERVICIO = OFERTA[0]?.ruta.es ?? "/servicios";
+const DOCUMENTO =
+  fs
+    .readdirSync(path.join(import.meta.dirname, "../../content/downloads/es"))
+    .find((f) => f.endsWith(".md"))
+    ?.replace(/\.md$/, "") ?? "documento";
 
 const URL = process.env.DATABASE_URL_MIGRATIONS ?? process.env.DATABASE_URL;
 if (!URL) { console.error("Falta DATABASE_URL_MIGRATIONS o DATABASE_URL."); process.exit(1); }
@@ -32,18 +55,18 @@ async function main() {
     api_key, organization, "user" restart identity cascade`;
 
   await sql`insert into organization (id,name,slug,type,status) values
-    ('org-slg','SLG Agency','slg','slg','active'),
-    ('org-demo','Cliente Demo','cliente-demo','client','active'),
+    ('org-slg',${sitio.marca.nombre},'slg','slg','active'),
+    ('org-demo','Empresa Ejemplo','empresa-ejemplo','client','active'),
     ('org-otro','Otro Cliente','otro-cliente','client','active')`;
 
   await sql`insert into "user" (id,name,email,email_verified,role,locale) values
-    ('u-ricardo','Ricardo Torres Oliva','ricardo@example.test',true,'slg_admin','es'),
+    ('u-admin','Admin','admin@example.test',true,'slg_admin','es'),
     ('u-jessica','Jessica','jessica@example.test',true,'slg_operator','es'),
     ('u-cliente','Ana Directora','ana@clientedemo.test',true,'client_admin','es'),
     ('u-miembro','Luis Equipo','luis@clientedemo.test',true,'client_member','en')`;
 
   await sql`insert into membership (id,user_id,organization_id,org_role) values
-    ('m1','u-ricardo','org-slg','slg_admin'),
+    ('m1','u-admin','org-slg','slg_admin'),
     ('m2','u-jessica','org-slg','slg_operator'),
     ('m3','u-cliente','org-demo','client_admin'),
     ('m4','u-miembro','org-demo','client_member')`;
@@ -54,35 +77,35 @@ async function main() {
     ('c2','org-demo','Mario Compras','mario@clientedemo.test','Jefe de Compras',false,null)`;
 
   await sql`insert into project (id,organization_id,name,service,status,owner_user_id,starts_at) values
-    ('p-demo','org-demo','Readiness 2026','SLG_Readiness','active','u-jessica',${hace(30)}),
-    ('p-otro','org-otro','Implementación','SLG_Implement','active','u-jessica',${hace(10)})`;
+    ('p-demo','org-demo','Proyecto 2026',${SERVICIO},'active','u-jessica',${hace(30)}),
+    ('p-otro','org-otro','Implementación',${OTRO_SERVICIO},'active','u-jessica',${hace(10)})`;
 
   // Los cuatro tipos con archivo, más el enlace. `material` cuelga del proyecto.
   await sql`insert into deliverable
     (id,project_id,organization_id,title,type,file_key,url,version,family_id,visibility,published_at,published_by_type,published_by_id,published_by_label) values
     ('d1','p-demo','org-demo','Informe de preparación','pdf','deliverables/d1.pdf',null,1,'fam-informe','client',${hace(5)},'user','u-jessica','Jessica'),
     ('d2','p-demo','org-demo','Informe de preparación','pdf','deliverables/d2.pdf',null,2,'fam-informe','client',${hace(1)},'user','u-jessica','Jessica'),
-    ('d3','p-demo','org-demo','Reporte interactivo','html','deliverables/d3.html',null,1,'fam-reporte','client',${hace(2)},'api_key','k1','Hermes'),
+    ('d3','p-demo','org-demo','Reporte interactivo','html','deliverables/d3.html',null,1,'fam-reporte','client',${hace(2)},'api_key','k1','Agente'),
     ('d4','p-demo','org-demo','Notas de la sesión','md','deliverables/d4.md',null,1,'fam-notas','client',${hace(3)},'user','u-jessica','Jessica'),
     ('d5','p-demo','org-demo','Grabación','link',null,'https://example.test/v',1,'fam-video','client',${hace(4)},'user','u-jessica','Jessica'),
-    ('d6','p-demo','org-demo','Manual del programa','material','deliverables/d6.pdf',null,1,'fam-manual','client',${hace(6)},'user','u-ricardo','Ricardo')`;
+    ('d6','p-demo','org-demo','Manual del programa','material','deliverables/d6.pdf',null,1,'fam-manual','client',${hace(6)},'user','u-admin','Admin')`;
 
   await sql`insert into announcement (id,organization_id,title,body_md,published_at,author_type,author_id,author_label) values
-    ('a1','org-demo','Sesión Cero agendada','Nos vemos el jueves.',${hace(7)},'user','u-ricardo','Ricardo')`;
+    ('a1','org-demo','Sesión Cero agendada','Nos vemos el jueves.',${hace(7)},'user','u-admin','Admin')`;
 
   // Los TRES estados de sincronización. Sin la `failed`, la pantalla de
   // reintento de HQ nunca se ve y R-24 queda sin mitigación visible.
   await sql`insert into lead_capture
     (id,email,email_domain,name,last_name,company,source,download_slug,page_path,locale,consent_at,privacy_version,crm_mode,crm_contact_id,crm_sync_status,crm_attempts,crm_delivered_at,crm_last_error,crm_next_attempt_at) values
-    ('l1','ceo@empresa.test','empresa.test','Un CEO','Primero','Empresa','download','lo-que-un-director-debe-saber','/ai/academy/phoenix-peex','es',${hace(2)},'v1','contact_note','crm-1','delivered',1,${hace(2)},null,null),
-    ('l2','cfo@otra.test','otra.test','Una CFO','Segunda','Otra','download','lo-que-un-director-debe-saber','/ai/academy/phoenix-peex','es',${hace(1)},'v1',null,null,'pending',0,null,null,${ahora}),
+    ('l1','ceo@empresa.test','empresa.test','Un CEO','Primero','Empresa','download',${DOCUMENTO},${PAGINA_DE_SERVICIO},'es',${hace(2)},'v1','contact_note','crm-1','delivered',1,${hace(2)},null,null),
+    ('l2','cfo@otra.test','otra.test','Una CFO','Segunda','Otra','download',${DOCUMENTO},${PAGINA_DE_SERVICIO},'es',${hace(1)},'v1',null,null,'pending',0,null,null,${ahora}),
     ('l3','coo@tercera.test','tercera.test','Un COO','Tercero','Tercera','contact',null,'/contacto','en',${hace(3)},'v1','contact_note',null,'failed',5,null,'El CRM no respondió tras 5 intentos',null)`;
 
   await sql`insert into download_event (id,lead_capture_id,download_slug,signed_url_issued_at,signed_url_expires_at,completed_at) values
-    ('de1','l1','lo-que-un-director-debe-saber',${hace(2)},${hace(2)},${hace(2)})`;
+    ('de1','l1',${DOCUMENTO},${hace(2)},${hace(2)},${hace(2)})`;
 
   await sql`insert into api_key (id,name,key_hash,organization_id,scopes,rate_limit_max) values
-    ('k1','Hermes — publicación','hash-ejemplo-no-es-una-clave','org-demo',
+    ('k1','Agente — publicación','hash-ejemplo-no-es-una-clave','org-demo',
      ${sql.json(['deliverables:write','announcements:write','events:write'])},60)`;
 
   await sql`insert into agent_event (id,api_key_id,organization_id,kind,payload_json) values

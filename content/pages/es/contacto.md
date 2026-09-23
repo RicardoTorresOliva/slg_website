@@ -1,16 +1,14 @@
 ---
 type: page
 title: "Contacto"
-description: "Escríbenos. Sin formulario de calificación y sin llamada de descubrimiento."
+description: "Escríbenos y cuéntanos en qué momento está tu empresa."
 lang: es
 pair: "contact"
 nav_order: 10
-updated: "2026-09-12"
+updated: "2026-09-22"
 copy: temporal
 ---
 
-Escríbenos a **support@softlandingglobal.com** y cuéntanos en qué estás.
+Cuéntanos en qué momento está tu empresa y qué decisión tienes por delante. Te respondemos por correo en un plazo de dos días hábiles.
 
-No hay formulario de calificación ni llamada de descubrimiento: si tienes una pregunta concreta, escríbela en el correo y te contestamos con detalles.
-
-**SLG Agency Inc.** — Florida, Estados Unidos.
+También puedes escribirnos directamente a **hola@demo.example.com**.

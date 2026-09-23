@@ -16,6 +16,7 @@ import {
 import { ESTADOS_CANONICOS } from "@/lib/app/estados";
 import { SECCIONES } from "@/lib/app/navegacion";
 import { loadUiStrings } from "@/lib/content/loader";
+import { DESTINOS, EJES, PAGINA_DE_SERVICIOS, RAMAS, SERVICIOS } from "@/lib/content/rutas";
 import { sitio } from "@/lib/sitio";
 
 /**
@@ -42,20 +43,26 @@ import { sitio } from "@/lib/sitio";
  *   · con **«reducir transparencia»**, la barra deja de ser translúcida.
  */
 export const metadata = {
-  title: "Prototipo C.5 · SLG Agency",
+  title: `Prototipo C.5 · ${sitio.marca.nombre}`,
   robots: { index: false, follow: false },
 };
 export const dynamic = "force-dynamic";
 
-const ENLACES = [
-  { href: "/ai", etiqueta: "VoltAi by SLG" },
-  { href: "/holdings", etiqueta: "Holdings by SLG" },
-  { href: "/doctrina", etiqueta: "Doctrina" },
-  { href: "/blog", etiqueta: "Blog" },
-];
+/**
+ * Los ejemplos de la oferta salen de la ficha, no de nombres escritos aquí: el
+ * prototipo se sirve (con `noindex`) en todos los sitios que nacen de la
+ * plantilla, y un nombre de servicio escrito a mano sería el del primer cliente
+ * en la web del segundo.
+ */
+const PRIMER_EJE = EJES[0] ?? { es: PAGINA_DE_SERVICIOS.es, en: PAGINA_DE_SERVICIOS.en, nombre: "Servicios" };
+const EJEMPLOS = SERVICIOS.slice(0, 3).map((s) => ({
+  ...s,
+  linea: RAMAS.find((r) => r.slug === s.rama)?.nombre ?? "Servicio suelto",
+}));
 
 export default function Prototipo() {
   const t = loadUiStrings().es;
+  const ENLACES = DESTINOS.map((d) => ({ href: d.es, etiqueta: t[d.clave] }));
 
   const textosFormulario = {
     etiqueta: t["download.emailLabel"],
@@ -72,12 +79,12 @@ export default function Prototipo() {
     <div>
       <BarraDeNavegacion
         enlaces={ENLACES}
-        activo="/ai"
+        activo={PAGINA_DE_SERVICIOS.es}
         acceso={{ href: "/acceder", etiqueta: t["nav.signin"] }}
         inicio="/"
         marca={{ nombre: sitio.marca.nombre, isotipo: sitio.marca.isotipo }}
         conmutador={{
-          href: "/en/ai",
+          href: PRIMER_EJE.en,
           etiqueta: t["nav.lang"],
           etiquetaNoDisponible: t["nav.langUnavailable"],
           idiomaDestino: "en",
@@ -121,23 +128,19 @@ export default function Prototipo() {
 
         <Bloque n={3} titulo="Hero tipográfico" nota="Una idea por viewport. Sin imagen de stock, sin gradiente animado.">
           <HeroTipografico
-            titular="Autoridad silenciosa"
+            titular={sitio.marca.lema}
             apoyo="Un titular, una línea de apoyo y nada más compitiendo por la atención."
-            accion={{ href: "/ai", etiqueta: "Ver VoltAi by SLG" }}
+            accion={{ href: PRIMER_EJE.es, etiqueta: `Ver ${PRIMER_EJE.nombre}` }}
           />
         </Bloque>
 
         <Bloque n={4} titulo="Tarjeta de rama / servicio">
           <div style={rejilla}>
-            <Reveal>
-              <TarjetaDeServicio nombre="Phoenix PEEx" rama="VoltAi Academy" href="/ai/academy/phoenix-peex" resumen="Marcador estructural. El copy definitivo es FU-01." />
-            </Reveal>
-            <Reveal>
-              <TarjetaDeServicio nombre="SLG_Readiness" rama="VoltAi Enterprise" href="/ai/enterprise/readiness" resumen="Marcador estructural. El copy definitivo es FU-01." />
-            </Reveal>
-            <Reveal>
-              <TarjetaDeServicio nombre="APP_Building" rama="VoltAi Factory" href="/ai/factory/app-building" resumen="Marcador estructural. El copy definitivo es FU-01." />
-            </Reveal>
+            {EJEMPLOS.map((s) => (
+              <Reveal key={s.slug}>
+                <TarjetaDeServicio nombre={s.nombre} rama={s.linea} href={s.es} resumen="Marcador estructural. El copy definitivo es FU-01." />
+              </Reveal>
+            ))}
           </div>
         </Bloque>
 
@@ -155,11 +158,11 @@ export default function Prototipo() {
         <Bloque n={6} titulo="Tarjeta de artículo">
           <div style={rejilla}>
             <TarjetaDeArticulo
-              titulo="Autoridad silenciosa"
+              titulo="Título de un artículo"
               fecha="2026-09-08"
-              href="/blog/autoridad-silenciosa"
+              href="/blog"
               resumen="Marcador estructural."
-              etiquetas={["Doctrina", "AI Literacy"]}
+              etiquetas={["Estrategia", "Método"]}
             />
           </div>
         </Bloque>
@@ -195,14 +198,14 @@ export default function Prototipo() {
                 saltar: t["app.shell.skip"],
                 cuenta: t["app.shell.account"],
               }}
-              usuario={{ nombre: "Ricardo Torres Oliva", cerrarSesionHref: "/api/acceso/salir" }}
+              usuario={{ nombre: "Ana Pérez", cerrarSesionHref: "/api/acceso/salir" }}
             >
               <div style={{ display: "grid", gap: "1rem" }}>
                 <TablaDeApp
                   etiqueta="Capturas web recientes"
                   columnas={["Correo", "Origen", "Estado"]}
                   filas={[
-                    ["lead@empresa.com", "/ai/academy/phoenix-peex", "Entregada"],
+                    ["lead@empresa.com", EJEMPLOS[0]?.es ?? PAGINA_DE_SERVICIOS.es, "Entregada"],
                     ["otro@empresa.com", "/contacto", "En cola"],
                   ]}
                 />

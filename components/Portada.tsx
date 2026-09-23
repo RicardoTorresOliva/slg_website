@@ -18,16 +18,18 @@ import { HeroTipografico, TarjetaDeArticulo, TarjetaDeServicio } from "./piezas"
  * entrada es un mapa poco invasivo.
  *
  * Qué bloques y en qué orden lo dice la ficha (`sitio.bloquesDeServicios`); en
- * SLG son estos:
+ * la demo de la plantilla son estos:
  *
  *   1. Hero tipográfico, una idea — siempre, y siempre el primero
- *   2. `puertas`: los ejes de la Agencia y sus servicios sueltos
+ *   2. `puertas`: los ejes del sitio y sus servicios sueltos
  *   3. `lineas`: las tarjetas de las líneas
- *   4. `Holdings by SLG`, un servicio suelto desarrollado debajo de los ejes
- *   5. `doctrina`: franja con pull-quote y enlace
- *   6. `articulos`: últimos artículos
- *   7. `descarga`: tres documentos y el enlace a la biblioteca
- *   8. Pie *(lo pone `ArmazonPublico`, que es de DU-02)*
+ *   4. `Formación a equipos`, un servicio suelto desarrollado debajo de los ejes
+ *   5. `articulos`: últimos artículos
+ *   6. `descarga`: tres documentos y el enlace a la biblioteca
+ *   7. Pie *(lo pone `ArmazonPublico`, que es de DU-02)*
+ *
+ * `doctrina` —franja con cita y enlace— existe también, y se pinta solo si el
+ * módulo está encendido.
  *
  * **El texto de cada bloque no lo decide este archivo: lo decide el `.md`.** El
  * hero es la primera sección del registro `servicios` de `content/pages`, y el

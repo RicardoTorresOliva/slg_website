@@ -64,7 +64,7 @@ Orden estricto: cada paso depende del anterior. Total: **4 días de Claude + 45 
 | 9 | `auth:primer-admin` en modo invitación: manda el enlace al responsable en vez de imprimir una contraseña | Claude | Script cambiado + prueba | 1 h || ✅ 22-09 |
 | 10 | Lector del intake: hoja de respuestas + carpeta de Drive → borrador de `site.config.ts` y del contenido | Claude | `commands/leer-intake.md` | 3 h || ✅ 22-09 · skill `leer-intake` |
 | 11 | Plantillas de los cuatro correos al cliente (formulario, faltantes, revisión, entrega) | Claude | `docs/intake/correos.md` | 1 h || ✅ 22-09 · `docs/intake/correos.md` |
-| 12 | Vaciar lo específico de SLG y dejar un «Cliente Demo» bilingüe con 3 servicios | Claude | La plantilla arranca con demo | 2 h | |
+| 12 | Vaciar lo específico de SLG y dejar un «Cliente Demo» bilingüe con 3 servicios | Claude | La plantilla arranca con demo | 2 h | ✅ 22-09 · en `website_template`, rama `plantilla/p12-cliente-demo` · `docs/PLANTILLA.md` |
 | 13 | Repositorio `website_template` privado y marcado como *template* | Ricardo | github.com/RicardoTorresOliva/website_template | — | ✅ 22-09 · rama por defecto cambiada a `develop` por Claude: «Use this template» solo copia la rama por defecto y `main` iba 102 commits atrás |
 | 14 | Llevar los pasos 1–12 a `website_template` y limpiar sus ramas viejas | Claude | Plantilla al día | 30 min | |
 | 15 | Configuración única de Ricardo (§7.3) | Ricardo | Permisos y cuentas listos | 45 min | |

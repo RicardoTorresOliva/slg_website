@@ -273,7 +273,7 @@ async function main() {
 
     /* ── Criterio 5 · el payload de post.published ──────────────────────── */
     console.log("\nCriterio 5 — `post.published` se puede publicar sin leer de vuelta el repositorio:\n");
-    process.env.NEXT_PUBLIC_SITE_URL = "https://softlandingglobal.com";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://demo.example.com";
     const { urlDelArticulo } = await import("../../lib/webhooks/index.ts");
     const { articulos } = await import("../../lib/content/blog.ts");
     const muestra = articulos("es")[0];
@@ -297,7 +297,7 @@ async function main() {
       };
       check(
         "lleva el ENLACE CANÓNICO en su idioma, no un identificador",
-        datos.url === `https://softlandingglobal.com/blog/${muestra.slug}`,
+        datos.url === `https://demo.example.com/blog/${muestra.slug}`,
         String(datos.url),
       );
       check(
@@ -308,8 +308,8 @@ async function main() {
       check("lleva las etiquetas del artículo", Array.isArray(datos.tags) && datos.tags.length > 0);
       check(
         "el enlace del inglés apunta a /en/blog/, no al español",
-        urlDelArticulo("en", "silent-authority") === "https://softlandingglobal.com/en/blog/silent-authority",
-        urlDelArticulo("en", "silent-authority"),
+        urlDelArticulo("en", "un-articulo") === "https://demo.example.com/en/blog/un-articulo",
+        urlDelArticulo("en", "un-articulo"),
       );
     }
 

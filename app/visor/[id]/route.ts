@@ -13,8 +13,8 @@ import { documentoParaElVisor, urlFirmadaDelObjeto } from "@/lib/visor/servicio"
  * `/visor/[id]` — **el documento del entregable HTML, en su propio origen**
  * (DU-19 · D-45 · RF-90 · RNF-21 · R-11).
  *
- * SE SIRVE DESDE `visor.softlandingglobal.com`, NO DESDE EL DOMINIO DEL SITIO.
- * Parte de estos HTML los generan agentes Hermes, y desde el dominio de la
+ * SE SIRVE DESDE `visor.<dominio del sitio>`, NO DESDE EL DOMINIO DEL SITIO.
+ * Parte de estos HTML los generan agentes, y desde el dominio de la
  * aplicación un script hostil **comparte origen con la sesión del cliente**:
  * podría leer la cookie, llamar a la API con las credenciales del navegador y
  * llevarse los datos. Desde un subdominio propio no puede, y no porque nosotros

@@ -25,10 +25,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { Resolver } from "node:dns/promises";
 
+import { sitio } from "../../lib/sitio/index.ts";
+
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 const BASELINE = process.env.DNS_BASELINE ?? path.join(REPO_ROOT, "docs", "dns_baseline.txt");
 const RESOLUTOR = process.env.DNS_RESOLVER ?? "8.8.8.8";
-const DOMINIO = process.env.DNS_DOMAIN ?? "softlandingglobal.com";
+/** El dominio de producción de la ficha, sin esquema; `DNS_DOMAIN` lo cambia para una prueba. */
+const DOMINIO = process.env.DNS_DOMAIN ?? new URL(sitio.dominio.produccion).host;
 
 type Tipo = "A" | "CNAME" | "MX" | "TXT";
 type Entrada = { nombre: string; tipo: Tipo };

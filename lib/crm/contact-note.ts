@@ -11,7 +11,7 @@
  * cosas de negocio desde un formulario web.
  *
  * EL CONTRATO ES EL DEL CRM REAL, no el de un doble imaginado. Se comprobó el
- * 2026-09-17 contra `crm.softlandingglobal.com` (`crm_slg/backend`), después de
+ * 2026-09-17 contra el CRM del primer sitio (`CRM_Template` expone el mismo), después de
  * que la primera versión —escrita contra un doble— devolviera 400 en producción:
  *
  *   · `GET /api/v1/contacts?q=<correo>&pageSize=50`. `q` busca por «contiene»

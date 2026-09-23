@@ -5,7 +5,7 @@
  *
  *   1. `lead_capture` NO tiene etapa, propietario, valor de oportunidad ni
  *      próximo paso. Es evidencia y cola de entrega, no un CRM. El sistema de
- *      registro comercial es el CRM Softlanding Global (§10-13, RF-57).
+ *      registro comercial es el CRM del sitio, si lo tiene (§10-13, RF-57).
  *   2. `membership` NO tiene semántica de matrícula: ni progreso, ni cohorte,
  *      ni fecha de finalización. Esto no es un LMS (§5.2).
  *

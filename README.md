@@ -1,9 +1,33 @@
-# slg_website — manual de operación
+# Manual de operación del sitio
 
-**Para quién es esto.** Para Ricardo, y para cualquiera que tenga que operar el sitio **sin ser
-programador**. No hay ni un comando que teclear en una terminal: todo se hace desde el navegador, en
-tres sitios —**GitHub**, **Easypanel** y el propio sitio (`/hq`)— y cada paso dice dónde hay que
-pulsar.
+## Esta es la plantilla
+
+Este repositorio es **la plantilla de la que nacen las webs de clientes**. Tal cual está sirve
+**«Cliente Demo»**, una consultora inventada con la oferta más pequeña que ejercita todo el motor:
+un eje con una línea de dos servicios, un servicio suelto, blog, descargas, contacto e intranet, sin
+doctrina y sin CRM. Para convertirla en la web de un cliente:
+
+1. **La ficha.** Reescribe [`site.config.ts`](site.config.ts) entera con los datos del cliente: marca,
+   colores, dominio, idiomas, módulos, menú y la estructura de su oferta. Sale de su formulario de
+   intake con [`commands/leer-intake.md`](commands/leer-intake.md). Sustituye el logo y el isotipo de
+   `public/marca/` y los iconos de `app/` (`icon.svg`, `icon.png`, `apple-icon.png`, `favicon.ico`).
+2. **El contenido.** Sustituye todo `content/`: las páginas, un registro por servicio con sus seis
+   secciones, las descargas y el blog, en cada idioma encendido. `content/ui/` casi no se toca: la
+   marca y el correo los pone la ficha (`{marca}`, `{correo}` y `{razonSocial}` en las cadenas).
+3. **La infraestructura.** [`commands/crear-sitio.md`](commands/crear-sitio.md) monta el repositorio,
+   la base, los archivos y el despliegue; los secretos los carga `npm run sitio:secretos`.
+
+El procedimiento completo, con tiempos y lo que hace cada uno, está en
+[`docs/PLAYBOOK_REPLICACION.md`](docs/PLAYBOOK_REPLICACION.md). Qué de este repositorio es motor y qué
+es herencia del primer sitio que se puede ignorar: [`docs/PLANTILLA.md`](docs/PLANTILLA.md).
+
+---
+
+**Para quién es el resto de este manual.** Para el responsable del sitio, y para cualquiera que tenga
+que operarlo **sin ser programador**. No hay ni un comando que teclear en una terminal: todo se hace
+desde el navegador, en tres sitios —**GitHub**, el panel de despliegue y el propio sitio (`/hq`)— y
+cada paso dice dónde hay que pulsar. Los ejemplos usan el dominio de la demo, `demo.example.com`: en
+un sitio real, es el suyo.
 
 Si algún paso de aquí no funciona tal como está escrito, **eso es un defecto del manual**, no un
 error tuyo: dilo y se corrige.
@@ -18,13 +42,13 @@ error tuyo: dilo y se corrige.
 
 | Qué | Para qué | Cómo entras |
 |---|---|---|
-| Cuenta de **GitHub** con acceso a `RicardoTorresOliva/slg_website` | Cambiar textos, artículos y documentos | `https://github.com` |
+| Cuenta de **GitHub** con acceso al repositorio del sitio | Cambiar textos, artículos y documentos | `https://github.com` |
 | Cuenta de **Easypanel** | Variables, despliegue y tareas programadas | El panel de tu VPS |
-| Tu cuenta del **sitio** | Crear clientes, invitar y claves de API | `https://softlandingglobal.com/acceder` |
+| Tu cuenta del **sitio** | Crear clientes, invitar y claves de API | `https://demo.example.com/acceder` |
 
 **Dos ramas y qué significa cada una.** El repositorio tiene dos: **`develop`** publica en
-**staging** (la copia de pruebas, `staging.softlandingglobal.com`) y **`main`** publica en
-**producción** (`softlandingglobal.com`). **Siempre se toca `develop` primero.** Es una regla del
+**staging** (la copia de pruebas, `staging.demo.example.com`) y **`main`** publica en
+**producción** (`demo.example.com`). **Siempre se toca `develop` primero.** Es una regla del
 sistema, no una recomendación: hay un freno que rechaza cualquier cosa que llegue a `main` sin haber
 pasado por staging.
 
@@ -34,14 +58,14 @@ pasado por staging.
 
 Los textos **no están dentro del programa**: son archivos de texto que puedes editar tú.
 
-1. Entra en `https://github.com/RicardoTorresOliva/slg_website`.
+1. Entra en el repositorio del sitio en `https://github.com`.
 2. Arriba a la izquierda hay un selector que pone **`main`**. Púlsalo y elige **`develop`**.
 3. Busca el archivo. Los textos viven en la carpeta **`content/`**:
 
    | Qué quieres cambiar | Dónde está |
    |---|---|
    | Una página (Nosotros, Contacto, Legal…) | `content/pages/es/` y `content/pages/en/` |
-   | Una página de servicio (Phoenix PEEx, …) | `content/services/es/` y `content/services/en/` |
+   | Una página de servicio (Diagnóstico, …) | `content/services/es/` y `content/services/en/` |
    | Un artículo del blog | `content/blog/es/` y `content/blog/en/` |
    | La ficha de un documento de descarga | `content/downloads/es/` y `content/downloads/en/` |
    | Un botón, un menú, un mensaje de la interfaz | `content/ui/es.json` y `content/ui/en.json` |
@@ -52,7 +76,7 @@ Los textos **no están dentro del programa**: son archivos de texto que puedes e
 6. Abajo: **Commit changes**. En el cuadro de arriba escribe qué cambiaste (por ejemplo, «corrijo el
    subtítulo de Nosotros»). Deja marcado **«Commit directly to the `develop` branch»**. Pulsa
    **Commit changes**.
-7. **Espera dos o tres minutos** y mira `https://staging.softlandingglobal.com`. Tu cambio está ahí.
+7. **Espera dos o tres minutos** y mira `https://staging.demo.example.com`. Tu cambio está ahí.
 8. Cuando te guste, hay que pasarlo a producción → **Tarea 6**.
 
 > **Cada texto tiene pareja.** Si cambias algo en español, cambia lo equivalente en inglés. El sistema
@@ -111,7 +135,7 @@ cambio de un correo no puede estar descargable sin dar el correo. Va al almacén
 
 ### a) Subir el PDF
 
-1. **Easypanel → proyecto `slg_website` → servicio `minio` → pestaña `Domains`.**
+1. **Easypanel → el proyecto del sitio → servicio `minio` → pestaña `Domains`.**
 2. Si hay un dominio apuntando al **puerto 9001**, ábrelo. Si no lo hay: **Add Domain**, marca
    **Generate a free domain**, en *Port* escribe **9001**, **Create**, y ábrelo.
 3. Entra con el usuario y la contraseña de MinIO (están en las variables `MINIO_ROOT_USER` y
@@ -128,7 +152,7 @@ cambio de un correo no puede estar descargable sin dar el correo. Va al almacén
    ```
    ---
    type: download
-   service: "phoenix-peex"
+   service: "diagnostico"
    title: "El título del documento"
    audience: "Para quién es, en una frase."
    learns:
@@ -157,7 +181,7 @@ cambio de un correo no puede estar descargable sin dar el correo. Va al almacén
 
 Esto **no pasa por GitHub**: se hace dentro del sitio.
 
-1. Entra en `https://softlandingglobal.com/acceder` con tu cuenta.
+1. Entra en `https://demo.example.com/acceder` con tu cuenta.
 2. Menú lateral → **Empresas** → rellena **nombre** y **slug** (el slug es el nombre en minúsculas y
    con guiones: `cliente-demo`), tipo **client**, estado **active** → **Guardar**. El **identificador
    en el CRM** se pone aquí, al crear la empresa: es lo que permite que el CRM cree en el sitio sus
@@ -205,15 +229,15 @@ nadie haya entrado (`--rehacer`).
 
 ## Tarea 5 · Crear una clave de API
 
-Una clave de API es lo que usa un agente (por ejemplo, Hermes) para leer o escribir sin ser una
+Una clave de API es lo que usa un agente (por ejemplo, un asistente) para leer o escribir sin ser una
 persona.
 
 1. En el sitio, menú lateral → **Claves**.
 2. Rellena:
    - **Nombre**: para qué es. Se verá en la auditoría, así que ponle algo que reconozcas dentro de un
-     año («Hermes · publicador de informes»).
+     año («Agente · publicador de informes»).
    - **Empresa**: si la eliges, esa clave **solo ve esa empresa**. Si la dejas vacía, ve todas — eso
-     es una clave de SLG, y solo debe existir si de verdad hace falta.
+     es una clave del propio equipo, y solo debe existir si de verdad hace falta.
    - **Alcances**: marca **lo mínimo**. Los alcances no se implican entre sí: una clave que puede
      escribir eventos **no** puede crear entregables, y eso es a propósito.
    - **Límite** y **ventana**: cuántas peticiones por cuántos segundos. No hay valor por defecto
@@ -233,21 +257,21 @@ o tres minutos.
 
 **Pasar de staging a producción:**
 
-1. GitHub → `https://github.com/RicardoTorresOliva/slg_website`.
+1. GitHub → el repositorio del sitio.
 2. Pestaña **Pull requests** → **New pull request**.
 3. Arriba: **base: `main`** ← **compare: `develop`**.
 4. **Create pull request**. Ponle un título («publico los cambios de esta semana»).
 5. Espera a los cuatro cuadros verdes de abajo. **Si alguno sale rojo, no fuerces nada**: es el
    sistema diciendo que algo no está listo. Pulsa el rojo, copia lo que dice y pásamelo.
 6. Con todo en verde: **Merge pull request** → **Confirm merge**.
-7. Dos o tres minutos y `https://softlandingglobal.com` tiene los cambios.
+7. Dos o tres minutos y `https://demo.example.com` tiene los cambios.
 
 ### Si un despliegue sale mal: volver a la versión anterior
 
 Esto es lo primero que hay que hacer, **antes** de investigar nada: primero se vuelve a algo que
 funciona, y después se mira qué pasó.
 
-1. **Easypanel → proyecto `slg_website` → servicio `slg-web` → pestaña `Deployments`.**
+1. **Easypanel → el proyecto del sitio → servicio `slg-web` → pestaña `Deployments`.**
 2. Verás la lista de despliegues, el más reciente arriba. Busca **el anterior al que rompió** (por la
    hora).
 3. En su fila, menú de tres puntos → **Redeploy**.
@@ -269,7 +293,7 @@ antes: lo que se escribió después de esa copia **se pierde**.
 Lo que tienes que saber y hacer:
 
 1. **La clave privada de las copias es tuya y solo tuya.** Está en tu gestor de contraseñas, con el
-   nombre «SLG · clave privada de backups». **Sin ella no hay restauración posible**, y eso es
+   nombre «<sitio> · clave privada de backups». **Sin ella no hay restauración posible**, y eso es
    deliberado: es lo que impide que quien entre en el servidor pueda leer las copias.
 2. **Avísame y lo hacemos juntos.** Necesito que me pases esa clave **por el canal privado** —nunca
    por el repositorio, nunca por el chat de trabajo— y la borro del entorno al terminar.
@@ -320,12 +344,12 @@ rotes el secreto, dime la fecha y la anoto ahí.
 Para rotarlo:
 
 1. Entra en `https://entra.microsoft.com` → **Aplicaciones** → **Registros de aplicaciones** → la
-   aplicación de `slg_website`.
+   aplicación del sitio.
 2. Menú izquierdo → **Certificados y secretos** → pestaña **Secretos de cliente**.
-3. **Nuevo secreto de cliente**. Descripción: `slg_website <mes y año>`. Expiración: **24 meses**.
+3. **Nuevo secreto de cliente**. Descripción: el nombre del sitio y el mes y año. Expiración: **24 meses**.
    **Agregar**.
 4. Copia **el valor** (la columna *Valor*, no la de *Id.*). **Se enseña una sola vez.**
-5. **Easypanel → `slg_website` → `slg-web` → `Environment`** → cambia `MICROSOFT_CLIENT_SECRET` por el
+5. **Easypanel → el proyecto del sitio → `slg-web` → `Environment`** → cambia `MICROSOFT_CLIENT_SECRET` por el
    nuevo valor → **Save** → **Deploy**. Repite en `slg-web-staging`.
 6. Comprueba que puedes entrar con Microsoft en staging **antes** de borrar el secreto viejo.
 7. Vuelve a Entra y **elimina el secreto anterior**.
@@ -338,7 +362,7 @@ Para rotarlo:
 **Aquí no hay ni un valor escrito, y no lo va a haber**: el repositorio es público. Lo que hay es de
 dónde sale cada uno y quién puede volver a generarlo.
 
-Los valores se ponen en **Easypanel → proyecto `slg_website` → el servicio → pestaña
+Los valores se ponen en **Easypanel → el proyecto del sitio → el servicio → pestaña
 `Environment`**. Los nombres, con su explicación, están también en
 [`.env.example`](.env.example).
 

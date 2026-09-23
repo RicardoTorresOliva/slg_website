@@ -1,68 +1,54 @@
 ---
 type: page
 title: "Servicios"
-description: "SLG Agency ayuda a directorios y comités de dirección a decidir sobre inteligencia artificial: qué preguntar, qué exigir y qué no comprar."
+description: "Cliente Demo acompaña a empresas medianas a decidir hacia dónde crecer y a ordenar el trabajo para llegar."
 lang: es
 pair: "services"
 nav_order: 1
-updated: "2026-09-18"
+updated: "2026-09-22"
 copy: temporal
 ---
 
 ## Hero
 
-No vendemos inteligencia artificial. Construimos juntos tu futuro con ella.
+Decisiones claras para empresas que crecen.
 
-Trabajamos con directorios y comités de dirección que tienen que decidir sobre IA y no quieren hacerlo con la información que da quien vende.
+Trabajamos con gerencias que tienen más oportunidades que tiempo y necesitan elegir con información, no con intuición.
 
-## Los ejes de la Agencia
+## Cómo trabajamos
 
-La agencia trabaja sobre dos ejes, y conviene elegir antes de seguir leyendo.
+Dos puertas, según lo que necesites hoy.
 
-### VoltAi by SLG
+### Consultoría
 
-El eje de inteligencia artificial. Formar criterio, diagnosticar, implementar y construir lo que no está en el catálogo.
+Entender dónde está la empresa y trazar el camino para crecer, con un diagnóstico y un plan que se pueden ejecutar.
 
-### Holdings by SLG
+### Formación a equipos
 
-Construir y operar compañías fuera de su mercado de origen, con implicación directa en el resultado.
+Talleres prácticos para que tu equipo use las herramientas del plan sin depender de nosotros.
 
-## VoltAi by SLG
+## Consultoría
 
-`VoltAi by SLG` se despliega en tres líneas, y responden a tres momentos distintos.
+La consultoría se organiza en una línea de trabajo.
 
-### VoltAi Academy
+### Estrategia
 
-Formar criterio en quien decide. Qué preguntar a un proveedor, qué exigir en una propuesta y qué no comprar.
+Primero el diagnóstico, después el plan. Dos servicios que se contratan por separado o seguidos.
 
-### VoltAi Enterprise
+## Formación a equipos
 
-Saber dónde estás y llegar a donde decidas. Primero el diagnóstico, después la implementación.
+Un plan que solo entiende la gerencia no llega a ejecutarse. Los talleres de formación llevan el método a quienes hacen el trabajo cada día: mandos intermedios, equipos comerciales y de operaciones.
 
-### VoltAi Factory
-
-Construir lo que no está en el catálogo: aplicaciones, agentes y dirección de operaciones.
-
-## Holdings by SLG
-
-El otro eje de la Agencia, y el único contexto en el que la marca se escribe **Softlanding Global**. No es asesoría de internacionalización: es construcción y operación de compañías fuera de su mercado de origen, con implicación directa en el resultado.
-
-Para el fundador o el equipo directivo que sabe que la dificultad de operar fuera no es la traducción, sino todo lo demás: estructura societaria, regulación, clientes y gente. Un punto único de responsabilidad sobre el conjunto, que es la diferencia con contratar cinco asesorías.
-
-## Doctrina
-
-> Lo que hay que dejar de hacer pesa más que lo que hay que empezar.
-
-Todo lo que hacemos sale de un cuerpo doctrinal escrito: The Phoenix Doctrine, y los tres pilares de DAL OS — Destrucción Creativa, Antifragilidad y AI Literacy.
+Se dan en tu empresa, con tus datos y tus casos, y terminan con un material que el equipo conserva.
 
 ## Últimos artículos
 
-Publicamos criterio, no novedades.
+Escribimos sobre cómo se toman las decisiones de crecimiento.
 
 Todavía no hay artículos publicados. Cuando los haya, aparecen aquí.
 
 ## Descargas destacadas
 
-Cada servicio tiene un documento, escrito para una silla concreta y publicado tal cual. Se entregan a cambio de un correo corporativo, y nada más.
+Nuestros documentos explican cómo trabajamos, antes de que hablemos. Se entregan a cambio de un correo corporativo.
 
 Todavía no hay ningún documento disponible. Cuando lo esté, aparece aquí.

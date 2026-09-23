@@ -24,6 +24,7 @@ import {
   validateFrontmatter,
   validateServiceSections,
 } from "./schema.ts";
+import { sitio } from "../sitio/index.ts";
 
 const CONTENT_ROOT = path.join(process.cwd(), "content");
 
@@ -158,7 +159,7 @@ export function loadUiStrings(): Record<Lang, Record<string, string>> {
         throw new Error(`${rel} no es JSON válido: ${(e as Error).message}`);
       }
     }
-    out[lang] = partes;
+    out[lang] = conMarca(partes);
   }
 
   const [a, b] = LANGS;
@@ -178,5 +179,38 @@ export function loadUiStrings(): Record<Lang, Record<string, string>> {
     );
   }
 
+  return out;
+}
+
+/**
+ * Los datos de la marca que una cadena de interfaz puede citar, escritos entre
+ * llaves en el texto: `{marca}`, `{razonSocial}` y `{correo}`. Salen de la
+ * ficha (`sitio.marca`).
+ *
+ * **POR QUÉ LA INTERFAZ NO ESCRIBE LA MARCA A MANO.** Unas pocas cadenas —el
+ * pie, el nombre accesible del logotipo, la raíz del mapa, la respuesta de
+ * contacto— tienen que decir cómo se llama el sitio o cuál es su correo. Si lo
+ * dijeran literalmente, cada cliente nuevo tendría que encontrarlas y
+ * reescribirlas en los dos idiomas, y la que se olvidara saldría publicada con
+ * el nombre del cliente anterior: el fallo clásico de una plantilla. Así, la
+ * marca se escribe una vez, en la ficha, y `content/ui` no nombra a nadie.
+ *
+ * Solo estas tres marcas, y una que no esté en la tabla se deja tal cual: una
+ * llave suelta en un texto no es un error, y adivinar qué quería decir sí.
+ */
+const DATOS_DE_MARCA: Readonly<Record<string, string>> = {
+  marca: sitio.marca.nombre,
+  razonSocial: sitio.marca.razonSocial,
+  correo: sitio.marca.correoPublico,
+};
+
+function conMarca(cadenas: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [clave, texto] of Object.entries(cadenas)) {
+    out[clave] =
+      typeof texto === "string"
+        ? texto.replace(/\{(\w+)\}/g, (todo, nombre: string) => DATOS_DE_MARCA[nombre] ?? todo)
+        : texto;
+  }
   return out;
 }

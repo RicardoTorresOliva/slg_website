@@ -1,22 +1,22 @@
 ---
 type: page
 title: "Privacy"
-description: "What data we process, what for, and what you can ask us."
+description: "What data we process, what for, and what you can ask of us."
 lang: en
 pair: "legal-privacidad"
 nav_order: 11
-updated: "2026-09-12"
+updated: "2026-09-22"
 copy: temporal
 ---
 
-**Notice: this text is provisional.** The final legal text is reviewed by a professional before launch.
+**Notice: this is a generic template.** Each site replaces it with the text reviewed by its legal adviser before launch.
 
-**What we collect.** Only what you give us: your corporate email address when you request a document, and whatever you write if you contact us. Nothing else.
+**What we collect.** Only what you give us: your work email when you request a document, and whatever you write if you contact us.
 
-**What for.** To deliver the document you asked for and to reply to you. We do not sell or transfer your address to third parties.
+**What for.** To send you the document you requested and to reply to you. We do not sell or share your address with third parties.
 
-**Analytics.** We measure site usage with a self-hosted, cookie-free tool: we do not track you across sites and we do not build a profile of you.
+**For how long.** As long as needed to handle your request and meet our legal obligations.
 
-**Your rights.** You can ask us for access to, correction of, or deletion of your data by writing to support@softlandingglobal.com.
+**Your rights.** You can ask us for access to, correction or deletion of your data by writing to hola@demo.example.com.
 
-**Controller.** SLG Agency Inc., Florida, United States.
+**Controller.** Cliente Demo S.A.C., Lima, Peru.
