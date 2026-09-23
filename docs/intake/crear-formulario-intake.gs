@@ -40,7 +40,8 @@ function crearFormularioIntake() {
       'The discipline of going global.\n\n' +
         'Con este brief construimos tu web. Son unos 15 minutos. Si no sabes una respuesta, ' +
         'elige «No sé»: lo resolvemos contigo después. Al terminar recibes un enlace para ' +
-        'corregir lo que quieras, y una carpeta compartida para subir logos, fotos y documentos.'
+        'corregir lo que quieras, y una carpeta compartida para subir logos, fotos y documentos.\n\n' +
+        'Prefer English? Answer in English — every question accepts it. / ¿Prefieres inglés? Responde en inglés sin problema.'
     )
     .setProgressBar(true)
     .setAllowResponseEdits(true)
@@ -126,11 +127,20 @@ function crearFormularioIntake() {
     'El DNS es la configuración que dice dónde vive tu web. Si lo gestionamos nosotros, te pediremos un solo cambio en tu proveedor y no tendrás que tocar nada más. Tu correo seguirá funcionando igual.'
   );
   texto('Correo que debe recibir los mensajes del formulario de contacto de la web', '', true).setValidation(correo);
+  texto(
+    'Correo público que aparece en la web',
+    'El que verán tus visitantes en la web (por ejemplo hola@tuempresa.com). Si es el mismo de arriba, repítelo.',
+    true
+  ).setValidation(correo);
 
   /* ── 3 · Marca ──────────────────────────────────────────────────────────── */
   seccion('03 · Tu marca', 'El logo, las fotos y el manual de marca los subirás a la carpeta compartida.');
   parrafo('Colores de tu marca', 'Si los tienes en código (por ejemplo #0A2540), mejor. Si no, descríbelos.', false);
-  texto('Tipografías de tu marca', 'Si no lo sabes, déjalo en blanco.', false);
+  texto(
+    'Tipografías de tu marca',
+    'La web usa una tipografía optimizada para cargar rápido. Si tu marca exige otra, escríbela y la valoramos contigo.',
+    false
+  );
   variasOpciones(
     '¿Cómo quieres que suene tu web?',
     ['Sobria', 'Cercana', 'Técnica', 'Premium', 'Juvenil', 'Institucional'],
@@ -141,7 +151,12 @@ function crearFormularioIntake() {
 
   /* ── 4 · Idiomas y estructura ───────────────────────────────────────────── */
   seccion('04 · Idiomas y lo que ofreces');
-  unaOpcion('Idiomas de la web', ['Solo español', 'Solo inglés', 'Español e inglés'], true);
+  unaOpcion(
+    'Idiomas de la web',
+    ['Solo español', 'Español e inglés'],
+    true,
+    'Si tu web debe ser solo en inglés, elige «Español e inglés» y cuéntanoslo al final: lo vemos contigo.'
+  );
   parrafo(
     'Tus servicios o productos',
     'Uno por línea, así: Nombre — para quién es — una frase que lo explique.',
@@ -186,7 +201,7 @@ function crearFormularioIntake() {
     '¿Usas un CRM para tus clientes?',
     ['No', 'HubSpot', 'Pipedrive', 'Salesforce', 'Zoho', 'Otro', 'No sé'],
     true,
-    'Si no usas ninguno, los contactos de la web te llegan por correo y quedan guardados en tu panel.'
+    'Si no usas ninguno, cada contacto de la web te llega por correo al buzón que indicaste.'
   );
   unaOpcion(
     '¿Quieres medir las visitas a tu web?',

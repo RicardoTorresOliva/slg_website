@@ -120,6 +120,13 @@ Se pide **todo antes de empezar**; sin los ítems ★ no arranca el reloj de los
 8. Pega los cuatro enlaces del paso 6 en la sesión de Claude. Claude los guarda y a partir de ahí los usa solo.
 9. Si sale un error en rojo: cópialo entero y pégalo en la sesión de Claude. No ejecutes el script dos veces: crearía un segundo formulario. Si ya lo ejecutaste con la versión anterior, borra antes en Google Drive la carpeta «SLG · Intake webs».
 
+**Corrección del 23-09 (formulario ya creado):** `docs/intake/corregir-formulario-intake.gs` añade
+`Correo público que aparece en la web`, quita «Solo inglés», corrige las ayudas del CRM y de la
+tipografía e invita a responder en inglés. Se pega en el editor de Apps Script **del propio
+formulario** (⋮ → Editor de secuencias de comandos) y se ejecuta `corregirFormularioIntake`. No toca
+respuestas ni la hoja; ejecutarlo dos veces no duplica nada. `crear-formulario-intake.gs` ya incluye
+estos cambios.
+
 **Por cliente, Claude:** redacta el correo con el enlace del formulario (borrador en Gmail), lee la respuesta en la hoja, crea la carpeta `Intake · <cliente>` dentro de «Softlanding Global · Intake webs», la comparte con el correo del responsable (con tu «sí» en el chat) y comprueba los ★ antes de arrancar.
 
 ## 5. Procedimiento de lanzamiento de una web nueva (≤ 5 días hábiles)

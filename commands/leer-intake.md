@@ -35,14 +35,14 @@ Por el conector de Google Drive. **El conector no acepta `name`**: la consulta e
 4. **Si la carpeta no existe**, es que falta el paso 2 del §5: se pide a Ricardo el «sí» para crearla
    y compartirla, y este playbook sigue solo con la hoja.
 
-Las 32 columnas de la hoja, en orden (los encabezados son los títulos de las preguntas, literales):
+Las 33 columnas de la hoja (los encabezados son los títulos de las preguntas, literales; se leen **por título**, no por posición: `Correo público que aparece en la web` se añadió el 23-09 y en la hoja existente es la **última** columna):
 
 `Timestamp` · `Nombre comercial` · `Razón social` · `País y ciudad` · `Nombre y apellido de la
 persona responsable del proyecto` · `Correo corporativo de la persona responsable` · `Teléfono o
 WhatsApp` · `¿Quién aprueba la web antes de publicarla?` · `Fecha en la que te gustaría lanzar la
 web` · `¿Ya tienes dominio?` · `¿Cuál es tu dominio?` · `¿Dónde compraste el dominio?` · `¿Qué
 correo usa tu empresa hoy?` · `¿Nos autorizas a gestionar el DNS del dominio?` · `Correo que debe
-recibir los mensajes del formulario de contacto de la web` · `Colores de tu marca` · `Tipografías de
+recibir los mensajes del formulario de contacto de la web` · `Correo público que aparece en la web` · `Colores de tu marca` · `Tipografías de
 tu marca` · `¿Cómo quieres que suene tu web?` · `Webs que te gustan, y qué te gusta de cada una` ·
 `Webs de tu competencia` · `Idiomas de la web` · `Tus servicios o productos` · `¿Se agrupan en áreas
 o líneas?` · `Páginas que necesitas` · `¿Qué funciones necesitas?` · `¿Usas un CRM para tus
@@ -62,7 +62,7 @@ columna; «No sé» nunca cumple un ★.
 | 1 | Empresa | `Nombre comercial`, `Razón social` y `País y ciudad` con texto | Faltante |
 | 2 | Dominio | `¿Ya tienes dominio?` = «Sí» **y** `¿Cuál es tu dominio?` con un dominio válido **y** `¿Dónde compraste el dominio?` ≠ «No sé»; **o** = «No, quiero que lo gestionen ustedes». Y `¿Nos autorizas a gestionar el DNS…?` ≠ «No sé, explíquenmelo» | Faltante. «No sé, explíquenmelo» → el correo 2 lleva la explicación del DNS |
 | 3 | Correo actual | `¿Qué correo usa tu empresa hoy?` ≠ «No sé» | Faltante: sin saberlo no se toca el DNS |
-| 4 | Idiomas | `Idiomas de la web` = «Solo español» o «Español e inglés» | «Solo inglés» → **parada** (§3) |
+| 4 | Idiomas | `Idiomas de la web` = «Solo español» o «Español e inglés» (el formulario ya no ofrece «Solo inglés») | Una respuesta antigua con «Solo inglés», o una nota final pidiéndolo → **parada** (§3) |
 | 5 | Marca | Hay un logo en la carpeta (SVG, PNG o PDF vectorial) **y** hay colores: en `Colores de tu marca` o en un manual de marca de la carpeta | Faltante. Favicon, imagen para redes y tipografías **no** bloquean: tienen salida (§6) |
 | 6 | Servicios | `Tus servicios o productos` con al menos una línea que se lee como «Nombre — para quién — frase» (§5.1) | Faltante si no hay ninguna; si algunas no se leen, se interpretan y van a pendientes |
 | 7 | Páginas | `Páginas que necesitas` con al menos una | Faltante |
@@ -90,7 +90,7 @@ opción recomendada, y el trabajo sigue en lo demás.
 
 | Respuesta | Por qué para | Opción recomendada |
 |---|---|---|
-| `Idiomas de la web` = «Solo inglés» | El motor sirve el español en la raíz; un sitio solo en inglés no está soportado (`lib/sitio/tipos.ts`) | Proponer al cliente «Español e inglés» con el español mínimo, o cotizar el cambio del motor |
+| `Idiomas de la web` = «Solo inglés» (respuestas anteriores al 23-09) o una nota final que lo pida | El motor sirve el español en la raíz; un sitio solo en inglés no está soportado (`lib/sitio/tipos.ts`) | Proponer al cliente «Español e inglés» con el español mínimo, o cotizar el cambio del motor |
 | `¿Usas un CRM…?` = HubSpot, Pipedrive, Salesforce, Zoho u «Otro» | Hace falta un adaptador nuevo en `lib/crm` (opción C del §2: +2 días) | Arrancar con `crm: false` (aviso por correo) y cotizar el adaptador aparte |
 | `Páginas que necesitas` incluye «Preguntas frecuentes», «Equipo» o «Trabaja con nosotros» | El motor no tiene esas páginas | «Equipo» como sección de Quiénes somos; las otras dos, cotizadas aparte o fuera |
 | `¿Qué funciones necesitas?` incluye «Entrar con Google» o «Entrar con Microsoft» | Exige credenciales del proveedor de identidad del cliente | Arrancar con invitación + contraseña; activarlo cuando el cliente entregue las credenciales |
@@ -116,7 +116,8 @@ columna no va a la ficha; la tercera dice adónde va.
 | `¿Dónde compraste el dominio?` | — | Paso 13 del §5 (DNS): a qué panel se refieren los pasos que se le manden |
 | `¿Qué correo usa tu empresa hoy?` | — | Paso 13 del §5: registros MX y SPF que **no** se tocan |
 | `¿Nos autorizas a gestionar el DNS…?` | — | Paso 13 del §5: *nameservers* a la plataforma, o los dos registros exactos al cliente |
-| `Correo que debe recibir los mensajes…` | `marca.correoPublico` (provisional) | Buzón de contactos (§4.3). Como correo público de la web, **por confirmar**: el formulario no lo pregunta |
+| `Correo que debe recibir los mensajes…` | — | Buzón de contactos (§4.3) |
+| `Correo público que aparece en la web` | `marca.correoPublico` | Si falta (respuestas anteriores al 23-09): el buzón de contactos, provisional, y a pendientes |
 | `Colores de tu marca` | `marca.colores` | §4.1 |
 | `Tipografías de tu marca` | — | La ficha no tiene tipografía: el motor usa Montserrat autoalojada. Otra tipografía → pendiente |
 | `¿Cómo quieres que suene tu web?` | — | Tono de todos los borradores de `content/` |
@@ -194,7 +195,7 @@ secretos no salen de aquí**: los genera y los carga `npm run sitio:secretos` (p
 | `BETTER_AUTH_URL` | Igual que `NEXT_PUBLIC_SITE_URL` (solo con `intranet: true`) | `¿Cuál es tu dominio?` |
 | `MAIL_FROM_NAME` | `marca.remitente` | `Nombre comercial` |
 | `MAIL_FROM_ADDRESS` | `noreply@mailweb.<dominio>` — el subdominio de envío (D-24) | `¿Cuál es tu dominio?` |
-| `MAIL_REPLY_TO` | `marca.correoPublico` | `Correo que debe recibir los mensajes…` (provisional) |
+| `MAIL_REPLY_TO` | `marca.correoPublico` | `Correo público que aparece en la web` |
 | **Buzón de contactos**: `MAIL_ALERTS_TO` hoy; `MAIL_LEADS_TO` si el paso 5b del §3 la crea | El correo, literal | `Correo que debe recibir los mensajes…` |
 | `PRIVACY_POLICY_VERSION` | Fecha de la versión de la política, `AAAA-MM-DD` | `Política de privacidad…` |
 | `FILES_DRIVER` | `supabase` | — (la plataforma elegida, §2) |
