@@ -38,9 +38,7 @@ export const RAMA_PLANTILLA = "develop";
  *   · termina en `/`  → la carpeta entera
  *   · termina en `*`  → archivos de esa carpeta que empiezan así
  *   · si no           → ese archivo
- * Los tres documentos de `docs/` son la memoria del proyecto, no del motor; y
- * `planning/`, `implementation/` y `knowledge/` son su especificación y su
- * saber (AGENTS.md): cada sitio tiene los suyos.
+ * Los tres documentos de `docs/` son la memoria del proyecto, no del motor.
  * `.gitattributes` repite esta lista; `test-actualizar.ts` comprueba que coinciden.
  */
 export const PIEL = [
@@ -55,9 +53,6 @@ export const PIEL = [
   "docs/project_memory.md",
   "docs/work_log.md",
   "docs/decision_log.md",
-  "planning/",
-  "implementation/",
-  "knowledge/",
 ] as const;
 
 export function esPiel(archivo: string): boolean {

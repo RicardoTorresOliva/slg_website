@@ -85,6 +85,14 @@ clientes. Si la plantilla la usara otra agencia, cambian esas dos constantes (`s
 
 ## 4. Vaciar la herencia sin romper frenos
 
+> **Decisión del 23-09: no se vacía.** Desde D-167 cada cliente se actualiza fusionando la plantilla,
+> y `planning/`, `implementation/` y casi todo `knowledge/` son la especificación del motor: el
+> código cita sus `RF-*`, `DU-*` y conceptos cientos de veces. Vaciarlos en la plantilla dejaría esas
+> referencias sin destino en todos los clientes (y borraría los de SLG en su siguiente
+> `sitio:actualizar`). Se quedan compartidos. Lo que sí es de cada sitio viaja como piel
+> (`PIEL` en `scripts/sitio/fusion.ts`). La lista de abajo queda como referencia por si un cliente
+> pide un repositorio propio sin la historia de SLG.
+
 Si algún día se quiere un repositorio sin rastro del primer sitio, este es el orden. Ninguno de
 estos pasos se hizo en el paso 12.
 
