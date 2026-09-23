@@ -1288,7 +1288,7 @@ async function main() {
       "ninguno de los rechazos dejó fila con ese `crm_project_id`",
       ((await dueno`select count(*)::text as n from project where crm_project_id = 'crm-d162-0003'`) as unknown as { n: string }[])[0]?.n === "0",
     );
-    const sinFechas = await postJson(RUTA_PROYECTOS_A, VALORES.escribeProyectos, { name: "Sin fechas", service: "CoO as a Service", crm_project_id: "crm-d162-0004" });
+    const sinFechas = await postJson(RUTA_PROYECTOS_A, VALORES.escribeProyectos, { name: "Sin fechas", service: SERVICIO, crm_project_id: "crm-d162-0004" });
     check(
       "las fechas son opcionales: sin ellas, 201 con `starts_at` y `ends_at` nulos y `status: active` por defecto",
       sinFechas.status === 201 && sinFechas.cuerpo?.data?.starts_at === null && sinFechas.cuerpo?.data?.ends_at === null && sinFechas.cuerpo?.data?.status === "active",
