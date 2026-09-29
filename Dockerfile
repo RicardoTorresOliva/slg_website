@@ -44,6 +44,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Es el mismo arreglo que el trabajo `gates` de CI. Allí lo puse y aquí no, y
 # por eso el pipeline estaba verde mientras el despliegue llevaba horas roto:
 # **dos sitios construyen esta aplicación, y solo uno estaba arreglado**.
+# Next hornea NEXT_PUBLIC_* al compilar: sin ARG, el build-arg de Easypanel se pierde.
+ARG NEXT_PUBLIC_SITE_URL
+ENV NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
 ENV DATABASE_URL=postgresql://nadie@127.0.0.1:1/no-se-usa
 ENV BETTER_AUTH_SECRET=solo-para-compilar-la-imagen
 
