@@ -268,7 +268,7 @@ const primera = dobles();
   check("…y no toca el rol postgres (Supabase no deja: es privilegiado)", !/ROLE postgres/i.test(sql));
   check("…y ninguna contraseña en claro", !sql.includes(uApp.password));
   check("pide las dos claves de cuenta la primera vez y las guarda", primera.pedidas.length === 2 && primera.llavero.size === 2);
-  check("el monitor se crea en pausa (el dominio aún no responde)", primera.monitores.length === 1 && primera.monitores[0]?.pausado === true && primera.monitores[0]?.url === "https://demo-cliente.com/api/health");
+  check("el monitor se crea en pausa (el dominio aún no responde)", primera.monitores.length === 1 && primera.monitores[0]?.pausado === true && primera.monitores[0]?.url === "https://demo-cliente.com/api/health/base");
   check("imprime los registros DNS (no son secretos)", texto.includes("feedback-smtp.sa-east-1.amazonses.com"));
   check("MAIL_SMTP_PASSWORD es la clave de solo envío, no la de cuenta", primera.almacen.get("MAIL_SMTP_PASSWORD")?.valor === primera.claves.envio);
 }
@@ -303,7 +303,7 @@ console.log("\n4 · Idempotencia");
 {
   const reactivar = dobles({ almacen: primera.almacen, llavero: primera.llavero });
   reactivar.claves.resendCuenta = primera.claves.resendCuenta;
-  reactivar.monitores.push({ url: "https://demo-cliente.com/api/health", pausado: true });
+  reactivar.monitores.push({ url: "https://demo-cliente.com/api/health/base", pausado: true });
   await ejecutar(OPCIONES, { ...reactivar.d, sitioEnLinea: async () => true });
   check("el día del lanzamiento, la misma línea activa el monitor", reactivar.llamadas.includes("uptime.reanudar"));
 }

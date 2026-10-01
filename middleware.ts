@@ -34,7 +34,7 @@ const REALM = 'Basic realm="slg staging", charset="UTF-8"';
  * la compuerta, no el servicio. La sonda no devuelve ningún dato de negocio
  * —ver `app/api/health/route.ts`—, así que abrirla no filtra nada.
  */
-const SIN_COMPUERTA = ["/api/health"];
+const SIN_COMPUERTA = ["/api/health", "/api/health/base"];
 
 /** Comparación en tiempo constante. El runtime edge no trae `timingSafeEqual`. */
 function igualEnTiempoConstante(a: string, b: string): boolean {

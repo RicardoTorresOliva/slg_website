@@ -430,7 +430,9 @@ export async function ejecutar(o: Opciones, d: Dependencias): Promise<number> {
     if (claveUptime === null) {
       decir("  · Saltado (--sin-monitor): nadie vigila el sitio hasta que vuelvas a pegar la línea sin esa opción.");
     } else {
-      const urlSonda = `https://${o.dominio}/api/health`;
+      // La sonda que prueba la base (`/api/health/base`), no la de vida: el 01-10
+      // la de vida dio `ok` durante días con la base inaccesible.
+      const urlSonda = `https://${o.dominio}/api/health/base`;
       const monitor = await d.uptime.buscarMonitor(claveUptime, urlSonda);
       const enLinea = await d.sitioEnLinea(urlSonda);
       if (!monitor) {
