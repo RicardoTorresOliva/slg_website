@@ -138,6 +138,22 @@ async function produccion(base: string) {
     `status ${salud.status}`,
   );
 
+  // La sonda de la base (incidente del 01-10). Aquí `DATABASE_URL` apunta a un
+  // puerto donde no hay nadie: tiene que dar 503 —para que el monitor avise— y
+  // no decir dónde intentó conectar.
+  const sondaBase = await fetch(`${base}/api/health/base`);
+  const cuerpoBase = await sondaBase.text();
+  check(
+    "producción · /api/health/base da 503 si la base no contesta",
+    sondaBase.status === 503 && cuerpoBase.includes('"error"'),
+    `status ${sondaBase.status}: ${cuerpoBase.slice(0, 120)}`,
+  );
+  check(
+    "producción · /api/health/base no filtra host, rol ni puerto",
+    !/127\.0\.0\.1|nadie|postgres|slg_app/i.test(cuerpoBase),
+    cuerpoBase.slice(0, 120),
+  );
+
   await politicaPorSuperficie(base, r);
 
   // `/api/ops` no existe mientras `OPS_TOKEN` esté vacía. Es una ruta que manda
