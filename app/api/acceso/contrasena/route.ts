@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import {
   auth,
+  destinoInterno,
   esperaPendienteEnSegundos,
   registrarAcierto,
   registrarFallo,
@@ -64,11 +65,10 @@ export async function POST(request: NextRequest) {
   /**
    * Destino: solo rutas internas. Un `volver` que llegue por el formulario es
    * entrada del usuario, y aceptarlo tal cual es una redirección abierta —el
-   * clásico «entras en nuestro dominio y acabas en otro»—. Se exige que empiece
-   * por una sola barra.
+   * clásico «entras en nuestro dominio y acabas en otro»—. Ver `destinoInterno`:
+   * una sola barra no basta, `\\` y los tabuladores también escapan.
    */
-  const destino =
-    volverCrudo.startsWith("/") && !volverCrudo.startsWith("//") ? volverCrudo : "/";
+  const destino = destinoInterno(volverCrudo);
 
   const salida = NextResponse.redirect(new URL(destino, request.url), 303);
   // Las cookies de sesión que emitió la librería viajan tal cual: con sus

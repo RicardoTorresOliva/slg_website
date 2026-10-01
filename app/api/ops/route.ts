@@ -271,7 +271,8 @@ function pagina(bloques: Bloque[], token: string, hecho?: Bloque): string {
   const fallos = total.filter((r) => !r.ok).length;
 
   const botones = ACCIONES.map(
-    (a) => `<form method="post" action="/api/ops?token=${encodeURIComponent(token)}">
+    (a) => `<form method="post" action="/api/ops">
+      <input type="hidden" name="token" value="${escapar(token).replace(/"/g, "&quot;")}">
       <input type="hidden" name="accion" value="${a.id}">
       <button type="submit">${escapar(a.boton)}</button>
       <small>${escapar(a.explica)}</small>
@@ -307,11 +308,38 @@ function escapar(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function autorizado(request: Request): string | null {
+/**
+ * Intentos fallidos con testigo, en memoria (una réplica, como D-40). Sin esto
+ * la ruta es un adivinador de testigos sin freno.
+ */
+const fallosDeTestigo: number[] = [];
+const MAX_FALLOS = 10;
+const VENTANA_MS = 10 * 60 * 1000;
+
+function bloqueada(): boolean {
+  const desde = Date.now() - VENTANA_MS;
+  while (fallosDeTestigo.length && fallosDeTestigo[0]! < desde) fallosDeTestigo.shift();
+  return fallosDeTestigo.length >= MAX_FALLOS;
+}
+
+/**
+ * El testigo llega por cabecera `Authorization: Bearer`, por el cuerpo del POST
+ * (los botones de la página) o, solo para abrir la página con el navegador, por
+ * `?token=`. Las ACCIONES ya no lo llevan en la URL: una URL acaba en registros
+ * de proxy, historial y `Referer`.
+ */
+function autorizado(request: Request, cuerpo?: FormData): string | null {
   const esperado = process.env.OPS_TOKEN;
   if (!esperado) return null;
-  const token = new URL(request.url).searchParams.get("token");
-  return testigoCorrecto(token, esperado) ? esperado : null;
+  if (bloqueada()) return null;
+  const cabecera = request.headers.get("authorization");
+  const dado =
+    (cabecera?.startsWith("Bearer ") ? cabecera.slice(7) : null) ??
+    (cuerpo ? String(cuerpo.get("token") ?? "") || null : null) ??
+    new URL(request.url).searchParams.get("token");
+  if (testigoCorrecto(dado, esperado)) return esperado;
+  fallosDeTestigo.push(Date.now());
+  return null;
 }
 
 async function diagnostico(): Promise<Bloque[]> {
@@ -352,10 +380,10 @@ export async function GET(request: Request) {
  * alcanzable con GET, ni siquiera con el testigo puesto.
  */
 export async function POST(request: Request) {
-  const token = autorizado(request);
+  const datos = await request.formData();
+  const token = autorizado(request, datos);
   if (!token) return new Response("Not Found", { status: 404 });
 
-  const datos = await request.formData();
   const accion = String(datos.get("accion") ?? "");
 
   let hecho: Bloque;

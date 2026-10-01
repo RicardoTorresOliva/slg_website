@@ -53,6 +53,22 @@ type Registro = { fallos: number; ultimo: number; bloqueadoHasta: number };
  */
 const intentos = new Map<string, Registro>();
 
+/**
+ * Tope de entradas. Sin él, quien envía correos distintos sin parar hace crecer
+ * el mapa sin límite: una entrada solo se borra cuando alguien vuelve a mirar
+ * esa MISMA clave. Al llegar al tope se descartan primero las más antiguas
+ * (el orden de inserción de un `Map`), que son las que menos importan.
+ */
+const MAXIMO_DE_ENTRADAS = 10_000;
+
+function recortar(): void {
+  while (intentos.size > MAXIMO_DE_ENTRADAS) {
+    const mas_antigua = intentos.keys().next().value;
+    if (mas_antigua === undefined) return;
+    intentos.delete(mas_antigua);
+  }
+}
+
 /** La misma cerradura protege el acceso y la recuperación (RNF-24). */
 export type Puerta = "acceso" | "recuperacion";
 
@@ -79,7 +95,9 @@ export function registrarFallo(puerta: Puerta, identificador: string): number {
   const fallos = (dentroDeVentana ? previo.fallos : 0) + 1;
 
   const espera = ESPERA_POR_FALLOS_EN_SEGUNDOS[fallos] ?? ESPERA_MAXIMA;
+  intentos.delete(k); // reinserta al final: la clave activa es la última en caer
   intentos.set(k, { fallos, ultimo: ahora, bloqueadoHasta: ahora + espera * 1000 });
+  recortar();
   return espera;
 }
 
@@ -91,6 +109,26 @@ export function registrarAcierto(puerta: Puerta, identificador: string): void {
 /** Solo para pruebas. */
 export function reiniciarBloqueos(): void {
   intentos.clear();
+}
+
+/**
+ * El destino de retorno tras acceder: **solo una ruta interna**.
+ *
+ * `startsWith("/") && !startsWith("//")` NO basta: el analizador de URL del
+ * navegador trata `\` como `/` y descarta tabuladores y saltos de línea, así
+ * que `/\evil.com` y `/<TAB>/evil.com` salen de nuestro dominio. Aquí se
+ * rechaza cualquier barra invertida, espacio o carácter de control, y se
+ * comprueba además que al resolverla el origen sigue siendo el nuestro.
+ */
+export function destinoInterno(crudo: string | null | undefined): string {
+  const v = crudo ?? "";
+  if (!/^\/(?![/\\])[^\s\\\u0000-\u001f\u007f]*$/.test(v)) return "/";
+  try {
+    const base = "https://destino.invalido";
+    return new URL(v, base).origin === base ? v : "/";
+  } catch {
+    return "/";
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════

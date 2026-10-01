@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { loadCollection } from "@/lib/content/loader";
+import { ipDelCliente } from "@/lib/antiabuso/ip";
 import { registrarCaptura } from "@/lib/descargas/service";
 
 /**
@@ -17,14 +18,6 @@ import { registrarCaptura } from "@/lib/descargas/service";
  */
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-/** La IP del cliente, si el despliegue la expone. Vacía no rompe nada. */
-function ipDe(request: Request): string {
-  const cabecera =
-    request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip") ?? "";
-  // El primer valor de `x-forwarded-for` es el cliente; el resto son proxies.
-  return cabecera.split(",")[0]?.trim() ?? "";
-}
 
 export async function POST(request: Request) {
   const datos = await request.formData();
@@ -60,7 +53,7 @@ export async function POST(request: Request) {
     pagina: `${base}/${slug}`,
     locale: lang,
     utm: utmDe(request),
-    ip: ipDe(request),
+    ip: ipDelCliente(request),
   });
 
   if (!resultado.ok) {
