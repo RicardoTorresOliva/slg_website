@@ -29,6 +29,7 @@
  * viaja por HTTP es una frase y un identificador.
  */
 import { ErrorDeAutorizacion, exigir, verificarClave, type EstadoDelLimite } from "../auth/index.ts";
+import { ipDelCliente } from "../antiabuso/ip.ts";
 import { auditarLlamadaDeApi } from "../auditoria/index.ts";
 import type { AuthContext } from "../db/context.ts";
 
@@ -89,14 +90,6 @@ export type Contrato = {
   readonly entidad: string;
 };
 
-/** La IP del cliente. El primer valor de `x-forwarded-for`; el resto son proxies. */
-function ipDe(request: Request): string | null {
-  const cabecera =
-    request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip") ?? "";
-  const primera = cabecera.split(",")[0]?.trim();
-  return primera && primera.length > 0 ? primera.slice(0, 100) : null;
-}
-
 function cabecerasComunes(requestId: string, limite?: EstadoDelLimite): Headers {
   const h = new Headers({
     "content-type": "application/json; charset=utf-8",
@@ -136,7 +129,7 @@ export async function manejar(
   fn: (ctx: AuthContext, cuerpo: Record<string, unknown>) => Promise<Resultado>,
 ): Promise<Response> {
   const ruta = new URL(request.url).pathname;
-  const ip = ipDe(request);
+  const ip = ipDelCliente(request) || null;
 
   const responder = async (
     estado: EstadoDeError,

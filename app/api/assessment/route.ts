@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { ipDelCliente } from "@/lib/antiabuso/ip";
 import { CUESTIONARIOS, etiquetaDePrograma, programaDe } from "@/lib/assessment/cuestionarios";
 import { barrerDespues } from "@/lib/colas/barrer";
 import { registrarCaptura } from "@/lib/descargas/service";
@@ -19,11 +20,6 @@ export const dynamic = "force-dynamic";
 
 const MAX_RESPUESTA = 1500;
 const MAX_MENSAJE = 12000;
-
-function ipDe(request: Request): string {
-  const cabecera = request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip") ?? "";
-  return cabecera.split(",")[0]?.trim() ?? "";
-}
 
 function limpia(v: FormDataEntryValue | null): string {
   return String(v ?? "").trim().slice(0, MAX_RESPUESTA);
@@ -57,7 +53,7 @@ export async function POST(request: Request) {
     mensaje: lineas.join("\n").slice(0, MAX_MENSAJE),
     pagina: base,
     locale: lang,
-    ip: ipDe(request),
+    ip: ipDelCliente(request),
   });
 
   if (resultado.ok) barrerDespues({ inmediato: true });
