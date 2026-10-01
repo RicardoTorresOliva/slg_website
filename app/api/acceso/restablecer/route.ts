@@ -1,12 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { auth, cerrarTodasLasSesiones, sesionActual } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 
 /**
  * Aplica la contraseña nueva. El testigo es de **un solo uso**: la librería lo
  * invalida al consumirlo, así que un segundo envío del mismo enlace falla.
  *
- * Y al cambiar la contraseña se cierran **todas** las sesiones. Quien
+ * Y al cambiar la contraseña se cierran **todas** las sesiones **de la cuenta
+ * cuyo testigo se canjea** (`revokeSessionsOnPasswordReset`, en
+ * `better-auth.ts`). Antes se cerraban las de quien enviaba la petición, que
+ * casi nunca es esa cuenta: quien restablece lo hace desde un navegador sin
+ * sesión, y las del atacante seguían vivas. Quien
  * restablece suele hacerlo porque sospecha que alguien entró: dejar vivas las
  * sesiones anteriores deja dentro justamente a quien motivó el cambio.
  */
@@ -33,9 +37,6 @@ export async function POST(request: NextRequest) {
   } catch {
     return conError();
   }
-
-  const sesion = await sesionActual();
-  if (sesion) await cerrarTodasLasSesiones(sesion.userId);
 
   return NextResponse.redirect(new URL("/acceder", request.url), 303);
 }

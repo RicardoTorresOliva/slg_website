@@ -376,6 +376,24 @@ export function middleware(request: NextRequest) {
  */
 const ALTA_PUBLICA = "/api/auth/sign-up";
 
+/**
+ * Endpoints de la librería que tienen **gemelo propio** con bloqueo progresivo y
+ * mensaje neutro (RNF-24, RF-59). Expuestos tal cual, saltarían el bloqueo y
+ * `sign-in/email` distingue «correo sin verificar» solo cuando la contraseña es
+ * correcta. Las rutas propias llaman a la librería POR DENTRO, así que esto no
+ * les afecta.
+ */
+const GEMELOS_PROPIOS = [
+  "/api/auth/sign-in/email",
+  "/api/auth/request-password-reset",
+  "/api/auth/forget-password",
+];
+
+/** Sin mayúsculas, sin barras repetidas ni final: una sola forma de comparar. */
+function rutaNormalizada(pathname: string): string {
+  return pathname.toLowerCase().replace(/\/{2,}/g, "/").replace(/\/+$/, "");
+}
+
 /** Prefijos que exigen sesión: `(hq)` y `(portal)` (§2.4, pasos 1 y 2). */
 const CON_SESION = ["/hq", "/portal"];
 
@@ -397,7 +415,15 @@ const GRUPO_AUTH = [
 function clasificar(request: NextRequest, respuesta: NextResponse): NextResponse {
   const { pathname } = request.nextUrl;
 
-  if (pathname === ALTA_PUBLICA || pathname.startsWith(`${ALTA_PUBLICA}/`)) {
+  const ruta = rutaNormalizada(pathname);
+  if (
+    ruta === ALTA_PUBLICA ||
+    ruta.startsWith(`${ALTA_PUBLICA}/`) ||
+    GEMELOS_PROPIOS.includes(ruta) ||
+    // Una `%` en el tramo de la librería solo sirve para esquivar la
+    // comparación de arriba: ninguno de sus endpoints la necesita.
+    (ruta.startsWith("/api/auth/") && ruta.includes("%"))
+  ) {
     return new NextResponse(null, {
       status: 404,
       headers: { "X-Robots-Tag": "noindex, nofollow" },

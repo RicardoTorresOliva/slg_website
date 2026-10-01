@@ -45,6 +45,8 @@ const proveedoresSociales = {
         google: {
           clientId: process.env.GOOGLE_CLIENT_ID,
           clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          // Sin registro público (§10-10): solo entra quien ya tiene cuenta.
+          disableSignUp: true,
         },
       }
     : {}),
@@ -54,6 +56,7 @@ const proveedoresSociales = {
           clientId: process.env.MICROSOFT_CLIENT_ID,
           clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
           tenantId: process.env.MICROSOFT_TENANT_ID ?? "common",
+          disableSignUp: true,
         },
       }
     : {}),
@@ -131,6 +134,7 @@ export const auth = betterAuth({
      * aterrizaría en un 404 con el token en la barra de direcciones, que es la
      * peor forma posible de gastar un enlace de un solo uso.
      */
+    revokeSessionsOnPasswordReset: true,
     async sendResetPassword({ user, url, token }) {
       const base = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.BETTER_AUTH_URL;
       const propia = base
