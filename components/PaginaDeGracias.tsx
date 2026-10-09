@@ -73,8 +73,9 @@ export function PaginaDeGracias({
 }
 
 /** El estado que llega por la URL, acotado a lo que esta página sabe decir. */
-function variante(estado: string): "comingSoon" | "contact" | "doctrine" {
+function variante(estado: string): "comingSoon" | "contact" | "doctrine" | "assessment" {
   if (estado === "contact") return "contact";
+  if (estado === "assessment") return "assessment";
   if (estado === "doctrine-request") return "doctrine";
   return "comingSoon";
 }

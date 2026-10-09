@@ -4235,3 +4235,13 @@ los pasos 1–12 y el propio comando; la piel de SLG queda intacta. **Cotejo**: 
 después de la fusión; las 89 páginas prerenderizadas tienen el mismo texto visible y los mismos
 `href/src/content/alt/aria-label/title` (solo cambian los nombres de los chunks). `web_demo` enganchado
 con `--primera-vez` y actualizado de verdad a `7926d6d`.
+
+## 2026-10-08 — Assessment público (spec-delta-assessment, aprobado por Ricardo)
+
+Origen: hallazgo H-1 del Piloto F1 de Hermes (el onboarding necesita un enlace real al Assessment).
+Construido sobre `develop`: `/assessment` y `/en/assessment` (par ES/EN, `?programa=peex|teax|retx`, PEEx por defecto), cuestionarios en `lib/assessment/cuestionarios.ts`,
+`FormularioDelAssessment` (cliente, `useSearchParams` en `Suspense` para no volver dinámica la página), `PaginaDelAssessment`,
+`app/api/assessment/route.ts` sobre `registrarCaptura` con origen `contact` y las respuestas en el mensaje (`ASSESSMENT <programa>`): sin migración
+(desvío del spec: el `CHECK` de `lead_capture.source` obligaba a una migración). `/gracias?estado=assessment`. Prefijo `/api/assessment` bajo el módulo `contacto`.
+Opcional y sin filtro (DU-10). Verificado: `tsc --noEmit`, `check:content`, `check:cadenas`, `check:sitio`, `check:fronteras`, `check:alcance`, `check:secrets`, `check:env`.
+**Pendiente:** `build:standalone` + `check:paginas/seo/armazon`, `test:capturas`, revisión visual en staging, envío de prueba al CRM. Llega a producción solo por la ruta `develop`→staging→`main`.
