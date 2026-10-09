@@ -91,6 +91,8 @@ const PREFIJOS_DE_MODULO: ReadonlyArray<{ prefijo: string; modulos: readonly Mod
   ),
   { prefijo: "/api/descargas", modulos: ["descargas"] },
   { prefijo: "/api/contacto", modulos: ["contacto"] },
+  // El Assessment público (spec-delta-assessment): comparte el módulo y la máquina de contacto.
+  { prefijo: "/api/assessment", modulos: ["contacto"] },
   // La intranet: sus dos superficies, el acceso y el visor de entregables.
   { prefijo: "/hq", modulos: ["intranet"] },
   { prefijo: "/portal", modulos: ["intranet"] },
