@@ -21,7 +21,7 @@ Descargar el documento del diagnóstico
 
 A cambio de un correo corporativo, y nada más.
 
-## Tres situaciones que vemos en los comités
+## Tres situaciones al decidir sobre IA
 
 Si alguna te suena, este sitio está escrito para ti.
 

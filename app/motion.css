@@ -47,8 +47,10 @@
   --slg-dur-enter: 300ms;
   --slg-dur-exit: 240ms;
   --slg-dur-reveal: var(--slg-spring-duration);
-  /* Solo las cuatro fases del método: el orden ES el contenido. */
-  --slg-stagger: 60ms;
+  /* El escalonado de las fases del método. A 0 POR DEFECTO (DD-7, crítica
+     C-12): el orden ya lo dan los numerales y el `<ol>`. El mecanismo queda
+     listo; solo se enciende si un prototipo demuestra que ayuda a leer. */
+  --slg-stagger: 0ms;
 }
 
 /* ── Feedback a la entrada (RNF-10) ────────────────────────────────────────
@@ -257,6 +259,13 @@ textarea:focus-visible,
     content: attr(data-label);
     color: var(--slg-ink-2);
     font-size: 0.8125rem;
+  }
+  /* Celdas de frase, no de dato (el antes/después de la portada): el rótulo
+     va ENCIMA de su valor. Al lado, una columna de 30 px partía cada frase en
+     cuatro líneas. */
+  [data-slg-tabla="apilada"] td {
+    flex-direction: column;
+    gap: 0.25rem;
   }
 }
 

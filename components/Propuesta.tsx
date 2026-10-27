@@ -30,7 +30,8 @@ import { Reveal } from "./Reveal";
  * **MOVIMIENTO MÍNIMO, A PROPÓSITO** (plan visual §4.1). El hero no anima nunca:
  * es el LCP y la primera lectura. Cada sección aparece una vez con el reveal
  * que ya existe. La única secuencia escalonada es la de las cuatro fases,
- * porque ahí el orden ES el contenido. Sin contadores, carruseles ni
+ * porque ahí el orden ES el contenido —y está a 0 ms mientras un prototipo no
+ * demuestre que ayuda (DD-7)—. Sin contadores, carruseles ni
  * parallax: nada se mueve solo y nada queda detrás de una interacción (P7).
  *
  * **UNA SOLA ACCIÓN PRIMARIA** — descargar el documento del diagnóstico—, que
@@ -318,7 +319,7 @@ function AntesYDespues({ cuerpo }: { cuerpo: string }) {
     .map((x) => x.trim());
   const filas = subsecciones(cuerpo);
   return (
-    <table data-slg-tabla style={tabla}>
+    <table data-slg-tabla="apilada" style={tabla}>
       <thead>
         <tr>
           <th scope="col" style={{ ...celdaCabecera, color: "var(--slg-ink-2)" }}>
@@ -348,8 +349,8 @@ function AntesYDespues({ cuerpo }: { cuerpo: string }) {
 /**
  * El método: `<ol>` de cuatro fases. El numeral es tipografía quieta, con
  * `aria-hidden` —el `<ol>` ya anuncia el orden, y así no se lee «cero uno»—.
- * Un único filete superior hace de conector estático. Cada fase entra con
- * 60 ms de diferencia, solo la primera vez (plan visual §4.4).
+ * Un único filete superior hace de conector estático. El escalonado existe
+ * (`--slg-stagger`), pero a 0 ms por defecto (DD-7): el orden ya está escrito.
  */
 function Metodo({ fases }: { fases: { titulo: string; cuerpo: string }[] }) {
   return (
@@ -476,13 +477,17 @@ const contenedor: React.CSSProperties = {
 
 const heroEstilo: React.CSSProperties = { padding: "var(--slg-hero-pad) 0 var(--slg-space-7)" };
 
+/**
+ * El antetítulo es una FRASE, no una etiqueta: en caja normal y peso 600. Una
+ * frase entera en versalitas espaciadas grita (crítica C-13); las mayúsculas
+ * quedan para rótulos de una a tres palabras.
+ */
 const eyebrow: React.CSSProperties = {
   margin: "0 0 var(--slg-space-4)",
-  fontSize: "var(--slg-type-eyebrow)",
+  fontSize: "var(--slg-type-body)",
   fontWeight: 600,
-  lineHeight: 1.2,
-  letterSpacing: "var(--slg-track-eyebrow)",
-  textTransform: "uppercase",
+  lineHeight: 1.3,
+  letterSpacing: "var(--slg-track-small)",
   color: "var(--slg-blue-primary)",
 };
 

@@ -21,7 +21,7 @@ Download the diagnosis briefing
 
 In exchange for a corporate email address, and nothing else.
 
-## Three situations we see in committees
+## Three situations when deciding on AI
 
 If one of them sounds familiar, this site was written for you.
 

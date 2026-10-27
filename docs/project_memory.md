@@ -8,6 +8,13 @@ timestamp: 2026-09-12
 
 # Project memory — slg_website
 
+> **Reingeniería del 2026-10-27 (rama `claude/gifted-mccarthy-uz6d54`, sobre `develop`).** La
+> portada vuelve a vender (propuesta de valor, método «Criterio primero», cuatro reglas); el mapa
+> sigue en `/empieza-aqui`. Expediente en `planning/reingenieria/` (empieza por `00_resumen_ejecutivo.md`),
+> decisiones D-168…D-173, estado en `task_tracker.md` § Reingeniería. **Espera la firma de Ricardo**
+> sobre D-168 y el copy antes de mezclar a `develop`. **Ojo: lo publicado sale de `develop`, no de
+> `main`** (main va 167 commits por detrás).
+>
 > **Punto de retomada en una línea:** **la capa pública está construida.** Dieciséis unidades tocadas
 > — **once `done`** y cinco `in_progress`. 58 rutas: portada, los cuatro overviews, las 22 páginas de
 > servicio, el blog completo y los legales, en los dos idiomas y todas prerrenderizadas. Lighthouse

@@ -443,3 +443,27 @@ Corren **en paralelo a M0** y se revisan al cerrar cada milestone. Detalle compl
   `test:visor`: **25** comprobaciones contra un entregable hostil que hace las siete cosas que hay
   que impedir. `test:db` sube a **563**. Queda el **criterio 3**, que pide la prueba contra el
   origen separado **desplegado**.
+
+---
+
+## Reingeniería del sitio público (2026-10-27)
+
+Unidades de `planning/reingenieria/03_plan_contenidos.md` §9 y `04_plan_diseno_apple_nordico.md` §8.
+Decisiones D-168…D-173. Rama `claude/gifted-mccarthy-uz6d54`, sobre `develop`; **no se mezcla sin
+la firma de Ricardo**.
+
+| Unidad | Qué | Estado |
+|---|---|---|
+| FU-RC01 | Base sobre `develop` e inventario | `done` |
+| FU-RC02 | Copy maestro bilingüe — compuerta | `review` (copy `temporal`, espera firma) |
+| FU-RC03 | Nomenclatura pública (D-2, D-9) | `blocked` (decisión de Ricardo) |
+| FU-RC04 | Método y cuatro reglas en una sola redacción | `in_progress` (redacción única hecha; registro compartido pendiente) |
+| FU-21/22/23 | Tokens únicos, frenos de motion, press unificado | `done` |
+| DU-40 | Sheet móvil v2: foco, `inert`, entrada y salida simétricas | `done` |
+| DU-RC01 | Portada nueva ES/EN | `review` (a11y 100, perf 97–98) |
+| DU-RC02 | Mapa reubicado · `/servicios` como índice por fase | `in_progress` (mapa hecho; índice por fase pendiente) |
+| DU-RC03 | `/ai` como página del método y líneas por fase | `in_progress` (hype y backticks retirados) |
+| DU-RC04 | Servicios dentro de A.3 (lector, fase, entregables, objeciones) | `pending` |
+| DU-RC05 | Nosotros, Contacto, Gracias | `in_progress` (compuerta y contradicción de Contacto corregidas) |
+| DU-RC06 | Prueba de 5 s con lectores y cierre | `pending` |
+| DU-RC07/08 | Casos y duraciones | `blocked` (condicionadas a datos de Ricardo) |

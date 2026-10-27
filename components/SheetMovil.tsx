@@ -146,7 +146,12 @@ function PanelArrastrable({
       );
     enfocables()[0]?.focus({ preventScroll: true });
 
-    const fondo = Array.from(document.querySelectorAll<HTMLElement>("main, footer, .slg-saltar"));
+    // Nunca un contenedor del propio diálogo: si el sheet vive dentro de
+    // `<main>` (el prototipo lo monta ahí), volver `main` inerte lo dejaría
+    // sordo al dedo a él también.
+    const fondo = Array.from(document.querySelectorAll<HTMLElement>("main, footer, .slg-saltar")).filter(
+      (n) => !n.contains(panel.current),
+    );
     for (const n of fondo) n.inert = true;
 
     const alTeclado = (e: KeyboardEvent) => {
