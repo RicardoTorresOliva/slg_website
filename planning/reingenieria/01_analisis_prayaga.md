@@ -32,7 +32,7 @@ Lo **peor**: la propuesta de valor no dice **para quién** es (ni sector, ni tam
 [E-PRY-50]; la oferta es una **lista de capacidades técnicas** sin paquetes, fases con precio ni
 resultados comprometidos [E-PRY-08]; la prueba tiene **números de antigüedad contradictorios**
 (2001 / 2009 / "más de 20 años") [E-PRY-11, E-PRY-17, E-PRY-36] y **ninguna métrica de resultado
-cuantificada** por caso (el único porcentaje, "hasta 40%", no tiene fuente) [E-PRY-28]; el hay **una
+cuantificada** por caso (el único porcentaje, "hasta 40%", no tiene fuente) [E-PRY-28]; hay **una
 docena de CTA con 5 destinos diferentes** (form, chat HubSpot, chat de IA de terceros, WhatsApp,
 "Agenda" que apunta a `#`) [E-PRY-41]; y hay **descuidos editoriales** visibles (erratas, meta
 descriptions copiadas de otra página, "seis" vs "siete" líneas, blog parado desde 2022)
@@ -285,7 +285,7 @@ lead magnet (descargable) ni una oferta de entrada definida con alcance.
   *silos*, DWH, ETL, Microsoft Fabric, MicroStrategy, FTP. Nombres de servicio en inglés en un sitio en
   español ("Artificial Intelligence", "IoT Software Development").
 - **Nivel de "hype" de IA**: **moderado**. "Impulsadas por IA", "tiempo real" se repiten como muletilla
-  (≥8 apariciones de "tiempo real" entre home y servicios), pero la IA se baja a casos de uso concretos
+  (15 apariciones de "tiempo real" en el DOM de la home, contando los duplicados de carrusel), pero la IA se baja a casos de uso concretos
   (chatbots, scoring, mantenimiento predictivo) [E-PRY-30]. El "hasta 40%" sí es *hype* sin respaldo
   [E-PRY-28].
 - **Mejor frase**: "Ventas dice 100, finanzas dice 90." [E-PRY-27]: una escena reconocible, no una abstracción.
