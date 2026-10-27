@@ -20,34 +20,16 @@
  * ========================================================================== */
 
 :root {
-  /* ── Escala tipográfica ──────────────────────────────────────────────────
-   * El tracking NO es un valor único: un texto grande con el mismo espaciado
-   * que el cuerpo se lee desparramado, y un texto pequeño con el del titular
-   * se lee apelmazado. Cada escalón trae el suyo, y el interlineado va al
-   * revés que el tamaño — apretado arriba, holgado en el cuerpo.
-   */
-  --slg-track-display: -0.03em;
-  --slg-track-title: -0.022em;
-  --slg-track-heading: -0.015em;
+  /* Desde la reingeniería (2026-10-27) los valores viven en `tokens.css`, que
+   * es la única fuente: esta capa los CONSUME. Antes había aquí una segunda
+   * escala, una segunda familia de sombras y un ritmo declarado sin uso, y las
+   * tres fuentes no coincidían (plan visual §1.2). Solo quedan los alias que
+   * otros archivos todavía nombran. */
+  --slg-track-title: var(--slg-track-h2);
+  --slg-track-heading: var(--slg-track-h3);
   --slg-track-body: 0em;
-  --slg-track-caption: 0.02em;
-
-  --slg-leading-display: 1.02;
-  --slg-leading-title: 1.12;
-  --slg-leading-body: 1.62;
-
-  /* Ritmo vertical. En `rem` para que crezca con el tamaño de texto que el
-   * usuario haya fijado en su sistema, en vez de romperse. */
-  --slg-seccion: clamp(3.5rem, 8vw, 6.5rem);
-
-  /* Elevación con luz: una sombra de contacto corta y una difusa larga. Una
-   * sola sombra plana es lo que hace que una tarjeta parezca una caja. */
-  --slg-elev-1:
-    0 1px 1px rgb(10 10 20 / 0.04),
-    0 4px 12px rgb(10 10 20 / 0.05);
-  --slg-elev-2:
-    0 2px 4px rgb(10 10 20 / 0.05),
-    0 12px 32px rgb(10 10 20 / 0.09);
+  --slg-track-caption: var(--slg-track-small);
+  --slg-leading-title: var(--slg-leading-h2);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -55,39 +37,57 @@
  * ══════════════════════════════════════════════════════════════════════════ */
 
 main h1 {
-  font-size: clamp(2.25rem, 6.2vw, 4.25rem) !important;
+  font-size: var(--slg-type-h1) !important;
+  line-height: var(--slg-leading-h1) !important;
+  letter-spacing: var(--slg-track-h1) !important;
+  text-wrap: balance;
+  hyphens: manual;
+  max-width: 24ch;
+}
+
+/* El H1 de la portada es el único display del sitio. El tracking se aprieta
+ * en dos pasos según el tamaño REAL: −0.026em a 36 px apelmaza Montserrat. */
+main h1.slg-display {
+  font-size: var(--slg-type-display) !important;
   line-height: var(--slg-leading-display) !important;
   letter-spacing: var(--slg-track-display) !important;
-  text-wrap: balance;
   max-width: 20ch;
+}
+@media (min-width: 60rem) {
+  main h1.slg-display {
+    letter-spacing: var(--slg-track-display-xl) !important;
+  }
 }
 
 main h2 {
-  font-size: clamp(1.625rem, 3.6vw, 2.5rem) !important;
-  line-height: var(--slg-leading-title) !important;
-  letter-spacing: var(--slg-track-title) !important;
+  font-size: var(--slg-type-h2) !important;
+  line-height: var(--slg-leading-h2) !important;
+  letter-spacing: var(--slg-track-h2) !important;
   text-wrap: balance;
+  hyphens: manual;
 }
 
 main h3 {
-  letter-spacing: var(--slg-track-heading) !important;
-  line-height: 1.25 !important;
+  letter-spacing: var(--slg-track-h3) !important;
+  line-height: var(--slg-leading-h3) !important;
+  text-wrap: balance;
 }
 
 /* El párrafo de entrada que sigue al H1: es subtítulo, no cuerpo. Tiene que
  * pesar más que el texto corriente sin competir con el titular. */
 main h1 + p {
-  font-size: clamp(1.0625rem, 1.9vw, 1.375rem) !important;
+  font-size: var(--slg-type-lead) !important;
   line-height: 1.5 !important;
-  letter-spacing: -0.008em !important;
+  letter-spacing: var(--slg-track-lead) !important;
   color: var(--slg-ink-2) !important;
-  max-width: 52ch;
+  max-width: var(--slg-medida-lead);
 }
 
 /* La medida de lectura. Una línea de 120 caracteres se pierde al volver. */
 main p {
-  max-width: 68ch;
+  max-width: var(--slg-medida);
   line-height: var(--slg-leading-body);
+  text-wrap: pretty;
 }
 
 /* Los rótulos en versalitas («5 servicios»): pequeños y espaciados, que es
@@ -106,19 +106,16 @@ main [style*="uppercase"] {
  * Gana al `border-bottom` en línea del componente. */
 header.slg-material {
   border-bottom: 0 !important;
-  background: color-mix(in srgb, var(--slg-paper) 68%, transparent) !important;
+  background: color-mix(in srgb, var(--slg-paper) 72%, transparent) !important;
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.6),
     0 1px 0 color-mix(in srgb, var(--slg-line) 60%, transparent),
     0 8px 24px -16px rgb(10 10 20 / 0.28) !important;
 }
 
-/* Los enlaces de la barra: el realce llega en el mismo gesto, no después. */
-header nav a {
-  transition:
-    color 140ms var(--slg-spring),
-    opacity 140ms var(--slg-spring);
-}
+/* Los enlaces de la barra: el realce llega en el mismo gesto y SIN
+ * transición. `color` no es transform ni opacity, y un enlace que se usa
+ * decenas de veces al día no necesita coreografía (plan visual §1.3, 1). */
 header nav a:hover {
   color: var(--slg-blue-deep) !important;
 }
@@ -127,22 +124,41 @@ header nav a:hover {
  * 3 · Superficies con profundidad
  * ══════════════════════════════════════════════════════════════════════════ */
 
-/* Gana a `border`, `box-shadow` y `border-radius` en línea de las tarjetas. */
+/* Gana a `border`, `box-shadow` y `border-radius` en línea de las tarjetas.
+ * 16 px y no 24 (DD-4): en una tarjeta de 18 rem, 24 px se lee blando y
+ * compite con la franja oscura y la puerta de entrada. */
 .slg-card {
-  border-radius: var(--slg-radius-lg) !important;
-  border: 1px solid color-mix(in srgb, var(--slg-line) 55%, transparent) !important;
+  border-radius: var(--slg-radius-md) !important;
+  border: 1px solid var(--slg-hairline) !important;
   box-shadow: var(--slg-elev-1) !important;
-  /* Solo `transform` se anima; la sombra cambia sin transición para no
-     provocar repintados caros en cada fotograma. */
-  transition: transform 260ms var(--slg-spring);
-  will-change: transform;
 }
 
-/* Un objeto que se puede tocar responde antes de que lo toques. El
- * levantamiento es de 2 px: se nota y no se aparatosa. */
-.slg-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--slg-elev-2) !important;
+/* El levantamiento SOLO con puntero fino: en táctil, `:hover` se queda pegado
+ * tras el toque y la tarjeta parece rota (plan visual §1.3, 3). La sombra de
+ * hover vive en un `::before` que se FUNDE por opacidad: así también se anima
+ * en el compositor, y no salta mientras el `transform` sí se mueve. Sin
+ * `will-change` en reposo (defecto 2): la capa la crea el navegador cuando la
+ * transición empieza. */
+@media (hover: hover) and (pointer: fine) {
+  .slg-card {
+    transition: transform var(--slg-dur-hover) var(--slg-ease-out);
+  }
+  .slg-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: var(--slg-elev-2);
+    opacity: 0;
+    transition: opacity var(--slg-dur-hover) var(--slg-ease-out);
+    pointer-events: none;
+  }
+  .slg-card:hover {
+    transform: translateY(-2px);
+  }
+  .slg-card:hover::before {
+    opacity: 1;
+  }
 }
 
 /* Una tarjeta cuyo título es un enlace es un objetivo entero, no una palabra.
@@ -163,7 +179,7 @@ header nav a:hover {
 /* El hero necesita aire por encima: es lo primero que se ve y ahora mismo
  * arranca pegado a la barra. Gana al `padding` en línea de la sección. */
 main > div > section:first-of-type {
-  padding-block: clamp(4.5rem, 11vw, 8rem) clamp(2rem, 5vw, 3.5rem) !important;
+  padding-block: var(--slg-hero-pad) var(--slg-space-7) !important;
 }
 
 /* Una franja suave cada dos bloques da estructura sin añadir una línea más.
@@ -177,17 +193,10 @@ main section:nth-of-type(even) {
  * 5 · Botones y llamadas a la acción
  * ══════════════════════════════════════════════════════════════════════════ */
 
-/* El CTA se lee como un objeto pulsable, no como un texto con un marco.
- * `--slg-red` sigue reservado a una o dos instancias por viewport (gate D2b):
- * esta regla NO lo reparte, solo da forma al que ya lo llevaba. */
-a[style*="border"][style*="radius"],
-button[style*="border"][style*="radius"] {
-  transition: transform var(--slg-press-duration) var(--slg-spring);
-}
-a[style*="border"][style*="radius"]:active,
-button[style*="border"][style*="radius"]:active {
-  transform: scale(var(--slg-press-scale));
-}
+/* El press es UNO solo (plan visual §4.3): `.slg-pressable` + `data-pressed`
+ * en `pointerdown`, que pone un escuchador delegado (`PressDelegado`). Antes
+ * convivía aquí un segundo mecanismo con `:active`, que en iOS llega tarde o no
+ * llega — justo lo que `motion.css` evita. */
 
 /* El subrayado de un enlace de cuerpo, a distancia de la letra: pegado al
  * texto corta los descendentes y se lee sucio. */
@@ -219,6 +228,9 @@ main li a {
   .slg-card {
     border-color: var(--slg-ink-2) !important;
     box-shadow: none !important;
+  }
+  .slg-card::before {
+    display: none;
   }
   header.slg-material {
     background: var(--slg-paper) !important;

@@ -77,6 +77,14 @@ function PanelArrastrable({
    * `scripts/ci/test-gesto.ts`, que es exactamente para lo que está.
    */
   const [cierre, setCierre] = useState<{ ms: number; alto: number } | null>(null);
+  /**
+   * La ENTRADA (plan visual §4.2): el panel nace fuera, abajo, y sube en el
+   * fotograma siguiente. Sale por donde entró —coherencia espacial—, también
+   * cuando se cierra con Escape o tocando el telón. Quien pide menos movimiento
+   * no lo ve subir: nace en su sitio.
+   */
+  const [entrado, setEntrado] = useState(() => prefiereMenosMovimiento());
+  const [asentado, setAsentado] = useState(() => prefiereMenosMovimiento());
   const gesto = useRef({ inicioY: 0, ultimaY: 0, ultimoT: 0, velocidad: 0 });
   const temporizador = useRef<number | null>(null);
 
@@ -99,18 +107,84 @@ function PanelArrastrable({
     [altoActual, onCerrar],
   );
 
+  /** Cierre sin gesto (Escape, telón): el mismo camino de salida, sin velocidad. */
+  const cerrarSinGesto = useCallback(() => {
+    const ms = prefiereMenosMovimiento() ? CROSSFADE_MS : DURACION_DE_SALIDA_MS;
+    setCierre({ ms, alto: altoActual() });
+    temporizador.current = window.setTimeout(onCerrar, ms);
+  }, [altoActual, onCerrar]);
+
   useEffect(() => {
-    // Escape cierra. «Cómo salgo» es una de las tres preguntas de wayfinding.
-    const alEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onCerrar();
+    if (entrado) return;
+    // Doble `requestAnimationFrame`: el primero deja que el navegador pinte el
+    // panel fuera de pantalla; el segundo cambia el destino y la transición
+    // arranca desde ahí. Con uno solo, a veces los dos estados caen en el
+    // mismo fotograma y el panel aparece sin recorrido.
+    let segundo = 0;
+    const primero = requestAnimationFrame(() => {
+      segundo = requestAnimationFrame(() => setEntrado(true));
+    });
+    return () => {
+      cancelAnimationFrame(primero);
+      cancelAnimationFrame(segundo);
     };
-    document.addEventListener("keydown", alEscape);
-    return () => document.removeEventListener("keydown", alEscape);
-  }, [onCerrar]);
+  }, [entrado]);
+
+  useEffect(() => {
+    /**
+     * EL FOCO (WCAG 2.4.3; plan visual §1.3, defecto 4). Un diálogo modal que
+     * no mueve el foco deja a quien navega con teclado detrás del telón. Al
+     * abrir, el foco pasa al primer enlace; Tab y Mayús+Tab dan la vuelta
+     * dentro del panel; el contenido de fondo queda `inert`; y al cerrar, el
+     * foco vuelve a quien abrió —el botón «Menú»—.
+     */
+    const quienAbrio = document.activeElement as HTMLElement | null;
+    const enfocables = () =>
+      Array.from(
+        panel.current?.querySelectorAll<HTMLElement>("a[href], button:not([disabled]), [tabindex]:not([tabindex='-1'])") ??
+          [],
+      );
+    enfocables()[0]?.focus({ preventScroll: true });
+
+    const fondo = Array.from(document.querySelectorAll<HTMLElement>("main, footer, .slg-saltar"));
+    for (const n of fondo) n.inert = true;
+
+    const alTeclado = (e: KeyboardEvent) => {
+      // Escape cierra. «Cómo salgo» es una de las tres preguntas de wayfinding.
+      if (e.key === "Escape") {
+        cerrarSinGesto();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const lista = enfocables();
+      if (lista.length === 0) return;
+      const primero = lista[0];
+      const ultimo = lista[lista.length - 1];
+      if (e.shiftKey && document.activeElement === primero) {
+        e.preventDefault();
+        ultimo.focus();
+      } else if (!e.shiftKey && document.activeElement === ultimo) {
+        e.preventDefault();
+        primero.focus();
+      } else if (!panel.current?.contains(document.activeElement)) {
+        e.preventDefault();
+        primero.focus();
+      }
+    };
+    document.addEventListener("keydown", alTeclado);
+    return () => {
+      document.removeEventListener("keydown", alTeclado);
+      for (const n of fondo) n.inert = false;
+      quienAbrio?.focus?.({ preventScroll: true });
+    };
+  }, [cerrarSinGesto]);
 
   useEffect(() => () => {
     if (temporizador.current !== null) window.clearTimeout(temporizador.current);
   }, []);
+
+  // La capa solo existe mientras hay movimiento inminente (plan visual §4.6).
+  const capaViva = arrastrando || cierre !== null || !asentado;
 
   return (
     <div
@@ -119,20 +193,31 @@ function PanelArrastrable({
       aria-label={etiqueta}
       style={telon}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onCerrar();
+        if (e.target === e.currentTarget) cerrarSinGesto();
       }}
     >
       <div
         ref={panel}
         style={{
           ...panelEstilo,
-          transform: `translate3d(0, ${cierre ? cierre.alto : y}px, 0)`,
+          transform: cierre
+            ? `translate3d(0, ${cierre.alto}px, 0)`
+            : entrado
+              ? `translate3d(0, ${y}px, 0)`
+              : "translate3d(0, 100%, 0)",
           // Durante el arrastre NO hay transición: el panel va donde va el
           // dedo, fotograma a fotograma. Una transición aquí introduce el
-          // retardo que rompe el 1:1.
+          // retardo que rompe el 1:1. La entrada usa la curva de cajón
+          // (`--slg-ease-drawer`, 300 ms); el resto, la de siempre.
           transition: arrastrando
             ? "none"
-            : `transform ${cierre ? cierre.ms : SPRING.response * 1000}ms var(--slg-spring)`,
+            : !entrado || (y === 0 && !cierre && !asentado)
+              ? `transform var(--slg-dur-enter) var(--slg-ease-drawer)`
+              : `transform ${cierre ? cierre.ms : SPRING.response * 1000}ms var(--slg-spring)`,
+          willChange: (capaViva ? "transform" : "auto"),
+        }}
+        onTransitionEnd={() => {
+          if (entrado && !cierre) setAsentado(true);
         }}
         onPointerDown={(e) => {
           // Cláusula 1: capturar el puntero.
@@ -147,6 +232,8 @@ function PanelArrastrable({
             temporizador.current = null;
           }
           setCierre(null);
+          setEntrado(true);
+          setAsentado(true);
           setY(desde);
           setArrastrando(true);
           gesto.current = {
@@ -215,13 +302,18 @@ function traslacionPresentada(nodo: HTMLElement): number {
  */
 const VENTANA_DE_VELOCIDAD_MS = 100;
 
+/** Salida sin gesto: un poco más rápida que la entrada (plan visual §3.6). */
+const DURACION_DE_SALIDA_MS = 240;
+
 const telon: React.CSSProperties = {
   position: "fixed",
   inset: 0,
-  background: "rgb(10 10 20 / 0.32)",
+  background: "var(--slg-scrim)",
   display: "flex",
   alignItems: "flex-end",
   zIndex: 50,
+  // La página no se desplaza por detrás del telón.
+  overscrollBehavior: "contain",
 };
 
 const panelEstilo: React.CSSProperties = {
@@ -233,13 +325,12 @@ const panelEstilo: React.CSSProperties = {
   // `touch-action: none` es obligatorio: sin él, el navegador se queda el
   // gesto vertical para hacer scroll y el sheet no se mueve.
   touchAction: "none",
-  willChange: "transform",
 };
 
 const tirador: React.CSSProperties = {
   width: "2.25rem",
   height: "0.25rem",
   margin: "0.75rem auto 1rem",
-  borderRadius: "999px",
+  borderRadius: "var(--slg-radius-full)",
   background: "var(--slg-line)",
 };

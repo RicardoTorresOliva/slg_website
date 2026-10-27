@@ -551,5 +551,7 @@
   "home.download": "Download",
   "downloads.get": "Go to the document",
   "nav.backTo": "← Back to",
-  "nav.backAria": "Back to the previous level"
+  "nav.backAria": "Back to the previous level",
+  "home.aboutUs": "Who we are",
+  "home.readArticles": "Read the articles"
 }

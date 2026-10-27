@@ -68,7 +68,7 @@ export const sitio: FichaDelSitio = {
   },
 
   menu: [
-    { clave: "nav.start", ruta: { es: "/", en: "/en" } },
+    { clave: "nav.start", ruta: { es: "/empieza-aqui", en: "/en/start-here" } },
     { clave: "nav.services", ruta: { es: "/servicios", en: "/en/services" } },
     { clave: "nav.blog", ruta: { es: "/blog", en: "/en/blog" } },
     { clave: "nav.about", ruta: { es: "/nosotros", en: "/en/about" } },

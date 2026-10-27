@@ -30,6 +30,11 @@ inputs:
 >   clientes, duraciones ni precios. Un hueco se queda como hueco.
 > - Todo el trabajo parte de **`origin/develop`** (lo publicado), no de `main` ni de esta copia local
 >   (E-SLG-41, E-SLG-71).
+> - **Corregido tras crítica** (`05_critica_y_riesgos.md`): C-01 (los `[PENDIENTE]` no pueden llegar a
+>   `develop`, que es producción), C-04 (accesibilidad 100 como no-regresión), C-05 (prerender), C-06 (el mapa
+>   reutiliza `/empieza-aqui` y `/en/start-here`), C-09 (una sola franja oscura), C-14 (montaje único de la
+>   portada con el plan visual), C-15 (fases sin entregable), C-16 (escenas sin afirmar práctica no confirmada) y
+>   C-17 (menú sin cambios de destino).
 
 ---
 
@@ -138,6 +143,12 @@ de una línea. Razones (INF):
    (E-PRY-05, 06).
 4. Si Ricardo prefiere su frase completa como H1, **B es la alternativa válida**, y el plan no cambia en nada más.
 
+**Longitud real (corregido tras crítica, C-13).** El H1 de A tiene unos 82 caracteres en ES y el subtítulo unos
+170. Es más que los «unos 60 caracteres» que suponía el plan visual. La condición «las cuatro piezas en la primera
+pantalla a 360×740» se valida en el prototipo de DU-42 con este texto. Si no cabe, **se acorta el subtítulo**
+(p. ej. «Para directorios y comités de dirección: qué preguntar, qué exigir y qué no comprar.»), no se baja la
+escala tipográfica por debajo de la que fije FU-21.
+
 **Prueba de cumplimiento (P1).** Cinco lectores que no conocen SLG ven solo la primera pantalla durante 5 segundos
 y repiten para quién es, qué problema resuelve y qué ofrece como siguiente paso. Si 4 de 5 lo consiguen, pasa. La
 prueba se hace en DU-RC06, sobre la página renderizada y en los dos idiomas.
@@ -155,16 +166,16 @@ artículos», que pasa a un enlace en el bloque de Doctrina (P7: menos cosas).
 
 | # | Bloque | Trabajo | Contenido (borrador) | Prueba que necesita | CTA |
 |---|---|---|---|---|---|
-| 0 | Barra | Navegar | Menú: **Inicio · Servicios · Doctrina · Nosotros** y «Acceder» secundario (E-SLG-58). «Empieza aquí» deja de ser el primer ítem; el mapa pasa al pie | — | Ninguno nuevo |
+| 0 | Barra | Navegar | *Corregido tras crítica (C-17):* **los destinos del menú no cambian** (Empieza aquí · Servicios · Blog · Nosotros + «Acceder» secundario, E-SLG-58; coincide con 04 §5.1). Solo cambia el destino de `nav.start`, que pasa de `/` al mapa (`/empieza-aqui`, `/en/start-here`). El logo lleva a la portada. Sustituir Blog por Doctrina es una decisión aparte de Ricardo, no de este plan | — | Ninguno nuevo |
 | 1 | **Hero** | Vender (P1) | §1, alternativa recomendada | Ninguna: la frase es la prueba de foco | **Primario**: descarga del diagnóstico (rojo) |
-| 2 | **Dolor con escena** | Que el lector se reconozca (P2) | Titular: «Tres situaciones que vemos en comités que deciden sobre IA». Escenas, una por línea:<br>· «El piloto funcionó en la demo y nunca llegó a producción.»<br>· «Las tres propuestas que compara el comité las escribieron los tres que quieren venderle.»<br>· «La herramienta ya está pagada y nadie dentro sabe mantenerla sin quien la vendió.» | Ninguna cifra. Son escenas, no estadísticas (E-PRY-27 como patrón; contraejemplo E-PRY-28) | Ninguno |
+| 2 | **Dolor con escena** | Que el lector se reconozca (P2) | Titular: «Tres situaciones que vemos en comités que deciden sobre IA» `[PENDIENTE: Ricardo confirma que las tres escenas salen de su práctica; si no, el titular no dice «vemos»: «Tres situaciones de comités que deciden sobre IA»]` *(corregido tras crítica, C-16)*. Escenas, una por línea:<br>· «El piloto funcionó en la demo y nunca llegó a producción.»<br>· «Las tres propuestas que compara el comité las escribieron los tres que quieren venderle.»<br>· «La herramienta ya está pagada y nadie dentro sabe mantenerla sin quien la vendió.» | Ninguna cifra. Son escenas, no estadísticas (E-PRY-27 como patrón; contraejemplo E-PRY-28) | Ninguno |
 | 3 | **Lo que cambia** (antes/después estático) | Hacer tangible el resultado (B-02) | Dos columnas fijas, tres filas:<br>· Decides con la información de quien vende → Decides con criterio propio y evidencia por dimensión.<br>· Compras la herramienta y luego buscas el problema → Primero sabes qué bloquea y después decides qué construir.<br>· Al terminar dependes del proveedor → Al terminar la capacidad está dentro. | Las tres filas derivan de E-SLG-10, 15 y 17. No hay fotos ni deslizador (contraejemplo E-AIA-17) | Ninguno |
 | 4 | **El método** | Ordenar la oferta (P4) | Las cuatro fases numeradas, cada una con: qué resuelve, una línea «si estás aquí…», su entregable, la compuerta y el enlace a la línea que la ejecuta (§5) | Entregables enumerados (M-AIA-08), parte de ellos `[PENDIENTE: Ricardo]` (§4) | Enlaces de texto a las líneas (no son CTA) |
 | 5 | **La puerta de entrada** | Dar un primer paso con nombre (P6) | «Si no sabes por dónde empezar, empieza por saber dónde estás.» + alcance: diagnóstico de preparación en **once dimensiones**, «se entregan las once» (E-SLG-15), evidencia por dimensión, orden de prioridad y documento presentable ante directorio (`develop:content/services/es/readiness.md`) | Especificidad del entregable. Duración: `[PENDIENTE: Ricardo, D-4]`, no se publica sin dato | **El mismo** CTA primario (misma acción que el hero; no es un segundo CTA) |
 | 6 | **Cuatro reglas y la postura sobre la prueba** | Confianza sin prueba (P3) | Las cuatro reglas con **una sola redacción** (§5.3) + «No revendemos licencias. No cobramos comisión de ningún proveedor.» + la postura: «No publicamos una cifra, un caso ni un nombre de cliente sin autorización escrita. Por eso aquí no hay logos.» (E-SLG-12) | Es la prueba. Mismo texto que en Nosotros, desde una sola fuente en `content/` | Ninguno |
 | 7 | **Cuándo no conviene comprar IA (todavía)** | Ganar credibilidad renunciando (P5) | Ver §2.5 | Ninguna; se apoya en la voz (E-SLG-08, 10) y en el patrón de E-AIA-32 | Ninguno |
 | 8 | **Quién responde** | Dar rostro a la responsabilidad (M-PRY-07 adaptado) | «SLG Agency Inc. es una compañía constituida en Florida. La dirige Ricardo Torres Oliva.» + dos o tres líneas de trayectoria verificable `[PENDIENTE: Ricardo]` + enlace a Nosotros y a LinkedIn (E-SLG-14) | Trayectoria y fotografía del fundador (§4, P-03, D-7) | Enlace de texto a Nosotros |
-| 9 | **Doctrina** (franja oscura) | Autoridad por escrito | Pull-quote: «Lo que hay que dejar de hacer pesa más que lo que hay que empezar.» (E-SLG-08) + «Publicamos criterio, no novedades.» (E-SLG-24) + enlaces «Leer la doctrina» y «Ver los artículos» | Ninguna | Enlaces de texto |
+| 9 | **Doctrina** (banda clara `paper`; *corregido tras crítica, C-09:* la única franja oscura de la página es la del bloque 6, DD-6 de 04) | Autoridad por escrito | Pull-quote: «Lo que hay que dejar de hacer pesa más que lo que hay que empezar.» (E-SLG-08) + «Publicamos criterio, no novedades.» (E-SLG-24) + enlaces «Leer la doctrina» y «Ver los artículos» | Ninguna | Enlaces de texto |
 | 10 | **Holdings** (una línea) | Segunda audiencia sin competir con la primera | «¿Vas a construir u operar una compañía fuera de tu mercado de origen? Eso es Holdings: un punto único de responsabilidad sobre el conjunto.» (E-SLG-07) | — | Enlace de texto a `/holdings` |
 | 11 | **Cierre** | Repetir el siguiente paso | «Si después de leer el documento quieres conversar, escríbenos.» (copy actual de `/gracias`) + el CTA primario | — | **El mismo** CTA primario + «Escríbenos» como enlace de texto, nunca botón rojo |
 | 12 | Pie | Higiene y verificabilidad | Razón social y jurisdicción en texto (M-PRY-09 adaptado), **Mapa del sitio**, Doctrina, Descargas, Contacto y legales | — | — |
@@ -176,10 +187,13 @@ hero, en la entrada y en el cierre. Son tres botones para **la misma** acción y
 ### 2.2 Qué pasa con el mapa del sitio y con `/servicios` (sujeto a D-1)
 
 - **Mapa del sitio.** Se conserva tal cual (`MapaDelSitio.tsx`, generado desde la ficha, sin animación;
-  E-SLG-43) en una **ruta propia**: `/mapa` y `/en/site-map`. Los nombres de ruta son propuesta y se confirman en
-  FU-RC01 contra `lib/content/rutas.ts`. Se enlaza desde el pie y desde Nosotros («Si es tu primera visita…»).
-  El registro `empieza-aqui` / `start-here` cambia de ruta, no de contenido. **Las URL antiguas `/en/start-here`**
-  redirigen a la nueva (`check:paginas` y `check:seo` se actualizan).
+  E-SLG-43) en una **ruta propia**. *Corregido tras crítica (C-06):* no se crean rutas nuevas. Se reutilizan
+  **`/empieza-aqui` y `/en/start-here`**, que ya existen y que en `develop` hacen hoy `permanentRedirect` a `/` y
+  a `/en` (`develop:app/(public)/en/start-here/page.tsx`). Se retira esa redirección y la ruta vuelve a servir el
+  mapa con su registro `empieza-aqui` / `start-here`, sin cambiar el contenido. Así no hay redirecciones nuevas,
+  ningún enlace externo se rompe y el slug ES no queda huérfano (la versión anterior de este plan solo redirigía
+  el EN). La ruta se declara en la ficha y en el motor (`lib/sitio/motor.ts`), y `check:paginas` y `check:seo`
+  (sitemap, hreflang recíproco) la cubren. Se enlaza desde el menú (`nav.start`), el pie y Nosotros.
 - **`/servicios`.** Deja de ser «la casa comercial» (su hero y su arco pasan a `/`, E-SLG-42) y se convierte en
   **«Todos los servicios»**: el índice de los once servicios agrupados por **fase del método**, con el lector y el
   entregable de cada uno en una línea. Se conserva la URL, así no se rompen enlaces. Es la entrada para quien ya
@@ -469,8 +483,12 @@ El orden de las seis secciones **no cambia** (DU-05, RF-06). Cambia lo que va de
 3. **Inglés británico** en todo el EN, coherente con el contenido existente.
 4. **Claves de UI** (`content/ui/{es,en}.json`) para los rótulos nuevos: «Mapa del sitio», las etiquetas de fase y
    las salidas de la compuerta. Validadas en build.
-5. **Rutas.** Los slugs de servicio no cambian, así que no se rompen URL. Cambia la ruta del mapa en los dos
-   idiomas (con redirección de `/en/start-here`). El ítem de menú `nav.start` cambia de rótulo.
+5. **Rutas.** Los slugs de servicio no cambian, así que no se rompen URL. El mapa vuelve a `/empieza-aqui` y
+   `/en/start-here`, que dejan de redirigir a la portada (C-06). El ítem de menú `nav.start` conserva el rótulo
+   «Empieza aquí» / «Start here» y cambia de destino.
+9. **Prerender (corregido tras crítica, C-05).** La portada y todas las páginas tocadas siguen siendo estáticas
+   (`x-nextjs-prerender: 1`, E-SLG-21): el contenido se lee de `content/` en build, sin `cookies()`, `headers()`
+   ni `searchParams` en la portada, y el formulario de descarga sigue siendo la única isla de cliente.
 6. **Nomenclatura.** Si D-9 elige renombrar, el freno lleva los literales nuevos **y** las variantes prohibidas en
    los dos idiomas a la vez.
 7. **Longitud.** El ES suele ocupar más que el EN. El límite de longitud del hero (una pantalla en móvil) se valida
@@ -508,6 +526,12 @@ El orden de las seis secciones **no cambia** (DU-05, RF-06). Cambia lo que va de
 - **Compuerta de copy.** Igual que FU-01 en la v1: ninguna DU de página se declara construible hasta que FU-RC02
   esté aprobada. Antes se puede construir contra el esquema con texto `[PENDIENTE: …]`, visible en staging y
   prohibido en `main` (RNF-18).
+- **Corregido tras crítica (C-01): `develop` es producción.** El sitio publicado se compila desde `develop`
+  (E-SLG-71), y en `develop` `check:pending` solo **avisa** (modo no estricto, `scripts/content/check-pending.ts`).
+  Por tanto «prohibido en `main`» no protege el sitio real. Regla para esta reingeniería: el texto con
+  `[PENDIENTE]` vive **solo en la rama de trabajo y en su despliegue de vista previa**. Ningún merge a `develop`
+  sin `CONTENT_STRICT=1 npm run check:pending` en verde y sin la entrada de FU-RC02 en `decision_log`. Donde
+  este plan dice «no pasa a `main`», léase «no pasa a `develop` ni a `main`».
 - **Las decisiones de Ricardo no son unidades.** Son acciones previas (§0.3), igual que en `user_units.md` §1.
 - Cada unidad pasa por `/review` antes de darse por cerrada (AGENTS.md Regla 3).
 
@@ -534,7 +558,10 @@ que pueda, como mínimo **P-03, P-06 y P-07**.
 1. La rama parte de `origin/develop`; el commit base queda anotado en `work_log`.
 2. `check:ci` pasa en verde **antes** de cualquier cambio, como línea base.
 3. El inventario lista, por cada bloque de §2.1 y §7, el archivo de origen actual o «nuevo».
-4. Las rutas propuestas para el mapa (`/mapa`, `/en/site-map`) se confirman o se corrigen contra `rutas.ts`.
+4. Se confirma contra `rutas.ts` y `lib/sitio/motor.ts` que el mapa puede volver a `/empieza-aqui` y
+   `/en/start-here` retirando su `permanentRedirect` (C-06).
+5. Se confirma qué rama despliega producción y si existe un despliegue de vista previa para la rama de trabajo
+   (C-01). Si no existe, se crea antes de FU-RC02.
 
 ---
 
@@ -597,8 +624,10 @@ resuelve, entregable, compuerta y línea), `reglas` (§5.3 + «sin licencias ni 
 **Criterios de aceptación.**
 1. Las reglas aparecen en home, Nosotros, `/ai` y servicios **desde el mismo registro**. Una búsqueda en `content/`
    no encuentra otra redacción de la regla de la compuerta (E-SLG-16/17).
-2. El esquema rechaza en build una fase sin entregable (si el entregable es `[PENDIENTE]`, sí valida, pero la fase
-   no puede publicarse en `main`).
+2. *Corregido tras crítica (C-15).* El campo `entregable` de cada fase admite tres estados: texto aprobado,
+   `[PENDIENTE]` (valida en la rama de trabajo, bloquea el merge a `develop`) u **omitido de forma explícita**
+   (`entregable: null`), en cuyo caso la fase se publica con «qué resuelve» y sin línea de entregable. El esquema
+   rechaza en build el campo ausente sin esa marca. Así se reconcilia este criterio con el riesgo de §10.
 3. Paridad ES/EN con `pair` recíproco.
 4. El orden de las fases en los datos es el orden de lectura (01 → 04).
 
@@ -613,6 +642,10 @@ resuelve, entregable, compuerta y línea), `reglas` (§5.3 + «sin licencias ni 
 
 **Qué produce.** `/` y `/en` con los bloques 0–12 de §2.1 en ese orden.
 
+*Corregido tras crítica (C-14).* DU-RC01 y DU-47 (`04_…`) describían el mismo montaje de la portada. Son **una
+sola unidad**: DU-RC01 aporta el contenido y el orden, DU-47 la forma, y se cierra cuando se cumplen los criterios
+de las dos. Al consolidar en `user_units.md` queda un único número.
+
 **Criterios de aceptación.**
 1. Un solo H1 fijo. Ningún componente rota ni se mueve solo (P1, `check:motion`).
 2. La primera pantalla contiene para quién, problema, resultado y el CTA, **en móvil y en escritorio** y en los dos
@@ -625,8 +658,11 @@ resuelve, entregable, compuerta y línea), `reglas` (§5.3 + «sin licencias ni 
 6. Ningún contenido detrás de flip, tab, carrusel o acordeón.
 7. Estado resuelto: si `d-06` no está disponible en un idioma, el bloque de entrada muestra el enlace a la página
    del diagnóstico en lugar de un botón roto.
-8. Lighthouse móvil ≥ 90 en rendimiento, SEO y buenas prácticas, y accesibilidad ≥ 95 (o 100 si D-8 lo decide). Se
-   registra en `work_log`.
+8. Lighthouse móvil ≥ 90 en rendimiento, SEO y buenas prácticas, y **accesibilidad 100** en `/` y `/en`
+   (*corregido tras crítica, C-04:* el encargo pide mantener el 100; es criterio de aceptación de la unidad, no
+   opcional. D-8 decide solo si el freno de CI sube de 95 a 100). Si la línea base de FU-20 no da 100, se
+   corrige primero. Se registra en `work_log`.
+9. La portada sigue prerenderizada (`x-nextjs-prerender: 1`) en los dos idiomas (C-05).
 
 **Gates.** `QG` · `check:ci` completo.
 
@@ -639,13 +675,13 @@ resuelve, entregable, compuerta y línea), `reglas` (§5.3 + «sin licencias ni 
 | **Tipo** | **DU** |
 | **Depende de** | DU-RC01, D-1, FU-RC01 (rutas confirmadas) |
 
-**Qué produce.** El mapa en su ruta propia (ES/EN) con redirección desde la ruta antigua en EN, enlazado desde el
-pie y desde Nosotros. `/servicios` y `/en/services` reescritos como «Todos los servicios», agrupados por fase.
+**Qué produce.** El mapa de vuelta en `/empieza-aqui` y `/en/start-here` (C-06), enlazado desde el menú, el
+pie y Nosotros. `/servicios` y `/en/services` reescritos como «Todos los servicios», agrupados por fase.
 
 **Criterios de aceptación.**
 1. El componente del mapa no cambia (sigue generado desde la ficha y sin animación, E-SLG-43).
-2. `/en/start-here` redirige de forma permanente a la ruta nueva. `check:paginas` y `check:seo` (hreflang
-   recíproco) en verde.
+2. `/empieza-aqui` y `/en/start-here` responden 200 con el mapa (ya no redirigen a la portada). No se crea
+   ninguna redirección nueva. `check:paginas` y `check:seo` (sitemap y hreflang recíproco) en verde.
 3. `/servicios` lista los 11 servicios, cada uno bajo su fase, con titular por resultado, lector y enlace. No tiene
    hero comercial ni CTA de conversión.
 4. Ningún enlace interno del sitio apunta a una ruta antigua.
@@ -727,7 +763,8 @@ límite heredado de los análisis, que no tuvieron render (E-SLG-80).
    problema y siguiente paso. El resultado se registra en `work_log`. Si no pasa, se vuelve a FU-RC02, no se
    maquilla.
 2. Recorrido completo home → descarga → `/gracias` → contacto en ES y EN, con teclado y en móvil.
-3. `check:ci` completo en verde. Lighthouse según D-8.
+3. `check:ci` completo en verde. Lighthouse: accesibilidad 100 en las páginas tocadas (C-04); el freno de CI
+   según D-8. `CONTENT_STRICT=1 npm run check:pending` en verde antes del merge a `develop` (C-01).
 4. Barrido de la §3: ninguna frase marcada para eliminar sigue publicada.
 5. Revisión independiente (`/review`) sin hallazgos bloqueantes.
 
@@ -773,7 +810,7 @@ FU-RC01 ──► FU-RC02 (compuerta de copy) ──► FU-RC04 ─┐
 | Riesgo | Mitigación |
 |---|---|
 | Ricardo mantiene el mapa en `/` (D-1 = no) | El plan se aplica a `/servicios` como página de destino y el mapa se queda. Pierde fuerza (B-01 sigue abierta), pero las demás unidades valen igual |
-| Los entregables por fase (P-07) no llegan | Las fases sin entregable se publican con «qué resuelve» y sin entregable. **No se inventa uno.** FU-RC04 lo permite en staging, no en `main` |
+| Los entregables por fase (P-07) no llegan | Las fases sin entregable se publican con «qué resuelve» y sin línea de entregable (`entregable: null`, FU-RC04 criterio 2). **No se inventa uno**, y un `[PENDIENTE]` nunca llega a `develop` (C-01, C-15) |
 | La home se alarga y pierde la idea por viewport | Los bloques 7 a 10 se pueden fusionar o mover a `/ai` sin tocar el resto. La validación de DU-RC06 decide |
 | Los nombres por resultado chocan con la identidad de producto de Ricardo | D-9 opción (b): el literal se conserva como etiqueta, y no se pierde nada |
 | El EN se queda como traducción literal | FU-RC02 exige revisión del EN como texto propio. DU-RC06 prueba con lectores anglófonos |

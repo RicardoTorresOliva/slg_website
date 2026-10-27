@@ -51,7 +51,9 @@ inputs:
    tiene uno sin nombre, sin duración y ausente de la home (E-PRY-31). SLG tiene las piezas (secuencia, compuertas,
    reglas) pero no las ha nombrado ni dibujado (E-SLG-10, 16, 17). Además, la secuencia de SLG coincide con sus tres
    líneas de oferta (ver §4, M-SLG-05), así que **el método puede ser la columna que ordene toda la oferta**.
-6. **El sistema visual de SLG ya es superior al de ambas referencias** (E-SLG-48…51). De ellas no hay que adoptar
+6. **El sistema visual de SLG está mejor gobernado que el de ambas referencias** (tokens, reglas y frenos leídos en
+   el código, E-SLG-48…51, frente a configuración de Elementor). *Corregido tras crítica (05, C-03):* esto compara
+   **sistema**, no percepción; cómo se ve cada sitio renderizado es UNK (E-AIA-49, E-PRY-58, E-SLG-80). De ellas no hay que adoptar
    nada visual, salvo el número grande como encabezado de fase y la idea de un antes/después estático. Hay que
    rechazar su forma de agencia: sliders, flip-boxes, carruseles autoplay, contadores, muros de logos y vídeo de fondo.
 
@@ -73,7 +75,7 @@ apoya en un render.
 | Método | Débil (5 versiones) | Media (1 versión, incompleta) | Media-débil (piezas sin nombre) |
 | CTAs | Débil (único y tardío) | Débil (≥12 en 5 canales) | Media (sana, pero falta en la portada) |
 | Tono | Débil (hype con islas sobrias) | Media | **Fuerte** (con huecos de hype y jerga) |
-| Presentación visual | Débil (configuración) | Débil (configuración) | **Fuerte** (código, con deriva) |
+| Presentación visual *(sistema, no render; corregido tras crítica)* | Débil (configuración) | Débil (configuración) | **Fuerte** (código, con deriva) |
 | Confianza | Débil (la higiene la destruye) | Media | Media (contenido fuerte pero disperso) |
 
 ### 2.2 Matriz detallada
@@ -289,7 +291,9 @@ enumerados, once dimensiones y doctrina escrita.
 
 **Enunciado.** Se nombra y se dibuja la secuencia que SLG ya tiene: **criterio → diagnóstico/arquitectura →
 construcción → transferencia**. Cada fase tiene entregable y compuerta de aprobación del cliente, y la compuerta
-tiene tres salidas: escalar, ajustar o descartar. INF: las fases coinciden con Academy, Enterprise y Factory
+tiene tres salidas: escalar, ajustar o descartar (*corregido tras crítica, 05 C-08:* el plan de contenidos propone
+«avanzar, ajustar o descartar», porque no todas las fases son pilotos; esa es la redacción de trabajo única para
+03 y 04 hasta FU-RC02). INF: las fases coinciden con Academy, Enterprise y Factory
 (M-SLG-05), así que el método puede **ordenar la oferta** en lugar de los «dos ejes». El nombre debe ser legible en
 español; no se añade otra sigla.
 **Evidencia.** E-SLG-10, 16, 17, 25, 44. Referencias: E-AIA-36 (salidas); E-PRY-31 (consistencia); E-AIA-44 y

@@ -1,14 +1,14 @@
 import { ArmazonPublico } from "@/components/ArmazonPublico";
-import { MapaDelSitio } from "@/components/MapaDelSitio";
+import { Propuesta } from "@/components/Propuesta";
 import { metadatosDePagina } from "@/lib/content/seo";
 
-/** La versión inglesa de la portada: «Start here». Ver `app/(public)/page.tsx`. */
-export const metadata = metadatosDePagina("start-here", "en", "/en");
+/** La versión inglesa de la portada. Ver `app/(public)/page.tsx`. */
+export const metadata = metadatosDePagina("home", "en", "/en");
 
 export default function HomeEn() {
   return (
     <ArmazonPublico ruta="/en">
-      <MapaDelSitio slug="start-here" lang="en" />
+      <Propuesta lang="en" />
     </ArmazonPublico>
   );
 }

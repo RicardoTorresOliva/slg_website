@@ -11,13 +11,13 @@ copy: temporal
 
 ## Hero
 
-No vendemos inteligencia artificial. Construimos juntos tu futuro con ella.
+No vendemos inteligencia artificial. Te ayudamos a decidir cuál comprar, cuál construir y cuál no.
 
 Trabajamos con directorios y comités de dirección que tienen que decidir sobre IA y no quieren hacerlo con la información que da quien vende.
 
 ## Los ejes de la Agencia
 
-La agencia trabaja sobre dos ejes, y conviene elegir antes de seguir leyendo.
+La agencia trabaja sobre dos ejes: la inteligencia artificial, y la construcción de compañías fuera de su mercado de origen.
 
 ### VoltAi by SLG
 
@@ -29,7 +29,7 @@ Construir y operar compañías fuera de su mercado de origen, con implicación d
 
 ## VoltAi by SLG
 
-`VoltAi by SLG` se despliega en tres líneas, y responden a tres momentos distintos.
+VoltAi by SLG se despliega en tres líneas, y responden a tres momentos distintos: primero criterio, después diagnóstico y solo entonces construcción.
 
 ### VoltAi Academy
 
@@ -45,7 +45,7 @@ Construir lo que no está en el catálogo: aplicaciones, agentes y dirección de
 
 ## Holdings by SLG
 
-El otro eje de la Agencia, y el único contexto en el que la marca se escribe **Softlanding Global**. No es asesoría de internacionalización: es construcción y operación de compañías fuera de su mercado de origen, con implicación directa en el resultado.
+El otro eje de la Agencia. No es asesoría de internacionalización: es construcción y operación de compañías fuera de su mercado de origen, con implicación directa en el resultado.
 
 Para el fundador o el equipo directivo que sabe que la dificultad de operar fuera no es la traducción, sino todo lo demás: estructura societaria, regulación, clientes y gente. Un punto único de responsabilidad sobre el conjunto, que es la diferencia con contratar cinco asesorías.
 

@@ -31,7 +31,7 @@ Confidencialidad, que en este servicio es la condición de que sirva para algo.
 
 Sin lock-in: nada de lo que construimos te ata a nosotros ni a un proveedor.
 El stack lo eliges tú, y si ya tienes uno, trabajamos con el que tienes.
-Cada fase pasa por una compuerta de aprobación tuya antes de que empiece la siguiente.
+Cada fase termina en una compuerta de aprobación: una decisión tuya, y la siguiente no empieza sin ella.
 Y la capacidad se queda dentro de tu empresa: si al terminar sigues dependiendo de nosotros, el trabajo no está hecho.
 
 ## Descarga
