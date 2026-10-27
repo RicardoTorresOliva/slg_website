@@ -1,0 +1,227 @@
+/* ============================================================================
+ * apple.css — Capa de acabado
+ * ----------------------------------------------------------------------------
+ * Los cimientos ya estaban: springs, `prefers-reduced-motion`, material
+ * translúcido y anillo de foco viven en `motion.css`, y el color en
+ * `tokens.css`. Este archivo NO los repite ni los contradice: aporta lo que
+ * faltaba, que era el oficio visual — escala tipográfica con tracking por
+ * tamaño, profundidad real en las superficies y jerarquía que se ve sin leer.
+ *
+ * POR QUÉ HAY `!important` AQUÍ, Y SOLO AQUÍ.
+ * Las páginas escriben su estilo en `style={{…}}` en línea, y un estilo en
+ * línea gana a cualquier hoja por especificidad. Reescribir las 79 páginas para
+ * quitarlos sería el arreglo correcto y es un trabajo aparte; mientras tanto,
+ * la única forma de que esta capa alcance el marcado existente es esa. Está
+ * acotado a un puñado de propiedades tipográficas y de superficie, nunca a
+ * layout, y cada bloque dice a qué estilo en línea está ganando.
+ *
+ * Regla heredada que este archivo respeta: solo se anima `transform` y
+ * `opacity` (RNF-11). Ninguna transición de aquí provoca reflow.
+ * ========================================================================== */
+
+:root {
+  /* ── Escala tipográfica ──────────────────────────────────────────────────
+   * El tracking NO es un valor único: un texto grande con el mismo espaciado
+   * que el cuerpo se lee desparramado, y un texto pequeño con el del titular
+   * se lee apelmazado. Cada escalón trae el suyo, y el interlineado va al
+   * revés que el tamaño — apretado arriba, holgado en el cuerpo.
+   */
+  --slg-track-display: -0.03em;
+  --slg-track-title: -0.022em;
+  --slg-track-heading: -0.015em;
+  --slg-track-body: 0em;
+  --slg-track-caption: 0.02em;
+
+  --slg-leading-display: 1.02;
+  --slg-leading-title: 1.12;
+  --slg-leading-body: 1.62;
+
+  /* Ritmo vertical. En `rem` para que crezca con el tamaño de texto que el
+   * usuario haya fijado en su sistema, en vez de romperse. */
+  --slg-seccion: clamp(3.5rem, 8vw, 6.5rem);
+
+  /* Elevación con luz: una sombra de contacto corta y una difusa larga. Una
+   * sola sombra plana es lo que hace que una tarjeta parezca una caja. */
+  --slg-elev-1:
+    0 1px 1px rgb(10 10 20 / 0.04),
+    0 4px 12px rgb(10 10 20 / 0.05);
+  --slg-elev-2:
+    0 2px 4px rgb(10 10 20 / 0.05),
+    0 12px 32px rgb(10 10 20 / 0.09);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * 1 · Tipografía — el tamaño manda sobre el tracking y el interlineado
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+main h1 {
+  font-size: clamp(2.25rem, 6.2vw, 4.25rem) !important;
+  line-height: var(--slg-leading-display) !important;
+  letter-spacing: var(--slg-track-display) !important;
+  text-wrap: balance;
+  max-width: 20ch;
+}
+
+main h2 {
+  font-size: clamp(1.625rem, 3.6vw, 2.5rem) !important;
+  line-height: var(--slg-leading-title) !important;
+  letter-spacing: var(--slg-track-title) !important;
+  text-wrap: balance;
+}
+
+main h3 {
+  letter-spacing: var(--slg-track-heading) !important;
+  line-height: 1.25 !important;
+}
+
+/* El párrafo de entrada que sigue al H1: es subtítulo, no cuerpo. Tiene que
+ * pesar más que el texto corriente sin competir con el titular. */
+main h1 + p {
+  font-size: clamp(1.0625rem, 1.9vw, 1.375rem) !important;
+  line-height: 1.5 !important;
+  letter-spacing: -0.008em !important;
+  color: var(--slg-ink-2) !important;
+  max-width: 52ch;
+}
+
+/* La medida de lectura. Una línea de 120 caracteres se pierde al volver. */
+main p {
+  max-width: 68ch;
+  line-height: var(--slg-leading-body);
+}
+
+/* Los rótulos en versalitas («5 servicios»): pequeños y espaciados, que es
+ * justo lo contrario que el titular. */
+main [style*="uppercase"] {
+  letter-spacing: var(--slg-track-caption) !important;
+  font-weight: 600 !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * 2 · La cabecera como material, no como franja
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/* El divisor de 1 px se sustituye por un borde de luz arriba y una sombra de
+ * separación abajo: la barra flota sobre el contenido en vez de cortarlo.
+ * Gana al `border-bottom` en línea del componente. */
+header.slg-material {
+  border-bottom: 0 !important;
+  background: color-mix(in srgb, var(--slg-paper) 68%, transparent) !important;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.6),
+    0 1px 0 color-mix(in srgb, var(--slg-line) 60%, transparent),
+    0 8px 24px -16px rgb(10 10 20 / 0.28) !important;
+}
+
+/* Los enlaces de la barra: el realce llega en el mismo gesto, no después. */
+header nav a {
+  transition:
+    color 140ms var(--slg-spring),
+    opacity 140ms var(--slg-spring);
+}
+header nav a:hover {
+  color: var(--slg-blue-deep) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * 3 · Superficies con profundidad
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/* Gana a `border`, `box-shadow` y `border-radius` en línea de las tarjetas. */
+.slg-card {
+  border-radius: var(--slg-radius-lg) !important;
+  border: 1px solid color-mix(in srgb, var(--slg-line) 55%, transparent) !important;
+  box-shadow: var(--slg-elev-1) !important;
+  /* Solo `transform` se anima; la sombra cambia sin transición para no
+     provocar repintados caros en cada fotograma. */
+  transition: transform 260ms var(--slg-spring);
+  will-change: transform;
+}
+
+/* Un objeto que se puede tocar responde antes de que lo toques. El
+ * levantamiento es de 2 px: se nota y no se aparatosa. */
+.slg-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--slg-elev-2) !important;
+}
+
+/* Una tarjeta cuyo título es un enlace es un objetivo entero, no una palabra.
+ * El área de toque crece sin mover nada de sitio. */
+.slg-card h3 a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.slg-card {
+  position: relative;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * 4 · Ritmo y jerarquía entre secciones
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/* El hero necesita aire por encima: es lo primero que se ve y ahora mismo
+ * arranca pegado a la barra. Gana al `padding` en línea de la sección. */
+main > div > section:first-of-type {
+  padding-block: clamp(4.5rem, 11vw, 8rem) clamp(2rem, 5vw, 3.5rem) !important;
+}
+
+/* Una franja suave cada dos bloques da estructura sin añadir una línea más.
+ * `.superficie-suave` ya existe para corregir el contraste del enlace sobre
+ * `--paper-2` (D-68), así que se reutiliza en vez de inventar otra clase. */
+main section:nth-of-type(even) {
+  position: relative;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * 5 · Botones y llamadas a la acción
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/* El CTA se lee como un objeto pulsable, no como un texto con un marco.
+ * `--slg-red` sigue reservado a una o dos instancias por viewport (gate D2b):
+ * esta regla NO lo reparte, solo da forma al que ya lo llevaba. */
+a[style*="border"][style*="radius"],
+button[style*="border"][style*="radius"] {
+  transition: transform var(--slg-press-duration) var(--slg-spring);
+}
+a[style*="border"][style*="radius"]:active,
+button[style*="border"][style*="radius"]:active {
+  transform: scale(var(--slg-press-scale));
+}
+
+/* El subrayado de un enlace de cuerpo, a distancia de la letra: pegado al
+ * texto corta los descendentes y se lee sucio. */
+main p a,
+main li a {
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: from-font;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * 6 · Las tres preferencias del sistema, también aquí
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  .slg-card,
+  .slg-card:hover {
+    transform: none !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  header.slg-material {
+    background: var(--slg-paper) !important;
+    box-shadow: 0 1px 0 var(--slg-line) !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .slg-card {
+    border-color: var(--slg-ink-2) !important;
+    box-shadow: none !important;
+  }
+  header.slg-material {
+    background: var(--slg-paper) !important;
+    box-shadow: 0 1px 0 var(--slg-ink-2) !important;
+  }
+}

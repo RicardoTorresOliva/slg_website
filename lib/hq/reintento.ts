@@ -15,7 +15,15 @@
  *
  * **ES IDEMPOTENTE SOBRE UNA CAPTURA YA ENTREGADA** (criterio 6). Reintentar
  * algo que ya llegó crearía un contacto duplicado en el CRM, y lo haría en
- * silencio. Se devuelve «ya estaba entregada» y no se toca nada.
+ * silencio. Se devuelve «ya estaba entregada» y no se toca nada. *
+ * **EN UN SITIO SIN CRM, LO QUE SE REINTENTA ES EL AVISO** (plantilla, paso
+ * 5b). `notify_failed` es el `failed` de ese modo —cinco avisos por correo sin
+ * salir— y se reabre igual, con un ciclo nuevo: vuelve a `pending` y el barrido
+ * manda el aviso otra vez. `notified` es el `delivered` de ese modo: el cliente
+ * ya tiene el correo, y reintentarlo le mandaría el mismo contacto dos veces.
+ * Que la fila vuelva a `pending` y no a un estado propio del aviso es lo que la
+ * deja en manos del modo que tenga el sitio HOY: si entretanto se le ha
+ * conectado un CRM, la captura va al CRM, que es lo que se quiere.
  */
 import { sql } from "drizzle-orm";
 
@@ -23,6 +31,11 @@ import { exigir } from "../auth/matriz.ts";
 import { conAuditoria } from "../auditoria/index.ts";
 import type { AuthContext } from "../db/context.ts";
 import { withScope } from "../db/scope.ts";
+
+/** Los dos finales buenos: con CRM, entregada; sin CRM, avisada. */
+const ENTREGADAS: readonly string[] = ["delivered", "notified"];
+/** Los dos finales agotados, los únicos que se reabren a mano. */
+export const AGOTADAS: readonly string[] = ["failed", "notify_failed"];
 
 export type ResultadoDeReintento =
   | { readonly ok: true; readonly cicloNuevo: number }
@@ -48,8 +61,8 @@ export async function reintentarCaptura(
         `)) as unknown as { crm_sync_status: string; crm_cycle: number }[];
         const actual = filas[0];
         if (!actual) return { ok: false, motivo: "no_encontrada" } as const;
-        if (actual.crm_sync_status === "delivered") return { ok: false, motivo: "ya_entregada" } as const;
-        if (actual.crm_sync_status !== "failed") return { ok: false, motivo: "en_curso" } as const;
+        if (ENTREGADAS.includes(actual.crm_sync_status)) return { ok: false, motivo: "ya_entregada" } as const;
+        if (!AGOTADAS.includes(actual.crm_sync_status)) return { ok: false, motivo: "en_curso" } as const;
 
         const cicloNuevo = actual.crm_cycle + 1;
         /**
@@ -66,7 +79,7 @@ export async function reintentarCaptura(
                  crm_last_error = NULL,
                  crm_next_attempt_at = now()
            WHERE id = ${leadCaptureId}
-             AND crm_sync_status = 'failed'
+             AND crm_sync_status IN ('failed', 'notify_failed')
         `);
         return { ok: true, cicloNuevo } as const;
       });

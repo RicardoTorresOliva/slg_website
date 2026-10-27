@@ -1,7 +1,7 @@
 ---
 type: service
 name: "AI Coaching for Directors"
-branch: SLG_Academy
+branch: VoltAi Academy
 parent: "slg-academy-en"
 download: "d-05-en"
 lang: en
@@ -11,20 +11,21 @@ copy: temporal
 
 ## Who it is for and what problem
 
-For the director who does not need a programme but an interlocutor: someone to think aloud with about a specific decision, without that person selling anything from the other side of the table.
-The problem with asking inside the company is that nobody is neutral; with asking a vendor, that everyone has an answer ready.
+For the director who does not need a programme but a counterpart: someone to think a specific decision through out loud, with no one selling anything across the table.
+The problem with asking inside the company is that nobody is neutral; the problem with asking a vendor is that they all have an answer ready.
 
 ## What it is
 
-Individual, sustained support for artificial intelligence decisions at board and executive level.
-It is neither training nor implementation consulting: it is a space for judgement, with someone who has sat in both chairs and who is not paid for what you decide to buy.
+Individual, continuing support for artificial intelligence decisions at board and executive level.
+It is neither training nor implementation consulting: it is a space for judgement.
+We take no commission from any vendor, and when the conversation reaches something this firm sells — `SLG_Implement`, `VoltAi Factory` — that is said at the time, and you decide with that on the table.
 
 ## What it includes
 
-Individual sessions at an agreed cadence, on the decisions you have in front of you.
-A review of third-party proposals before signing them: what to ask, what is missing, what is overpriced.
-Access to the house frameworks when they add something to the case at hand, never as vocabulary.
-Confidentiality, which in this service is the condition for it being worth anything.
+Individual sessions at the cadence we agree, on the decisions in front of you.
+Review of third-party proposals before you sign them: what to ask, what is missing and what is overpriced.
+The agency's frameworks — Digital Geography, Market Fracking, Hyperflexibility, Agentic Mindset — where they serve the specific case, and not as vocabulary.
+Confidentiality, which in this service is the condition for it to be worth anything.
 
 ## How we work
 
@@ -35,8 +36,8 @@ And the capability stays inside your company: if you still depend on us when we 
 
 ## Download
 
-The briefing document for this service. **The only call to action on this page.**
+The document of interest for this service. **The only call to action on this page.**
 
 ## Next step
 
-If after reading it you want to talk, write to us.
+If you want to talk after reading it, write to us.

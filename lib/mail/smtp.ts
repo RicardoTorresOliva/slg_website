@@ -17,6 +17,7 @@ import nodemailer, { type Transporter } from "nodemailer";
 
 import { ErrorDeCorreo, type EnvioAceptado, type MensajeSaliente, type PuertoDeCorreo } from "./port.ts";
 import { componer } from "./templates.ts";
+import { sitio } from "../sitio/index.ts";
 
 export type ConfiguracionSmtp = {
   readonly host: string;
@@ -54,11 +55,13 @@ export function configuracionDelEntorno(): ConfiguracionSmtp {
     password: exigirVariable("MAIL_SMTP_PASSWORD"),
     /**
      * D-24: vive en el subdominio de envío dedicado, no en la raíz. El brief
-     * §5.1 y RF-117 dicen que el remitente es `support@softlandingglobal.com` y
+     * §5.1 y RF-117 dicen que el remitente es el `support@` de la raíz y
      * quedan desactualizados desde D-24: `support@` es el Reply-To.
      */
     fromAddress: exigirVariable("MAIL_FROM_ADDRESS"),
-    fromName: process.env.MAIL_FROM_NAME ?? "SLG Agency",
+    // Sin `MAIL_FROM_NAME`, firma el remitente de la ficha: un cliente que la
+    // olvide no manda correos en nombre de otra marca.
+    fromName: process.env.MAIL_FROM_NAME ?? sitio.marca.remitente,
     replyTo: process.env.MAIL_REPLY_TO ?? null,
   };
 }

@@ -16,6 +16,8 @@ import { spawn, type ChildProcess } from "node:child_process";
 import net from "node:net";
 import path from "node:path";
 
+import { moduloActivo } from "../../lib/sitio/index.ts";
+
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 const SERVER = path.join(REPO_ROOT, ".next", "standalone", "server.js");
 
@@ -136,6 +138,22 @@ async function produccion(base: string) {
     `status ${salud.status}`,
   );
 
+  // La sonda de la base (incidente del 01-10). Aquí `DATABASE_URL` apunta a un
+  // puerto donde no hay nadie: tiene que dar 503 —para que el monitor avise— y
+  // no decir dónde intentó conectar.
+  const sondaBase = await fetch(`${base}/api/health/base`);
+  const cuerpoBase = await sondaBase.text();
+  check(
+    "producción · /api/health/base da 503 si la base no contesta",
+    sondaBase.status === 503 && cuerpoBase.includes('"error"'),
+    `status ${sondaBase.status}: ${cuerpoBase.slice(0, 120)}`,
+  );
+  check(
+    "producción · /api/health/base no filtra host, rol ni puerto",
+    !/127\.0\.0\.1|nadie|postgres|slg_app/i.test(cuerpoBase),
+    cuerpoBase.slice(0, 120),
+  );
+
   await politicaPorSuperficie(base, r);
 
   // `/api/ops` no existe mientras `OPS_TOKEN` esté vacía. Es una ruta que manda
@@ -239,7 +257,7 @@ async function politicaPorSuperficie(base: string, publica: Response) {
   );
 
   // Superficie dinámica: ahí manda la política estricta.
-  const uno = await fetch(`${base}/acceder`);
+  const uno = await fetch(`${base}${SUPERFICIE_DINAMICA}`);
   const cspUno = uno.headers.get("content-security-policy") ?? "";
   const scriptUno = /script-src ([^;]*)/.exec(cspUno)?.[1] ?? "";
   const nonceUno = /'nonce-([^']+)'/.exec(scriptUno)?.[1] ?? "";
@@ -261,7 +279,7 @@ async function politicaPorSuperficie(base: string, publica: Response) {
     "la cabecera promete un nonce que el HTML no lleva: el navegador bloquearía los scripts",
   );
 
-  const dos = await fetch(`${base}/acceder`);
+  const dos = await fetch(`${base}${SUPERFICIE_DINAMICA}`);
   const nonceDos =
     /'nonce-([^']+)'/.exec(dos.headers.get("content-security-policy") ?? "")?.[1] ?? "";
   check(
@@ -333,6 +351,12 @@ async function staging(base: string) {
  * staging. Si alguna comprobación sigue en verde ahí, esa comprobación no
  * comprueba.
  */
+/**
+ * La superficie dinámica donde se mide la política estricta: el acceso, o el
+ * prototipo si la ficha apaga la intranet (D-166) y `/acceder` no existe.
+ */
+const SUPERFICIE_DINAMICA = moduloActivo("intranet") ? "/acceder" : "/prototipo";
+
 async function main() {
   const externo = process.env.RUNTIME_BASE;
   if (externo) {

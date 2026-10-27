@@ -142,6 +142,7 @@ export async function capturas(
         email: c.email,
         email_domain: c.emailDomain,
         name: c.name,
+        last_name: c.lastName,
         company: c.company,
         job_title: c.jobTitle,
         locale: c.locale,
@@ -247,17 +248,35 @@ export async function organizaciones(
 
   return {
     page,
-    data: data.map(({ o, contactoId, contactoNombre }) => ({
-      id: o.id,
-      name: o.name,
-      slug: o.slug,
-      type: o.type,
-      status: o.status,
-      // **Sin el correo del contacto**: un agente que lista empresas no
-      // necesita datos personales para hacerlo (minimización, C.6).
-      primary_contact: contactoId ? { id: contactoId, name: contactoNombre } : null,
-      created_at: o.createdAt.toISOString(),
-    })),
+    data: data.map(({ o, contactoId, contactoNombre }) =>
+      empresaDelContrato(o, contactoId ? { id: contactoId, name: contactoNombre } : null),
+    ),
+  };
+}
+
+/**
+ * La forma de una empresa en el contrato (§3.2). La comparten el listado y
+ * `POST /organizations` (D-163): la que el CRM acaba de crear tiene que leerse
+ * igual que la que ya estaba.
+ */
+export function empresaDelContrato(
+  o: typeof organization.$inferSelect,
+  contacto: { id: string; name: string | null } | null,
+) {
+  return {
+    id: o.id,
+    name: o.name,
+    slug: o.slug,
+    type: o.type,
+    status: o.status,
+    // **Sin el correo del contacto**: un agente que lista empresas no
+    // necesita datos personales para hacerlo (minimización, C.6).
+    primary_contact: contacto,
+    // D-163: el identificador de la empresa en el CRM. `null` en las
+    // anteriores a la decisión, para que el CRM reconcilie sin adivinar por
+    // el nombre.
+    crm_company_id: o.crmCompanyId,
+    created_at: o.createdAt.toISOString(),
   };
 }
 
@@ -304,21 +323,37 @@ export async function proyectosDeEmpresa(
 
   return {
     page,
-    data: data.map(({ p, duenoId, duenoNombre }) => ({
-      id: p.id,
-      organization_id: p.organizationId,
-      name: p.name,
-      // Literal e intraducible (RF-14). Un agente que reciba `SLG Readiness`
-      // sin guion bajo está leyendo un dato corrupto — y la base lo habría
-      // rechazado antes, con `project_service_literal`.
-      service: p.service,
-      status: p.status,
-      owner: duenoId ? { id: duenoId, name: duenoNombre } : null,
-      // Fechas de calendario, sin hora y sin huso (§3.3).
-      starts_at: p.startsAt ? p.startsAt.toISOString().slice(0, 10) : null,
-      ends_at: p.endsAt ? p.endsAt.toISOString().slice(0, 10) : null,
-      created_at: p.createdAt.toISOString(),
-    })),
+    data: data.map(({ p, duenoId, duenoNombre }) =>
+      proyectoDelContrato(p, duenoId ? { id: duenoId, name: duenoNombre } : null),
+    ),
+  };
+}
+
+/**
+ * La forma de un proyecto en el contrato (§3.3). **Una sola**, para la lectura
+ * y para la escritura de D-162: lo que el CRM recibe al crear es exactamente
+ * lo que después lista. `crm_project_id` viaja para que el CRM pueda
+ * reconciliar sin adivinar por el nombre; nulo en los proyectos anteriores.
+ */
+export function proyectoDelContrato(
+  p: typeof project.$inferSelect,
+  owner: { id: string; name: string | null } | null,
+) {
+  return {
+    id: p.id,
+    organization_id: p.organizationId,
+    name: p.name,
+    // Literal e intraducible (RF-14). Un agente que reciba un nombre de
+    // servicio mal escrito está leyendo un dato corrupto — y la aplicación lo
+    // habría rechazado antes, contra la ficha (D-166).
+    service: p.service,
+    status: p.status,
+    owner,
+    crm_project_id: p.crmProjectId,
+    // Fechas de calendario, sin hora y sin huso (§3.3).
+    starts_at: p.startsAt ? p.startsAt.toISOString().slice(0, 10) : null,
+    ends_at: p.endsAt ? p.endsAt.toISOString().slice(0, 10) : null,
+    created_at: p.createdAt.toISOString(),
   };
 }
 

@@ -16,6 +16,9 @@
  *     ni pidiéndolo (RF-89).
  *   · **6** — la atribución distingue **persona** de **clave de API** (RF-111).
  *   · **7** — proyecto sin entregables · empresa sin avisos · enlace inválido.
+ *   · **§3.10** (DU-29) — un `material` puede ser **archivo O enlace**: por
+ *     enlace guarda `url` con `file_key` nulo, y «Clases» lo reconoce como
+ *     vídeo por esa URL (RF-155). Con los dos a la vez es ambiguo y se rechaza.
  *
  * Necesita `bash scripts/db/local-pg.sh up`.
  */
@@ -23,6 +26,15 @@ import postgres from "postgres";
 
 import { contextoDeClaveApi, contextoDeSesion } from "../../lib/db/context.ts";
 import type { UserRole } from "../../lib/db/schema.ts";
+import { nombresDeServicio } from "../../lib/sitio/index.ts";
+/**
+ * Los servicios con los que se siembran los proyectos salen de la ficha
+ * (`site.config.ts`): la base no restringe `project.service` (0024), pero la
+ * aplicación solo acepta los literales de la oferta, y una prueba que sembrara
+ * el nombre de un servicio de otro sitio probaría datos que este sitio no
+ * puede producir.
+ */
+const [SERVICIO] = nombresDeServicio();
 
 let fallos = 0;
 let comprobaciones = 0;
@@ -73,7 +85,7 @@ async function sembrar() {
   await dueno`insert into "user" (id, name, email, email_verified, role, locale)
               values (${ADMIN}, 'Admin DU15', 'admin@du15.test', true, 'slg_admin', 'es')`;
   await dueno`insert into project (id, organization_id, name, service, status)
-              values (${PROYECTO}, ${ORG}, 'Proyecto DU15', 'Phoenix PEEx', 'active')`;
+              values (${PROYECTO}, ${ORG}, 'Proyecto DU15', ${SERVICIO}, 'active')`;
 }
 
 /** Apunta el adaptador de S3 a un endpoint que no existe: aquí solo se FIRMA. */
@@ -173,6 +185,44 @@ async function main() {
     check(
       "ninguno de los rechazados llegó a escribirse",
       (await entregables(admin(), PROYECTO)).every((e) => e.titulo !== "Roto"),
+    );
+
+    /* ── §3.10 · `material` por enlace ──────────────────────────────────── */
+    console.log("\n`material` puede ser un archivo O un enlace: `source` es ortogonal a `type` (§3.10, RF-155):\n");
+    const clase = await publicarEntregable(admin(), {
+      ...base,
+      titulo: "Clase grabada",
+      tipo: "material",
+      url: "https://www.youtube.com/watch?v=du15",
+    });
+    check("un `material` por enlace se publica y NO pide subida", clase.subida === null);
+    const filaClase = (await entregables(admin(), PROYECTO)).find((e) => e.id === clase.id);
+    check(
+      "guarda la URL y deja `file_key` nulo",
+      filaClase?.url === "https://www.youtube.com/watch?v=du15" && filaClase?.claveDeArchivo === null,
+      JSON.stringify({ url: filaClase?.url, clave: filaClase?.claveDeArchivo }),
+    );
+    const { esVideo } = await import("../../lib/portal/clases.ts");
+    check("y «Clases» lo reconoce como vídeo por esa URL", esVideo(filaClase?.url));
+    check(
+      "un `material` con enlace que no es http(s) se rechaza",
+      (await intentar({ tipo: "material", archivo: null, url: "javascript:alert(1)" })) === "url",
+    );
+    check(
+      "un `material` sin archivo y sin enlace se rechaza por el archivo",
+      (await intentar({ tipo: "material", archivo: null, url: "" })) === "archivo",
+    );
+    check(
+      "un `material` con archivo Y enlace es ambiguo y se rechaza",
+      (await intentar({
+        tipo: "material",
+        archivo: { nombre: "anexo.png", mime: "image/png", bytes: 10 },
+        url: "https://ejemplo.test/clase.mp4",
+      })) === "url",
+    );
+    check(
+      "un `material` por archivo sigue publicándose como antes, con subida y sin URL",
+      Boolean((await porArchivo("material", "guia.pdf", "application/pdf")).subida?.url),
     );
 
     /* ── Criterio 2 · versiones ─────────────────────────────────────────── */
@@ -285,6 +335,46 @@ async function main() {
     for (const bueno of ["https://ejemplo.test", "http://ejemplo.test", "mailto:hola@ejemplo.test", "/interno", "#ancla"]) {
       check(`«${bueno}» sí se pinta`, enlaceSeguro(bueno));
     }
+
+    /**
+     * Los bloques que entraron el 2026-09-18 (lista numerada, cita, tabla) se
+     * prueban por la misma razón que los enlaces: `bloquesDe` devuelve datos,
+     * y una celda de tabla con un `<script>` dentro sigue siendo texto.
+     */
+    console.log("\nLos bloques de Markdown se clasifican sin producir HTML:\n");
+    const { bloquesDe } = await import("../../lib/content/markdown-seguro.ts");
+    const bloques = bloquesDe(
+      [
+        "## Título",
+        "",
+        "> La tesis, en una línea.",
+        "",
+        "1. Primero",
+        "2. Segundo",
+        "",
+        "| Col A | Col B |",
+        "|---|---|",
+        "| uno | <script>alert(1)</script> |",
+        "| dos |",
+        "",
+        "Párrafo final.",
+      ].join("\n"),
+    );
+    check("cinco bloques, en orden", bloques.map((b) => b.tipo).join(",") === "h2,cita,lista-numerada,tabla,parrafo", bloques.map((b) => b.tipo).join(","));
+    const cita = bloques[1];
+    check("la cita pierde el «> » y conserva el texto", cita?.tipo === "cita" && cita.texto === "La tesis, en una línea.");
+    const numerada = bloques[2];
+    check("la lista numerada pierde los números", numerada?.tipo === "lista-numerada" && numerada.items.join("|") === "Primero|Segundo");
+    const tabla = bloques[3];
+    check(
+      "la tabla tiene cabecera y filas cuadradas a la cabecera",
+      tabla?.tipo === "tabla" && tabla.cabecera.length === 2 && tabla.filas.length === 2 && tabla.filas.every((f) => f.length === 2),
+      JSON.stringify(tabla),
+    );
+    check(
+      "un `<script>` dentro de una celda sigue siendo texto",
+      tabla?.tipo === "tabla" && trozosDeLinea(tabla.filas[0]?.[1] ?? "").every((t) => t.tipo === "texto"),
+    );
 
     let campoAviso = "";
     try {

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { tieneCookieDeSesion } from "@/lib/auth/edge";
+import { rutaDisponible } from "@/lib/sitio/motor";
 
 /**
  * Middleware — FU-05 (compuerta de staging) y FU-06 (clasificación de §2).
@@ -28,12 +29,12 @@ const REALM = 'Basic realm="slg staging", charset="UTF-8"';
 /**
  * `/api/health` queda FUERA de la compuerta a propósito.
  *
- * UptimeRobot (D-49) vigila `staging.softlandingglobal.com` desde fuera del VPS
+ * UptimeRobot (D-49) vigila `staging.<dominio>` desde fuera del servidor
  * y no lleva credenciales: si la sonda recibiera 401 el monitor estaría midiendo
  * la compuerta, no el servicio. La sonda no devuelve ningún dato de negocio
  * —ver `app/api/health/route.ts`—, así que abrirla no filtra nada.
  */
-const SIN_COMPUERTA = ["/api/health"];
+const SIN_COMPUERTA = ["/api/health", "/api/health/base"];
 
 /** Comparación en tiempo constante. El runtime edge no trae `timingSafeEqual`. */
 function igualEnTiempoConstante(a: string, b: string): boolean {
@@ -279,7 +280,7 @@ function hostDelVisor(): string | null {
 /**
  * **En el host del visor no vive la aplicación: vive un documento.**
  *
- * Sin esto, `visor.softlandingglobal.com/portal` serviría el portal entero desde
+ * Sin esto, `visor.<dominio>/portal` serviría el portal entero desde
  * el subdominio del visor. No habría sesión —las cookies no viajan ahí, que es
  * el mecanismo— pero sí una copia del sitio en otro dominio: contenido
  * duplicado para los buscadores, una superficie más que auditar, y sobre todo
@@ -296,7 +297,8 @@ function puertaDelVisor(request: NextRequest): NextResponse | null {
   const esRutaDeVisor = request.nextUrl.pathname.startsWith("/visor/");
 
   if (visor && host === visor) {
-    if (!esRutaDeVisor) {
+    // Sin intranet no hay entregables que ver: el visor tampoco existe.
+    if (!esRutaDeVisor || !rutaDisponible(request.nextUrl.pathname)) {
       return new NextResponse(null, {
         status: 404,
         headers: { "X-Robots-Tag": "noindex, nofollow", "Cache-Control": "no-store" },
@@ -394,8 +396,45 @@ const GRUPO_AUTH = [
   "/prototipo",
 ];
 
+/* ══════════════════════════════════════════════════════════════════════════
+ * D-166 · Módulos e idiomas apagados
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * **UN MÓDULO APAGADO NO EXISTE, Y SE DICE CON UN 404.** Si la ficha apaga el
+ * blog, la intranet o el inglés, sus rutas responden como cualquier ruta que
+ * nunca existió: no un 403, que confirma que ahí hay algo, ni una página vacía.
+ * La tabla de qué ruta es de qué módulo es `lib/sitio/motor.ts`.
+ *
+ * Las páginas se reescriben a una ruta que no existe, para que Next sirva la
+ * 404 propia (RF-17) con su armazón y sus salidas; los manejadores —`/api/**`,
+ * los `.xml`— reciben un 404 sin cuerpo, que es lo que espera quien los llama.
+ * Va DESPUÉS de la compuerta de staging, como toda la clasificación.
+ */
+const RUTA_INEXISTENTE = "/_apagado";
+
+function moduloApagado(request: NextRequest): NextResponse | null {
+  const { pathname } = request.nextUrl;
+  if (rutaDisponible(pathname)) return null;
+  if (pathname.startsWith("/api/") || pathname.endsWith(".xml")) {
+    return new NextResponse(null, {
+      status: 404,
+      headers: { "X-Robots-Tag": "noindex, nofollow", "Cache-Control": "no-store" },
+    });
+  }
+  const destino = request.nextUrl.clone();
+  destino.pathname = RUTA_INEXISTENTE;
+  const respuesta = NextResponse.rewrite(destino);
+  respuesta.headers.set("Content-Security-Policy", politicaPublica());
+  respuesta.headers.set("X-Robots-Tag", "noindex, nofollow");
+  return respuesta;
+}
+
 function clasificar(request: NextRequest, respuesta: NextResponse): NextResponse {
   const { pathname } = request.nextUrl;
+
+  const apagado = moduloApagado(request);
+  if (apagado) return apagado;
 
   if (pathname === ALTA_PUBLICA || pathname.startsWith(`${ALTA_PUBLICA}/`)) {
     return new NextResponse(null, {

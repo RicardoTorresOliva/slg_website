@@ -81,7 +81,7 @@ documento define esas 18 más **una** que el brief no nombra y que D-22 hace nec
 |---|---|---|
 | Filas de la tabla B.2 | **16** | Filas del cuerpo de la tabla, sin cabecera |
 | Entidades nombradas en B.2 | **18** | 15 filas de una entidad + 1 fila con tres (`account`, `session`, `verification`) |
-| Tablas definidas aquí | **19** | Las 18 de B.2 + `email_delivery` |
+| Tablas definidas aquí | **24** | Las 18 de B.2 + `email_delivery`, + 2 de antiabuso (0010: `free_email_domain`, `rate_limit_hit`), + **3 de la Academy** (0018, FU-15: `news_item`, `milestone`, `action_item`, §5.20–5.22) |
 | Vocabularios enumerados cerrados | **19** | §3. Se aplican a **27 columnas** (varios se reutilizan: el rol, el idioma, el vocabulario de cola, el modo del CRM y la nomenclatura literal) |
 | Valores literales de `project.service` | **11** | Las 11 páginas de servicio de A.2 (D-17) |
 
@@ -334,23 +334,28 @@ actualice, y ese proceso es exactamente lo que falla en silencio.
 
 ### 3.6 Alcances de `api_key.scopes`
 
-**Seis** alcances, granulares y **sin implicación entre ellos** (RF-147: que una clave con
-`events:write` consiga crear un entregable es un defecto de seguridad, no una comodidad). Seis y no
-más: son exactamente los que B.3 y B.5 nombran.
+**Diez** alcances, granulares y **sin implicación entre ellos** (RF-147: que una clave con
+`events:write` consiga crear un entregable es un defecto de seguridad, no una comodidad). Los seis de
+B.3 y B.5, los dos de la Academy (FU-15, RF-153), el del proyecto que nace en el CRM (D-162) y el de la
+empresa que el CRM crea o encuentra por su identificador (D-163).
 
 | Alcance | Qué habilita | Origen |
 |---|---|---|
 | `captures:read` | `GET /api/v1/captures`; ver capturas y su estado en el CRM (solo evidencia) | B.3, B.5, RF-100 |
 | `orgs:read` | `GET /api/v1/organizations` y sus proyectos | B.5, RF-101 |
+| `orgs:write` | `POST /api/v1/organizations` (la empresa que el CRM crea o encuentra por su `crm_company_id`, idempotente). Siempre `type = client`, `status = active`. **No** habilita `orgs:read` ni `projects:write`; una clave acotada a una empresa no crea otras | D-163 |
 | `deliverables:read` | `GET /api/v1/projects/{id}/deliverables` | B.5, RF-103 |
 | `deliverables:write` | `POST /api/v1/deliverables` y su publicación | B.5, RF-102 |
 | `announcements:write` | `POST /api/v1/announcements` | B.5, RF-104 |
 | `events:write` | `POST /api/v1/events` | B.5, RF-105 |
+| `news:write` | `POST /api/v1/organizations/{id}/news` — una noticia con comentario para esa empresa | RF-153 (FU-15) |
+| `milestones:write` | `POST/PATCH` de hitos y pendientes de un proyecto | RF-153 (FU-15) |
+| `projects:write` | `POST /api/v1/organizations/{id}/projects` (la carpeta del cliente que el CRM acaba de abrir, idempotente por `crm_project_id`) · `POST /api/v1/projects/{id}/close` · `/reopen`. **No** habilita `orgs:read` ni crear empresas: leer no implica escribir y las empresas se dan de alta en HQ | D-162 |
 
 `GET /api/v1/openapi.json` responde a **cualquier** clave válida (RF-106) y por eso no consume
 alcance: no es una laguna, es el requisito.
 
-`CHECK api_key_scopes_valid: scopes <@ ARRAY['captures:read','orgs:read','deliverables:read','deliverables:write','announcements:write','events:write']::text[]`
+`CHECK api_key_scopes_valid: scopes <@ '["captures:read","orgs:read","orgs:write","deliverables:read","deliverables:write","announcements:write","events:write","news:write","milestones:write","projects:write"]'::jsonb` (reescrito entero en 0020)
 — el operador de contención hace que un alcance inventado no llegue a guardarse.
 `CHECK api_key_scopes_not_empty: cardinality(scopes) > 0` — una clave sin alcance no puede hacer nada
 y solo sirve para confundir en HQ.
@@ -480,7 +485,7 @@ Once valores, uno por página de servicio de A.2 (D-17), escritos **literales e 
 
 `Phoenix PEEx` · `Phoenix TEAx` · `Phoenix RETx` · `Customize Programs` ·
 `AI Coaching for Directors` · `SLG_Readiness` · `SLG_Implement` · `APP_Building` · `AGE_Building` ·
-`CoO as a Service` · `SLG_Holdings`
+`CoO as a Service` · `Holdings by SLG`
 
 `CHECK project_service_literal: service IN (…los once…)`.
 
@@ -492,6 +497,15 @@ bajo) en un proyecto se rechaza en la inserción, no en la revisión.
 **Coste asumido**: añadir un servicio a la oferta es una migración de una línea más su registro de
 contenido. Es el precio correcto: un servicio nuevo ya exige página, copy bilingüe y documento de
 descarga (A.3, D-17); la migración es lo barato del lote.
+
+**Y el coste tiene una factura que ya llegó**: *renombrar* un servicio es también una migración, y
+la primera vez se olvidó. 0001 escribió la contención con `SLG_Holdings`; el 18-09 la línea pasó a
+llamarse `Holdings by SLG` y se movieron el contenido, las páginas y este documento, pero no la
+base. Durante tres días la lista de HQ ofrecía el nombre bueno, el servidor lo validaba contra la
+colección de contenido y PostgreSQL lo rechazaba en la inserción: el servicio entero era
+inoperante. Lo arregla `0021_vocabulario_de_servicios`, que traduce las filas que hubiera y
+reescribe el `CHECK` completo. La lectura que queda: el `CHECK` solo protege la nomenclatura
+mientras diga lo mismo que la oferta; en cuanto se separan, bloquea a quien la escribe bien.
 
 ---
 
@@ -538,22 +552,35 @@ criterio:
 | `agent_event.api_key_id` | `api_key` | `RESTRICT` | Las claves se **revocan** (`revoked_at`), no se borran (RF-82). La actividad del agente sobrevive a la revocación, que es precisamente cuando más se necesita leerla (R-14). |
 | `agent_event.organization_id` | `organization` | `RESTRICT` | Nulo cuando el evento no es de una empresa. |
 | `email_delivery.organization_id` | `organization` | `RESTRICT` | Nulo en correos que no pertenecen a una empresa. |
+| `news_item.organization_id` | `organization` | `RESTRICT` | Una noticia publicada a un cliente es evidencia de lo que se le dijo (FU-15). |
+| `milestone.project_id` · `action_item.project_id` | `project` | `RESTRICT` | Compromisos de entrega: sobreviven al proyecto igual que un entregable. `organization_id` desnormalizado como en `deliverable` (FU-15). |
 | `audit_log.*` | — | **sin clave foránea** | §2.4. Su inmutabilidad no puede depender de la política de otra tabla. |
 | `deliverable.published_by_*` · `announcement.author_*` | — | **sin clave foránea** | §2.4. |
 
 ### 4.3 Qué pasa exactamente al archivar una empresa
 
-Archivar `organization` es **`UPDATE organization SET status = 'archived'`**. Nada más. En detalle:
+Archivar `organization` es **`UPDATE organization SET status = 'archived'` y cerrar las dos puertas que
+no pasan por la capa de acceso**. Nada se borra. En detalle:
 
 | Qué | Qué le pasa |
 |---|---|
 | `project`, `deliverable`, `announcement` de esa empresa | **Nada.** Siguen ahí, íntegros y legibles desde HQ. Un cliente archivado puede volver, y sus entregables son la prueba de lo que se le entregó. |
 | Acceso de sus miembros al portal | Se deniega en la **capa de acceso** (§6), no borrando filas: la comprobación de sesión rechaza a un usuario cuya organización está `archived` con la misma respuesta que a un usuario sin permiso. |
 | `membership` | Se conserva. Es lo que permite reactivar sin volver a invitar. |
-| `invitation` en estado `pending` de esa empresa | Pasan a `canceled` en la misma transacción. Razón: una invitación vigente a una empresa archivada es una puerta abierta a un sitio cerrado (RF-60). |
-| `api_key` con `organization_id` de esa empresa | Se revocan (`revoked_at`) en la misma transacción, por la misma razón (R-14). |
+| `invitation` en estado `pending` de esa empresa | Pasan a `canceled` en la misma transacción, con `revoked_at` y **sin `token_hash`**. Razón: una invitación vigente a una empresa archivada es una puerta abierta a un sitio cerrado (RF-60). La condición es el estado de la fila, no la caducidad: una `pending` ya caducada también se cancela. |
+| `api_key` con `organization_id` de esa empresa | Se revocan (`revoked_at`) en la misma transacción, por la misma razón (R-14). Solo las que **ya estaban vivas**: una revocada antes conserva su fecha. Las claves **sin** `organization_id` —las de SLG— no se tocan: archivar un cliente no apaga la integración de la casa. |
 | `lead_capture` | **No se toca y no tiene relación con la empresa**: una captura es una persona que descargó un documento, no un cliente. Esa ausencia de relación es deliberada (frontera (a) de `scope.md`). |
-| `audit_log` | Recibe una fila del archivado, como cualquier otra escritura. |
+| `audit_log` | Recibe la fila del archivado (`org.archive`) **y una por cada cosa cerrada**: `invitation.revoke` por invitación y `apikey.revoke` por clave, las mismas acciones que apunta una revocación a mano. Así el histórico de una invitación se lee entero en un solo sitio. |
+
+**«En la misma transacción» es literal**: las tres escrituras van en un único `withScope`. Tres
+transacciones separadas dejarían, el día que fallara la segunda, una empresa archivada con sus claves
+vivas — el mismo agujero, pero intermitente.
+
+**Reactivar NO deshace el cierre.** `UPDATE organization SET status = 'active'` devuelve la empresa y a
+sus miembros, porque `membership` se conservó; las invitaciones canceladas y las claves revocadas se
+quedan como están. Es una puerta que se cerró, no una que se entornó: quien vuelva a hacer falta se
+invita otra vez, y la clave se crea de nuevo declarando alcances y caducidad. Resucitarlas en silencio
+sería conceder, meses después, un acceso que nadie recuerda haber dado.
 
 **Y si alguien intenta `DELETE FROM organization`**: falla por `RESTRICT` en la primera fila hija. Ese
 fallo ruidoso es el objetivo del diseño, no un efecto secundario: convierte un error irreversible en un
@@ -690,7 +717,7 @@ Better Auth núcleo. Verificación de correo y recuperación de contraseña (RF-
 
 ### 5.5 `organization` — empresa
 
-Plugin `organization` + cuatro columnas nuestras.
+Plugin `organization` + cinco columnas nuestras.
 
 | Columna | Tipo SQL | Nulo | Defecto | Propósito |
 |---|---|---|---|---|
@@ -702,6 +729,7 @@ Plugin `organization` + cuatro columnas nuestras.
 | `type` | `text` | NO | `'client'` | **Nuestro.** `client` · `slg` (§3.2) |
 | `status` | `text` | NO | `'active'` | **Nuestro.** `active` · `archived` (§3.3) |
 | `primary_contact_user_id` | `text` | SÍ | `NULL` | **Nuestro.** `FK → user.id`. Contacto principal (B.2) |
+| `crm_company_id` | `text` | SÍ | `NULL` | **Nuestro. Identificador de la empresa en el CRM** (D-163): es lo que relaciona la empresa de aquí con la del CRM y lo que permite al CRM crear aquí sus proyectos (`POST /api/v1/organizations`, y con el `id` recibido, §5.13). Se pone al crear la empresa en HQ o lo pone el CRM. Nulo en las anteriores. **Aquí no entra nada comercial** —ni etapa, ni importe, ni propietario comercial—: la frontera (a) de `scope.md` no se mueve |
 | `created_at` | `timestamptz` | NO | `now()` | — |
 | `updated_at` | `timestamptz` | NO | `now()` | **Nuestro** |
 
@@ -710,6 +738,7 @@ Plugin `organization` + cuatro columnas nuestras.
 | Nombre | Definición | Por qué |
 |---|---|---|
 | `organization_slug_unique` | `UNIQUE (slug)` | El slug aparece en rutas de HQ |
+| `uq_organization_crm_id` | `UNIQUE (crm_company_id) WHERE crm_company_id IS NOT NULL` (0020) | La misma empresa del CRM no entra dos veces, y eso es lo que hace seguro reintentar la creación. Parcial porque las anteriores no lo tienen y varios `NULL` no colisionan |
 | `organization_type_valid` | `CHECK (type IN ('client','slg'))` | §3.2 |
 | `organization_status_valid` | `CHECK (status IN ('active','archived'))` | §3.3 |
 | `organization_id_type_unique` | `UNIQUE (id, type)` | **Redundante a propósito**: es el destino de la clave foránea compuesta de `membership` (§5.6). Sin ella, la denormalización que hace cumplir RF-144 no sería verificable por la base de datos |
@@ -898,7 +927,8 @@ La tabla más sensible del esquema, y la más fácil de estropear. **Es evidenci
 | `id` | `text` | NO | — | `PK` |
 | `email` | `text` | NO | — | Correo del visitante. Corporativo obligatorio (RF-31) |
 | `email_domain` | `text` | NO | `GENERATED ALWAYS AS (split_part(lower(email),'@',2)) STORED` | Dominio. **Columna generada**: no puede desalinearse del correo, que es lo que pasa cuando se calcula en la aplicación |
-| `name` | `text` | SÍ | `NULL` | Nombre declarado |
+| `name` | `text` | SÍ | `NULL` | Nombre declarado (**solo el nombre**; el apellido va en `last_name`). Obligatorio en los formularios públicos |
+| `last_name` | `text` | SÍ | `NULL` | Apellido declarado. Obligatorio en los formularios públicos; `NULL` solo en capturas anteriores a la migración `0017`. Se pide aparte porque el CRM exige nombre y apellido por separado, y partir un texto libre falla con los nombres compuestos |
 | `company` | `text` | SÍ | `NULL` | Empresa **como texto libre**: el visitante no es todavía una `organization` |
 | `job_title` | `text` | SÍ | `NULL` | Cargo. B.2 lo llama `role`; se renombra para no confundirlo con `user.role`, que es autorización |
 | `source` | `text` | NO | — | `download` · `contact` · `doctrine-request` (§3.7) |
@@ -942,7 +972,7 @@ Responsabilidad de C.6).
 |---|---|---|
 | `lead_capture_source_valid` | `CHECK (source IN ('download','contact','doctrine-request'))` | §3.7 |
 | `lead_capture_locale_valid` | `CHECK (locale IN ('es','en'))` | Dos idiomas |
-| `lead_capture_sync_status_valid` | `CHECK (crm_sync_status IN ('pending','delivered','failed'))` | §3.8 |
+| `lead_capture_sync_status_valid` | `CHECK (crm_sync_status IN ('pending','delivered','failed','notified','notify_failed'))` — los dos últimos desde 0025: el aviso por correo de un sitio sin CRM | §3.8 |
 | `lead_capture_mode_valid` | `CHECK (crm_mode IS NULL OR crm_mode IN ('contact_note','lead_admission'))` | §3.8 |
 | `lead_capture_download_required` | `CHECK ((source = 'download') = (download_id IS NOT NULL))` | Una captura de descarga sin documento no es evidencia de nada; una de contacto con documento es un dato inventado |
 | `lead_capture_delivered_coherent` | `CHECK (crm_sync_status <> 'delivered' OR (crm_contact_id IS NOT NULL AND crm_mode IS NOT NULL AND crm_delivered_at IS NOT NULL))` | «Entregada» sin identificador de contacto es una mentira que se descubre meses después |
@@ -1085,6 +1115,7 @@ la señal temprana de R-04 y R-07 («el CRM está devolviendo 403 en empresas y 
 | `owner_user_id` | `text` | NO | — | `FK → user.id`. Responsable. **Ancla del permiso «asignados» de `slg_operator`** (B.3) |
 | `starts_at` | `date` | SÍ | `NULL` | Fecha de inicio (B.2) |
 | `ends_at` | `date` | SÍ | `NULL` | Fecha de fin prevista |
+| `crm_project_id` | `text` | SÍ | `NULL` | **Identificador del proyecto en el CRM** (D-162): el CRM es donde nace un proyecto y este sitio lo recibe por `POST /api/v1/organizations/{id}/projects`. Nulo en los anteriores. **Aquí no entra nada comercial** —ni etapa, ni importe, ni propietario comercial—: la frontera (a) de `scope.md` no se mueve. Índice único parcial `uq_project_crm_id … WHERE crm_project_id IS NOT NULL` (0019): el mismo proyecto del CRM no entra dos veces, y eso es lo que hace seguro reintentar la creación |
 | `created_at` · `updated_at` | `timestamptz` | NO | `now()` | — |
 
 `starts_at` y `ends_at` son `date`, no `timestamptz`: son fechas de calendario acordadas con un
@@ -1394,6 +1425,74 @@ por tanto, **su propia evidencia en Postgres**, con la misma forma que `webhook_
 > afirme que el remitente es exactamente `support@softlandingglobal.com` —incluidos RF-117 y §5.1 del
 > brief— está desactualizado respecto a D-24; `support@` sigue siendo el **destinatario** de los avisos
 > y, previsiblemente, el `Reply-To`.
+
+---
+
+### 5.20 `news_item` — noticia con comentario para una empresa (FU-15)
+
+| Columna | Tipo SQL | Nulo | Defecto | Propósito |
+|---|---|---|---|---|
+| `id` | `text` | NO | — | `PK` |
+| `organization_id` | `text` | NO | — | `FK → organization.id`. La noticia es **de una empresa**: el comentario es el producto (RF-150) |
+| `title` | `text` | NO | — | Título |
+| `source_url` | `text` | SÍ | `NULL` | De dónde sale la noticia |
+| `summary_md` | `text` | NO | — | La noticia, en Markdown. Se sanea al renderizar (RNF-31) |
+| `comment_md` | `text` | NO | — | **Qué significa para esta empresa.** Lo escribe un agente o SLG |
+| `importance` | `integer` | NO | `2` | 1–3, 1 = más importante. **Editorial** (D-161), nunca calculada |
+| `published_at` | `timestamptz` | SÍ | `NULL` | Nulo = borrador |
+| `author_type` · `author_id` · `author_label` | `text` | SÍ | `NULL` | Actor polimórfico (§2.4) |
+| `created_at` | `timestamptz` | NO | `now()` | — |
+
+**Restricciones**: `news_item_importance_valid CHECK (importance BETWEEN 1 AND 3)` ·
+`news_item_published_needs_author CHECK ((published_at IS NULL) = (author_id IS NULL))`.
+
+| Índice | Definición | Consulta que sirve |
+|---|---|---|
+| `idx_news_item_portal` | `(organization_id, importance, published_at DESC) WHERE published_at IS NOT NULL` | «Hoy» (RF-149): las de mi empresa, primero las importantes |
+
+### 5.21 `milestone` — hito de entrega de un proyecto (FU-15)
+
+| Columna | Tipo SQL | Nulo | Defecto | Propósito |
+|---|---|---|---|---|
+| `id` | `text` | NO | — | `PK` |
+| `project_id` | `text` | NO | — | `FK → project.id` |
+| `organization_id` | `text` | NO | — | `FK → organization.id`, desnormalizado como en `deliverable` para la política de fila |
+| `title` | `text` | NO | — | Qué se entrega |
+| `due_at` | `timestamptz` | NO | — | Cuándo |
+| `status` | `text` | NO | `'pending'` | `pending` · `done` |
+| `position` | `integer` | NO | `0` | Orden dentro del proyecto |
+| `done_at` | `timestamptz` | SÍ | `NULL` | — |
+| `created_at` · `updated_at` | `timestamptz` | NO | `now()` | — |
+
+**Restricciones**: `milestone_status_valid` · `milestone_done_has_date CHECK ((status = 'done') = (done_at IS NOT NULL))`.
+**Lo que no lleva, a propósito**: porcentaje, participante, calificación. Frontera (b).
+
+| Índice | Definición | Consulta que sirve |
+|---|---|---|
+| `idx_milestone_project` | `(project_id, position)` | «Programa» (RF-151) |
+| `idx_milestone_next` | `(organization_id, due_at) WHERE status = 'pending'` | «Próximo hito» en «Hoy» (RF-149) |
+
+### 5.22 `action_item` — obligación pendiente de un proyecto (FU-15)
+
+| Columna | Tipo SQL | Nulo | Defecto | Propósito |
+|---|---|---|---|---|
+| `id` | `text` | NO | — | `PK` |
+| `project_id` · `organization_id` | `text` | NO | — | Como en `milestone` |
+| `title` | `text` | NO | — | Qué hay que hacer |
+| `due_at` | `timestamptz` | SÍ | `NULL` | Para cuándo |
+| `status` | `text` | NO | `'open'` | `open` · `done` |
+| `closes_by` | `text` | NO | `'client'` | **Quién puede cerrarlo**: `client` · `slg`. El cliente solo cierra los suyos (RF-151), y se decide aquí, no en la pantalla |
+| `done_at` | `timestamptz` | SÍ | `NULL` | — |
+| `done_by_type` · `done_by_id` · `done_by_label` | `text` | SÍ | `NULL` | Quién lo cerró: actor polimórfico (§2.4) |
+| `created_at` · `updated_at` | `timestamptz` | NO | `now()` | — |
+
+**Restricciones**: `action_item_status_valid` · `action_item_closes_by_valid` ·
+`action_item_done_is_complete CHECK ((status = 'done') = (done_at IS NOT NULL AND done_by_id IS NOT NULL))`.
+
+| Índice | Definición | Consulta que sirve |
+|---|---|---|
+| `idx_action_item_project` | `(project_id, status)` | «Programa» |
+| `idx_action_item_open` | `(organization_id, due_at) WHERE status = 'open'` | «Pendientes abiertos» en «Hoy» |
 
 ---
 
@@ -1994,5 +2093,9 @@ registran juntas, con su razón y su coste asumido, antes de escribir la primera
   (`agent_event.kind`, RF-146).
   Cierra **RNF-25**. Deja **7 huecos declarados** (§11.1) y **5 decisiones** pendientes de registro en
   `docs/decision_log.md` (§11.2).
+- `2026-09-18` — **FU-15 (Academy, D-160)**: tres tablas (§5.20–5.22), dos alcances (§3.6), tres
+  claves foráneas (§4.2). Migración `0018_academy.sql` con la **misma política de fila** de 0015 y
+  `GRANT` explícito al rol de aplicación. El conteo de §1.1 pasa a **24**, y reconoce de paso las dos
+  tablas de antiabuso de 0010 que este documento no había contado.
 - `2026-09-08` — **D-45** cierra la discrepancia del §3.10 (CF-4): el **origen separado** del visor de
   `type = 'html'` es **normativo**, como este documento ya lo daba. El esquema no cambia.

@@ -357,9 +357,14 @@ export type EstadoDeTestigo =
  * El mensaje público de un testigo inválido es SIEMPRE el mismo, no importa si
  * no existió, si caducó, si ya se usó o si lo revocaron (criterio 1). Distinguir
  * los cuatro casos le dice a quien prueba enlaces cuáles existieron.
+ *
+ * **LO QUE VIAJA ES LA CLAVE DE `content/ui`, NO EL PÁRRAFO** (RF-16). Escrito
+ * aquí, el mensaje existía en un solo idioma y llevaba el nombre de la casa
+ * dentro de `lib/`, donde la piel del sitio no llega. Quien lo enseñe resuelve
+ * el idioma que corresponda —la pantalla de invitación ya lo hacía con esta
+ * misma clave—, y así el texto se cambia donde se cambian todos los textos.
  */
-export const MENSAJE_DE_TESTIGO_INVALIDO =
-  "Este enlace no es válido. Solicita una invitación nueva a tu contacto en SLG.";
+export const CLAVE_DE_TESTIGO_INVALIDO = "auth.invitation.invalid";
 
 export async function consultarTestigo(enClaro: string): Promise<EstadoDeTestigo> {
   const hash = hashDeTestigo(enClaro);
@@ -402,7 +407,16 @@ export async function consultarTestigo(enClaro: string): Promise<EstadoDeTestigo
 
 export type ResultadoDeAceptacion =
   | { readonly aceptada: true; readonly organizationId: string; readonly role: UserRole }
-  | { readonly aceptada: false; readonly mensaje: string; readonly motivoInterno: string };
+  | {
+      readonly aceptada: false;
+      /**
+       * La clave de `content/ui` del texto público, no el texto. Se llamaba
+       * `mensaje` y contenía el párrafo ya escrito: quien lo enseñara lo
+       * enseñaba en castellano aunque la cuenta tuviera el inglés.
+       */
+      readonly claveDeMensaje: string;
+      readonly motivoInterno: string;
+    };
 
 /**
  * Canjea el testigo para una cuenta ya autenticada, por cualquiera de los tres
@@ -427,7 +441,7 @@ export async function aceptarInvitacion(entrada: {
   if (!estado.valido) {
     return {
       aceptada: false,
-      mensaje: MENSAJE_DE_TESTIGO_INVALIDO,
+      claveDeMensaje: CLAVE_DE_TESTIGO_INVALIDO,
       motivoInterno: estado.motivoInterno,
     };
   }
@@ -440,7 +454,7 @@ export async function aceptarInvitacion(entrada: {
     if (verificado !== esperado) {
       return {
         aceptada: false,
-        mensaje: MENSAJE_DE_TESTIGO_INVALIDO,
+        claveDeMensaje: CLAVE_DE_TESTIGO_INVALIDO,
         motivoInterno: "el correo verificado del proveedor no es el de la invitación",
       };
     }
@@ -450,7 +464,7 @@ export async function aceptarInvitacion(entrada: {
     if (!declarado || declarado !== esperado) {
       return {
         aceptada: false,
-        mensaje: MENSAJE_DE_TESTIGO_INVALIDO,
+        claveDeMensaje: CLAVE_DE_TESTIGO_INVALIDO,
         motivoInterno:
           "el proveedor no entregó correo verificable y no hubo coincidencia explícita (RF-63, R-22)",
       };
@@ -469,7 +483,7 @@ export async function aceptarInvitacion(entrada: {
     // canjeó el mismo enlace entre la consulta y el canje. Un solo uso, real.
     return {
       aceptada: false,
-      mensaje: MENSAJE_DE_TESTIGO_INVALIDO,
+      claveDeMensaje: CLAVE_DE_TESTIGO_INVALIDO,
       motivoInterno: "carrera perdida: la invitación se canjeó entre la consulta y el canje",
     };
   }

@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 /**
  * Tabla y ficha del octavo componente de C.5 — la parte que sobrevivió.
@@ -22,7 +22,12 @@ export function TablaDeApp({
   etiqueta,
 }: {
   columnas: readonly string[];
-  filas: readonly (readonly string[])[];
+  /**
+   * Una celda es texto casi siempre; desde DU-29 puede ser un nodo, porque la
+   * lista de proyectos enlaza cada nombre a su ficha. El texto sigue valiendo
+   * tal cual: ampliar el tipo no cambia ninguna llamada existente.
+   */
+  filas: readonly (readonly ReactNode[])[];
   etiqueta: string;
 }) {
   return (

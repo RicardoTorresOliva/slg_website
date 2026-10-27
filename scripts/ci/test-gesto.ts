@@ -33,6 +33,8 @@ import fs from "node:fs";
 import net from "node:net";
 import path from "node:path";
 
+import { rutaDisponible } from "../../lib/sitio/motor.ts";
+
 import { chromium, type Browser, type Page } from "playwright";
 
 import { rubberBand } from "../../lib/design/motion.ts";
@@ -96,9 +98,9 @@ async function puertoLibre(): Promise<number> {
  * verdad, prerrenderizada y servida como la verá un visitante: el criterio 4 de
  * DU-02 pide las cuatro cláusulas «en producción», y un componente que se porta
  * bien en su prototipo y mal en la página real es exactamente el fallo que ese
- * criterio existe para atrapar.
+ * criterio existe para atrapar. Sin el módulo de doctrina, queda el prototipo.
  */
-const PAGINAS = ["/prototipo", "/doctrina"];
+const PAGINAS = ["/prototipo", "/doctrina"].filter(rutaDisponible);
 
 async function arrancarServidor(): Promise<{ url: string; parar: () => void }> {
   const port = await puertoLibre();

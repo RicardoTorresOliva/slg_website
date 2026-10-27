@@ -2,13 +2,16 @@ import Link from "next/link";
 
 import en from "@/content/ui/error.en.json";
 import es from "@/content/ui/error.es.json";
+import type { SalidaDeError } from "@/lib/content/rutas";
 
 /**
  * 404 y 500 — **propias, bilingües y con navegación de vuelta** (RF-17).
  *
- * Las tres salidas son las que `ui_wireframes` fija: Home, `/ai` y `/blog`. Un
- * error sin salidas deja al visitante con el botón «atrás» como única opción, y
- * el botón «atrás» lo devuelve a la página rota.
+ * Las tres salidas son las que `ui_wireframes` fija: la portada, la oferta y el
+ * blog. Un error sin salidas deja al visitante con el botón «atrás» como única
+ * opción, y el botón «atrás» lo devuelve a la página rota. **Las rutas llegan
+ * por props** (`salidasDeError()`, de la ficha del sitio): este componente lo
+ * pinta también la 500, que es de cliente, y la ficha no viaja al navegador.
  *
  * **El idioma se decide por la RUTA** cuando existe; si no se puede saber —un
  * 404 profundo no siempre la trae—, el español es el defecto, porque es el que
@@ -30,12 +33,13 @@ import es from "@/content/ui/error.es.json";
 export function PaginaDeError({
   codigo,
   lang = "es",
+  salidas: destinos,
 }: {
   codigo: "404" | "500";
   lang?: "es" | "en";
+  salidas: readonly SalidaDeError[];
 }) {
   const t: Record<string, string> = lang === "en" ? en : es;
-  const base = lang === "en" ? "/en" : "";
 
   return (
     <div style={contenedor} lang={lang}>
@@ -43,21 +47,13 @@ export function PaginaDeError({
       <h1 style={titulo}>{t[`error.${codigo}.title`]}</h1>
       <p style={texto}>{t[`error.${codigo}.body`]}</p>
       <ul style={salidas}>
-        <li>
-          <Link href={base || "/"} style={enlace}>
-            {t["error.home"]}
-          </Link>
-        </li>
-        <li>
-          <Link href={`${base}/ai`} style={enlace}>
-            {t["error.ai"]}
-          </Link>
-        </li>
-        <li>
-          <Link href={`${base}/blog`} style={enlace}>
-            {t["error.blog"]}
-          </Link>
-        </li>
+        {destinos.map((d) => (
+          <li key={d.clave}>
+            <Link href={d.href} style={enlace}>
+              {t[d.clave]}
+            </Link>
+          </li>
+        ))}
       </ul>
     </div>
   );

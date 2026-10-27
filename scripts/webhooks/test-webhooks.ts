@@ -35,6 +35,7 @@ import http from "node:http";
 
 import postgres from "postgres";
 
+import { NOMBRE_DEL_CAMPO_TRAMPA } from "../../lib/antiabuso/index.ts";
 import { CABECERA_EVENTO, CABECERA_FIRMA, CABECERA_MARCA, firmaValida } from "../../lib/webhooks/firma.ts";
 
 let fallos = 0;
@@ -272,7 +273,7 @@ async function main() {
 
     /* ── Criterio 5 · el payload de post.published ──────────────────────── */
     console.log("\nCriterio 5 — `post.published` se puede publicar sin leer de vuelta el repositorio:\n");
-    process.env.NEXT_PUBLIC_SITE_URL = "https://softlandingglobal.com";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://demo.example.com";
     const { urlDelArticulo } = await import("../../lib/webhooks/index.ts");
     const { articulos } = await import("../../lib/content/blog.ts");
     const muestra = articulos("es")[0];
@@ -296,7 +297,7 @@ async function main() {
       };
       check(
         "lleva el ENLACE CANÓNICO en su idioma, no un identificador",
-        datos.url === `https://softlandingglobal.com/blog/${muestra.slug}`,
+        datos.url === `https://demo.example.com/blog/${muestra.slug}`,
         String(datos.url),
       );
       check(
@@ -307,8 +308,8 @@ async function main() {
       check("lleva las etiquetas del artículo", Array.isArray(datos.tags) && datos.tags.length > 0);
       check(
         "el enlace del inglés apunta a /en/blog/, no al español",
-        urlDelArticulo("en", "silent-authority") === "https://softlandingglobal.com/en/blog/silent-authority",
-        urlDelArticulo("en", "silent-authority"),
+        urlDelArticulo("en", "un-articulo") === "https://demo.example.com/en/blog/un-articulo",
+        urlDelArticulo("en", "un-articulo"),
       );
     }
 
@@ -347,6 +348,11 @@ async function main() {
     const formulario = (email: string) => {
       const f = new FormData();
       f.set("email", email);
+      // La trampa VACÍA: esto imita lo que llega de un formulario del sitio, y
+      // un navegador real la manda siempre, porque la página la pinta. Desde
+      // D-164 su ausencia descarta el envío (RF-33), así que un fixture sin
+      // ella no probaría el cableado de eventos: no llegaría a haberlo.
+      f.set(NOMBRE_DEL_CAMPO_TRAMPA, "");
       return f;
     };
 
@@ -358,12 +364,16 @@ async function main() {
         titulo: "Documento con archivo",
         audiencia: "prueba",
         aprende: [],
-        estado: "available",
+        // `published`, el único valor con el que el servicio emite la firma (el 17-09
+        // se unificó `available` → `published` en cinco componentes; este fixture no).
+        estado: "published",
         claveDeArchivo: "du12/con-archivo.pdf",
       },
       origen: "download",
       datos: formulario("director@du12-cableado.test"),
       email: "director@du12-cableado.test",
+      nombre: "Director",
+      apellido: "Cableado",
       pagina: "/descargas/du12",
       locale: "es",
     });
@@ -375,11 +385,13 @@ async function main() {
         titulo: "Documento sin archivo",
         audiencia: "prueba",
         aprende: [],
-        estado: "coming_soon",
+        estado: "coming-soon",
       },
       origen: "download",
       datos: formulario("otra@du12-cableado.test"),
       email: "otra@du12-cableado.test",
+      nombre: "Otra",
+      apellido: "Cableado",
       pagina: "/descargas/du12",
       locale: "es",
     });
@@ -389,6 +401,8 @@ async function main() {
       origen: "contact",
       datos: formulario("tercera@du12-cableado.test"),
       email: "tercera@du12-cableado.test",
+      nombre: "Tercera",
+      apellido: "Cableado",
       mensaje: "un mensaje de prueba",
       pagina: "/contacto",
       locale: "es",

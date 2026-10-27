@@ -2751,3 +2751,1497 @@ de UptimeRobot. Todo del 10 de septiembre y confirmado por Ricardo en su momento
 **El riesgo que queda, dicho antes de que muerda:** las variables de entorno de Easypanel se
 configuraron para la **otra** línea de código, y los nombres no coinciden con los de esta. La página
 `/api/ops?token=…` los diagnostica uno a uno —pero para que exista hay que poner `OPS_TOKEN` primero.
+
+---
+
+## Los documentos hablan inglés; el correo y el CRM esperan dos credenciales (2026-09-17, madrugada)
+
+**Traducción.** Cuatro agentes en paralelo (D-01/02 · D-03/04/05 · D-06/07/08 · D-09/10/11)
+contra `_BRIEF_TRADUCCION.md`. Los once `-en.md` salen `ok` en `_revisar.py` con el mismo número de
+tablas y de citas que el original, y una extensión entre −2 % y +3 %. Tres decisiones de los agentes
+que conviene conocer: los artículos del blog sin versión inglesa se sustituyeron por la doctrina o por
+*Silent Authority*, los únicos enlaces válidos; «coste por tarea exitosa» quedó como *cost per
+successful task*; y **la ficha EN de D-03 estaba desfasada** (describía el RETx antiguo, el de
+implementaciones fallidas), así que el documento lleva el título aprobado y la ficha se corrigió.
+
+**Cadena de publicación.** La plantilla Typst tenía `lang: "es"` fijo: ahora lo toma del
+frontmatter, y `_a-pdf.sh` limpia también `[source: …]`. Once PDF nuevos, subidos al bucket
+`downloads` con `montar/subir.mjs` —el script que la memoria citaba y no existía—. Las once fichas
+EN pasan a `published` con su `file_key`; `check:content` en verde. Commit `22aa6ef`.
+
+**Lo que no se pudo hacer desde el agente, y por qué.** El modo auto bloqueó (a) leer credenciales
+fuera del repo, (b) escribir un script que despliegue con ellas y (c) `vercel deploy --prod`. No es
+un fallo del código: es el freno del propio agente. El comando de despliegue y los tres archivos de
+variables (`ops/web.env`, `ops/secretos.env`, más el de Supabase) quedan listos para Ricardo.
+
+**Una nota falsa corregida.** La memoria decía que el `.env` local tenía las credenciales de Resend.
+Tiene valores de prueba (`pruebas`, dominio `.test`), y producción los lleva también: por eso la
+sonda acusaba solo `MAIL_SMTP_HOST` y `OPS_MAIL_TO`. La clave real de Resend hay que crearla
+(§4bis.2) o copiarla de Easypanel. Las dos del CRM se crean en su interfaz (§4septies.1): el MCP del
+CRM no gestiona claves.
+
+**Continuación (21:00–21:15).** Ricardo creó las tres credenciales y desplegó dos veces desde su
+terminal. El primer despliegue dejó `/api/health` limpio pero la descarga devolvía `error_de_firma`:
+el filtro de nombres del comando (`[A-Z_]`) no dejaba pasar `S3_BUCKET_DOWNLOADS`, con dígito, y sin
+bucket no hay firma. Corregido a `[A-Z0-9_]`; el segundo despliegue entrega el PDF en inglés
+(`/en/thank-you` con la URL firmada). SMTP de Resend autenticado sin enviar nada. **Queda por ver el
+lead en el CRM**: el barrendero es un `setInterval` pensado para el VPS y en Vercel solo corre
+mientras hay peticiones; si no aparece, la salida es `after()` tras cada captura (decisión pendiente).
+
+
+---
+
+## La cola se vacía por acontecimientos; banderas junto al logo; logo en el pie (2026-09-17, noche)
+
+**El CRM seguía vacío con las claves bien puestas.** Causa: el barrendero es un `setInterval` en el
+proceso, y en Vercel el proceso solo vive mientras atiende una petición. Ricardo pidió la solución
+arquitectónicamente superior aunque hubiera que retroceder, porque este sitio se va a replicar.
+
+**Decisión: la cola se vacía por acontecimientos, no por reloj** (`lib/colas/barrer.ts`). Tras cada
+captura, el manejador barre una vez **después de responder** con `after()` de Next —el visitante
+sigue sin esperar al CRM, criterio 1 de DU-09—; cada visita de la sonda `/api/health` recoge los
+reintentos vencidos, también después de responder y con un freno de 30 s; y `/api/colas` con
+`CRON_SECRET` queda como gancho para un planificador donde se quiera cadencia garantizada. El
+`setInterval` del VPS sigue: es un acontecimiento más. Coincidir es seguro porque los barrenderos
+reclaman con `FOR UPDATE SKIP LOCKED`. La sonda no cambia su respuesta: sigue siendo tonta.
+Documentado en `docs/deployment.md` §4septies.4 y en `.env.example`.
+
+**Banderas.** El conmutador de idioma pasa de un enlace de texto al final del menú a dos banderas
+(España, Estados Unidos) pegadas al logo, en escritorio y en móvil, fuera del sheet. SVG en línea,
+cero peticiones. Sigue siendo el único enlace con `hreflang` de la página y sigue dibujándose
+desactivado cuando no hay pareja, que es lo que `check:armazon` mide. Nombres de idioma desde
+`content/ui` (`nav.langName`, `nav.langCurrent`); `check:cadenas` vigila también `Banderas.tsx`.
+
+**Pie.** El logotipo horizontal con lema de Softlanding Global (WebP, 35 KB, desde
+`SLG_Overhauling/Logos/SLG-Horizontal-Tagline-2023.png`) firma el pie por decisión de Ricardo. La
+barra conserva el isotipo con la marca pública «SLG Agency» (§10-4).
+
+**Verificado:** lint, `check:types`, `check:cadenas`, `check:env`, `check:content`, `check:secrets`,
+`check:alcance`, `check:archivos`, `check:fronteras`, compilación `standalone` y `check:armazon`
+contra el servidor real.
+
+
+**El CRM seguía vacío tras el rediseño de la cola: el contrato de la API no era el que el código
+suponía.** El adaptador se había escrito contra un doble complaciente (`name`, `company`, `source`,
+`contact_id`, búsqueda por `?email=`); el CRM real exige `firstName`/`lastName`, rechaza claves
+desconocidas, busca por `?q=` y envuelve todo en `{ data }`. Se vio ejecutando el adaptador desde
+local contra el CRM real: `400 validation_error`. Reescrito `lib/crm/contact-note.ts` al contrato
+real y **el doble de `test:crm` ahora rechaza lo mismo que el CRM**, para que no vuelva a pasar.
+Verificado contra el CRM real: contacto `prueba.captura` creado con su nota. Lección registrada:
+un doble que acepta lo que le mandan no prueba nada; el contrato se lee del proveedor.
+
+
+**Cierre (22:10).** Desplegado `66ub5svqp`. Captura desde la web → traza `[colas] barrido tras-captura`
+en los logs de Vercel → dos notas nuevas en el contacto del CRM (la captura y una pendiente arrastrada).
+Lección operativa: el despliegue anterior «hecho» no existía en `vercel ls --prod`; desde ahora se
+comprueba antes de probar. Propuesta pendiente: variables en el proyecto de Vercel y despliegue por
+`git push`, en vez de viajar en cada comando.
+
+
+---
+
+## Variables en Vercel, Nosotros reescrito, contrato del blog; dos encargos interrumpidos (2026-09-18, madrugada)
+
+Las 26 variables del despliegue viven ahora en el proyecto de Vercel (Production); Preview quedó
+vacío y hay que repetir la carga. Nosotros/About abren con el Cliente Cero y la estructura de CoO
+(Company of One). `docs/blog-editor.md` fija cómo entra un artículo del Editor (Hermes) y cómo sale a
+redes con lo que la web ya tiene (`post.published` firmado → n8n). Dos agentes empezaron los
+formularios con apellido y la página «Empieza aquí» en worktrees aislados y se detuvieron por el
+límite de uso de la API; el trabajo parcial está en sus ramas y los briefs en
+`SLG_Overhauling/docs/_BRIEF_FORMULARIOS.md` y `_BRIEF_EMPIEZA_AQUI.md`.
+
+---
+
+## Los programas Phoenix como descarga y los documentos de Academy como artículos (2026-09-18, mañana)
+
+**Corrección de origen.** Los PDF de la familia Phoenix salen de `SLG_Overhauling/docs/phoenix/`
+(los programas PEEx, TEAx y RETx, versiones Alta Dirección, Gerencial y Researchers, en español), no
+de los documentos escritos en `docs/pdf/`. Subidos al bucket como `Programa-Phoenix-*.pdf`; las seis
+fichas de D-01, D-02 y D-03 (ES y EN) describen ahora el programa que entregan. Las fichas EN avisan
+de que el folleto está en español.
+
+**Los tres documentos de Academy pasan al blog**, en español e inglés, emparejados: seis artículos
+publicados con sus extractos para redes. Para que se lean enteros, el renderizador de Markdown
+—propio, sin librería, sin HTML— aprende **lista numerada, cita en bloque y tabla**; el troceado en
+bloques vive en `markdown-seguro.ts` y se prueba sin navegador (un `<script>` en una celda sigue
+siendo texto). Frenos: `check:content`, `lint`, `check:types`, `build:standalone`, `check:blog` (51),
+`check:js-budget`, `test-entregables` (48).
+## Los formularios públicos piden nombre, apellido y correo corporativo (2026-09-18, madrugada)
+
+**Encargo.** Todos los formularios públicos —descarga, contacto y solicitud de Doctrina— piden
+**nombre, apellido y correo corporativo, los tres obligatorios**. Hasta ahora la descarga pedía solo
+el correo y el contacto un «nombre» opcional en texto libre; el CRM exige nombre y apellido por
+separado al crear el contacto, y el adaptador los inventaba partiendo el texto por el primer espacio
+o, sin nada, con la parte local del correo y el dominio entre paréntesis. Lo retomó un segundo agente
+sobre el trabajo sin confirmar del primero (modelo, servicio, rutas, formularios, CRM y HQ) y lo cerró
+por las pruebas y la verificación.
+
+**Modelo.** Columna `last_name` en `lead_capture` (migración `0017_apellido_en_la_captura`, en el
+journal y en `lib/db/schema.ts`). Es una columna y no un corte de `name` porque «Ana María Ruiz» y
+«Juan Pérez de la Cruz» se parten mal en los dos sentidos. `name` pasa a significar **solo el
+nombre**. Nullable: las capturas anteriores no lo traen. `data_model` §5.9 lo recoge.
+
+**Servicio.** `registrarCaptura` recibe `nombre` y `apellido`; si falta cualquiera, veredicto nuevo
+`datos_incompletos` (`Veredicto`, en `lib/antiabuso/service.ts`), que las dos rutas responden como
+los demás motivos: `303` a la misma página con `?error=datos_incompletos`. La comprobación va
+**después** de las tres capas de FU-11 a propósito: la trampa sigue respondiendo como la trampa, y
+un bot con la trampa rellena no recibe ninguna pista de qué campo le faltó. El `required` del HTML es
+cortesía; la comprobación que vale es la del servidor, y `test:descargas` lo prueba sin el HTML.
+
+**Formularios.** Nombre, Apellido, Correo corporativo, en ese orden, `required`, `autoComplete`
+`given-name` / `family-name` / `email`, etiquetas desde `content/ui` (`form.name`, `form.lastName`,
+`download.emailLabel`, en ES y EN). Campo trampa intacto. La descarga sigue siendo el CTA único de la
+página de servicio (RF-07). El aviso del motivo —`dominio_gratuito` y `datos_incompletos`, textos
+`download.freeEmailRejected` y `download.incompleteData`— lo pinta `components/AvisoDelFormulario.tsx`,
+un componente de cliente dentro de `Suspense` que lee `?error=` con `useSearchParams`: leerlo en el
+servidor volvería dinámica la página del documento, que se prerrenderiza (RF-29), por un aviso que
+solo ve quien se equivocó. Un motivo sin texto (`limite`, `correo_invalido`) no pinta nada, como
+hasta ahora. `check:cadenas` vigila también el componente nuevo.
+
+**CRM.** `CapturaParaCrm` lleva `apellido`; `reclamar` devuelve `l.last_name`; el contacto se crea
+con `firstName = nombre` y `lastName = apellido` tal como los escribió la persona. El repliegue
+(partir el nombre, o parte local + dominio) queda **solo** para las capturas anteriores a la columna,
+y `test:crm` lo comprueba con una captura con `last_name` nulo. `lead_admission` manda `last_name`.
+
+**HQ y API.** La lista de capturas de HQ muestra nombre y apellido debajo del correo.
+`GET /api/v1/captures` añade `last_name` junto a `name` (campo aditivo; `api_contracts` actualizado):
+sin él, un consumidor de la API recibiría solo el nombre de pila y no lo sabría.
+
+**Pruebas.** Todas las que crean capturas (`test-crm`, `test-descargas`, `test-capturas`,
+`test-tablero`, `test-api`, `test-webhooks`, `seed`) envían nombre y apellido. Nuevas en
+`test:descargas`: sin apellido → `datos_incompletos` y nada guardado; sin nombre, lo mismo; el
+contacto exige lo mismo que la descarga; la captura guarda `name` y `last_name` por separado. Su
+limpieza borra `crm_delivery` antes que `lead_capture`: desde que la cola se vacía tras cada captura,
+toda captura deja su fila ahí y el `DELETE` final chocaba con la clave foránea.
+
+**Verificado:** lint, `check:types`, `check:cadenas` (35 archivos), `check:env`, `check:migrations`
+(18/18), `check:content`, `check:secrets`; con base local migrada y sembrada: `test:crm` (21/21),
+`test:capturas` (23/23), `test:nocompile`, `test:contracts`, `test:hq` (28/28), `test:api` (130/130);
+compilación `standalone`, `check:paginas` (142/142) y `check:armazon` (60/60); en el servidor
+compilado, `/descargas/d-06`, `/contacto`, `/doctrina`, `/en/downloads/d-06-en`, `/en/contact` y
+`/en/doctrine` sirven los tres campos con `required` y los `autoComplete` correctos.
+`test:descargas`: 23 de 24; la que falla («el envío redirige a gracias con próximamente») es anterior
+al encargo: D-06 es `published` con `file_key` desde el 17 y el `.env` local no tiene S3, así que
+responde `error_de_firma`. `test:webhooks`: 2 de 32 fallan igual en la base `5ca2178`
+(`download.completed` no se dispara con las credenciales S3 falsas de la prueba); no es de aquí.
+
+**Desviaciones.** El `node_modules` enlazado al repositorio principal, como decía el brief, lo
+rechaza Turbopack («Symlink … points out of the filesystem root»): en el worktree se sustituyó por
+un clon APFS (`cp -c -R`) y se enlazó el `.env`, los dos ignorados por git.
+## «Empieza aquí» / «Start here»: el mapa del sitio en una página (2026-09-18)
+
+**Qué es.** Página bilingüe `/empieza-aqui` ⇄ `/en/start-here` con el árbol completo del sitio:
+SLG Agency → SLG_VoltAi (sus tres líneas y los once servicios), SLG_Holdings, Doctrina, Blog y
+Nosotros; Descargas y Contacto como accesos desde cualquier página. Cada nodo lleva su nombre, una
+línea que dice qué es y el enlace a su página. Entra por el pie —primer enlace, `footer.startHere`—
+y no por la barra: los destinos del menú siguen siendo cinco (RF-01).
+
+**Decisiones.**
+
+- **El árbol se genera desde la estructura real.** Los nodos salen de `DESTINOS`, `RAMAS` y
+  `SERVICIOS` (`lib/content/rutas.ts`) y las líneas del `title`/`description` de cada registro vía
+  `loadCollection`; Blog toma `blog.metaDescription`; SLG_Holdings, la primera línea de su registro
+  de servicio, como hace el índice de rama. No hay una segunda lista que se pueda desincronizar.
+- **Los once servicios se enseñan por su nombre, sin línea.** Su registro no tiene `description`
+  —tiene seis secciones— y la línea de su rama ya dice qué hay debajo. La alternativa, la primera
+  frase de «Para quién» (entre 130 y 260 caracteres), multiplicaba por cinco la altura de la
+  columna de `SLG_VoltAi` y mataba el vistazo que la página existe para dar.
+- `components/MapaDelSitio.tsx` es componente de servidor. Los conectores viven en `app/mapa.css`:
+  CSS puro con tokens, sin transiciones ni `@keyframes`; apilado en móvil y árbol a partir de
+  64 rem, con `SLG_VoltAi` al doble de ancho porque lleva dentro tres líneas y once servicios.
+- Ruta propia (no `/[slug]`), registrada en `PAGINAS_CON_RUTA_PROPIA` y `PARES_FIJOS` para que el
+  conmutador cruce; en el sitemap; tres cadenas nuevas `mapa.*` en `content/ui`.
+- **Los frenos crecen con la unidad**: `check:armazon` mide las dos rutas nuevas y `check:cadenas`
+  vigila `MapaDelSitio.tsx`.
+
+**Fuera de este encargo.** La frase en «Dónde empezar» de Nosotros/About queda para otra sesión:
+Ricardo pidió no tocar esos dos registros desde este worktree.
+
+**Entorno del worktree, para el siguiente.** El enlace simbólico a `node_modules` que proponía el
+brief rompe Turbopack («Symlink … points out of the filesystem root»); se sustituyó por un clon
+APFS (`cp -Rc`), que es instantáneo y no ocupa espacio. La compilación exige `.env`
+(`DATABASE_URL`): enlazado desde el repo principal y sigue ignorado por git.
+
+**Verificado:** lint, `check:types`, `check:content`, `check:cadenas`, `check:secrets`,
+`check:motion`, `build:standalone` (93 páginas; las dos nuevas, estáticas), `check:armazon` (62
+comprobaciones, con `/empieza-aqui ⇄ /en/start-here`), `check:paginas` (142), `check:js-budget`
+(142,5 KB por ruta nueva, 95 % del presupuesto), `check:seo` (226). Servidor compilado en 3211:
+las dos rutas responden 200, contienen los once servicios con su enlace, el conmutador lleva de
+una a la otra y vuelve, y el sitemap las lista.
+
+---
+
+## Nueva arquitectura de menú, renombre de ejes y líneas, regreso al nivel anterior (2026-09-18)
+
+**Decisiones de Ricardo, ejecutadas.** (1) El menú pasa de cinco destinos a cuatro: **Empieza aquí ·
+Servicios · Blog · Nosotros**. La portada (`/`, `/en`) es ahora el mapa del sitio —entrada poco
+invasiva— y la portada anterior, con los bloques de RF-09, vive en `/servicios` y `/en/services`, la
+casa comercial. `/empieza-aqui` y `/en/start-here` redirigen (308) a la portada. Doctrina, Holdings
+y Descargas se llegan desde Servicios, el mapa y el pie. `check:armazon` y `check:paginas` miden la
+estructura nueva. (2) Renombre: `SLG_VoltAi` → **VoltAi by SLG**, `SLG_Holdings` → **Holdings by
+SLG**, y las líneas `VoltAi Academy / Enterprise / Factory`. Los servicios no cambian. 76 archivos
+del sitio, 19 documentos fuente y los PDF de D-04 a D-11 regenerados y subidos; los nombres viejos
+son variantes prohibidas en `nomenclature.ts`. (3) Servicios desarrolla Holdings by SLG bajo el eje
+de IA (bloque nuevo) y «Descargas destacadas» enseña tres documentos y enlaza la biblioteca, que
+ahora muestra título, audiencia, abstract y enlace al formulario. (4) `components/Regreso.tsx`: una
+línea «← Volver a …» sobre la fotografía en toda página que no sea la portada, con el padre sacado de
+la tabla de rutas (servicio → línea → eje → Servicios; artículo → Blog; documento → Descargas; el
+resto → Empieza aquí). (5) Fechas del blog repartidas entre agosto y septiembre.
+
+**Ediciones manuales de Ricardo en Doctrina** (Nobel 2025, Taleb, letrados e iletrados) conservadas
+con su fuente declarada en la línea, para que `check:copy` las acepte, y reflejadas en inglés.
+
+**`SLG_Overhauling` es ahora un repositorio privado** (`RicardoTorresOliva/SLG_Overhauling`) con
+`ops/` ignorado.
+
+Frenos: content, cadenas, secretos, env, motion, migraciones, compilación, páginas (142), blog (51),
+armazón (60), SEO (226), presupuesto de JS. Pendiente al cierre: las fotografías nuevas (agente en
+curso) y su mapeo en `Fotografia.tsx`.
+
+**Fotografías (2026-09-18).** Quince escenas nuevas de la misma sesión (`z_image`, 3,6 créditos):
+cinco sustituidas —Servicios con piezas que unen los dos bloques, VoltAi con fichas, Doctrina con el
+libro protagonista, Nosotros en un balcón con horizonte y mar, Enterprise con lápices de puntas de
+colores y el azul al centro— y una por servicio. Todas con el isotipo como sello en la esquina, como
+las anteriores, y mapeadas en `Fotografia.tsx`. Peso: 24–47 KB.
+
+
+**Cierre (2026-09-18, 02:30).** Producción `56kh73gri` completa. Ricardo confirma que `SLG_Readiness` y
+`SLG_Implement` conservan el prefijo. Para la sesión siguiente quedan dos objetivos: convertir el
+proyecto en la base para montar sitios de clientes en dos días (motor vs. piel, `site.config`,
+playbook) y la entrada a la intranet, que hoy no tiene camino para crear el primer administrador en
+producción. Detalle y orden sugerido en `project_memory.md`.
+
+---
+
+## La primera cuenta de la intranet, y el inventario de lo que nombra a SLG (2026-09-18, tarde)
+
+**El agujero de arranque, tapado: `scripts/auth/primer-admin.ts`.** En producción **no existía camino
+para crear la primera cuenta**. `/acceder` es correo + contraseña; el alta pública está cerrada en el
+middleware y solo se crea cuenta canjeando una invitación; e invitar exige un actor con rol de SLG.
+Sin usuarios no hay quien invite: un punto muerto perfecto, y la base de producción no tiene ninguno.
+
+La decisión que pedía la memoria —guion o acción en `/api/ops`— **la resolvió el propio diseño, no una
+preferencia**. `membership` lleva `FORCE ROW LEVEL SECURITY`, y su política (migraciones 0001 y 0015)
+solo deja escribir al actor cuya empresa coincide o a `slg_admin`/`slg_operator`/`agent_slg`.
+`withSystemScope` pone `app.actor_role = 'system'`, que **no está en esa lista y no puede estarlo** —la
+0015 lo escribe con todas las letras—; y `withScope` exige un `AuthContext`, que solo se construye
+desde una sesión o una clave verificadas y no se puede fabricar. Es decir: **la aplicación no puede
+crear su primera pertenencia, por diseño.** Una acción HTTP correría con la conexión de la aplicación,
+que es justo la que no puede. Así que es un guion con el rol dueño, como `migrar.ts` y `seed.ts`, y
+**se niega a hacer nada si `"user"` tiene una sola fila**: eso es lo único que separa «arrancar la
+casa» de una puerta trasera. Deja fila en `audit_log` (`auth.primer-admin`, actor `system`), que es de
+solo inserción.
+
+Dos detalles que no son de estilo: la contraseña se pica con **`auth.$context.password.hash`**, el
+mismo hasheador que usa `signUpEmail` —uno propio «equivalente» produce una cuenta que el login no
+reconoce—, y **no se usa `signUpEmail`** porque con `sendOnSignUp: true` el alta manda un correo de
+verificación, y el arranque ocurre antes de que el correo esté garantizado. Verificado el ida y vuelta
+del hasheador contra la librería instalada (1.7.4): `verify` acepta la buena y rechaza la mala.
+`check:types`, `lint`, `check:fronteras`, `check:env` y `check:secrets` en verde. **Sin correr contra
+producción**: el modo auto del agente bloquea leer credenciales y tocar la base real; el comando queda
+listo para Ricardo.
+
+**Lo que sigue faltando para ver HQ, y no es la cuenta.** `SUPERFICIES_ABIERTAS` está en `false` para
+`hq` y `portal` (`lib/auth/roles.ts`): con sesión válida y rol correcto, producción devuelve **404**. La
+única apertura es `SUPERFICIES_EN_REVISION`, y solo actúa **si delante hay compuerta de staging**
+(`STAGING_BASIC_AUTH_*`), que producción no lleva. Entrar a mirarlas es, por construcción, un
+despliegue de vista previa con esas tres variables.
+
+**Inventario de la plantilla (objetivo A, primer paso): `docs/plantilla-de-sitios.md`.** 1.388 líneas
+en 128 archivos nombran a SLG, y el recuento cambia el tamaño del trabajo: 761 son el prefijo técnico
+(`--slg-*`, `data-slg-*`), 347 son «SLG» como **la casa** frente a la empresa cliente, 133 el
+vocabulario de roles — **y solo 147 son marca y oferta**, que es lo único que un `site.config` tiene
+que dar. Lo caro no es la marca (26 sitios, media tarde): es la **estructura** —`rutas.ts`,
+`schema.ts`, los 30 patrones de `nomenclature.ts`, `POR_RUTA` de `Fotografia.tsx` y los destinos y
+bloques que miden `check:armazon` y `check:paginas`—, y con ella los cinco frenos que validan contra
+la oferta de SLG. Dos defectos encontrados de paso, **de hoy y no de la plantilla**: texto visible con
+la marca dentro de `lib/` (`lib/auth/acceso.ts:23`, `lib/invitations/service.ts:362`) y el respaldo
+`?? "https://softlandingglobal.com"` en tres sitios, que hace que un sitio de cliente sin variable no
+falle: publique el dominio de SLG. Ninguno arreglado: son cambio de alcance y los decide Ricardo.
+
+**Menores cerrados.** Un freno estaba en rojo desde la sesión de Supabase y nadie lo había mirado:
+`check:literacy` acusaba cuatro variables de `.env.example` sin explicar en el manual (`FILES_DRIVER`,
+`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`); documentadas, gate en verde. Los tres
+worktrees `agent-*` quitados: **3,0 GB → 2,0 MB**, y las ramas intactas —una de ellas,
+`worktree-agent-a361ac28e2e6b40e1`, **no está fusionada** en `develop` pese a lo que decía la memoria;
+por eso se quitó el directorio y no la rama. `.gitignore`: el `.env*` suelto del final **volvía a
+ignorar `.env.example`** anulando el `!.env.example` de arriba; retirado, y añadido `supabase/.temp/`.
+CLI de Vercel 54 → 59.23.1.
+
+**Frenos que no se pueden correr aquí**: los cinco de `check:brakes` que fallan piden navegador
+(Playwright sin Chromium instalado) o PostgreSQL, y esta máquina no tiene ni Docker ni Postgres. No
+son defectos del código.
+
+**Corrección del mismo día.** Ricardo lanzó el comando con los marcadores de posición puestos y no
+recibió un aviso: recibió un volcado de pila de `node:internal/url` desde `lib/db/scope.ts`, porque
+importar la librería de identidad **abre conexiones al importarse**, antes de que el guion compruebe
+nada. Arreglado invirtiendo el orden —comprobaciones primero, `await import` después— y añadiendo tres
+mensajes: falta el argumento, falta la cadena (con los nombres que se buscan), y la cadena no parece
+una URL de PostgreSQL («si ves puntos suspensivos, el marcador se pegó tal cual»). Además, el guion
+acepta ahora `DATABASE_URL_OWNER`/`DATABASE_URL_APP`, que son los nombres reales de
+`ops/supabase-slg-website.env`, para poder invocarlo con `node --env-file=…` y **no escribir la
+credencial en la línea de comandos**. Las cuatro salidas probadas; comprobado también que `npm run …
+-- --nombre "A B C"` conserva el argumento entero, que era la otra sospecha.
+
+**Y el arranque salió mal, que es el hallazgo que valía la ejecución.** Ricardo lanzó el comando con
+el marcador de posición del ejemplo y el guion **creó la cuenta**: un `slg_admin` con el correo
+`tu@correo`, que no existe —así que no se le puede mandar el enlace de recuperación— y, peor, la
+guarda de «sólo si la tabla está vacía» cerró la única puerta que había para arreglarlo. **Una
+operación que sólo se puede hacer una vez tiene que admitir que esa vez salga mal.** Dos arreglos:
+
+1. **El correo se valida.** `tu@correo` no tiene dominio de primer nivel y ahora se rechaza antes de
+   tocar la base. El ejemplo de la cabecera y del uso sigue siendo `tu@correo` **a propósito**: un
+   ejemplo que parece una dirección se pega tal cual.
+2. **`--rehacer`**, con tres condiciones a la vez y ninguna negociable: hay exactamente un usuario,
+   **lo creó este guion** (apunte `auth.primer-admin` con su `entity_id`) y **nadie ha abierto sesión
+   jamás** (cero filas en `session`). La tercera es la que manda: separa «el arranque no llegó a
+   usarse» de «esta cuenta ya es de alguien», y en cuanto se entra una vez `--rehacer` muere. Borra el
+   usuario —`account` y `membership` se van por CASCADE—, conserva la empresa y **no borra el apunte**:
+   `audit_log` es de solo inserción, así que el arranque fallido queda en la historia y el rehecho
+   añade el suyo (`auth.primer-admin.rehecho`, con el correo anterior y el nuevo).
+
+La contraseña del arranque fallido queda quemada: salió por pantalla y se sustituye al rehacer.
+
+**La vista previa con HQ y portal abiertos, hecha y comprobada (2026-09-18, 16:55).** La memoria
+estaba desactualizada en un punto que cambia el trabajo: **las variables YA están en el almacén del
+proyecto de Vercel**, 26 en Production y 26 en Preview, puestas la madrugada anterior. Así que no
+hacía falta componer un despliegue con `--env`: bastaba añadir cuatro variables al alcance
+**Preview + rama `develop`** y volver a desplegar.
+
+- `SUPERFICIES_EN_REVISION=hq,portal` y el par `STAGING_BASIC_AUTH_USER`/`_PASSWORD` — sin la
+  compuerta, `hayCompuertaDeStaging()` devuelve `false` y la apertura no ocurre; ése es el diseño.
+- `BETTER_AUTH_URL` apuntando al **alias de rama** (`…-git-develop-…vercel.app`) y no a la URL de cada
+  despliegue: la instancia de Better Auth toma su origen de ahí, y con la URL de producción puesta el
+  acceso se haría contra un origen que no es el que sirve la página.
+
+Acotadas a la rama `develop`: cualquier otra vista previa sigue sin compuerta y, por tanto, con las
+superficies cerradas. Producción no se toca — y sigue devolviendo 404 en `/hq`, que es lo que RF-87
+protege.
+
+Comprobado por HTTP, sin abrir un navegador: sin credencial, `/`, `/acceder` y `/hq/tablero`
+responden **401** con `WWW-Authenticate: Basic realm="slg staging"`. Con ella, `/` y `/acceder` dan
+**200**, y `/hq/tablero` y `/portal/entregables` dan **307 → /acceder?volver=…**. Ese 307 es el
+resultado: donde antes había un 404 de «tu milestone sigue abierto», ahora hay la redirección normal
+de «esto existe y te falta sesión».
+
+**Lo que hay que tener presente al usarla: la vista previa escribe en la base de PRODUCCIÓN.** Las
+variables de Preview apuntan al mismo proyecto de Supabase. Crear una empresa de prueba desde HQ la
+crea de verdad. Es lo que permite revisar con datos reales, y también lo que obliga a no inventarse
+datos para probar.
+
+**Es un andamio con fecha**: cuando M3 y M4 cierren, se pone `SUPERFICIES_ABIERTAS` en `true` y se
+retiran las cuatro variables.
+
+**Y un hallazgo sobre un freno propio, encontrado por equivocarse.** Al escribir la sesión en la
+memoria puse la contraseña de la compuerta en `docs/project_memory.md` — en un repositorio **público**,
+que es justo lo que prohíbe la Regla 2. Lo paró el clasificador del agente, no el freno del proyecto:
+`check:secrets` pasa esa línea en verde. Comprobado aislando el caso con `SECRETS_SCAN_ROOT`: una
+tabla con «contraseña: `<veinte caracteres al azar>`» da «1 archivos, sin coincidencias». El escáner
+busca **formas conocidas** —claves de proveedor, cabeceras de clave privada, cadenas de conexión—, y
+una contraseña generada no tiene forma de nada. No es un fallo del escáner: es su límite, y conviene
+saberlo antes de confiarle una revisión. Lo que sí cabría añadirle es la pareja «palabra que anuncia
+un secreto + valor pegado al lado», que es como se escapan de verdad. Queda anotado, no hecho.
+
+**500 en `/hq/capturas` de la vista previa: el pool de conexiones, no la pantalla (2026-09-18, 17:30).**
+`vercel logs` lo dice en una línea: `EMAXCONNSESSION — max clients are limited to pool_size: 15`. El
+*pooler* de Supabase en modo sesión limita a **15 clientes en total**, y el código abría 10
+(`lib/db/scope.ts`) + 5 (`lib/auth/db.ts`) **por instancia**: una sola instancia agotaba el cupo, y
+producción llevaba el mismo riesgo latente desde el 17-09. Arreglo en dos mitades: el código pasa a
+pools de 3 + 2 con `prepare: false` —el modo transacción no admite sentencias preparadas con nombre—,
+y `DATABASE_URL` pasa al puerto **6543** (transacción), que quita el límite. El orden importa: primero
+el código, después la variable; `prepare: false` funciona en los dos modos, así que no hay ventana
+rota. Nada usa `LISTEN`, `NOTIFY` ni bloqueos consultivos; todo el trabajo con alcance va dentro de
+`db.transaction`, que en modo transacción es exactamente la unidad que conserva `set_config(…, true)`.
+
+**Spec Delta — Academy y centro de mando (2026-09-18, 18:10).** Ricardo redefine la intranet: HQ como
+centro de mando de una Company of One (CRM, agentes, chatbots, fábrica de contenidos, estudio,
+asistente) y el portal como una Academy que el cliente quiera abrir cada día (noticias con comentario
+para su caso, programación, hitos y pendientes con cero incertidumbre, biblioteca, clases). Decidido
+con él: **misma app, no un proyecto aparte** (D-160). El delta completo —RF-149…RF-156, milestone M6
+con FU-15 y DU-26…DU-30, qué se modifica, qué fronteras se mantienen (no LMS, no chat, sin incrustar
+vídeo), riesgo de regresión— está en `planning/spec-delta-academy.md`. **Espera aprobación** (Regla 1).
+
+## FU-15 · Modelo de datos de la Academy (2026-09-18, 19:00)
+
+**Qué hay.** Migración `0018_academy.sql`: `news_item`, `milestone`, `action_item`, las tres con
+`organization_id`, la **misma política de fila** de 0001/0015 en la propia migración, `GRANT`
+explícito al rol de aplicación —«ON ALL TABLES» de 0001 no alcanza a las tablas que nacen después— y
+la contención de `api_key.scopes` reescrita de seis a ocho (`news:write`, `milestones:write`). En el
+esquema Drizzle, tres tablas y cuatro enumerados. `test:isolation` gana **nueve comprobaciones**
+(tres por tabla: cero sin contexto, solo lo mío con él, escritura cruzada rechazada) además de la
+comprobación 8, que ya las cubría por catálogo. Fixture negativo `9998_hitos_con_progreso.sql`:
+`check:alcance` lo marca con dos hallazgos, así que el freno ve también las tablas nuevas.
+
+**Decisiones de forma.** `news_item` lleva dos textos porque el comentario para esa empresa **es el
+producto**; la importancia es editorial (D-161). `action_item.closes_by` decide en el servidor quién
+puede cerrarlo. Tres `CHECK` de coherencia: publicado ⇔ con autor, hecho ⇔ con fecha, cerrado ⇔ con
+fecha y actor. `organization_id` desnormalizado como en `deliverable`, sin clave compuesta: la
+compuesta que `data_model` §4.2 describe para `deliverable` **no existe en las migraciones**; se
+anota, no se arregla aquí.
+
+**Verificado**: `check:types`, `lint`, `tsc` de la app, `check:migrations` (19/19), `check:alcance`
+(228 archivos), `fronteras`, `env`, `secrets`, `literacy`, `playbook`. **No verificado**: la migración
+y `test:isolation` contra PostgreSQL — esta máquina no tiene. Se corren en CI y al migrar.
+
+`data_model.md` §1.1 pasa a **24 tablas** y reconoce las dos de antiabuso (0010) que no contaba.
+
+## DU-28 · Portal «Clases» (2026-09-18)
+
+**Qué hay.** `/portal/clases` (`app/(portal)/portal/clases/page.tsx`): los materiales de programa
+agrupados por proyecto, **por la misma puerta que «Materiales»** — `materialesPorProyecto()`, sin
+tocarla — con los de vídeo distinguidos (insignia) y abiertos en pestaña nueva
+(`target="_blank" rel="noopener"`). Sin cambio de CSP ni de visor: nada se incrusta; lo que no es
+vídeo sigue yendo a `/portal/entregables/[id]`.
+
+**Decisión de forma.** «Es de vídeo» no es un campo nuevo del modelo — la frontera (b) prohíbe
+vocabulario de LMS y un campo así es el primer paso hacia ahí aunque el nombre sea inocente. Se decide
+por la URL, en una función pura: `esVideo(url)` en `lib/portal/clases.ts`, host de vídeo conocido
+(YouTube, Vimeo, Wistia, Loom) o ruta que termina en `.mp4/.webm/.mov` — la extensión sobrevive en la
+ruta de una URL firmada, antes de la cadena de consulta con la firma. Con el `deliverable.url` de hoy
+(siempre `null` para `type = 'material'`, porque `publicarEntregable` en `lib/hq/entregables.ts` solo
+lo rellena para `type = 'link'`) la función no encuentra ningún vídeo todavía; queda lista para cuando
+esa puerta —fuera de alcance de esta unidad, que no toca `lib/hq/`— admita un material por enlace.
+
+**Navegación.** Sección `classes` en `lib/app/navegacion.ts`, justo después de `materials` y con su
+misma acción (`deliverable.read`): son los mismos datos vistos de otra manera, no un permiso nuevo —
+igual razón que ya defendía `materials`. Claves `app.nav.classes` y `portal.classes.*` en `content/ui`
+(ES/EN), al final del bloque del portal. Vacío inicial redactado: «Todavía no hay clases».
+
+**Verificado**: `check:types`, `lint`, `tsc --noEmit` de la app, `check:alcance` (230 archivos, la
+página nunca selecciona por `type = 'material'`), `check:cadenas` (38 archivos, `clases/page.tsx`
+añadido a la lista vigilada), `check:shell` (47 comprobaciones — la sección declara su acción y las
+dos etiquetas existen en los dos idiomas), `check:fronteras`, `check:secrets`, `check:pairs`.
+`scripts/app/test-shell.ts` y `scripts/ci/check-shell.ts` no enumeran las secciones a mano —leen
+`SECCIONES`— así que no necesitaron cambio. **No verificado**: `esVideo()` gana ocho comprobaciones en
+`scripts/portal/test-materiales.ts`, pero el archivo entero necesita PostgreSQL para arrancar
+(`DATABASE_URL_MIGRATIONS`) y esta máquina no lo tiene; se corre en CI. `design_docs/ui_wireframes.md`
+§7.8 documenta la pantalla sin renumerar §7.5-§7.7 (`§7.6` y `§7.7` los cita `docs/design_summary.md`
+y esta misma página, y renumerar habría roto esas referencias sin necesidad).
+
+## DU-26 · Portal «Hoy» (2026-09-18)
+
+**Qué hay.** `/portal` (`app/(portal)/portal/page.tsx`) deja de ser la lista de avisos y pasa a ser
+«Hoy»: cinco bloques en este orden — **noticias de hoy** por importancia (1 primero), cada una con
+título, fuente (`target="_blank" rel="noopener"`), resumen y **el comentario para esta empresa
+destacado** con marco y fondo propios, porque es el producto (D-161); **qué sigue**, el próximo hito
+de cada proyecto activo con el nombre del proyecto y su fecha; **pendientes** abiertos, los que cierra
+el cliente primero, con insignia («Te toca a ti» / «Lo cierra SLG») y fecha límite; los tres
+**últimos entregables**; los tres últimos **avisos** con el mismo render de siempre. Cada bloque tiene
+su vacío redactado (`portal.today.*`, ES/EN) y enlaza a su pantalla completa (RNF-43): Programa,
+Proyectos, Avisos. El paso «Agenda tu Sesión Cero» sigue arriba, donde estaba.
+
+**La lista completa de avisos** se mueve **tal cual** a `/portal/avisos`
+(`app/(portal)/portal/avisos/page.tsx`): mismo componente de estado, mismo `ContenidoEntregado` y
+`Markdown`, mismo vacío redactado. En `lib/app/navegacion.ts`, `/portal` pasa de la clave
+`announcements` a `today` —el título de la pantalla sale de `app.nav.<clave>` y ya no es «Avisos»—
+con la **misma acción** `announcement.read`, y `announcements` renace en `/portal/avisos` después
+de `materials`. `test-shell`, `check-shell` y `test-aislamiento` leen `SECCIONES` y no necesitaron
+cambio; `check-cadenas` vigila la página nueva.
+
+**Decisiones de forma.** (1) Las funciones que deciden la portada —qué es «de hoy», el próximo hito
+por proyecto activo, el orden de los pendientes, el recorte a tres— son puras y viven en
+`lib/portal/hoy.ts`, no en la página: se prueban sin sesión ni HTTP, y una página de Next no puede
+exportar nada más que la página. `bloquesDeHoy(ctx)` es la única puerta y **no escribe ningún
+`organizationId`** en ninguna de las cinco llamadas; `test:hoy` barre el archivo para que siga así.
+(2) «Hoy» es el día de calendario en UTC, el mismo que enseña `publicadaEn.slice(0, 10)`: con la
+zona del servidor, la fecha impresa y la condición «de hoy» podrían discrepar a medianoche. (3)
+`news_item` no guarda el idioma en que se escribió (FU-15, fuera de alcance aquí), así que el
+`lang` del resumen y del comentario es el de la cuenta; lo que RNF-31 exige —saneado, tal como se
+entregó, `translate="no"`— se cumple igual. (4) Las noticias no enlazan a ninguna pantalla completa
+porque no la tienen: «Hoy» es la suya (la navegación del spec-delta no prevé `/portal/noticias`).
+
+**Verificado**: `check:types`, `lint`, `tsc --noEmit` de la app, `check:cadenas` (40 archivos),
+`check:shell` (51 comprobaciones: `today` y `announcements` declaran su acción y tienen etiqueta en
+los dos idiomas), `check:alcance` (245 archivos), `check:fronteras`, `check:secrets`, `check:pairs`.
+**No verificado**: `scripts/portal/test-hoy.ts` (`npm run test:hoy`, añadido a `test:db`) — un
+`client_member` de A ve solo lo de A en los cinco bloques y pedir lo de B a `lib/academy` devuelve
+cero; el orden de RF-149 (importancia, proyecto activo y no pausado, cliente antes que SLG, sin
+`internal`); las últimas tres sin noticias de hoy; el wayfinding de la pantalla; y la portada por
+HTTP con sesión real (alta por invitación, compuerta de staging y `SUPERFICIES_EN_REVISION=portal`,
+como `test-acceso`), que responde 200 con los cinco bloques y sin la noticia de B. Necesita
+PostgreSQL y `build:standalone`, que esta máquina no tiene; se corre en CI. `/portal/programa` la
+hace DU-27 en paralelo: el enlace es correcto aunque hoy dé 404 en este árbol.
+
+## M6 construido: las seis unidades en `develop` (2026-09-18, 21:30)
+
+Tres agentes en paralelo por ola, cada uno en su worktree, fusionados por el orquestador con los
+frenos en verde tras cada fusión. **Ola 1**: DU-30 (`lib/academy/` + API v1; sin `GET news` porque
+`news.read` no tiene alcance de agente y la matriz no se toca por una comodidad), DU-28 («Clases»),
+DU-29a («Conexiones», `content/conexiones.json`). **Ola 2**: DU-29 b/c/d (HQ escribe hitos,
+pendientes y noticias; material por enlace, que «Clases» necesitaba y `data_model` §3.10 ya
+prometía), DU-26 («Hoy») y DU-27 («Programa», escrita por el orquestador). Dos hallazgos que no
+estaban en el plan: (1) los worktrees de los agentes nacen de `main`, 50+ commits por detrás de
+`develop` — cada agente tuvo que fusionar `develop` antes de empezar; (2) un `html` `internal` no se
+puede abrir en el visor desde HQ porque la función de la migración 0016 solo sirve entregables
+`client` (`ui_wireframes` §6.13).
+
+**Verificado en cada fusión**: `check:types`, `lint`, `tsc`, `cadenas` (43), `shell` (55), `hq`,
+`alcance` (249), `fronteras` (266), `pairs`, `secrets`, `migrations`, `playbook`, `test:permisos`
+(354). **En CI, contra PostgreSQL real**: `test:isolation` con las tres tablas nuevas, en verde.
+**Todavía sin verde**: `test:api` (+87), `test:gestion`, `test:entregables`, `test:hoy`,
+`test:programa`, `test:materiales` — CI no llegaba a ellas porque dos frenos **anteriores a M6**
+estaban en rojo desde el 17-09 (`check:produccion` con «Liderazgo» y `test:descargas` con `d-06`
+ya publicado); arreglados en el commit siguiente. Las seis unidades quedan en `review` hasta ese
+verde.
+
+## D-162: el proyecto nace en el CRM; este sitio lo recibe (2026-09-18, 23:45)
+
+Decisión de Ricardo (`docs/decision_log.md` D-162): hasta hoy un proyecto se creaba a mano aquí y
+otra vez en el CRM, y nada los relacionaba. Ahora el CRM (o Hermes por él) crea aquí la «carpeta
+del cliente» por `POST /api/v1/organizations/{id}/projects` y deja al lado su identificador. **Nada
+comercial cruza**: la frontera (a) de `scope.md` no se mueve.
+
+**Hecho**: migración `0019_proyecto_del_crm` (`project.crm_project_id` nulo, índice único parcial
+`uq_project_crm_id`, `COMMENT`, y el `CHECK` de `api_key.scopes` reescrito de ocho a nueve);
+alcance `projects:write` en `API_SCOPES`, en `data_model` §3.6 y §5.13, y en la fila `project.write`
+de B.3 (`lib/auth/roles.ts`), que pasa de `null` a ese alcance; tres rutas en el catálogo
+(`POST …/projects`, `POST /projects/{id}/close`, `/reopen`) con sus escrituras en
+`lib/api/escrituras.ts` (10 y 11) y sus manejadores; `GET …/projects` devuelve `crm_project_id`;
+`api_contracts` §2.3, §3.16–§3.18 y §4.1. **La ruta es idempotente por `crm_project_id`**: repetir
+devuelve 200 con el existente, y el índice sostiene la promesa aunque dos reintentos lleguen a la
+vez. Los once servicios del cuerpo son los del `CHECK` de 0001 (`PROJECT_SERVICES` en el esquema),
+que es lo que la base acepta —y ahí hay un hallazgo: 0001 dice `SLG_Holdings` donde `data_model`
+§3.13 y el contenido dicen `Holdings by SLG`; queda apuntado, no resuelto.
+
+**No verificado**: `scripts/api/test-api.ts` (+40 comprobaciones: 403 sin alcance, `orgs:read` no
+implica, 201, el mismo `crm_project_id` dos veces → 200 y una sola fila, en otra empresa → 422,
+ajena → 404 idéntico al inexistente, `service` inventado, `crm_project_id` vacío y ausente, campo
+comercial de más, `close`/`reopen` idempotentes, el listado con `crm_project_id`, la
+especificación y la auditoría). Necesita PostgreSQL y `build:standalone`, que esta máquina no tiene;
+se corre en CI.
+
+## «Empieza aquí» horizontal, líneas bajo VoltAi y la frase de cada servicio (2026-09-21)
+
+Ricardo, al ver el mapa: cuatro columnas verticales con solo la primera poblada —«desproporcionado»—,
+las tres líneas de VoltAi al nivel del eje, y los servicios sin una frase que diga para quién son.
+Tres cambios, todos en la pieza que ya derivaba de la tabla de rutas: (1) el árbol crece de
+izquierda a derecha —raíz a la izquierda y fija, destinos apilados a su derecha, y el mismo conector
+en todos los niveles—; (2) las líneas cuelgan de `VoltAi by SLG` (`Rama` pasa a ser recursiva y un
+solo componente pinta cualquier nivel); (3) cada servicio lleva su `tagline` al lado —«para
+Directores», «Army of Agents»—, como **campo opcional del registro del servicio** y no como cadena
+de `content/ui`: es oferta, no interfaz, y el día que la portada de la línea quiera enseñarla ya está
+donde tiene que estar. Seis servicios en ES y EN. Comprobado en el servidor local a 1280 px y en
+móvil: la estructura es la misma, solo cambia dónde va la raíz. Frenos: `check:content` entero
+(2232 comprobaciones de copy), `cadenas`, `contraste`, `motion`, `types`, `lint`.
+
+## D-163: la empresa del CRM y la de aquí, relacionadas por el identificador (2026-09-21)
+
+D-162 dejó que el CRM creara aquí la carpeta del cliente, pero el CRM no sabía **qué empresa**:
+`POST /api/v1/organizations/{id}/projects` pide un `{id}` de este sitio que allí nadie conoce, y
+emparejar por nombre es adivinar. Ahora cada empresa guarda su identificador del CRM al lado, y el
+CRM tiene puerta propia para crearla o encontrarla por él.
+
+**Hecho**: migración `0020_empresa_del_crm` (`organization.crm_company_id` nulo, índice único
+**parcial** `uq_organization_crm_id`, `COMMENT`, y el `CHECK` de `api_key.scopes` reescrito de nueve
+a diez); alcance `orgs:write` en `API_SCOPES` y en la fila `org.write` de B.3
+(`lib/auth/roles.ts`), que pasa de `null` a ese alcance; la ruta `POST /api/v1/organizations` en el
+catálogo —diecinueve— con su escritura (`crearEmpresaPorApi`, la duodécima) y su manejador; la forma
+de la empresa en el contrato se extrae a `empresaDelContrato` para que la recién creada se lea igual
+que la del listado, y lleva `crm_company_id`; en HQ, el campo en el formulario de empresas (crear y
+editar) con su cadena en ES y EN, y `campoRepetido` distingue por fin **qué** índice chocó, que
+antes se daba siempre por el del slug. `api_contracts`, `data_model`, `decision_log` y `README` al
+día.
+
+**La ruta es idempotente por `crm_company_id`**: repetir devuelve 200 con la existente, nunca 409;
+crea con 201 y siempre como `type = client`, `status = active`. El índice único parcial sostiene la
+promesa aunque dos reintentos entren a la vez —el segundo choca, se relee y devuelve la misma—.
+Una clave acotada a una empresa responde **403**: crear otra está fuera de su universo, y sin
+recurso en la ruta no hay «no existe» que dar. Nada comercial viaja en el cuerpo: la frontera (a) de
+`scope.md` no se mueve.
+
+**Verificado aquí**: `check:types`, `lint`, `check:migrations`, `check:fronteras`, `check:alcance`,
+`check:literacy`, `check:secrets`, `check:env`, `check:anexo-d`, `check:cadenas` y `check:playbook`,
+todos en verde.
+
+**No verificado en esta máquina**: `scripts/api/test-api.ts` y `scripts/hq/test-gestion.ts` (el
+identificador se pone al crear, se edita, es de una sola empresa —repetirlo es dato inválido con su
+campo, no error crudo de PostgreSQL—, en blanco vuelve a nulo; y por la API: 403 sin alcance, 201,
+el mismo identificador dos veces → 200 y una sola fila, clave acotada → 403, slug tomado → 422).
+Necesitan PostgreSQL, que esta máquina no tiene; se corren en CI.
+
+## Cierre del 2026-09-21: D-162 hecho, D-163 a medias, favicon, tsc sobre todos los scripts
+
+**D-162** (`31d6ad3`): el CRM crea el proyecto y el sitio lo recibe por `POST
+/api/v1/organizations/{id}/projects`, idempotente por `crm_project_id` (0019, aplicada en
+producción), alcance `projects:write`, `close`/`reopen`, +40 comprobaciones en `test:api`. Hallazgo
+del agente: el `CHECK` de 0001 acepta `SLG_Holdings` y el contenido dice `Holdings by SLG` — un
+proyecto de esa línea no se puede crear (pendiente). **Archivar** (`a827bfd`): empresas y proyectos,
+dos pasos por URL, nada se borra; §4.3 pide además cancelar invitaciones y revocar claves, y eso
+queda anotado. **D-163** (crm_company_id, `POST /organizations`, `orgs:write`, 0020): el agente lo dejó sin
+commit al cerrar la sesión; revisado y fusionado el 21-09 (entrada anterior).
+
+**Vista previa**: `DATABASE_URL` de Preview apuntaba a `db.example.com` (el marcador de la época sin
+base) y el login fallaba con el mensaje mudo de credenciales. Se vio solo cuando
+`/api/acceso/contrasena` empezó a registrar la causa en el servidor (`[acceso] … causa: [ENOTFOUND]`):
+la respuesta sigue siendo la misma para todos los motivos (RNF-32), pero el registro ya no calla.
+Arreglado con una variable acotada a la rama `develop` (pooler 6543). `scripts/auth/revisar-cuenta.ts`
+diagnostica una cuenta con las dos conexiones sin escribir nada.
+
+**Favicon** (`8263173`): el sitio servía el `favicon.ico` de la plantilla de Next; ahora el isotipo
+centrado en lienzo cuadrado (`app/icon.svg`, `icon.png`, `apple-icon.png`, `favicon.ico` con PNG).
+**tsc sobre todos los scripts**: `scripts/tsconfig.json` incluía cuatro carpetas; un identificador
+duplicado en `test-api.ts` pasó `check:types` y rompió CI. Ahora incluye `**/*.ts`.
+
+CI: todo M6 en verde contra PostgreSQL real en corridas anteriores; la corrida de `8263173` quedó en
+marcha al cerrar.
+
+## `Holdings by SLG`: la base decía otra cosa y el servicio no se podía crear (2026-09-21)
+
+El hallazgo quedó apuntado dos veces en este mismo registro sin resolverse: el `CHECK
+project_service_literal` de 0001 aceptaba `SLG_Holdings`, y desde el 18-09 el contenido, las páginas
+públicas, el desplegable de HQ y `data_model` §3.13 dicen `Holdings by SLG`. No era una diferencia
+cosmética entre un documento y un archivo: era un servicio de la oferta **imposible de dar de alta**.
+HQ lo ofrecía en la lista —el desplegable deriva de la colección de contenido, no del esquema—, el
+servidor lo daba por bueno porque `esServicioLiteral` pregunta a esa misma colección, y PostgreSQL lo
+rechazaba en el último metro: un 500 donde el contrato promete un 422 (D-162).
+
+**Hecho**: migración `0021_vocabulario_de_servicios` — `UPDATE` de las filas que llevaran el nombre
+viejo (no debería haber ninguna, pero un sembrado antiguo puede tenerlas y añadir la contención
+antes de traducirlas haría fallar la migración a mitad) y la contención **reescrita entera**,
+`DROP CONSTRAINT IF EXISTS` más `ADD CONSTRAINT`, como hicieron 0018, 0019 y 0020 con el `CHECK` de
+`api_key.scopes`; su entrada en `drizzle/meta/_journal.json` (`idx: 21`), sin la cual `drizzle-kit`
+no la aplicaría y el despliegue no diría nada; `PROJECT_SERVICES` en `lib/db/schema.ts`, que es el
+espejo del `CHECK`, con el comentario ampliado para que la próxima vez se lea que ser espejo **no
+autoriza a discrepar del contenido**; y §3.13 de `data_model`, donde el «coste asumido» de la
+contención gana el párrafo que le faltaba: renombrar un servicio también es una migración, y esta es
+la factura de haberlo olvidado.
+
+Siguen siendo once servicios: cambia uno, no el número. Los otros diez —`Phoenix PEEx`, `Phoenix
+TEAx`, `Phoenix RETx`, `Customize Programs`, `AI Coaching for Directors`, `SLG_Readiness`,
+`SLG_Implement`, `APP_Building`, `AGE_Building`, `CoO as a Service`— se comprobaron uno a uno contra
+el frontmatter `name` de `content/services/es` y `en`, y coinciden exactos. `download.service` no
+tiene contención en la base (guarda el *slug* del documento, no el nombre literal), así que no hay
+segunda migración escondida.
+
+**El freno que faltaba**: `scripts/hq/test-gestion.ts`, criterio 2, probaba las tres formas de
+escribir mal un servicio —minúsculas, espacio en vez de guion bajo, nombre inventado— y las tres
+preguntan al contenido, así que **ninguna podía ver este defecto**: la lista de la oferta estaba
+perfecta y la base decía otra cosa. Ahora enfrenta las tres fuentes: la colección de contenido,
+`PROJECT_SERVICES` y la definición viva de `project_service_literal` leída de `pg_constraint`. Se
+consulta la definición en vez de insertar once proyectos porque insertarlos alteraría los recuentos
+de archivar y cerrar que vienen después, y porque el texto del `CHECK` es exactamente lo que la base
+va a aplicar.
+
+**Verificado aquí**: `check:types`, `lint`, `check:migrations`, `check:fronteras`, `check:alcance`,
+`check:cadenas`, `check:copy`, `check:playbook`, `check:nomenclature` y `check:literacy`, todos en
+verde.
+
+**No verificado en esta máquina**: `test:gestion` (las dos comprobaciones nuevas del criterio 2) y el
+resto de `test:db`, porque necesitan PostgreSQL y esta máquina no lo tiene; se corren en CI. La
+migración queda **pendiente de aplicar en producción**, igual que 0020.
+
+## Archivar una empresa cierra sus invitaciones y sus claves (2026-09-21)
+
+El cierre del 21-09 lo dejó anotado como deuda: archivar cambiaba `status` a `archived` y ahí se
+acababa, mientras `data_model` §4.3 lleva desde el primer día pidiendo dos cosas más. Las dos que
+faltaban son justo las que **no pasan por la capa de acceso**, que es la razón de que el agujero no
+se viera: la capa de sesión deniega el portal a los miembros de una empresa archivada, pero un enlace
+de invitación lo canjea alguien que todavía no tiene cuenta —se la crea al canjearlo—, y una clave de
+API escribe por `/api/v1` sin sesión ninguna. Una empresa archivada quedaba cerrada por dentro con
+dos llaves fuera.
+
+**Hecho**: `cambiarEstadoDeEmpresa` (`lib/hq/empresas.ts`) hace las tres escrituras en **un solo**
+`withScope` —que es una sola transacción— cuando el estado al que va es `archived`: la empresa a
+`archived`, sus `invitation` en `pending` a `canceled` con `revoked_at`, quién la cerró y el
+`token_hash` borrado (lo mismo que hace `revocarInvitacion` a mano), y sus `api_key` vivas con
+`revoked_at`. La condición de las invitaciones es el estado de la fila y no la caducidad: una
+`pending` ya caducada sigue siendo una fila que dice `pending`, y dejarla viva haría que el contenido
+de la tabla dependiera de cuándo se mira. Las claves llevan `revoked_at IS NULL` para no reescribir
+la fecha de una revocada hace meses, y las claves **sin** empresa no entran: son las de SLG, y
+archivar un cliente no puede apagar la integración de la casa. Tres `withScope` habrían sido tres
+transacciones, y el día que fallara la segunda dejarían una empresa archivada con las claves vivas —
+el mismo agujero, pero intermitente y mucho peor de encontrar.
+
+**La auditoría no estrena vocabulario**: cada invitación cancelada deja un `invitation.revoke` y cada
+clave revocada un `apikey.revoke`, que son las acciones que ya apuntan `lib/hq/usuarios.ts` y
+`lib/hq/claves.ts`. Inventar aquí una acción distinta partiría en dos el histórico de una invitación y
+obligaría a saber de antemano por cuál de las dos preguntar. Los apuntes salen por `auditar`, fuera de
+la transacción y a propósito: `lib/auditoria` escribe con `withSystemScope` y no lanza nunca, así que
+meterlo dentro no lo haría atómico —es otra conexión— y sí ataría el cierre al registro.
+
+**Reactivar no deshace nada de esto**, y está dicho en el código y en §4.3: la empresa vuelve y sus
+miembros con ella, porque `membership` se conservó, pero las invitaciones canceladas y las claves
+revocadas se quedan. Es una puerta que se cerró, no una que se entornó.
+
+**Sin migración**: `invitation.status` ya admite `canceled` —los cuatro valores del plugin, desde
+0001— y `api_key.revoked_at` existe desde 0006. La política de aislamiento de 0015 ya deja a
+`slg_admin` cruzar empresas en las dos tablas, así que tampoco hizo falta tocarla.
+
+**Verificado en esta máquina**: `check:types`, `lint`, `check:migrations`, `check:fronteras`,
+`check:alcance`, `check:cadenas`, `check:copy`, `check:playbook` y `check:literacy`, todos en verde.
+
+**No verificado en esta máquina**: `scripts/hq/test-gestion.ts`, ampliado con el caso entero —empresa
+con dos invitaciones pendientes (una de ellas caducada) y dos claves vivas, una del cliente y otra sin
+empresa → archivar → las dos invitaciones `canceled` y sin `token_hash`, la clave del cliente revocada
+y muerta para HQ, la de la casa intacta, y los apuntes de auditoría contados por delta; reactivar y
+comprobar que no resucita ninguna—. La prueba necesita PostgreSQL real, que esta máquina no tiene; se
+corre en CI.
+
+## El visor abre los entregables `internal`, pero solo desde HQ (2026-09-21)
+
+El defecto estaba anotado en `ui_wireframes` §6.13 desde DU-29(d): el tablero que un agente Hermes
+publica para SLG es un `html` con visibilidad `internal`, y **no se abría en ninguna parte**. La
+función de la migración 0016 sirve `visibility = 'client'` y nada más, así que `/hq/entregables`
+enseñaba un aviso en vez de un enlace —un enlace habría llevado a un 404—. La pantalla de la gente
+que sí podía ver ese tablero era justo la que decía que no se podía.
+
+**0016 no estaba mal escrita, y por eso el arreglo no es quitarle la condición.** El visor vive en un
+origen **sin sesión** —el navegador aísla el subdominio de la cookie de la aplicación, que es la
+defensa entera (D-45)—, así que ahí no hay a quién preguntarle el rol y no hay política de fila que
+acote. Toda la autorización tenía que caber dentro de la función, y la única respuesta segura para
+una función sin quién es la más estrecha. Servir `internal` desde ahí, sin más, sería servírselo
+también a un usuario de cliente que conociera el identificador.
+
+Lo que cambia es **el vale**. Hasta hoy firmaba `<id>.<caducidad>`: decía qué se puede abrir y hasta
+cuándo, pero no para quién. Ahora firma `<id>.<caducidad>.<ámbito>`, con ámbito `cliente` o `hq`, y
+ese ámbito es lo único que la función recibe de quien llama —ni empresa, ni proyecto, ni visibilidad
+suelta—. No lo elige el código: lo firma la pantalla que sí tenía sesión. HQ firma `hq` sobre lo que
+`entregables(ctx)` le devolvió, ya acotado por la política de fila y por la asignación que B.3 exige
+a un `slg_operator`; el portal firma `cliente` sobre `entregablesDelCliente()`, que no devuelve
+`internal` y por tanto ni siquiera le da el identificador con el que pedir un vale. Reescribir `a=hq`
+en una URL del portal rompe el HMAC y cae en el mismo 404 que un entregable inexistente.
+
+**Hecho**: migración `0022_visor_de_entregables_internos` — `DROP` de la función de un argumento
+(dejarla viva habría dejado llamable la versión que no sabe de ámbitos) y
+`app_entregable_para_el_visor(p_id, p_ambito)` con `client` siempre e `internal` solo con
+`p_ambito = 'hq'`, más `REVOKE`/`GRANT` y `COMMENT`; el parámetro es **obligatorio**, sin `DEFAULT`,
+por lo mismo que `entregablesDelCliente()` existe aparte de `entregables()`: un filtro opcional es un
+filtro que alguien olvida pasar. En el código, `AmbitoDelVale` y `ambitoDeLaPeticion()` en
+`lib/visor/origen.ts`, con el ámbito dentro de la firma y en la URL como `a`; `valeValido()` y
+`urlDelVisor()` lo piden sin valor por defecto; la ruta `/visor/[id]` lo lee de la petición y **no
+supone ninguno** si falta o es inventado; `documentoParaElVisor(id, ambito)` lo pasa a la base. En
+HQ, la ficha ofrece el enlace para todo `html` con archivo y marca el `internal` al lado; se retira
+la cadena `hq.deliv.viewerClientOnly` y entran `hq.deliv.viewerNoFile` y `hq.deliv.viewerInternal`
+en ES y EN. El portal firma `"cliente"` explícito. `ui_wireframes` §6.13 deja de describir un defecto
+y describe el mecanismo.
+
+**Verificado aquí**: `check:types`, `lint`, `check:fronteras`, `check:alcance`, `check:cadenas`,
+`check:copy`, `check:playbook` y `check:literacy`, en verde.
+
+**No verificado en esta máquina**: `scripts/portal/test-visor.ts`, ampliada con el ámbito. Contra
+PostgreSQL real comprueba que un `internal` publicado **sí** vuelve con ámbito `hq` y **sigue sin
+volver** con ámbito `cliente` —las dos mitades, porque ninguna vale sin la otra—, que un `internal`
+sin publicar no se abre ni desde HQ, que un PDF tampoco (el ámbito amplía la visibilidad, no el
+tipo), que un `client` se abre en los dos, y que queda **una sola** función con ese nombre, con el
+`p_ambito = 'hq'` dentro del `WHERE` y sin `DEFAULT`. Sin base, además, que un vale de portal no vale
+como vale de HQ ni al revés, y que un `a` ausente o inventado no es ningún ámbito. Necesita
+PostgreSQL, que esta máquina no tiene; se corre en CI.
+
+**`check:migrations` queda en rojo en esta rama, y no por esta migración**: el journal salta de la
+`0020` a la `0022` porque la `0021` la está escribiendo otro agente en paralelo, y el freno exige
+índices consecutivos. Comprobado aparte con `MIGRATIONS_DIR` sobre una copia con un `0021` de
+relleno: en verde, 23 archivos y 23 declaradas, en secuencia. Vuelve a verde al fusionar las dos
+ramas.
+
+## Los dos defectos que el inventario de la plantilla dejó anotados (2026-09-21)
+
+`docs/plantilla-de-sitios.md` cerró el 18-09 con una lista de lo que hay que decidir con Ricardo y,
+al final, con tres cosas que **no** hay que decidir: dos fugas de texto en §2 y el respaldo de
+dominio de §3.2, «defectos hoy, en este sitio, no deuda de plantilla». Son las que se arreglan aquí,
+y nada más: ni `site.config`, ni `rutas.ts`, ni la identidad de §3.1, que siguen esperando la
+decisión de §4.1.
+
+**El texto con la marca dentro de `lib/`** resultó ser un problema más pequeño y más feo de lo
+anotado: los dos párrafos no estaban solo fuera del diccionario, estaban **duplicados**.
+`auth.signin.error` y `auth.invitation.invalid` ya decían exactamente lo mismo en ES y EN, y las dos
+pantallas ya pintaban la clave. Las constantes de `lib/` eran una segunda copia que nadie enseñaba,
+en un solo idioma, esperando a divergir de la primera el día que alguien suavizara una de las dos.
+Así que no se escribieron cadenas nuevas: `lib/` exporta ahora la **clave**, como ya hacían
+`lib/app/estados.ts` y `lib/portal/sesion-cero.ts`, y quien enseña el texto lo resuelve en el idioma
+que corresponda. Un barrido por `lib/` confirma que no había una tercera.
+
+**El respaldo de dominio era lo grave, y el arreglo consiste en quitarlo.** Tres sitios hacían
+`?? "https://softlandingglobal.com"` cuando faltaba `NEXT_PUBLIC_SITE_URL` —y un cuarto que el
+inventario no vio, dentro del propio freno del SEO, que por tanto medía los `canonical` de otro
+dominio y se ponía verde igual—. Un respaldo solo es bueno cuando el valor inventado es mejor que
+nada; aquí es peor, porque «nada» se ve al instante y un dominio ajeno se ve tarde, en público y ya
+indexado. Ahora hay **una sola función**, `baseDelSitio()` en `lib/content/sitio.ts`, que no inventa
+nada: sin la variable lanza, y también lanza si el valor no es una URL absoluta que sirva páginas,
+porque un `softlandingglobal.com` sin esquema rompe las mismas etiquetas y con el mismo silencio.
+
+**Falla al compilar, y esa es la decisión de ingeniería del día.** `app/sitemap.ts`, `app/robots.ts`
+y el `metadatosDe()` de las 58 rutas llaman a esa función mientras Next prerenderiza, así que el
+despliegue muere en la consola de quien lo lanzó, con el nombre de la variable escrito. No es solo
+que sea antes: es que `NEXT_PUBLIC_*` **se incrusta en el momento de compilar**, así que una
+comprobación en tiempo de ejecución sería una comprobación hecha cuando ya no se puede arreglar sin
+volver a construir. Y no hizo falta freno nuevo, que era lo que había que mirar antes de escribir
+uno: `lib/ops/variables.ts` ya la declaraba `obligatoria: true`, `.env.example` ya la listaba,
+`check:env` ya exige que toda variable que el código lea esté en esa plantilla y `check:literacy` ya
+exige que el manual la explique. Lo único que faltaba era que el **código** se creyera lo que el
+proyecto ya declaraba en tres sitios.
+
+**Hecho**: `lib/content/sitio.ts` nuevo con `baseDelSitio()`; `seo.ts`, `rss.ts`, `app/robots.ts`,
+`app/sitemap.ts`, los dos `rss.xml/route.ts`, `lib/webhooks/articulos.ts`, `app/api/ops/route.ts` y
+`scripts/ci/check-seo.ts` pasan por ella y ninguno guarda ya un dominio escrito a mano.
+`MENSAJE_NEUTRO` → `CLAVE_DEL_MENSAJE_NEUTRO` (`auth.signin.error`) y `MENSAJE_DE_TESTIGO_INVALIDO`
+→ `CLAVE_DE_TESTIGO_INVALIDO` (`auth.invitation.invalid`), con sus barriles; el campo `mensaje` de
+`ResultadoDeAceptacion` pasa a `claveDeMensaje`, que es lo que de verdad lleva, y `test:invitaciones`
+comprueba la clave. `NEXT_PUBLIC_SITE_URL` queda documentada como obligatoria y sin defecto en
+`.env.example` y en el README, y puesta en los **dos** trabajos de CI que compilan —sin ella, el
+`build:standalone` de CI se pararía—. El inventario queda anotado como cerrado en sus dos apartados.
+
+**Verificado**: `check:types`, `lint`, `check:cadenas`, `check:copy`, `check:content`,
+`check:literacy`, `check:env` (84 variables), `check:secrets` (562 archivos), `check:playbook` y
+`check:seo` (226 comprobaciones sobre el servidor real), todos en verde. Y las dos mitades del
+arreglo, a mano: `npm run build` **sin** la variable muere en `/ai/factory` con el mensaje entero y
+la línea de `sitio.ts` señalada; con ella puesta, `build:standalone` termina y sirve las 58 rutas.
+
+## «Empieza aquí»: fuera el nodo «Servicios», que repetía a la raíz (2026-09-21)
+
+Ricardo, mirando la portada: el cuadro **SLG Agency** y el nodo **Servicios** que colgaba de él decían
+la misma frase. No era casualidad ni copia pegada: los dos leían la `description` del registro
+`servicios`. La raíz lo hace porque el mapa **es** la portada y su enlace va a `/servicios`, la casa
+comercial; el nodo lo hacía por ser ese mismo registro. Padre e hijo con el mismo texto y el mismo
+destino: el nodo no ordenaba nada, solo metía un escalón.
+
+**Hecho**: el nodo desaparece y los dos ejes —`VoltAi by SLG`, con sus tres líneas y los servicios
+de cada una, y `Holdings by SLG`— suben un nivel, al lado de Doctrina, Blog y Nosotros. La página
+`/servicios` no se toca: sigue existiendo y sigue siendo el destino de la raíz y de la barra. Ni una
+cadena nueva: el árbol se sigue generando desde la tabla de rutas y los registros de contenido, así
+que el cambio son tres líneas de estructura, no una lista escrita a mano.
+
+**Verificado**: `check:types`, `lint`, `check:cadenas`, `check:paginas` y `check:copy` en verde, y la
+portada leída en el servidor local — el texto aparece una sola vez y el árbol conserva los tres
+niveles de VoltAi.
+
+## D-164 llega a `develop`, y trae un fallo propio que aquí sí se ve (2026-09-21)
+
+D-164 —la trampa anti-abuso descarta también cuando el campo **no viene**, no solo cuando viene
+relleno— se había commiteado directamente sobre `main`, que iba 102 commits por detrás. Se trae con
+`cherry-pick -x`, no fusionando `main`, para no arrastrar aquí una historia vieja.
+
+**El fallo que el traslado destapó**: el commit añadía `drizzle/0023_dominios_desechables.sql`
+**sin declararlo en `drizzle/meta/_journal.json`**. En `main` eso no se notaba porque allí el journal
+se queda en 0016 y `check:migrations` no tenía con qué comparar; en `develop`, con 0017 a 0022
+presentes, el freno lo caza en el acto. Registrado como `idx: 23`: 24 archivos, 24 declaradas, en
+secuencia.
+
+**Dos conflictos, los dos de texto.** `.gitignore`: las dos ramas ignoraban `.vercel` y
+`supabase/.temp/`; se conserva la redacción comentada de `develop` y se añaden, con su porqué, las
+dos rutas nuevas de `.claude/` —que es un acierto de D-164, porque este repositorio es público y esos
+archivos son configuración del portátil—. `decision_log.md`: D-164 entra en su propia sección
+después de la tabla D-160…D-163, con las tildes puestas, que es como está escrito el resto del
+documento.
+
+**Verificado aquí**: `check:types`, `lint`, `check:migrations`, `check:fronteras`, `check:alcance`,
+`check:literacy`, `check:secrets`, `check:env`, `check:anexo-d`, `check:cadenas`, `check:copy`,
+`check:nomenclature`, `check:archivos` y `check:playbook`, los catorce en verde.
+
+**No verificado en esta máquina**: `scripts/descargas/test-descargas.ts`, que necesita PostgreSQL;
+lo corre CI. Y la migración 0023 **está pendiente de aplicar en producción** — la lista de dominios
+ya se amplió en caliente el mismo día, así que la migración devuelve al repositorio lo aprendido,
+pero la base recreada desde cero la necesita.
+
+## Lo que CI encontró en D-164: la puerta de contacto y la prueba que faltaba (2026-09-21)
+
+La corrida de `c939519` falló: **5 de 18 comprobaciones de `test-descargas.ts`**, todas en el bloque
+DU-10 de contacto. El commit de D-164 había puesto la trampa vacía por delante en el ayudante
+`enviar` —el de `/api/descargas`— y se dejó `enviarA`, el de `/api/contacto` y la solicitud de
+doctrina, que seguía posteando sin el campo. Con la regla nueva, esos envíos legítimos se
+descartaban: la prueba estaba diciendo la verdad. Mismo arreglo en los dos ayudantes, con el spread
+después para que el caso del bot pueda seguir rellenando la trampa.
+
+**Y faltaba lo más importante: D-164 no tenía ni una prueba que ejerciera lo que decide.** Las que
+tocó el commit solo dejaban de fallar; ninguna enviaba un formulario **sin** el campo, que es
+exactamente el envío que se coló cinco veces en producción. Añadida: un `fetch` pelado contra
+`/api/contacto` —sin `enviarA`, que pinta la trampa por ser lo que hace un navegador— que comprueba
+las dos mitades de la decisión, que responde como si hubiera funcionado y que no queda fila.
+
+**Verificado aquí**: `check:types`, `lint`, `check:cadenas`, `check:migrations` y `check:playbook`.
+La prueba necesita PostgreSQL; la corre CI.
+
+## D-164, tercer llamador: el fixture de `test-webhooks` (2026-09-21)
+
+La corrida siguiente dejó `descargas` en verde —19 de 19, incluida la comprobación nueva— y sacó el
+mismo fallo un piso más abajo: **7 de 32 en `test-webhooks`**. La sección que comprueba el cableado
+—que los eventos salen desde donde ocurren las cosas, y no desde un `emitir` que nadie llama— arma
+su formulario con un solo campo y llama a `registrarCaptura`, la función real. Sin la trampa, el
+veredicto es `trampa` y no llega a haber cableado que observar.
+
+**Por qué el arreglo va en el fixture y no en el código.** `verificarEnvio` tiene un solo llamador,
+`registrarCaptura`, que es el embudo de las dos puertas públicas: la comprobación está, de hecho, en
+la frontera del formulario, y no hay ningún llamador interno que no sea un envío de formulario. El
+fixture imitaba mal lo que llega de un navegador. Se le pone `NOMBRE_DEL_CAMPO_TRAMPA` vacío —la
+constante, no la cadena escrita a mano— y con eso queda dicho también en la prueba por qué está ahí.
+
+Barrido de los dos archivos que tocan este camino (`test-descargas.ts` y `test-webhooks.ts`): no
+queda ningún otro fixture sin el campo.
+
+**Verificado aquí**: `check:types` y `lint`. Las dos pruebas necesitan PostgreSQL; las corre CI.
+
+## Plantilla, paso 1: la ficha del sitio (`site.config.ts`) (2026-09-22)
+
+Primer paso del plan de `docs/PLAYBOOK_REPLICACION.md` §3, tras D-165. **`site.config.ts`** (raíz) es
+la ficha de este sitio; su forma está en **`lib/sitio/tipos.ts`** y lo que se deriva de ella en
+**`lib/sitio/index.ts`**, la única puerta por la que el motor la leerá. Recoge: marca (nombre, razón
+social, lema, correo público, logo, isotipo, remitente, los nueve colores de `app/tokens.css`),
+dominio de producción y enlaces externos, idiomas, ocho módulos apagables, menú, la oferta como
+**ejes → líneas → servicios** más servicios **sueltos** (Holdings), fotos de las páginas fijas,
+bloques de la página de Servicios y nomenclatura.
+
+**Todavía no la consume nadie**, y es deliberado: este paso fija el contrato del que dependen los
+pasos 2–5, que se hacen en paralelo. Lo que sí está verificado es que la ficha **reproduce exactamente**
+lo escrito a mano: comparada campo a campo con `PROJECT_SERVICES`, `BRANCHES`, `SERVICIOS`, `RAMAS`,
+`LITERAL_TERMS`, `FORBIDDEN_VARIANTS` y `DAL_OS_FORBIDDEN` —los 31 patrones por su código fuente—,
+las siete comparaciones dan igual. Limitación declarada en el tipo: un sitio **solo en inglés** no
+está soportado (el principal vive en la raíz y es español).
+
+**Verificado**: `check:types`, `lint`, y el cotejo de las siete tablas.
+
+## Plantilla, paso 2: la marca y el dominio salen de la ficha (2026-09-22)
+
+Segundo paso de `docs/PLAYBOOK_REPLICACION.md` §3, sobre la ficha del paso 1. Lo que
+`docs/plantilla-de-sitios.md` §3.1 inventariaba como «SLG Agency» escrito a mano —y el enlace a la
+Academy externa que §3.2 dejaba abierto— se lee ahora de `sitio.marca` y `sitio.dominio`, siempre a
+través de `lib/sitio`. Para SLG no cambia nada que se vea: la ficha tiene exactamente los valores de
+antes, y eso es lo que se ha medido.
+
+**Hecho**:
+
+- **Nombre, razón social, lema y correo.** `PUBLIC_BRAND` es ahora `sitio.marca.nombre` (se conserva
+  el nombre porque lo citan la documentación y los frenos). `metadatosDe()` compone el título, el
+  `siteName` y el `alt` de la imagen social con el nombre; el JSON-LD de la organización y del
+  proveedor de cada servicio llevan la **razón social** y el **correo público**. El canal RSS, el
+  título y la descripción por defecto del armazón raíz (nombre y lema), los seis títulos de `(auth)`
+  y los diez `?? "SLG Agency"` de respaldo de `(public)`, también.
+- **Correo.** Las dos versiones de la invitación y el `invitadoPor` del correo de verificación dicen
+  `sitio.marca.nombre`; sin `MAIL_FROM_NAME`, el remitente es `sitio.marca.remitente`.
+- **Logo e isotipo.** El pie pinta `sitio.marca.logo`. El `Wordmark` ya **no** lee la ficha: recibe
+  nombre e isotipo por props desde `ArmazonPublico`, a través de `BarraDeNavegacion`. La razón es
+  concreta: la barra es de cliente, e importar `@/lib/sitio` desde el `Wordmark` metería la ficha
+  entera —oferta y patrones de nomenclatura— en el JavaScript de cada visitante para usar dos
+  cadenas. El prototipo, que también pinta la barra, pasa las mismas dos.
+- **La Academy externa.** `OverviewDeRama` enlaza `sitio.dominio.enlaces.academiaExterna` y, si la
+  ficha no declara esa clave, **no pinta el enlace**: antes un cliente habría mandado a sus
+  visitantes a la Academy de SLG.
+- **Los nueve colores.** Salen de `sitio.marca.colores` y **se quitan de `app/tokens.css`**, que
+  conserva sus nombres y sus reglas de uso. `app/layout.tsx` escribe un
+  `<style>:root{--slg-…}</style>` en el `<head>` con `cssDeLaMarca()`; la tabla color → variable
+  (`VARIABLES_DE_COLOR`) vive en `lib/sitio/index.ts` porque la leen dos. Se eligió así por tres
+  motivos: es servidor puro, sin JavaScript de cliente —la regla se escribe al prerrenderizar y
+  viaja en el HTML—; la CSP ya admite estilos en línea (`style-src 'unsafe-inline'`, a propósito);
+  y no hay un CSS generado que pueda quedarse viejo respecto de la ficha. Quitar los valores de
+  `tokens.css` en vez de dejarlos de respaldo es parte de la decisión: con dos fuentes, cuál gana
+  depende del orden en que Next escriba el `<head>`. `cssDeLaMarca()` solo acepta hexadecimales,
+  porque su texto va sin escapar dentro de un `<style>`.
+- **`check:contraste` mide la ficha.** Toma los nueve colores de `coloresDeLaMarca()` y el resto
+  (`--slg-ink-2`, `--slg-paper-2`, los alias) de `tokens.css`. Si `tokens.css` vuelve a definir uno
+  de los nueve como literal, el freno se niega a medir: mediría un color y el navegador pintaría
+  otro.
+
+**Fuera de este paso, a propósito**: el título de `/prototipo` («Prototipo C.5 · SLG Agency»), las
+cadenas de `content/ui/*.json` que nombran la marca, `scripts/auth/primer-admin.ts`,
+`scripts/db/seed.ts` y los dominios de las pruebas. `nomenclature.ts` solo cambia en `PUBLIC_BRAND`;
+los literales y patrones son de otro paso.
+
+**Verificado**: `check:types`, `lint`, `check:content`, `check:cadenas`, `check:contraste` (21
+mediciones, ahora sobre la ficha), `check:secrets` y `check:env`; con las variables del trabajo
+`gates` del CI, `build:standalone`, `check:seo`, `check:produccion`, `check:armazon`,
+`check:runtime`, y además `check:js-budget`, `check:paginas` y `check:blog`. Y la prueba directa del
+invariante: compilado también el commit anterior (`10e14fd`), los 97 HTML y cuerpos prerrenderizados
+se comparan sin los `<script>`, sin el `<style>` nuevo y sin los nombres de los trozos con hash: son
+**idénticos** salvo la fecha de `lastmod` del sitemap. El `<style>` de marca está en los 86 HTML que
+pasan por el armazón raíz (los tres que no, `_global-error` y las dos redirecciones del mapa antiguo,
+tampoco cargaban `tokens.css`). El asunto y el cuerpo de la invitación, compuestos en los dos
+idiomas, dicen lo mismo que antes.
+
+## Plantilla, paso 6: el perfil `marketing-website` (2026-09-22)
+
+Sexto paso del plan de `docs/PLAYBOOK_REPLICACION.md` §3. **`profiles/marketing-website/profile.md`**
+es el perfil corto para las webs de cliente, en sus dos variantes del §2 —informativa, y con área
+privada—, con todos los campos de `profiles/_contract.md`, que ahora lo lista entre los perfiles
+provistos.
+
+Lo que decide: los `design_docs` se reducen a **la ficha** (`site.config.ts`), el mapa de contenido,
+los pendientes con el cliente y, solo con área privada, el acceso; un DU es **una página** (o los
+servicios de una línea) y está terminado cuando se sirve en cada idioma de la ficha, con su copy
+declarado, enlazada, y —si lleva formulario— con un envío de prueba recibido en el buzón del
+cliente. El `quality_gate` son **D1–D6 de `docs/gates.md` por sus órdenes**, más las capturas en
+móvil y escritorio. Una tabla dice lo que el perfil **no** pide y cuándo sí: `data_model`,
+`api_contracts`, identidad social, API v1, copias a almacenamiento externo, `/hq`, doctrina.
+
+**Una tensión, resuelta a la vista.** El contrato prohíbe nombres de producto en un perfil, y el
+encargo pedía la publicación «Vercel + Supabase». `publication_step` y `stack_candidates` van en
+categorías, como exige el contrato, y una nota cita la elección vigente y remite a su decisión en el
+§2 del playbook: el perfil la cita, no la fija.
+
+**Verificado**: `check:types`, `lint`, `check:playbook`, `check:literacy`, `check:secrets`.
+
+## Plantilla, paso 10: el lector del intake (`commands/leer-intake.md`) (2026-09-22)
+
+Décimo paso del plan de `docs/PLAYBOOK_REPLICACION.md` §3. **`commands/leer-intake.md`** es el
+playbook que Claude sigue cuando un cliente responde el formulario; su envoltorio,
+`.claude/commands/leer-intake.md`, lo pone en el menú como `/leer-intake`.
+
+Qué fija: cómo se localizan la hoja y la carpeta por el conector de Drive (por `title`, que el
+conector no acepta `name`); las **32 columnas** de la hoja, literales y en orden; la comprobación de
+cada ítem ★ del §4 con su condición de cumplido y el camino del correo de faltantes; cinco
+**paradas** —respuestas que la plantilla no cubre y decide Ricardo—; la correspondencia de cada
+columna con la ficha, con otra parte del procedimiento o con una variable no secreta; los colores
+del cliente repartidos en los nueve tokens con su contraste mínimo; la conversión de los servicios en
+texto libre a oferta, slugs, rutas y registros de seis secciones; el destino de cada archivo de la
+carpeta; y el resultado, con `docs/intake/pendientes.md`.
+
+**El ejemplo «Cliente Demo» se comprobó**: su ficha compila contra `lib/sitio/tipos.ts` con `tsc
+--strict`.
+
+**Huecos que el ejemplo destapó**, anotados en el playbook como pendientes o paradas:
+
+- El formulario ofrece «Solo inglés» y el motor no lo soporta.
+- Ofrece tres páginas que el motor no tiene: «Preguntas frecuentes», «Equipo», «Trabaja con nosotros».
+- No pregunta el **correo público** de la web (`marca.correoPublico`): se usa el de contactos, por confirmar.
+- La ficha no tiene **tipografía** ni **nombre de servicio por idioma**.
+- El contrato de servicio exige `download` y `## Descarga` aunque `descargas` esté apagado.
+- El buzón de contactos es hoy `MAIL_ALERTS_TO`; el playbook admite `MAIL_LEADS_TO` si el paso 5b la crea.
+- La convención de rutas de la oferta (todo bajo `/servicios`) queda a confirmar por el paso 3.
+
+**Verificado**: `check:types`, `lint`, `check:playbook`, `check:literacy`, `check:secrets`.
+
+## Plantilla, paso 11: los cuatro correos al cliente (`docs/intake/correos.md`) (2026-09-22)
+
+Undécimo paso del plan de `docs/PLAYBOOK_REPLICACION.md` §3. **`docs/intake/correos.md`** trae las
+cuatro plantillas del §5 —envío del formulario, faltantes, revisión de la vista previa y entrega con
+accesos— en texto plano para Gmail, firmadas por Ricardo Torres Oliva, Softlanding Global, con el
+tagline del kit.
+
+Lo que fija además: el tono que pidió Ricardo, con la lista de fórmulas que no entran; los **16
+campos variables** entre dobles llaves, cada uno con su origen (columna de la hoja, ficha, plan o
+conector) y los correos en que aparece; las líneas condicionales `[solo si …]`; que ninguna
+contraseña viaja por correo; cuándo se escribe en inglés —por el idioma de la persona, no el de la
+web—; y la nota de estilo HTML con los colores del kit y una estructura mínima con estilos en línea.
+
+**Dos cosas que el paso destapó**, anotadas en el documento:
+
+- `#50B4DC`, el color de enlace del kit para correos, mide 2,4:1 sobre blanco: se exige subrayado
+  siempre.
+- El brief está solo en español: a un cliente que no lo lee no se le puede mandar el correo 1.
+
+**Y una incoherencia del formulario**: la ayuda de la pregunta del CRM promete que los contactos
+«quedan guardados en tu panel», y una web sin área privada (variante A) no tiene panel.
+
+**Verificado**: `check:types`, `lint`, `check:playbook`, `check:literacy`, `check:secrets`.
+
+## Plantilla, paso 5b: el modo sin CRM (2026-09-22)
+
+**El defecto.** En un sitio con `modulos.crm: false` la captura se guardaba en `lead_capture` y nadie
+se enteraba: la cola intentaba entregar a un CRM que no existe, fallaba cinco veces y a las ~31 h
+mandaba un aviso de FALLO. El cliente no recibía el contacto y el operador recibía una alarma falsa.
+
+**Lo que hace ahora.** La misma cola decide por la ficha: con el CRM apagado, `barrerUnaVez` no
+entrega, **avisa por correo** al buzón del cliente (`MAIL_LEADS_TO`) con el contacto entero —nombre,
+apellido, correo, origen, página, documento, empresa, cargo, idioma y el mensaje partido en líneas—,
+plantilla nueva `capture_inbox_notice` en ES y EN, en el idioma principal del sitio. Lo manda **la
+cola y no el formulario**, por lo mismo que con el CRM: el barrido corre tras responder (`lib/colas`),
+el visitante no espera al proveedor, y si el proceso muere entre guardar y avisar, la fila sigue
+`pending` y la recoge el barrido siguiente. Código propio del correo en `lib/crm/sin-crm.ts`; la
+rama, en `lib/crm/cola.ts` (`avisarUna`, `barrerSinCrmUnaVez`). No se escribe `crm_delivery` ni se
+llama a ningún CRM. **Con el CRM encendido —la ficha de SLG— el camino es exactamente el de antes.**
+
+**El estado.** Dos nuevos, migración **`drizzle/0025_captura_sin_crm.sql`** (rehace el `CHECK`
+`lead_capture_sync_status_valid`; espejo `CAPTURE_SYNC_STATUS` en `lib/db/schema.ts`):
+`notified` —el proveedor aceptó el aviso— y `notify_failed` —cinco avisos sin salir—. Ni `delivered`
+ni `failed` servían: los dos hablan de un CRM, y `pending` era justo el defecto. Un correo caído se
+trata como un CRM caído: misma escalera (1 min → 24 h), error en `crm_last_error` con el prefijo
+«aviso por correo:» y en `email_delivery`; al quinto, `notify_failed`. HQ → Capturas ofrece los
+estados nuevos en el filtro, pinta cada uno como su pareja y deja **Reintentar** sobre
+`notify_failed`, que reabre un ciclo como con `failed` (`lib/hq/reintento.ts`); sobre `notified`
+contesta «ya entregada». La cabecera de la pantalla dice «Sin CRM» en vez del modo. La API v1 acepta
+los dos estados en el filtro `crm_sync_status`.
+
+**`MAIL_LEADS_TO`**: declarada en `lib/ops/variables.ts` (obligatoria solo si el CRM está apagado),
+`.env.example`, `README.md` (tabla de variables y el apartado del CRM), `docs/MANUAL_DEL_SISTEMA.md`
+y `docs/plantilla-de-sitios.md`. No cae a `MAIL_ALERTS_TO`: ese es el buzón del operador, no el del
+cliente, y el contacto llegaría a quien no lo contesta.
+
+**Pruebas.** `scripts/crm/test-crm.ts` (bloque `probarSinCrm`, contra PostgreSQL y un puerto de
+correo falso): aviso al buzón con los datos, `notified`, cero llamadas y cero traza de CRM, el
+correo compuesto en los dos idiomas y escapado, la escalera hasta `notify_failed` y el fallo sin
+`MAIL_LEADS_TO`. `scripts/hq/test-capturas.ts`: el reintento de HQ sobre los dos estados y el filtro.
+`scripts/mail/test-correo.ts`: datos de la plantilla nueva. Las tres necesitan PostgreSQL; las corre CI.
+
+**Encontrado de paso y NO tocado** (el encargo exige que con CRM no cambie nada): `avisarDelFallo`
+en `lib/crm/cola.ts` manda `urlCrm` y `error`, y la plantilla `capture_failed_alert` exige `urlHq`
+(y lee `ultimoError`). `componer` lanza antes de encolar, el `catch` lo traga, y **el aviso del
+quinto fallo al CRM no ha salido nunca**. Queda para una unidad propia.
+
+**Verificado aquí**: `check:types`, `tsc` de la raíz, `lint`, `check:env`, `check:literacy`,
+`check:secrets`, `check:cadenas`, `check:copy`, `check:fronteras`, `check:alcance`, `check:hq`,
+`check:playbook`. `check:migrations` **falla en esta rama a propósito**: el 0024 es de otro trabajo en
+paralelo y el journal salta de 23 a 25; se resuelve al fusionar.
+
+## Plantilla, paso 9: el primer administrador sin contraseña impresa (2026-09-22)
+
+**El defecto.** `scripts/auth/primer-admin.ts` creaba el primer `slg_admin` e **imprimía** su
+contraseña: acababa en el historial del intérprete, en el registro de la sesión y en la
+transcripción de quien lo ejecutara —Claude incluido—. Era la credencial que abre todo.
+
+**Lo que hace ahora, por defecto.** Crea empresa, usuario (`email_verified`), pertenencia y apunte de
+auditoría como antes, pero **sin fila `credential` en `account`**: no hay contraseña con la que
+entrar. Después pide a la librería `auth.api.requestPasswordReset` para ese correo —el mismo camino
+de `/recuperar`, con su token de un solo uso, su caducidad de una hora y su plantilla
+`password_reset`—, y el enlace aterriza en `/restablecer`, donde la persona elige la contraseña;
+Better Auth crea entonces la fila `credential` con la forma que el login busca. El guion lee en
+`email_delivery` si el correo salió (la librería no lo cuenta: responde igual siempre) y lo dice; si
+no salió, sale con código 1 y explica las dos salidas (`/recuperar` en cuanto funcione el correo, o
+`--rehacer`). **Antes de crear nada** comprueba que están las variables de correo y
+`NEXT_PUBLIC_SITE_URL`: una cuenta creada sin poder mandar su enlace obligaría a rehacer el arranque.
+No se usa `lib/invitations`: la invitación crea la cuenta al canjearse y exige un actor de SLG que
+invite, que es justo lo que aún no existe.
+
+**Modo de emergencia explícito: `--imprimir-contrasena`.** Avisa antes de hacer nada y se comporta
+como el guion anterior (genera y enseña una vez, o usa `PRIMER_ADMIN_PASSWORD` sin enseñarla).
+`PRIMER_ADMIN_PASSWORD` sin el modificador se rechaza. La auditoría guarda cómo se dio el acceso
+(`acceso: enlace_por_correo | contrasena_impresa`).
+
+**Guardarraíles intactos**: validación del correo, rol dueño con `BYPASSRLS`, «solo si no hay
+nadie», `--rehacer` con sus tres condiciones (un usuario, creado por el guion, cero sesiones) y los
+dos apuntes de `audit_log`.
+
+**Documentado** en `README.md` (Tarea 4, «Antes de la primera invitación: la primera cuenta», con los
+pasos que hace la persona que recibe el correo), `docs/plantilla-de-sitios.md` §5 y
+`docs/project_memory.md`.
+
+**Verificado aquí**: `check:types`, `lint`, y los caminos que se niegan antes de tocar la base
+(faltan variables de correo · `PRIMER_ADMIN_PASSWORD` sin el modificador · aviso del modo de
+emergencia), ejecutados a mano. El camino completo necesita PostgreSQL **vacío** y un SMTP: no tiene
+prueba automática, porque la base de CI ya tiene usuarios y el guion, a propósito, se niega.
+
+## El aviso de captura fallida no salía nunca (2026-09-22)
+
+Lo encontró el agente del paso 5b al leer `lib/crm/cola.ts`, y es un defecto de producción, no de la
+plantilla: `avisarDelFallo` pasaba a la plantilla `capture_failed_alert` las claves `urlCrm` y `error`,
+pero la plantilla exige `urlHq` y lee `ultimoError`. `exigir(datos, "urlHq")` lanzaba antes de encolar
+el correo y el `catch` vacío se lo tragaba. Resultado: una captura que agotaba los cinco intentos de
+entrega al CRM quedaba en `failed` **sin avisar a nadie**, que es justo lo que RF-50 pide impedir.
+
+**Hecho**: se pasan las claves que la plantilla pide —`urlHq` a la captura en HQ, donde se reintenta, y
+`ultimoError`— y el `catch` escribe el fallo en el registro del servidor en vez de desaparecerlo.
+
+**Verificado aquí**: `check:types`, `lint`. La prueba de la cola necesita PostgreSQL; la corre CI.
+`scripts/mail/test-correo.ts` ya componía esta plantilla con las claves correctas, y por eso nunca lo
+vio: probaba la plantilla, no a quien la llama.
+
+## Plantilla, paso 7: `commands/crear-sitio.md`, la infraestructura por conectores (2026-09-22)
+
+Paso 7 del §3 de `docs/PLAYBOOK_REPLICACION.md`. **`commands/crear-sitio.md`** es el playbook que
+Claude sigue para montar un sitio de cliente sin tocar un secreto (envoltorio en
+`.claude/commands/crear-sitio.md`): comprobaciones previas; repositorio `web_<cliente>` desde
+`website_template` con `gh` y `main` como rama por defecto —Vercel toma de ahí la de producción—;
+proyecto Supabase con `get_cost` primero y parada ante cualquier coste; migraciones y buckets por la
+API; proyecto Vercel y variables no secretas; la línea del comando de secretos para Ricardo, y la
+comprobación de `/api/health` en la vista previa. Cada paso lleva herramienta, qué tiene que salir y
+qué hacer si falla.
+
+**Las migraciones por `apply_migration` funcionan tal cual**, revisadas una a una: el
+`--> statement-breakpoint` es un comentario; Drizzle ya las ejecuta en una sola transacción, así que
+ninguna exige salir de ella; los `CREATE/ALTER ROLE` de 0001–0002 necesitan `CREATEROLE` y
+`BYPASSRLS`, que el `postgres` de Supabase tiene (así se migró SLG). **Lo que sí necesita
+tratamiento es el diario**: `apply_migration` anota en `supabase_migrations`, no en
+`drizzle.__drizzle_migrations`, y sin esas filas `scripts/db/migrar.ts` intentaría repetir la 0000. El
+playbook trae la orden que calcula los *hash* igual que `drizzle-orm/migrator` (SHA-256 del archivo
+entero, `created_at` = `when` del diario, comprobado en su código).
+
+**Hallazgo de seguridad, fuera del alcance de este paso**: Supabase publica `public` por su API REST y
+concede su uso a `anon` y `authenticated`; con la clave anónima —pública— se leerían las tablas sin
+RLS y se llamarían por RPC las funciones `SECURITY DEFINER`. El sitio no usa esa API, así que el
+playbook la cierra con `REVOKE USAGE ON SCHEMA public FROM PUBLIC, anon, authenticated` (`slg_app`
+tiene `USAGE` explícito desde 0001). **Producción de SLG probablemente está igual y no se ha tocado**:
+queda para que Ricardo decida.
+
+Los buckets se crean por SQL sobre `storage.buckets`: `lib/files/aprovisionar.ts` solo habla S3, y la
+REST de Storage exige la clave de servicio.
+
+**[POR CONFIRMAR en la prueba en frío, §3 paso 16]**: que `apply_migration` corre como `postgres` (la
+comprobación *b* del paso 3 lo detecta) y el efecto del `REVOKE` sobre los avisos de `get_advisors`.
+
+**Verificado**: `check:secrets`, `check:env`, `check:literacy` y `check:playbook`. Nada se ha creado
+en GitHub, Supabase ni Vercel.
+
+## Plantilla, paso 8: `npm run sitio:secretos`, el comando único de secretos (2026-09-22)
+
+Paso 8 del §3. **`scripts/sitio/secretos.ts`** es lo único del montaje de un cliente que ejecuta
+Ricardo: una línea en Terminal, una vez por cliente. Genera en su Mac los valores secretos y los
+entrega directamente a cada plataforma; **ninguno sale por pantalla ni pasa por el chat**. Partido en
+`nucleo.ts` (lo que se decide, sin red) y `plataformas.ts` (las conversaciones reales y su doble para
+`--simular`), para que la prueba ejecute el mismo recorrido que Ricardo con plataformas de memoria.
+
+Qué va a cada sitio. **A Vercel** (Production y Preview, como *sensitive*): `APP_DB_PASSWORD`,
+`DATABASE_URL`, `DATABASE_URL_MIGRATIONS`, `BETTER_AUTH_SECRET`, `DELIVERABLE_VIEWER_SECRET`,
+`CRON_SECRET`, `WEBHOOK_SIGNING_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, `MAIL_SMTP_USERNAME`,
+`MAIL_SMTP_PASSWORD`; y `SUPABASE_URL`, legible. **A la base**: contraseñas nuevas de `slg_app` y de
+`postgres`. **A Resend**: el dominio `mailweb.<dominio>` y una clave de solo envío para ese sitio. **A
+UptimeRobot**: el monitor de `/api/health`. **Al Llavero** (servicio `slg-sitios`): las claves de cuenta
+de Resend y UptimeRobot, pedidas con entrada oculta la primera vez y comprobadas antes de guardarlas.
+
+Decisiones que no son obvias:
+
+- **La contraseña del dueño no hace falta conocerla.** `supabase db query --linked` va por la API de
+  gestión con la sesión de la CLI de Ricardo, así que el `ALTER ROLE` no necesita conectarse como
+  nadie. Y lo que viaja no es la contraseña sino su **verificador SCRAM-SHA-256**: la orden puede
+  quedar en los registros de Supabase, y un verificador con sal de una cadena de 192 bits no se
+  invierte. El cálculo se coteja con el vector del RFC 7677.
+- **El pooler no se adivina.** `aws-0` es el de SLG, pero Supabase asigna proyectos nuevos también a
+  `aws-1`. Se prueba la conexión con la contraseña recién puesta —con el paquete `postgres` del
+  repositorio— y el que acepta es el que va a `DATABASE_URL`. De paso, eso comprueba que el sitio
+  entra como `slg_app` y no como superusuario **antes** de cargarlo en Vercel.
+- **Las tres de la base cambian juntas o ninguna**: si una ejecución anterior se cortó entre medias,
+  se regeneran las tres para que digan lo mismo que la base.
+- **Ningún valor en la línea de comandos**: `vercel env add` y `security -i` lo reciben por la entrada;
+  `supabase db query`, por un archivo 0600 que se borra. Nada que aparezca en `ps` ni en el historial.
+- **Idempotente**: lo que ya está en Vercel no se regenera (regenerar `BETTER_AUTH_SECRET` cerraría
+  todas las sesiones). El monitor nace **en pausa** mientras el dominio no responde, y la misma línea,
+  pegada el día del lanzamiento, lo activa.
+- **Se niega** a tocar la base y el proyecto de producción de SLG.
+
+**`scripts/sitio/test-secretos.ts`** (`npm run test:sitio-secretos`), sin red: 66 comprobaciones.
+Ningún secreto en la salida —tampoco cuando una plataforma falla repitiéndolo—; ningún valor en los
+argumentos de `vercel`, `npx` ni `security` (dobles que los apuntan); `--simular` ejecutado como
+proceso aparte con procesos, `fetch` y *sockets* trampeados, sin que salte ninguno; coherencia entre
+`DATABASE_URL`, `APP_DB_PASSWORD` y el verificador enviado; idempotencia; cambio de pooler. La trampa
+se comprobó en rojo: el mismo comando sin `--simular` la dispara en la primera llamada a `vercel`.
+
+`docs/PLAYBOOK_REPLICACION.md` §7.3 punto 4 lleva ya la línea exacta.
+
+**Sin resolver**, con su motivo: (1) **plan de Resend** — el gratuito admite un solo dominio y ya lo
+ocupa `mailweb.softlandingglobal.com`; el comando lo detecta y lo presenta como compra, pero decidirlo
+es de Ricardo. (2) Tres supuestos que solo confirma la primera ejecución real: que `--scope` de la CLI
+de Vercel acepta el id del equipo, que `supabase db query --linked --project-ref` no exige un
+`supabase link` previo, y que `supabase projects api-keys` sigue devolviendo la `service_role` en
+proyectos nuevos (si solo trae la `sb_secret_…`, se usa esa, pero `lib/files/supabase.ts` no se ha
+probado con ella). (3) Las claves de Google/Microsoft y las del CRM, si un cliente las necesita,
+siguen fuera del comando.
+
+**Verificado**: `check:types`, `lint`, `check:secrets`, `check:env`, `check:literacy`,
+`check:playbook` y `test:sitio-secretos`. Solo en simulación: nada se ha llamado de verdad.
+
+## Seguridad: la API REST de Supabase exponía diez tablas y siete funciones (2026-09-22)
+
+Hallazgo del agente del paso 7 al preparar `crear-sitio`, **confirmado sobre producción** con el asesor
+de seguridad de Supabase (solo lectura, por el conector MCP): nivel ERROR, diez tablas sin RLS legibles
+por el rol `anon` a través de la API REST automática —`user`, `session`, `account`, `verification`,
+`lead_capture`, `organization`, `email_delivery`, `crm_delivery`, `download_event`,
+`webhook_delivery`— y siete funciones `SECURITY DEFINER` ejecutables sin sesión por
+`/rest/v1/rpc/…`. El sitio no usa esa API; estaba abierta igual, porque Supabase la publica por
+defecto. Bastaba la clave `anon` del proyecto.
+
+**Hecho**: migración `0026_cerrar_la_api_rest.sql` — quita a `PUBLIC`, `anon` y `authenticated` el uso
+del esquema `public`, que cierra de una vez lo que hay y lo que se cree después. Comprobado antes en
+producción que `slg_app` tiene su USAGE concedido explícitamente (`slg_app=U`), así que la aplicación no
+lo pierde; la migración lo vuelve a conceder por si acaso. `anon` y `authenticated` solo se tocan si
+existen, porque en PostgreSQL local y en CI no son roles.
+
+**No aplicada en producción**: va por el camino de siempre (`scripts/db/migrar.ts`, Ricardo), junto con
+0024 y 0025.
+
+## Plantilla, paso 3: la estructura sale de la ficha (2026-09-22)
+
+Tercer paso de `docs/PLAYBOOK_REPLICACION.md` §3 (D-165) y decisión **D-166**. La oferta de SLG
+—un eje, tres líneas, once servicios y un servicio suelto— dejó de estar escrita a mano en cinco
+sitios y en dieciocho carpetas: la declara `site.config.ts` y el motor la lee por `lib/sitio`.
+
+**Hecho.** `lib/content/rutas.ts` deriva de la ficha `DESTINOS`, `EJES`, `RAMAS`, `SERVICIOS` y los
+pares de idioma, con los mismos nombres exportados; las páginas fijas del motor (portada, Servicios,
+blog, doctrina, nosotros, descargas, contacto, gracias, legales, acceso) se listan una sola vez en
+`lib/sitio/motor.ts`, con su par, su registro y su módulo. **Las rutas**: se borran
+`app/(public)/[slug]`, `ai/**`, `holdings` y su copia bajo `en/`, y las sustituyen
+`app/(public)/[...ruta]` y `app/(public)/en/[...ruta]`, que con `resolverRuta()` sirven el índice de
+un eje, el de una línea, la página de un servicio o una página suelta, desde
+`components/PaginaDeLaFicha.tsx`, con `generateStaticParams` desde la ficha y `dynamicParams =
+false`. Las carpetas fijas siguen ganando porque Next resuelve lo estático antes que el comodín.
+`PuertaDeAI` recibe el eje, `OverviewDeRama` lee su enlace externo de la ficha
+(`enlaceExterno` → `dominio.enlaces`), `MapaDelSitio`, `Regreso` y `Portada` recorren ejes, líneas y
+sueltos sin nombrar ninguno —la página de Servicios pinta los bloques de `sitio.bloquesDeServicios`,
+y Holdings es un bloque «suelto desarrollado» con su `id`—, `Fotografia` deriva su tabla de las
+`foto` de la oferta y de `sitio.fotos`, y el sitemap sale de la misma tabla en el mismo orden.
+`BRANCHES` es `nombresDeRama()`; `LITERAL_TERMS`, `FORBIDDEN_VARIANTS` y `DAL_OS_FORBIDDEN` leen
+`sitio.nomenclatura` (`PUBLIC_BRAND` no se ha tocado); `PROJECT_SERVICES` es `nombresDeServicio()`, y
+el formulario de HQ (`lib/hq/servicios.ts`) lee la misma lista. **La base**: la migración
+`0024_servicio_desde_la_ficha` retira `project_service_literal`, que listaba los once servicios de
+SLG y habría impedido a cualquier otro cliente crear un proyecto; ahora lo validan el catálogo de la
+API, la escritura justo antes del `INSERT` (defensa nueva: ya no hay capa detrás) y HQ.
+`test:gestion` deja de leer el `CHECK` y comprueba que HQ y la API aceptan exactamente la ficha y que
+la contención ya no está. **Freno nuevo `check:sitio`**, en `check:ci` y en el trabajo `gates`: cada
+servicio con su registro en cada idioma, con el `name` de la ficha y el `branch` de su línea, ningún
+registro sin declarar, cada eje y línea con su página, cada foto en `public/fotos/`, rutas bien
+formadas, sin duplicados y sin caer bajo una carpeta fija de `app/` (lo calcula recorriendo `app/`),
+cada destino del menú existente. Su prueba negativa es una ficha rota
+(`scripts/ci/negative/sitio/site.config.ts`) con las seis formas de romperla, registrada en
+`check:brakes`.
+
+**Verificado.** Antes de tocar nada se compiló `develop` intacto y se guardó el HTML de las 117 URL
+que se alcanzan rastreando desde la portada, el sitemap y una lista de rutas inexistentes (404
+incluidos), sin scripts ni rutas de chunks. Tras el cambio, las 117 dan **el mismo código y el mismo
+HTML**; la única diferencia es `<lastmod>` del sitemap, que es la fecha de compilación. En verde:
+`check:types`, `lint`, `check:content`, `check:cadenas`, `check:migrations`, `check:fronteras`,
+`check:alcance`, `check:secrets`, `check:env`, `check:playbook`, `check:sitio` (389
+comprobaciones, y rojo contra su ficha negativa por los seis motivos), y, sobre la compilación
+autocontenida con las variables de CI, `check:paginas` (142), `check:seo` (226), `check:armazon`
+(60), `check:produccion`, `check:runtime`, `check:blog` y `check:js-budget`. `test:gestion` y
+`check:brakes` necesitan PostgreSQL y no corren en esta máquina: los corre el trabajo `datos` de CI.
+
+## Plantilla, paso 4: los cinco frenos de la oferta leen la ficha (2026-09-22)
+
+Cuarto paso de `docs/PLAYBOOK_REPLICACION.md` §3. Los cinco frenos que validaban contra la oferta de
+SLG escrita a mano la leen ahora de la ficha, y **ninguno nombra a SLG ni a sus servicios**: medirían
+igual el sitio de cualquier cliente.
+
+**Hecho.** `check:nomenclature` ya recorría `lib/content/nomenclature.ts`, que desde el paso 3 lee
+`sitio.nomenclatura`; faltaba la forma buena de las reglas de contenido, que el motor escribía a
+mano («Destrucción Creativa»): ahora es el campo opcional `correct` de cada regla en la ficha. Con
+las tres listas **vacías** el freno recorre el contenido y pasa sin hallazgos —se probó vaciándolas
+un momento—. `check:copy` toma lo reservado al portal de `sitio.nomenclatura.prohibidasEnPublico`
+(en la ficha de SLG, la Sesión Cero, con el mismo mensaje de siempre); las agendas de terceros siguen
+en el freno, porque son del motor. `check:armazon` lee los destinos del menú y el botón de acceso de
+la tabla de rutas y recorre las páginas del motor, los ejes, las líneas, los sueltos y el primer
+servicio de cada línea —el mismo conjunto que tenía escrito—; el criterio 3 (el idioma es la ruta)
+usa Servicios y su propio título en vez de Doctrina, que es un módulo que un sitio puede apagar.
+`check:paginas` toma los bloques de `sitio.bloquesDeServicios`, mide el bloque de artículos hasta el
+bloque siguiente sea cual sea, y el criterio del enlace externo recorre las líneas con
+`enlaceExterno` y su URL de `dominio.enlaces`. `check:seo` mide el `schema.org` del primer servicio
+de la ficha y las salidas de la 404 de `salidasDeError()`. Esas salidas eran `/ai` y `/blog` escritos
+en `PaginaDeError`: ahora llegan por props, y a la 500 —un límite de error, de cliente por
+obligación— por un contexto que pone el layout raíz (`components/SalidasDeError.tsx`), para no
+mandar la ficha entera al navegador con el presupuesto de JS a 142,9 KB de 150.
+
+**Verificado.** Las 117 URL rastreadas siguen sirviendo el mismo código y el mismo HTML que `develop`
+(solo cambia `<lastmod>`). Los frenos del servidor hacen **el mismo número de comprobaciones** que
+sobre `develop` —`check:paginas` 142, `check:seo` 226, `check:armazon` 60— y todas en verde; las
+únicas líneas distintas son los textos que ya no nombran la oferta y el cambio de Doctrina a
+Servicios en el criterio 3. `check:gates` ve en rojo sus cinco fixtures negativos de contenido, y en
+verde: `check:types`, `lint`, `check:content`, `check:cadenas`, `check:migrations`,
+`check:fronteras`, `check:alcance`, `check:secrets`, `check:env`, `check:playbook`, `check:sitio`,
+`check:produccion`, `check:runtime`, `check:blog` y `check:js-budget`. `check:brakes` necesita
+PostgreSQL: lo corre CI.
+
+## Plantilla, paso 5: módulos e idiomas apagables (2026-09-22)
+
+Quinto paso de `docs/PLAYBOOK_REPLICACION.md` §3. `sitio.modulos` y `sitio.idiomas` dejan de ser
+declaración y pasan a mandar: lo que la ficha apaga no existe en el sitio servido.
+
+**Hecho.** `lib/sitio/motor.ts` gana la tabla de qué rutas son de qué módulo —las páginas del motor
+y los prefijos que no tienen página: `/api/contacto`, `/api/descargas`, `/hq`, `/portal`, el acceso,
+el visor, `/api/auth`, `/api/v1`— y `rutaDisponible()`, que además da por inexistente todo `/en/**`
+si el inglés está apagado; la API exige también la intranet. **El middleware es la puerta**, porque
+es lo único por lo que pasan a la vez páginas y manejadores (`rss.xml`, `/api/**`): tras la
+compuerta de staging, una ruta apagada responde 404 —las páginas, reescritas a una ruta inexistente
+para que salga la 404 propia con sus salidas; los manejadores, 404 sin cuerpo— y en el host del
+visor lo mismo. Además: el menú, el pie y el mapa solo enlazan páginas de módulos encendidos; el
+botón de acceso desaparece sin intranet y el conmutador sin segundo idioma (`BarraDeNavegacion`
+los recibe opcionales); sin inglés no se emite `hreflang` ni se generan rutas `/en` de la ficha;
+la página de Servicios omite los bloques de doctrina, artículos y descarga si su módulo está
+apagado (`bloquesDeServiciosActivos()`) sin desplazar el texto de los demás; la página de servicio
+no ofrece documento sin descargas ni enlace a contacto sin contacto; el sitemap filtra rutas y
+artículos, `robots.txt` deja de nombrar `/hq` y `/portal` sin intranet y las salidas de la 404 no
+llevan al blog si no lo hay. `crm` y `analitica` quedan expuestos por `moduloActivo()`; su
+comportamiento es del paso 5b. **Los frenos que miden esas rutas las saltan**: `check:blog` sale en
+verde sin blog, `check:armazon` comprueba que sin intranet no hay botón y que sin inglés no hay
+conmutador y `/en` da 404, `check:paginas` y `check:seo` recorren solo lo encendido (y el segundo
+exige que sin inglés no haya `hreflang`), `check:runtime` mide la política estricta en `/prototipo`
+si `/acceder` no existe, y `check:terceros` y `test:gesto` filtran sus páginas.
+
+**Verificado.** Con la ficha de SLG, las 117 URL rastreadas sirven el mismo código y el mismo HTML
+que `develop`, y los frenos del servidor hacen el mismo número de comprobaciones (142, 226, 60).
+Con una ficha de prueba —sin inglés, blog, doctrina, contacto, intranet ni API, solo en la copia de
+trabajo y devuelta después— se compiló y: `/blog`, `/blog/rss.xml`, `/doctrina`, `/contacto`, `/en`,
+`/en/about`, `/acceder`, `/hq`, `/portal`, `/api/v1/…`, `/api/contacto` y `/visor/…` responden 404
+(las páginas con la 404 propia, CSP y `noindex`); `/gracias` y `/descargas` siguen en 200; la barra
+enlaza solo `/servicios` y `/nosotros`, sin acceso ni conmutador ni `hreflang`; el pie, el mapa, el
+sitemap, `robots.txt`, los bloques de Servicios y las salidas de la 404 se recortan como se espera;
+y `check:sitio`, `check:paginas` (58), `check:seo` (141), `check:armazon` (30), `check:produccion`,
+`check:runtime`, `check:blog` y `check:js-budget` pasan sobre ese sitio. Las pruebas negativas de
+armazón, páginas y SEO siguen en rojo por sus motivos. En verde con la ficha de SLG: `check:types`,
+`lint`, `check:content`, `check:cadenas`, `check:migrations`, `check:fronteras`, `check:alcance`,
+`check:secrets`, `check:env`, `check:playbook`, `check:sitio` y los siete del servidor.
+`check:terceros`, `test:gesto` y `check:lighthouse` necesitan Chromium, y `check:brakes` PostgreSQL:
+no corren en esta máquina.
+
+## La prueba del CRM dependía de que el sitio tuviera CRM (2026-09-22)
+
+El CI de `website_template` (ficha «Cliente Demo», CRM apagado) dejó `test-crm` en 15 de 36: la prueba
+del adaptador llamaba a `barrerUnaVez`, que desde el paso 5b elige camino **según la ficha**, así que
+en la plantilla medía el aviso por correo en vez de la entrega al CRM. Y una comprobación afirmaba
+literalmente «la ficha de SLG sigue con el CRM encendido».
+
+**Hecho**: `barrerUnaVez` se queda como la única rama y delega en dos funciones exportadas,
+`barrerConCrmUnaVez` y `barrerSinCrmUnaVez`. La prueba ejerce cada camino por su nombre —igual en SLG
+que en la plantilla— y lo que antes era una afirmación sobre SLG pasa a comprobar que `barrerUnaVez`
+elige por la ficha. Sin variable de entorno que fuerce el modo: sería una segunda puerta a la ficha.
+
+**Verificado aquí**: `check:types`, `lint`, `check:fronteras`, `check:alcance`. La prueba necesita
+PostgreSQL: la corre CI en los dos repositorios.
+
+## Prueba en frío (paso 16), primera tanda: lo que la realidad corrigió (2026-09-22)
+
+Montaje de «Cliente Demo» desde `website_template`, con `crear-sitio`: repositorio `web_demo` (privado,
+`main` por defecto), proyecto Supabase `web-demo` (`emzuigrgbcihjoxssfqd`, coste 0) con las 27
+migraciones aplicadas por la API de gestión —las cuatro comprobaciones del paso 3 en verde: diario de
+Drizzle con 27 filas, tablas de `postgres`, `slg_app` con LOGIN y sin BYPASSRLS ni superusuario, `anon`
+sin uso de `public`— y los dos buckets privados; proyecto Vercel `web-demo` conectado a GitHub con 14
+variables no secretas. Cuatro cosas que el papel no sabía:
+
+- **El conector MCP de Supabase no puede confirmar costes**: su esquema no llega al cliente, los
+  parámetros viajan como texto y `confirm_cost` exige `amount` numérico. El proyecto se creó con la CLI
+  (`supabase projects create`), con una contraseña generada en la propia orden y que nadie ve.
+- **Las migraciones van mejor por la CLI que por `apply_migration`**: `supabase db query --linked
+  --file` aplica cada archivo sin cargar 144 KB de SQL en la conversación.
+- **Supabase no deja cambiar la contraseña de `postgres`** desde su CLI («Only superusers can alter
+  privileged roles»): la CLI entra con un rol temporal. El comando de secretos ya no lo intenta ni
+  carga `DATABASE_URL_MIGRATIONS`, que un sitio montado así no necesita (sus migraciones van por la
+  API); la variable deja de ser obligatoria en `lib/ops/variables.ts`.
+- **`--sin-correo` y `--sin-monitor`** en el comando de secretos, para un sitio sin dominio real
+  todavía. Y dos pruebas (`test-crm`, `test-capturas`) llamaban a `barrerUnaVez` dando por hecho que el
+  sitio tiene CRM: ahora ejercen `barrerConCrmUnaVez` por su nombre. Lo cazó el CI de la plantilla.
+
+**Verificado aquí**: `check:types`, `lint`, `test:sitio-secretos` (66/66), `check:env`,
+`check:literacy`, `check:secrets`, `check:playbook`, `check:fronteras`.
+
+## Prueba en frío (paso 16): «Cliente Demo» en línea (2026-09-22)
+
+Del repositorio vacío a una vista previa en línea en Vercel, siguiendo `crear-sitio`:
+`https://web-demo-4mtfx5v7o-ricardotorresolivas-projects.vercel.app`.
+
+**Resultado**: `/api/health` → `status: ok`, 27 migraciones, faltan solo `MAIL_SMTP_USERNAME` y
+`MAIL_SMTP_PASSWORD` (esperado: se lanzó con `--sin-correo`). 19 rutas recorridas: las de la oferta de la
+demo en ES y EN a 200, `/doctrina` a 404 (módulo apagado), `/ai` y `/holdings` —las de SLG— a 404,
+`/hq/tablero` a 307 hacia el acceso; **cero** menciones a SLG, Softlanding, VoltAi o Phoenix en el HTML
+servido. Captura real por el formulario de contacto: 303 a `/gracias?estado=contact`, fila en
+`lead_capture` y la cola intentando el aviso por correo del modo sin CRM, que falla por falta de SMTP y
+queda `pending` con el error escrito — exactamente lo que tiene que pasar.
+
+**Tiempo de Ricardo**: dos ejecuciones del comando de secretos (la primera cayó en el rol `postgres`),
+unos 3 minutos. **Tiempo de Claude**: ~1,5 h, casi todo en corregir lo que la realidad enseñó:
+
+| Qué falló | Qué se hizo |
+|---|---|
+| El conector MCP de Supabase no puede confirmar costes (parámetros como texto) | Proyecto por `supabase projects create`, contraseña generada en la orden |
+| Supabase no deja alterar `postgres` desde su CLI | El comando de secretos solo pone la de `slg_app`; `DATABASE_URL_MIGRATIONS` deja de ser obligatoria |
+| El conector MCP de Vercel no ve los proyectos del equipo | Proyecto, variables, API y `curl` por la CLI de Vercel (`vercel api`, `vercel curl`) |
+| `vercel project add` crea el preset «Other» | `PATCH` de `framework: nextjs` por `vercel api` |
+| `vercel link` añade `.env*` al `.gitignore` (ignoraría `.env.example`) | Se cambia por `.env.local` |
+| Dos pruebas asumían que el sitio tiene CRM | `barrerConCrmUnaVez` por su nombre |
+
+`commands/crear-sitio.md` describe ya el camino que funcionó.
+
+**Hallazgo que queda abierto**: `gh repo create --template` crea el repositorio del cliente con **un
+solo commit, sin la historia de la plantilla**. Llevar a un cliente una corrección posterior de la
+plantilla no se puede hacer con un `git pull`; hoy fue a mano (copiar archivos). Hace falta decidir el
+mecanismo de actualización de clientes antes del segundo cliente.
+
+## 2026-09-23 · D-167 en marcha: SLG se actualiza desde la plantilla
+
+Producción desplegada en `0eb6fa5` (27 de 27). `slg_website` añade el remoto `plantilla` y trae
+`website_template` con `npm run sitio:actualizar` (`6edaa10` y `7926d6d`): llegan el motor genérico de
+los pasos 1–12 y el propio comando; la piel de SLG queda intacta. **Cotejo**: `next build` antes y
+después de la fusión; las 89 páginas prerenderizadas tienen el mismo texto visible y los mismos
+`href/src/content/alt/aria-label/title` (solo cambian los nombres de los chunks). `web_demo` enganchado
+con `--primera-vez` y actualizado de verdad a `7926d6d`.
+
+## 2026-10-08 — Assessment público (spec-delta-assessment, aprobado por Ricardo)
+
+Origen: hallazgo H-1 del Piloto F1 de Hermes (el onboarding necesita un enlace real al Assessment).
+Construido sobre `develop`: `/assessment` y `/en/assessment` (par ES/EN, `?programa=peex|teax|retx`, PEEx por defecto), cuestionarios en `lib/assessment/cuestionarios.ts`,
+`FormularioDelAssessment` (cliente, `useSearchParams` en `Suspense` para no volver dinámica la página), `PaginaDelAssessment`,
+`app/api/assessment/route.ts` sobre `registrarCaptura` con origen `contact` y las respuestas en el mensaje (`ASSESSMENT <programa>`): sin migración
+(desvío del spec: el `CHECK` de `lead_capture.source` obligaba a una migración). `/gracias?estado=assessment`. Prefijo `/api/assessment` bajo el módulo `contacto`.
+Opcional y sin filtro (DU-10). Verificado: `tsc --noEmit`, `check:content`, `check:cadenas`, `check:sitio`, `check:fronteras`, `check:alcance`, `check:secrets`, `check:env`.
+**Pendiente:** `build:standalone` + `check:paginas/seo/armazon`, `test:capturas`, revisión visual en staging, envío de prueba al CRM. Llega a producción solo por la ruta `develop`→staging→`main`.

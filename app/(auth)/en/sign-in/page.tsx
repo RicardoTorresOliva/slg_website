@@ -1,6 +1,8 @@
+import { sitio } from "@/lib/sitio";
+
 import { PantallaDeAcceso } from "../../acceso";
 
-export const metadata = { title: "Sign in · SLG Agency", robots: { index: false, follow: false } };
+export const metadata = { title: `Sign in · ${sitio.marca.nombre}`, robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
 export default async function SignIn({

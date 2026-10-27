@@ -16,6 +16,15 @@
  */
 
 import postgres from "postgres";
+import { nombresDeServicio } from "../../lib/sitio/index.ts";
+/**
+ * Los servicios con los que se siembran los proyectos salen de la ficha
+ * (`site.config.ts`): la base no restringe `project.service` (0024), pero la
+ * aplicación solo acepta los literales de la oferta, y una prueba que sembrara
+ * el nombre de un servicio de otro sitio probaría datos que este sitio no
+ * puede producir.
+ */
+const [SERVICIO, OTRO_SERVICIO = SERVICIO] = nombresDeServicio();
 
 const APP_URL = process.env.DATABASE_URL;
 const OWNER_URL = process.env.DATABASE_URL_MIGRATIONS ?? APP_URL;
@@ -75,8 +84,8 @@ async function main() {
     ('test-a','Cliente A','test-cliente-a','client','active'),
     ('test-b','Cliente B','test-cliente-b','client','active')`;
   await owner`insert into project (id,organization_id,name,service,status) values
-    ('test-pa','test-a','Readiness A','SLG_Readiness','active'),
-    ('test-pb','test-b','Readiness B','SLG_Readiness','active')`;
+    ('test-pa','test-a','Proyecto A',${OTRO_SERVICIO},'active'),
+    ('test-pb','test-b','Proyecto B',${OTRO_SERVICIO},'active')`;
 
   // ── 1. Sin contexto: cero filas, no todas ─────────────────────────────────
   const sinCtx = await conContexto(null, "", (tx) => tx`select count(*)::int as n from project`);
@@ -111,7 +120,7 @@ async function main() {
   try {
     await conContexto("test-a", "client_admin", (tx) =>
       tx`insert into project (id,organization_id,name,service,status)
-         values ('test-px','test-b','Intruso','SLG_Readiness','active')`,
+         values ('test-px','test-b','Intruso',${OTRO_SERVICIO},'active')`,
     );
   } catch {
     escrituraRechazada = true;
@@ -148,6 +157,62 @@ async function main() {
       rechazado = true;
     }
     comprobar(`audit_log rechaza ${op} incluso para slg_admin (RNF-29)`, rechazado);
+  }
+
+  // ── 7bis. Las tres tablas de la Academy (FU-15), una a una ───────────────
+  // La comprobación 8 recorre el catálogo y vería una tabla SIN política; esto
+  // comprueba lo otro: que la política que tienen se COMPORTA — cero filas sin
+  // contexto, solo las mías con él, y la escritura cruzada rechazada.
+  const ACADEMY = [
+    {
+      tabla: "news_item",
+      insertar: (tx: postgres.TransactionSql, id: string, org: string) =>
+        tx`insert into news_item (id,organization_id,title,summary_md,comment_md,importance)
+           values (${id},${org},'Noticia','Resumen','Comentario',1)`,
+    },
+    {
+      tabla: "milestone",
+      insertar: (tx: postgres.TransactionSql, id: string, org: string) =>
+        tx`insert into milestone (id,project_id,organization_id,title,due_at)
+           values (${id},${org === "test-a" ? "test-pa" : "test-pb"},${org},'Hito',now())`,
+    },
+    {
+      tabla: "action_item",
+      insertar: (tx: postgres.TransactionSql, id: string, org: string) =>
+        tx`insert into action_item (id,project_id,organization_id,title)
+           values (${id},${org === "test-a" ? "test-pa" : "test-pb"},${org},'Pendiente')`,
+    },
+  ] as const;
+
+  for (const { tabla, insertar } of ACADEMY) {
+    await owner.begin(async (tx) => {
+      await insertar(tx as unknown as postgres.TransactionSql, `test-${tabla}-a`, "test-a");
+      await insertar(tx as unknown as postgres.TransactionSql, `test-${tabla}-b`, "test-b");
+    });
+
+    const nada = await conContexto(null, "", (tx) => tx.unsafe(`select count(*)::int as n from ${tabla}`));
+    comprobar(`${tabla}: sin contexto, cero filas`, nada[0].n === 0, `devolvió ${nada[0].n}`);
+
+    const mias = await conContexto("test-a", "client_member", (tx) =>
+      tx.unsafe(`select id from ${tabla} where id like 'test-%'`),
+    );
+    comprobar(
+      `${tabla}: con contexto de A, solo la fila de A`,
+      mias.length === 1 && mias[0].id === `test-${tabla}-a`,
+      `vio ${mias.map((r) => r.id).join(",") || "nada"}`,
+    );
+
+    let cruzada = false;
+    try {
+      await conContexto("test-a", "client_admin", (tx) =>
+        insertar(tx as unknown as postgres.TransactionSql, `test-${tabla}-x`, "test-b"),
+      );
+    } catch {
+      cruzada = true;
+    }
+    comprobar(`${tabla}: escribir en la empresa ajena se rechaza`, cruzada);
+
+    await owner.unsafe(`delete from ${tabla} where id like 'test-%'`);
   }
 
   // ── 8. Catálogo: ninguna tabla con organization_id sin política ───────────

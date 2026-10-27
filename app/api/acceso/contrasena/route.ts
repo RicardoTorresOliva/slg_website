@@ -20,6 +20,20 @@ import {
  *      recuperación.
  *   3. **Funcionar sin JavaScript**: un formulario nativo que redirige.
  */
+/**
+ * El motivo, **con su causa**. Drizzle envuelve el error de PostgreSQL en uno
+ * suyo cuya `message` es «Failed query: select …» y deja el fallo real en
+ * `cause`: sin bajar un nivel, el registro dice qué consulta falló y no dice por
+ * qué, que es justo lo que hace falta para distinguir «no hay conexiones» de
+ * «no hay permiso» de «no existe la columna».
+ */
+function motivo(e: unknown): string {
+  const err = e as { message?: string; cause?: { message?: string; code?: string } };
+  const causa = err?.cause;
+  const raiz = causa?.message ? `${causa.code ? `[${causa.code}] ` : ""}${causa.message}` : "";
+  return `${(err?.message ?? String(e)).slice(0, 120)}${raiz ? ` · causa: ${raiz.slice(0, 200)}` : ""}`;
+}
+
 export async function POST(request: NextRequest) {
   const formulario = await request.formData();
   const email = String(formulario.get("email") ?? "").trim().toLowerCase();
@@ -47,15 +61,32 @@ export async function POST(request: NextRequest) {
       headers: request.headers,
       asResponse: true,
     });
-  } catch {
+  } catch (e) {
     // Cualquier fallo —credenciales, correo sin verificar, cuenta suspendida—
     // sale por la misma puerta y con el mismo texto.
     registrarFallo("acceso", email);
+    /**
+     * **PERO EN EL REGISTRO DEL SERVIDOR SÍ SE DICE POR QUÉ**, y no es una
+     * contradicción con RNF-32: lo que no puede filtrarse es la RESPUESTA, que
+     * sigue siendo la misma para todos los motivos. Sin esta línea, una base
+     * caída y una contraseña mal son **indistinguibles también para quien
+     * administra**: el 18-09 costó una vuelta entera de diagnóstico averiguar
+     * cuál de las dos era, porque el fallo no dejaba rastro en ninguna parte.
+     *
+     * Va el motivo, nunca el correo ni la contraseña (RNF-26): quién lo
+     * intentó ya lo cuenta el antiabuso, y aquí lo que falta es el QUÉ.
+     */
+    console.error(`[acceso] signInEmail lanzó: ${motivo(e)}`);
     return conError("credenciales");
   }
 
   if (!respuesta.ok) {
     registrarFallo("acceso", email);
+    // Un 401 de la librería es «credenciales mal»; cualquier otro código es un
+    // problema del servidor disfrazado de credenciales, y hay que poder verlo.
+    if (respuesta.status !== 401) {
+      console.error(`[acceso] signInEmail respondió ${respuesta.status}`);
+    }
     return conError("credenciales");
   }
 

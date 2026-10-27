@@ -19,6 +19,8 @@ export type CapturaParaCrm = {
   readonly email: string;
   readonly dominio: string;
   readonly nombre: string | null;
+  /** `null` solo en capturas anteriores a la columna `last_name`: el formulario lo exige. */
+  readonly apellido: string | null;
   readonly empresa: string | null;
   readonly cargo: string | null;
   readonly mensaje: string | null;

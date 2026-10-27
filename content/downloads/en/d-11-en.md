@@ -6,8 +6,9 @@ audience: "Founders and leadership teams that want to operate outside their home
 learns:
   - "Why the difficulty is not translation but structure, regulation and people"
   - "What fails when each part is handled by a different adviser"
-  - "The three lines of SLG_Holdings and when each one comes in"
-status: coming-soon
+  - "The three lines of Holdings by SLG and when each one comes in"
+file_key: "D-11-slg-holdings-en.pdf"
+status: published
 lang: en
 pair: "d-11"
 copy: temporal

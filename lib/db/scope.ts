@@ -36,10 +36,24 @@ if (!process.env.DATABASE_URL) {
  * saltarse el aislamiento sin darse cuenta.
  */
 const conexion = postgres(process.env.DATABASE_URL, {
-  max: 10,
+  /**
+   * TRES, NO DIEZ. La base está detrás del *pooler* de Supabase, y el tramo
+   * gratuito limita a **15 clientes en total** — no por instancia: en total,
+   * sumando producción, las vistas previas y cada instancia que la plataforma
+   * levante. Con 10 aquí y 5 en `lib/auth/db.ts`, **una sola instancia** agotaba
+   * el cupo y la segunda petición concurrente moría con `EMAXCONNSESSION` y un
+   * 500 (visto el 2026-09-18 en `/hq/capturas`). Tres y dos dejan sitio a tres
+   * instancias; el *pooler* en modo transacción (puerto 6543) quita el límite.
+   */
+  max: 3,
   // Las consultas van siempre parametrizadas (RNF-30). `postgres` lo hace por
   // defecto con plantillas etiquetadas; no se construye SQL por concatenación.
-  prepare: true,
+  //
+  // `prepare: false` porque el *pooler* en modo transacción no admite sentencias
+  // preparadas con nombre: cada transacción puede caer en una conexión distinta
+  // y la sentencia preparada en una no existe en la otra. La parametrización no
+  // depende de esto: sigue yendo por el protocolo extendido, sin concatenar.
+  prepare: false,
 });
 
 const db = drizzle(conexion, { schema });

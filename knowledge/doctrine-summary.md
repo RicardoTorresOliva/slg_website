@@ -24,7 +24,7 @@ sources:
 
 **The Phoenix Doctrine** es el cuerpo doctrinal de SLG. En la web tiene una página propia (`/doctrina`
 · `/en/doctrine`) que publica su **resumen ejecutivo público**, y da nombre a la familia de programas
-de `SLG_Academy`: `Phoenix PEEx`, `Phoenix TEAx`, `Phoenix RETx`.
+de `VoltAi Academy`: `Phoenix PEEx`, `Phoenix TEAx`, `Phoenix RETx`.
 
 **DAL OS** es el sistema del que el brief nombra **tres pilares**, y solo estos tres:
 

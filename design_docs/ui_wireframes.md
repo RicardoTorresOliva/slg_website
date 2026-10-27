@@ -76,7 +76,7 @@ Cinco destinos y un botón. Ni uno más (RF-01).
 | Orden | ES | EN | Ruta ES | Ruta EN |
 |---|---|---|---|---|
 | 1 | `SLG_AI` | `SLG_AI` | `/ai` | `/en/ai` |
-| 2 | `SLG_Holdings` | `SLG_Holdings` | `/holdings` | `/en/holdings` |
+| 2 | `Holdings by SLG` | `Holdings by SLG` | `/holdings` | `/en/holdings` |
 | 3 | Doctrina | Doctrine | `/doctrina` | `/en/doctrine` |
 | 4 | Blog | Blog | `/blog` | `/en/blog` |
 | 5 | Nosotros | About | `/nosotros` | `/en/about` |
@@ -86,7 +86,7 @@ Cinco destinos y un botón. Ni uno más (RF-01).
 
 - **Etiquetas específicas. Nunca "Inicio" / "Home" como destino de menú** (A.1, RF-01). El acceso a
   la portada es **el logo**, siempre a la izquierda, siempre enlazado a `/` (o `/en` en inglés).
-- La nomenclatura **no se traduce**: `SLG_AI` y `SLG_Holdings` se escriben literales en los dos
+- La nomenclatura **no se traduce**: `SLG_AI` y `Holdings by SLG` se escriben literales en los dos
   idiomas (RF-14). Solo Doctrina→Doctrine y Nosotros→About cambian.
 - **Sin menús desplegables.** La profundidad de la oferta se navega desde el overview `/ai`, que es
   la pantalla que explica las tres ramas. Un desplegable convertiría cinco destinos en dieciséis y
@@ -101,7 +101,7 @@ Cinco destinos y un botón. Ni uno más (RF-01).
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────┐
 │  ┌───────────┐                                                                   │
-│  │SLG Agency │   SLG_AI   SLG_Holdings   Doctrina   Blog   Nosotros   ES|EN  [Acceder] │
+│  │SLG Agency │   SLG_AI   Holdings by SLG   Doctrina   Blog   Nosotros   ES|EN  [Acceder] │
 │  └───────────┘                                                                   │
 │    logo → /                                        ^ ruta activa subrayada       │
 └──────────────────────────────────────────────────────────────────────────────────┘
@@ -116,7 +116,7 @@ Cinco destinos y un botón. Ni uno más (RF-01).
 │ │SLG Agency │                [ ≡ ] │        │              ▁▁▁▁▁                 │
 │ └───────────┘                      │  ───▶  │                                    │
 └────────────────────────────────────┘        │   SLG_AI                           │
-                                              │   SLG_Holdings                     │
+                                              │   Holdings by SLG                     │
   [ ≡ ] abre el sheet; el sheet se cierra     │   Doctrina                         │
   arrastrando hacia abajo, tocando el         │   Blog                             │
   scrim o con Esc. Foco atrapado dentro       │   Nosotros                         │
@@ -148,20 +148,20 @@ slugs difieren (`/descargas/x` ↔ `/en/downloads/x`).
 ```
 /                                        Home
 ├── ai                                   SLG_AI (overview de las tres ramas)
-│   ├── academy                          SLG_Academy (overview)  → enlace externo a Phoenix Academy
+│   ├── academy                          VoltAi Academy (overview)  → enlace externo a Phoenix Academy
 │   │   ├── phoenix-peex                 Phoenix PEEx        · descarga D-01
 │   │   ├── phoenix-teax                 Phoenix TEAx        · descarga D-02
 │   │   ├── phoenix-retx                 Phoenix RETx        · descarga D-03
 │   │   ├── customize-programs           Customize Programs  · descarga D-04
 │   │   └── ai-coaching                  AI Coaching for Directors · descarga D-05
-│   ├── enterprise                       SLG_Enterprise (overview)
+│   ├── enterprise                       VoltAi Enterprise (overview)
 │   │   ├── readiness                    SLG_Readiness       · descarga D-06
 │   │   └── implement                    SLG_Implement       · descarga D-07
-│   └── factory                          SLG_Factory (overview)
+│   └── factory                          VoltAi Factory (overview)
 │       ├── app-building                 APP_Building        · descarga D-08
 │       ├── age-building                 AGE_Building        · descarga D-09
 │       └── coo-as-a-service             CoO as a Service    · descarga D-10
-├── holdings                             SLG_Holdings        · descarga D-11
+├── holdings                             Holdings by SLG        · descarga D-11
 ├── doctrina                             Doctrina (+ solicitud del documento completo = captura)
 ├── nosotros                             Nosotros
 ├── blog                                 Índice de artículos
@@ -256,14 +256,14 @@ Siete bloques, en este orden. Alterarlo es rechazar la página.
 ├──────────────────────────────────────────────────────────────────────────────┤
 │   2 · DOS PUERTAS  (las dos ramas del negocio)                               │
 │   ┌───────────────────────────────┐   ┌───────────────────────────────┐      │
-│   │ SLG_AI                        │   │ SLG_Holdings                  │      │
+│   │ SLG_AI                        │   │ Holdings by SLG                  │      │
 │   │ una frase de definición       │   │ una frase de definición       │      │
 │   │ → /ai                         │   │ → /holdings                   │      │
 │   └───────────────────────────────┘   └───────────────────────────────┘      │
 ├──────────────────────────────────────────────────────────────────────────────┤
 │   3 · TRES TARJETAS DE SLG_AI                                                │
 │   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                       │
-│   │ SLG_Academy  │  │ SLG_Enterprise│ │ SLG_Factory  │                       │
+│   │ VoltAi Academy  │  │ VoltAi Enterprise│ │ VoltAi Factory  │                       │
 │   │ una frase    │  │ una frase    │  │ una frase    │                       │
 │   │ → /ai/academy│  │ → /ai/enterp.│  │ → /ai/factory│                       │
 │   └──────────────┘  └──────────────┘  └──────────────┘                       │
@@ -299,7 +299,7 @@ Siete bloques, en este orden. Alterarlo es rechazar la página.
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
 │  SLG Agency                                                                  │
-│  SLG_AI · SLG_Holdings · Doctrina · Blog · Nosotros                          │
+│  SLG_AI · Holdings by SLG · Doctrina · Blog · Nosotros                          │
 │  Descargas · Contacto                                                        │
 │  Privacidad · Términos                                          ES | EN  RSS │
 │  © SLG Agency Inc.  ·  [PENDIENTE: datos de contacto y jurisdicción — FU-01] │
@@ -361,7 +361,7 @@ rechazada.**
   overview de la rama. Sustituye a una miga de pan completa: en móvil una miga de tres niveles ocupa
   una línea entera para decir lo que el eyebrow dice en una palabra.
 - Estado **"disponible próximamente"** de la sección ⑤: §3.5.
-- Variante `SLG_Holdings`: misma plantilla, con la particularidad de que la sección ③ lista las tres
+- Variante `Holdings by SLG`: misma plantilla, con la particularidad de que la sección ③ lista las tres
   líneas de negocio. `[PENDIENTE: si el tagline "The discipline of going global" se usa aquí —
   Anexo I-5]`.
 
@@ -375,7 +375,7 @@ Estas cuatro **no** son páginas de servicio: no tienen descarga y por tanto no 
 │  una idea: qué resuelve la rama                                              │
 │                                                                              │
 │  ┌────────────────┐ ┌────────────────┐ ┌────────────────┐                    │
-│  │ SLG_Academy    │ │ SLG_Enterprise │ │ SLG_Factory    │   ← hijos directos │
+│  │ VoltAi Academy    │ │ VoltAi Enterprise │ │ VoltAi Factory    │   ← hijos directos │
 │  │ una frase      │ │ una frase      │ │ una frase      │                    │
 │  └────────────────┘ └────────────────┘ └────────────────┘                    │
 │                                                                              │
@@ -878,6 +878,12 @@ Ficha de empresa: datos + pestañas *Proyectos* · *Usuarios* · *Avisos*, y acc
 Crear/editar en panel lateral. Sin borrado en v1: una empresa se archiva cambiando su `status`
 (borrar arrastra proyectos, entregables y capturas).
 
+Acción por fila **«Archivar»** (o **«Reactivar»** si ya lo está). Confirmación en dos pasos por URL,
+sin JavaScript: el enlace lleva a `?archivar=<id>` y la fila pasa a «¿Seguro? [Sí, archivar]
+[Cancelar]». Las archivadas no desaparecen: bajan al final, atenuadas y con su estado escrito
+(data_model §2.5 y §4.3). Solo `slg_admin`: archivar una empresa entera no es «operar sobre un
+proyecto asignado».
+
 ### 6.3 Usuarios e invitaciones (`/hq/usuarios`) — RF-78
 
 ```
@@ -902,6 +908,12 @@ Tabla: nombre · empresa · servicio (nomenclatura literal) · estado · respons
 Ficha: datos + *Entregables* + *Avisos* + actividad. El campo servicio se elige de la lista literal
 (`Phoenix PEEx`, `SLG_Readiness`, `APP_Building`…), no se escribe libre: así el script de
 nomenclatura (RF-14) no tiene nada que corregir.
+
+Acción por fila **«Cerrar proyecto»** (o **«Reabrir»**), con el mismo dos pasos por URL que la
+empresa (`?cerrar=<id>`). Los cerrados bajan al final, atenuados; sus entregables siguen siendo del
+cliente y se ven en `/portal/proyectos`, pero dejan de tener «qué sigue» en `/portal` y en
+`/portal/programa`. `slg_operator` cierra solo los que tiene asignados (RF-86). El desplegable de
+empresa de «Nuevo proyecto» solo ofrece empresas activas.
 
 ### 6.5 Entregables (`/hq/entregables`) — RF-80
 
@@ -994,6 +1006,57 @@ Tabla filtrable por actor (usuario o clave), acción, entidad y fecha. **Solo le
 acción de editar ni borrar en la pantalla, porque `audit_log` es inmutable (RNF-29). Ausencia de
 botones aquí es una decisión de seguridad, no un olvido.
 
+### 6.10 Conexiones (`/hq/conexiones`) — RF-154 · DU-29(a)
+
+El lanzador de los productos externos de SLG (CRM, n8n, Evolution/WhatsApp, el asistente, el
+superchatbot, la fábrica de contenidos, el estudio creativo), agrupados en tres subtítulos:
+operación, agentes y creación. Cada ficha abre su producto en pestaña nueva con **Abrir**; el que
+todavía no tiene URL conocida se marca **pendiente de conectar** en vez de esconderse. Los datos
+salen de `content/conexiones.json` (D-11): añadir un producto es añadir un objeto, sin pantalla de
+administración.
+
+### 6.11 Ficha de proyecto: hitos y pendientes (`/hq/proyectos/[id]`) — RF-151 · RF-152 · DU-29(b)
+
+Se llega desde el nombre del proyecto en la lista de §6.4. Cabecera con nombre, empresa, servicio y
+estado, y dos bloques iguales en forma: **Hitos** (título · fecha · orden · estado, con «Marcar como
+hecho» / «Reabrir») y **Pendientes** (título · fecha límite · quién lo cierra · estado y, cerrado,
+quién y cuándo, con «Cerrar» / «Reabrir»). Cada bloque lleva su formulario de alta encima de la lista
+y su estado vacío redactado. Los botones no autorizan nada: `slg_operator` los ve en cualquier
+proyecto que lea, y es `lib/academy` quien rechaza —y audita como `.denied`— el intento sobre uno no
+asignado. Un hito es una fecha de entrega y un pendiente una obligación con plazo: nada mide a nadie
+(frontera (b)).
+
+### 6.12 Noticias (`/hq/noticias`) — RF-150 · RF-152 · DU-29(c)
+
+Misma forma que §6.6: formulario para **una** empresa (empresa · título · fuente opcional · resumen y
+comentario en Markdown · importancia 1–3 · publicar sí/no, explícito) y debajo las últimas noticias
+**renderizadas como las verá el cliente**, con el borrador marcado. Sección `newsHq` (`news.write`):
+el operador la ve solo con prueba de asignación, como entregables y avisos. En esta unidad no hay
+edición ni publicación posterior de un borrador, y la pista del formulario lo dice.
+
+### 6.13 Entregables: filtro de agentes y visor (`/hq/entregables?agentes=1`) — DU-29(d) · mod. §6.5
+
+Dos enlaces sobre la lista, «Todos» y «Publicados por agentes» (`published_by_type = 'api_key'`), con
+estado vacío por filtro. Cada `html` **con archivo** lleva «Abrir en el visor»: el mismo visor y la
+misma firma que usa el portal (D-45), en pestaña nueva. Sin archivo —un `html` que nunca terminó de
+subirse— no hay nada que abrir y la ficha lo dice.
+
+**Un `internal` también se abre, y solo desde aquí** (migración 0022, que reemplaza la función de la
+0016). El tablero que un agente Hermes publica para SLG es un `html` `internal`, y hasta esa
+migración no se abría en ninguna parte: el visor servía solo `client`, así que la pantalla de la
+gente que sí podía verlo era la que enseñaba el aviso de que no se podía. La línea que separa lo
+interno de lo del cliente **no se mueve**, porque el visor vive en un origen sin sesión y ahí no hay
+a quién preguntarle el rol: lo que cambia es que **el vale dice desde dónde se firmó**. HQ firma
+ámbito `hq` sobre lo que `entregables()` le devolvió —ya acotado por la política de fila y por la
+asignación que B.3 exige a un `slg_operator`—; el portal firma ámbito `cliente` sobre
+`entregablesDelCliente()`, que nunca contiene un `internal`. El ámbito va dentro del HMAC: reescribir
+`a=hq` en una URL del portal rompe la firma y devuelve el mismo 404 que un entregable inexistente.
+Junto al enlace, la ficha marca el `internal` como tal: que se pueda abrir no puede hacer olvidar que
+compartir ese enlace fuera de HQ es enseñarle al cliente algo que no era para él.
+
+El campo «Enlace» del formulario vale también para un `material` por enlace (data_model §3.10): un
+vídeo alojado fuera se publica sin archivo y «Clases» (§7.8) lo encuentra.
+
 ---
 
 ## 7. Portal de clientes (`/portal`)
@@ -1003,25 +1066,40 @@ contexto autenticado (RF-71, R-10).
 
 ```
 ┌───────────────────┬──────────────────────────────────────────────────────────┐
-│  Cliente Demo     │  Inicio                                                  │
+│  Cliente Demo     │  Hoy                                                     │
 │  ───────────────  ├──────────────────────────────────────────────────────────┤
-│  ▸ Inicio         │  AVISOS DE SLG                                           │
+│  ▸ Hoy            │  NOTICIAS DE HOY                                         │
 │  ▸ Proyectos      │  ┌────────────────────────────────────────────────────┐  │
-│  ▸ Materiales     │  │ fecha · Título del aviso                           │  │
-│  ▸ Miembros       │  │ cuerpo en Markdown (saneado — RNF-31)              │  │
-│  ▸ Perfil         │  └────────────────────────────────────────────────────┘  │
-│  ───────────────  │                                                          │
-│  Sesión Cero      │  TUS PROYECTOS            ÚLTIMOS ENTREGABLES            │
-│  Nombre ▾         │  · Proyecto A (3)         · Informe final · v2 · pdf     │
+│  ▸ Materiales     │  │ Título · fecha · Fuente ↗                          │  │
+│  ▸ Avisos         │  │ resumen en Markdown (saneado — RNF-31)             │  │
+│  ▸ Clases         │  │ ┃ QUÉ SIGNIFICA PARA TU EMPRESA — el comentario    │  │
+│  ▸ Miembros       │  └────────────────────────────────────────────────────┘  │
+│  ▸ Perfil         │  QUÉ SIGUE                            [ Ver el programa ]│
+│  ───────────────  │  · Proyecto A → Hito próximo · fecha                     │
+│  Sesión Cero      │  PENDIENTES                  [ Ver todos los pendientes ]│
+│  Nombre ▾         │  · Envíanos el organigrama  [Te toca a ti]  límite fecha │
+│                   │  ÚLTIMOS ENTREGABLES        [ Ver todos los proyectos ]  │
+│                   │  · Informe final · v2 · fecha                  [ Abrir ] │
+│                   │  AVISOS                        [ Ver todos los avisos ]  │
+│                   │  · fecha · Título · cuerpo en Markdown                   │
 └───────────────────┴──────────────────────────────────────────────────────────┘
    ^ el nombre de la empresa es el marcador de "dónde estoy": el cliente
      debe ver siempre de qué empresa está viendo datos
 ```
 
-### 7.1 Inicio (`/portal`) — RF-88
+### 7.1 Inicio «Hoy» (`/portal`) — RF-149, RF-150, RF-88 · DU-26
 
-Avisos + accesos a proyectos y últimos entregables. Vacío inicial redactado (RF-88): "Todavía no
-hay avisos" + "aquí aparecerán las comunicaciones de SLG". Nunca una tarjeta vacía sin texto.
+Cinco bloques, en este orden y ninguno en hueco: **noticias de hoy** por importancia (1 primero),
+cada una con título, fuente (enlace externo, `rel="noopener"`), resumen y **el comentario para esta
+empresa destacado** —es el producto (D-161)—; **qué sigue**: el próximo hito de cada proyecto activo
+con su fecha; **pendientes** abiertos, los que cierra el cliente primero, con fecha límite; los tres
+**últimos entregables**; los tres últimos **avisos** (RF-88, mismo render que §7.9). Resumen,
+comentario y aviso pasan por `Markdown` dentro de `ContenidoEntregado` (RNF-31). Sin noticias de
+hoy, **las últimas tres con su fecha**, nunca un hueco. Cada bloque enlaza a su pantalla completa
+(RNF-43): «Qué sigue» y «Pendientes» a `/portal/programa`, entregables a `/portal/proyectos`, avisos a
+`/portal/avisos`; las noticias no tienen otra pantalla — «Hoy» es la suya. Los cinco vacíos están
+redactados en `content/ui` (`portal.today.*`). El paso «Agenda tu Sesión Cero» (§7.7) sigue arriba.
+Ningún `organization_id` viaja: lo acota la política de fila (criterio 1).
 
 ### 7.2 Proyectos y entregables (`/portal/proyectos`, `/portal/proyectos/[id]`) — RF-89
 
@@ -1103,6 +1181,50 @@ método es contraseña** · "Cerrar sesión en todos los dispositivos" (con conf
 
 Es el **único** lugar del producto donde aparece la Sesión Cero (RF-96).
 
+### 7.8 Clases (`/portal/clases`) — RF-155
+
+Los mismos materiales de programa de §7.4, **agrupados por proyecto** y por la misma puerta
+(`materialesPorProyecto()`); lo único que añade es cómo se abre cada fila:
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  Proyecto A · SLG_Readiness                                                  │
+│  ┌────────────────────────────────────────────────────────────────────────┐  │
+│  │ Manual del programa          v1                          [ Abrir ]     │  │
+│  │ Sesión 1 — introducción  🎬 Vídeo   v1                    [ Ver ↗ ]    │  │
+│  └────────────────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+Un material es «vídeo» por su URL —host de vídeo conocido o extensión `.mp4/.webm/.mov`—, nunca por
+un campo nuevo del modelo. Un vídeo se abre en **pestaña nueva** (`target="_blank" rel="noopener"`);
+lo demás sigue abriendo en el visor de `/portal/entregables/[id]` de siempre. **Sin cambio de CSP ni
+de visor: nada se incrusta.** Vacío inicial redactado: "Todavía no hay clases".
+
+### 7.9 Avisos (`/portal/avisos`) — RF-88 · DU-26
+
+La lista completa de avisos de la empresa, **movida tal cual desde la antigua portada** (DU-18): fecha
+· título · autor · cuerpo en Markdown dentro de `ContenidoEntregado` con el `lang` en que se escribió
+(RF-72, RNF-31). «Hoy» enseña los tres últimos y enlaza aquí. Vacío inicial redactado: "No hay avisos
+por ahora" + "no hace falta que vuelvas a mirar: te llegará por correo". Sección `announcements` en la
+navegación; `/portal` pasa a la clave `today` con la misma acción (`announcement.read`).
+
+### 7.10 Programa (`/portal/programa`) — RF-151, RF-156 · DU-27
+
+Un bloque por **proyecto activo** (los pausados y cerrados no tienen «qué sigue» y no se pintan), en
+el orden de `/portal/proyectos`. Dentro, en este orden: **«Qué sigue»** —el próximo hito pendiente
+destacado con su fecha o, si no hay ninguno, la frase «sin hitos programados: contacta a SLG»; un
+proyecto **nunca queda en silencio** (criterio 2)—; **la línea de hitos** (hechos con su fecha,
+futuros con la suya); **pendientes** abiertos —los que cierra el cliente primero, por fecha límite,
+sin fecha al final; luego los de SLG— y cerrados (fecha y quién). Cada pendiente dice **quién lo
+cierra**; el botón «Marcar como hecho» solo se pinta en los del cliente, y la Server Action vuelve a
+exigirlo por `closes_by` en `lib/academy` (esconder no es proteger). Mensajes: `?aviso=ok` (hecho),
+`?error=permiso` («ese lo cierra SLG» — la única acción del portal que cuenta el rechazo, porque el
+pendiente ya está en la pantalla de quien lo intenta), `?error=pendiente` (ya no está). Vacío
+inicial redactado con salida a `/portal/proyectos`. Sección `program`, acción `milestone.read`.
+La redacción del reparto (hechos / siguiente / futuros; abiertos / cerrados) es pura en
+`lib/portal/programa.ts`, que no escribe ningún `organizationId`.
+
 ---
 
 ## 8. Estados: catálogo y aplicación
@@ -1137,7 +1259,8 @@ Es el **único** lugar del producto donde aparece la Sesión Cero (RF-96).
 | **HQ Capturas web** | "Todavía no hay capturas" | Filtro sin resultados | Reintentar · ← Tablero | Reintento manual falla → fila en `failed`, nuevo intento registrado y visible | 404 |
 | **HQ Claves de API** | "No hay claves creadas" + `[+ Nueva clave]` | — | Reintentar · ← Tablero | Crear/revocar falla → estado sin cambio + aviso | `slg_operator` → 404 en la ruta (RF-86) |
 | **HQ Auditoría** | "Sin eventos registrados" | Filtro por actor/acción/fecha | Reintentar · ← Tablero | — (solo lectura) | `slg_operator` → 404 en la ruta |
-| **Portal Inicio** | "Todavía no hay avisos" + qué aparecerá | — | Reintentar · sin salir de la superficie | — | — |
+| **Portal Hoy** | Un vacío redactado por bloque: "Todavía no hay noticias" · "Sin hitos programados" · "Nada pendiente" · "Todavía no hay entregables" · "No hay avisos por ahora" | — | Reintentar · sin salir de la superficie | — | — |
+| **Portal Avisos** | "No hay avisos por ahora" + qué aparecerá | — | Reintentar · sin salir de la superficie | — | — |
 | **Portal Proyectos** | "Todavía no hay proyectos" + "tu contacto en SLG los publicará aquí" | — | Reintentar · ← Inicio | — | Proyecto de otra empresa → 404 |
 | **Portal Ficha de proyecto** | "Este proyecto aún no tiene entregables" | — | Reintentar · ← Proyectos | — | 404 |
 | **Portal Visor** | — | — | Archivo no disponible → aviso + contacto, sin traza | Enlace firmado caducado → `[Volver a abrir]` | Entregable `internal` o ajeno → 404 |
@@ -1197,7 +1320,7 @@ columnas a un desplazamiento horizontal no es responsive.
 | §4 Identidad | RF-58 a RF-66, RF-119, RNF-24, RNF-37 |
 | §5 Shell | RF-72, RF-68, C.5 (componente 8), RNF-34 |
 | §6 HQ | RF-25, RF-51, RF-52, RF-54, RF-73 a RF-86, RF-111, RF-143, RF-147, RNF-25, RNF-29 |
-| §7 Portal | RF-88 a RF-96, RF-142, RF-144, RNF-21, RNF-31 |
+| §7 Portal | RF-88 a RF-96, RF-142, RF-144, RF-149, RF-150, RF-155, RNF-21, RNF-31 |
 | §8 Estados | RNF-34, perfil `deliverable_unit_completeness`, RF-71, RF-95 |
 | §9 Wayfinding | RNF-43, C.6 |
 | §10 Responsive | RNF-01 (coste de render), C.6 (Flexibilidad) |
@@ -1238,3 +1361,5 @@ Ninguno se resuelve inventando. Todos son visibles en staging y bloquean `main` 
 - `2026-09-08` — **D-44** cierra CF-3 en el §3.2: el anillo de foco es de **dos capas** —exterior
   `--cyan`, interior `--blue-primary` o `--ink`—. **D-45** cierra CF-4 en el §7.3: el **origen
   separado** del visor es **normativo**, con `sandbox` y CSP como defensa en profundidad.
+- `2026-09-18` — **DU-26**: §7.1 pasa de «Inicio» a «Hoy» (cinco bloques, RF-149/RF-150) y la lista
+  de avisos se documenta aparte en §7.9 (`/portal/avisos`); filas nuevas en §8.2 y §11.

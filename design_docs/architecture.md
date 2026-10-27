@@ -258,7 +258,7 @@ manda sobre la latencia.
 
 | Ruta / grupo | Estrategia | Justificación |
 |---|---|---|
-| Home, `SLG_AI`, las once páginas de servicio, `SLG_Holdings`, Doctrina, Nosotros, Legal (ES y EN) | **Estático, prerenderizado en el build** | Su contenido son archivos del repositorio (B.4). No hay fuente externa que pueda cambiar entre despliegues: revalidar sería revalidar contra sí mismo |
+| Home, `SLG_AI`, las once páginas de servicio, `Holdings by SLG`, Doctrina, Nosotros, Legal (ES y EN) | **Estático, prerenderizado en el build** | Su contenido son archivos del repositorio (B.4). No hay fuente externa que pueda cambiar entre despliegues: revalidar sería revalidar contra sí mismo |
 | `/blog`, `/blog/[slug]`, `/blog/etiqueta/[tag]` (ES y EN) | **Estático, prerenderizado en el build**; los `status: draft` no se generan | RF-21 pide que un artículo aparezca «en minutos» tras el push: los minutos los da el despliegue automático desde `main` (RF-121), no una revalidación. RF-22: un borrador no se sirve en ninguna ruta pública ni en RSS |
 | `/descargas` y `/descargas/[slug]` (ES y EN) | **Estático** el marco y la ficha; **dinámico** solo el envío del formulario | El estado del documento (`published` / `coming-soon`) es contenido (RF-29, RF-137). El envío es una acción, no una página |
 | `/gracias` (`/en/thank-you`) | **Dinámico por petición, `no-store`, `noindex`** | Muestra el enlace firmado de descarga, que es un secreto de un solo destinatario y caduca (RF-38, RF-42) |
@@ -409,7 +409,7 @@ scripts**, todos bloqueantes (RF-128, criterio 4 de FU-05):
 |---|---|---|---|
 | 1 | **Frontmatter válido** en las seis colecciones | Falta un campo mínimo de B.4 o tiene tipo incorrecto | RF-19 |
 | 2 | **`pair` existente** en `page` y `service` | Par ausente o roto | RF-20, RNF-16 |
-| 3 | **Nomenclatura literal** | Aparece cualquier variante traducida o alterada de `SLG_AI`, `SLG_Holdings`, `SLG_Academy`, `SLG_Enterprise`, `SLG_Factory`, `SLG_Readiness`, `SLG_Implement`, `APP_Building`, `AGE_Building`, `CoO as a Service`, `Phoenix PEEx`, `Phoenix TEAx`, `Phoenix RETx`; o la «D» de DAL OS se expande como algo distinto de **Destrucción Creativa** | RF-14, RF-15 |
+| 3 | **Nomenclatura literal** | Aparece cualquier variante traducida o alterada de `SLG_AI`, `Holdings by SLG`, `VoltAi Academy`, `VoltAi Enterprise`, `VoltAi Factory`, `SLG_Readiness`, `SLG_Implement`, `APP_Building`, `AGE_Building`, `CoO as a Service`, `Phoenix PEEx`, `Phoenix TEAx`, `Phoenix RETx`; o la «D» de DAL OS se expande como algo distinto de **Destrucción Creativa** | RF-14, RF-15 |
 | 4 | **Cero `[PENDIENTE]` en `main`** | Aparece `[PENDIENTE]` o lorem ipsum en la rama de producción; en `develop` es visible y legítimo | RF-128, RNF-18, DoD #10 |
 
 Los cuatro corren en cada push y **además** en el pipeline de `main`, junto con el análisis de

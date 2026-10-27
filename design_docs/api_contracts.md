@@ -142,7 +142,7 @@ Toda petición autenticada actualiza `api_key.last_request` y `api_key.request_c
 
 ### 2.3 Alcances por clave (RF-98, RF-147)
 
-Los **seis** alcances son exactamente los de `data_model` §3.6, sin implicación entre ellos: una
+Los **diez** alcances son exactamente los de `data_model` §3.6, sin implicación entre ellos: una
 clave con `events:write` **no** puede crear un entregable, y que pudiera sería un defecto de
 seguridad, no una comodidad (RF-147).
 
@@ -150,11 +150,18 @@ seguridad, no una comodidad (RF-147).
 |---|---|
 | `captures:read` | `GET /captures` |
 | `orgs:read` | `GET /organizations` · `GET /organizations/{id}/projects` |
+| `orgs:write` | `POST /organizations` (D-163: el CRM crea o encuentra aquí la empresa por su `crm_company_id`). **No** incluye `GET /organizations` ni `projects:write`: leer no implica escribir, y crear empresas no implica crear proyectos |
 | `deliverables:read` | `GET /projects/{id}/deliverables` |
 | `deliverables:write` | `POST /deliverables` · `POST /deliverables/{id}/publish` |
 | `announcements:write` | `POST /announcements` |
 | `events:write` | `POST /events` |
+| `news:write` | `POST /organizations/{id}/news` (M6, DU-30) |
+| `milestones:write` | `POST /projects/{id}/milestones` · `POST /milestones/{id}/done` · `POST /milestones/{id}/reopen` · `POST /projects/{id}/action-items` · `POST /action-items/{id}/done` (M6, DU-30) |
+| `projects:write` | `POST /organizations/{id}/projects` · `POST /projects/{id}/close` · `POST /projects/{id}/reopen` (D-162: el CRM crea aquí la carpeta del cliente). **No** incluye `GET /organizations/{id}/projects`, que sigue siendo `orgs:read` |
 | *(ninguno)* | `GET /openapi.json` — responde a **cualquier** clave válida (RF-106) |
+
+No hay alcance de **lectura** para noticias, hitos ni pendientes: `news.read` y `milestone.read` no
+tienen alcance de agente en B.3. Un agente escribe; quien lee es la persona, en su portal o en HQ.
 
 Alcance insuficiente → **403** con `code: "insufficient_scope"` y **sin decir qué alcance faltaba**
 (RF-98, gate D9). El mensaje es siempre el mismo, para cualquier ruta y cualquier alcance.
@@ -321,7 +328,11 @@ del error y en la cabecera `X-Request-Id` de **toda** respuesta.
 
 ---
 
-## 3. Los nueve endpoints
+## 3. Los diecinueve endpoints
+
+Nueve de DU-22/DU-23 (§3.1–§3.9), seis de la Academy, M6 · DU-30 (§3.10–§3.15), tres del proyecto
+que nace en el CRM, D-162 (§3.16–§3.18), y uno de la empresa que el CRM crea o encuentra por su
+identificador, D-163 (§3.19).
 
 ### 3.1 `GET /api/v1/captures` — evidencia de capturas web
 
@@ -337,7 +348,7 @@ de leads: el lead se trabaja en el CRM por su propio MCP (frontera (a) de `scope
 | `since` | fecha-hora RFC 3339 | — | `created_at >= since` |
 | `until` | fecha-hora RFC 3339 | — | `created_at < until` |
 | `source` | `download` · `contact` · `doctrine-request` | todas | `lead_capture.source` (`data_model` §3.7) |
-| `crm_sync_status` | `pending` · `delivered` · `failed` | todos | `lead_capture.crm_sync_status` (§3.8) |
+| `crm_sync_status` | `pending` · `delivered` · `failed` · `notified` · `notify_failed` (los dos últimos, solo en un sitio sin CRM: migración 0025) | todos | `lead_capture.crm_sync_status` (§3.8) |
 | `doc_code` | `D-01` … `D-11` | todos | Filtra por el documento a través de `download.doc_code` |
 | `limit` · `cursor` | §2.7 | | |
 
@@ -354,7 +365,8 @@ Un valor fuera de vocabulario → **422**. `since` posterior a `until` → **422
       "source": "download",
       "email": "director@empresa.com",
       "email_domain": "empresa.com",
-      "name": "Nombre Apellido",
+      "name": "Nombre",
+      "last_name": "Apellido",
       "company": "Empresa S.A.",
       "job_title": "Director de Operaciones",
       "locale": "es",
@@ -434,6 +446,7 @@ Un valor fuera de vocabulario → **422**. `since` posterior a `until` → **422
       "type": "client",
       "status": "active",
       "primary_contact": { "id": "usr_01J9Z7...", "name": "Nombre Apellido" },
+      "crm_company_id": "crm_cmp_9b2e",
       "created_at": "2026-08-14T09:12:00Z",
       "updated_at": "2026-09-02T17:40:11Z"
     }
@@ -445,6 +458,9 @@ Un valor fuera de vocabulario → **422**. `since` posterior a `until` → **422
 `primary_contact` es `null` cuando `organization.primary_contact_user_id` es nulo. **No se expone el
 correo del contacto**: un agente que lista empresas no necesita datos personales para hacerlo
 (minimización, principio de Responsabilidad de C.6).
+
+`crm_company_id` viaja desde D-163 en cada empresa (`null` en las anteriores a la decisión, o en las
+dadas de alta en HQ sin él), para que el CRM reconcilie sin adivinar por el nombre.
 
 Si la clave lleva `organization_id`, la colección tiene **exactamente un elemento**: el suyo. No es un
 filtro que el agente pueda ampliar.
@@ -853,6 +869,382 @@ El evento aparece en el tablero de HQ («actividad reciente de agentes», RF-76,
 
 ---
 
+### 3.10 `POST /api/v1/organizations/{id}/news` — noticia con comentario para una empresa
+
+**Alcance:** `news:write` · **RF-150, RF-153, RF-156** · **DU-30**
+
+La empresa va en la **ruta** y se verifica contra el contexto (§2.6): ajena o inexistente → **404**
+con el mismo cuerpo. Una noticia pertenece a **una** empresa: `summary_md` es la noticia y
+`comment_md` es lo que significa **para esa empresa** — el comentario es el producto, y por eso la
+misma noticia para dos empresas son dos filas.
+
+**Petición**
+
+```json
+{
+  "title": "La UE fija el calendario del AI Act",
+  "source_url": "https://ejemplo.test/ai-act",
+  "summary_md": "Las obligaciones para sistemas de alto riesgo entran en vigor en **agosto de 2027**.",
+  "comment_md": "Para tu caso: el copiloto de atención queda fuera del alto riesgo. Documenta la evaluación antes de la Sesión 3.",
+  "importance": 1,
+  "publish": true
+}
+```
+
+| Campo | Obligatorio | Reglas |
+|---|---|---|
+| `title` | sí | 1…200 caracteres |
+| `source_url` | no | Hasta 2 000 caracteres. **Solo `http(s)`**: otro esquema → **422** `scheme_not_allowed` |
+| `summary_md` | sí | Markdown, 1…20 000. Se guarda **tal cual** y se sanea al renderizar (RNF-31) |
+| `comment_md` | sí | Markdown, 1…20 000. Lo que la noticia significa **para esa empresa** |
+| `importance` | sí | Entero **1…3**. **Editorial** (D-161): la fija quien escribe, 1 es lo primero. Fuera de rango → 422 `out_of_range` |
+| `publish` | **sí** | Booleano. **Sin defecto, a propósito**, como en §3.7 |
+
+**Respuesta 201**
+
+```json
+{
+  "data": {
+    "id": "news_01J9…",
+    "organization_id": "org_01J9Z7...",
+    "title": "La UE fija el calendario del AI Act",
+    "source_url": "https://ejemplo.test/ai-act",
+    "summary_md": "Las obligaciones para sistemas de alto riesgo entran en vigor en **agosto de 2027**.",
+    "comment_md": "Para tu caso: …",
+    "importance": 1,
+    "published_at": "2026-09-18T09:12:03Z",
+    "author": {
+      "actor_type": "api_key",
+      "actor_id": "key_01J9Z7...",
+      "actor_label": "Hermes — noticias"
+    },
+    "created_at": "2026-09-18T09:12:03Z"
+  }
+}
+```
+
+Con `publish: false`, `published_at` y `author` son `null` (restricción
+`news_item_published_needs_author`) y la noticia **no aparece en «Hoy»**. **No se emite webhook**:
+las noticias van en un solo sentido (frontera (d)) y §10 no tiene evento para ellas. `audit_log`
+recibe `action: "news.create"`.
+
+### 3.11 `POST /api/v1/projects/{id}/milestones` — hito de entrega de un proyecto
+
+**Alcance:** `milestones:write` · **RF-151, RF-153, RF-156** · **DU-30**
+
+El proyecto va en la ruta y se verifica (§2.6): ajeno o inexistente → **404**. **La empresa del hito
+no viaja en el cuerpo**: sale del proyecto. Un hito es una fecha de entrega, no una lección: no hay
+porcentaje, participante ni nota (frontera (b); `check:alcance`).
+
+**Petición**
+
+```json
+{
+  "title": "Entrega del diagnóstico",
+  "due_at": "2026-10-15T00:00:00Z",
+  "position": 1
+}
+```
+
+| Campo | Obligatorio | Reglas |
+|---|---|---|
+| `title` | sí | 1…200 caracteres |
+| `due_at` | sí | Fecha-hora ISO 8601. Ilegible → 422 `not_a_datetime` |
+| `position` | no | Entero 0…10 000. Orden manual dentro del proyecto. Ausente: 0 |
+
+**Respuesta 201**
+
+```json
+{
+  "data": {
+    "id": "ms_01J9…",
+    "project_id": "prj_01J9Z7...",
+    "organization_id": "org_01J9Z7...",
+    "title": "Entrega del diagnóstico",
+    "due_at": "2026-10-15T00:00:00.000Z",
+    "status": "pending",
+    "position": 1,
+    "done_at": null,
+    "created_at": "2026-09-18T09:14:11Z",
+    "updated_at": "2026-09-18T09:14:11Z"
+  }
+}
+```
+
+Un hito **nace siempre `pending`**: hacerlo es otro acto (§3.12). `audit_log` recibe
+`action: "milestone.create"`.
+
+### 3.12 `POST /api/v1/milestones/{id}/done` — marcar un hito como hecho
+
+**Alcance:** `milestones:write` · **RF-151, RF-153** · **DU-30**
+
+**Petición:** cuerpo vacío o `{}`. Cualquier campo → **422** `unknown_parameter`: el estado no se
+parchea a mano.
+
+> RF-153 nombra `PATCH /milestones/{id}`. Se implementa como **dos sub-acciones `POST`** —`/done` y
+> `/reopen`—, como `POST /deliverables/{id}/publish` (§3.5): un acto con nombre se lee en `audit_log`
+> sin abrir el cuerpo, el catálogo (`lib/api/catalogo.ts`) solo admite `GET` y `POST`, y «solo
+> admite `status` y `due_at`» se cumple por construcción, porque no hay campos que admitir.
+
+**Respuesta 200:** el hito de §3.11 con `status: "done"` y `done_at` puesto. **Hecho ⇔ con fecha**:
+lo impone `milestone_done_has_date` en la base.
+
+| Situación | Código |
+|---|---|
+| Ya estaba hecho | **200**, idempotente: `done_at` **no se mueve**. Un agente que reintenta una llamada cortada no reescribe cuándo se entregó |
+| No existe bajo el contexto de la clave | **404** |
+| Alcance insuficiente | **403** |
+
+`audit_log` recibe `action: "milestone.update"` con la ruta en `metadata.path`.
+
+### 3.13 `POST /api/v1/milestones/{id}/reopen` — devolver un hito a pendiente
+
+**Alcance:** `milestones:write` · **RF-151, RF-153** · **DU-30**
+
+**Petición:** cuerpo vacío o `{}`. **Respuesta 200:** el hito con `status: "pending"` y
+`done_at: null`. Idempotente sobre uno ya pendiente. Existe para que un hito marcado por error se
+deshaga **sin borrar la fila**: el registro conserva las dos escrituras. Mismos códigos que §3.12.
+
+### 3.14 `POST /api/v1/projects/{id}/action-items` — pendiente de un proyecto
+
+**Alcance:** `milestones:write` · **RF-151, RF-153, RF-156** · **DU-30**
+
+El proyecto va en la ruta y se verifica (§2.6): ajeno o inexistente → **404**. Un pendiente es una
+**obligación del contrato** («envíanos el organigrama antes del 30»), no una tarea evaluable.
+
+**Petición**
+
+```json
+{
+  "title": "Enviar el organigrama actualizado",
+  "due_at": "2026-10-01T00:00:00Z",
+  "closes_by": "client"
+}
+```
+
+| Campo | Obligatorio | Reglas |
+|---|---|---|
+| `title` | sí | 1…200 caracteres |
+| `due_at` | no | Fecha-hora ISO 8601. Sin fecha límite, ausente |
+| `closes_by` | **sí** | `client` \| `slg`. **Sin defecto**: quién puede cerrarlo es una decisión, y se decide **en el servidor** (RF-151) |
+
+**Respuesta 201**
+
+```json
+{
+  "data": {
+    "id": "ai_01J9…",
+    "project_id": "prj_01J9Z7...",
+    "organization_id": "org_01J9Z7...",
+    "title": "Enviar el organigrama actualizado",
+    "due_at": "2026-10-01T00:00:00.000Z",
+    "status": "open",
+    "closes_by": "client",
+    "done_at": null,
+    "done_by": null,
+    "created_at": "2026-09-18T09:20:40Z",
+    "updated_at": "2026-09-18T09:20:40Z"
+  }
+}
+```
+
+`audit_log` recibe `action: "action_item.create"`.
+
+### 3.15 `POST /api/v1/action-items/{id}/done` — cerrar un pendiente
+
+**Alcance:** `milestones:write` · **RF-151, RF-153, RF-111** · **DU-30**
+
+**Petición:** cuerpo vacío o `{}`.
+
+**Una clave con `milestones:write` cierra cualquier pendiente**, sea `closes_by = client` o `slg`:
+B.3 no da alcance de agente a `action_item.close`, y la puerta lo resuelve por `action_item.write`.
+La regla «el cliente solo cierra los suyos» se aplica a las **personas** en el portal, y la aplica
+el servidor (`lib/academy/pendientes.ts`), no la pantalla.
+
+**Respuesta 200:** el pendiente de §3.14 con `status: "done"`, `done_at` y `done_by`, que es el
+actor polimórfico de `data_model` §2.4 tomado **del contexto** (RF-111):
+
+```json
+"done_by": { "actor_type": "api_key", "actor_id": "key_01J9Z7...", "actor_label": "Hermes — noticias" }
+```
+
+| Situación | Código |
+|---|---|
+| Ya estaba cerrado | **200**, idempotente: `done_at` y `done_by` **no cambian** — el primer cierre es el hecho |
+| No existe bajo el contexto de la clave | **404** |
+| Alcance insuficiente | **403** |
+
+`audit_log` recibe `action: "action_item.close"`. Reabrir un pendiente **no** tiene ruta en v1: lo
+hace SLG desde HQ (`reabrirPendiente`, RF-152).
+
+### 3.16 `POST /api/v1/organizations/{id}/projects` — la carpeta del cliente que el CRM acaba de abrir
+
+**Alcance:** `projects:write` · **D-162** · acción `project.write` de B.3
+
+**El CRM es donde nace un proyecto; este sitio lo recibe.** Hasta D-162 un proyecto se creaba a
+mano en los dos sitios y nada los relacionaba. Ahora el CRM (o Hermes por él) lo crea aquí y deja al
+lado su identificador. El proyecto sigue siendo lo que el cliente ve en su portal: de él cuelgan
+entregables, materiales, hitos y pendientes. **No se importa nada comercial** —ni etapa, ni importe,
+ni propietario comercial, ni probabilidad—: la frontera (a) de `scope.md` no se mueve.
+
+La empresa va en la **ruta** y se verifica contra el contexto (§2.6): ajena o inexistente → **404**
+con el mismo cuerpo, nunca 403. Las empresas **no** se crean por esta API: se dan de alta en HQ.
+
+**Petición**
+
+```json
+{
+  "name": "Implementación Phoenix PEEx — Cohorte 1",
+  "service": "Phoenix PEEx",
+  "crm_project_id": "crm_prj_7f3a",
+  "starts_at": "2026-10-01T00:00:00Z",
+  "ends_at": "2026-12-15T00:00:00Z",
+  "status": "active"
+}
+```
+
+| Campo | Obligatorio | Reglas |
+|---|---|---|
+| `name` | sí | 1…200 caracteres. Solo espacios → 422 `invalid` |
+| `service` | sí | **Uno de los once literales** de `data_model` §3.13, exacto e intraducible (RF-14). Fuera de la lista → 422 `not_in_vocabulary` |
+| `crm_project_id` | **sí** | 1…200 caracteres. Si el CRM manda, tiene que decir cuál es. Vacío → 422 `required` |
+| `starts_at` · `ends_at` | no | Fecha-hora ISO 8601; se guarda la fecha de calendario (§3.3). `ends_at` anterior a `starts_at` → 422 `before_starts_at` |
+| `status` | no | `active` · `paused` · `closed`. Ausente: `active` |
+
+**Respuesta 201**: el proyecto con la forma de §3.3 más `crm_project_id`. `owner` es `null`: el
+responsable es una persona de SLG y se asigna en HQ, no lo decide el CRM.
+
+```json
+{
+  "data": {
+    "id": "prj_01J9Z7...",
+    "organization_id": "org_01J9Z7...",
+    "name": "Implementación Phoenix PEEx — Cohorte 1",
+    "service": "Phoenix PEEx",
+    "status": "active",
+    "owner": null,
+    "crm_project_id": "crm_prj_7f3a",
+    "starts_at": "2026-10-01",
+    "ends_at": "2026-12-15",
+    "created_at": "2026-09-18T09:20:00Z"
+  }
+}
+```
+
+**Idempotente por `crm_project_id`.** Si esa empresa ya tiene un proyecto con ese identificador, la
+ruta responde **200 con el existente**: ni crea otro ni responde 409. Un reintento del CRM tras una
+llamada cortada **no puede duplicar la carpeta del cliente**, y el índice único parcial
+`uq_project_crm_id` (migración 0019) lo garantiza aunque dos reintentos lleguen a la vez. El resto
+del cuerpo se ignora en ese caso: el proyecto que manda es el que ya existe.
+
+| Situación | Código |
+|---|---|
+| Nuevo `crm_project_id` en esa empresa | **201** |
+| El mismo `crm_project_id` en esa empresa | **200**, el existente, sin escribir nada |
+| El mismo `crm_project_id` en **otra** empresa | **422** `already_taken` sobre `crm_project_id`: un proyecto del CRM pertenece a una sola |
+| Empresa ajena o inexistente | **404** |
+| Alcance insuficiente | **403** |
+
+`GET /api/v1/organizations/{id}/projects` (§3.3) devuelve desde D-162 `crm_project_id` en cada
+proyecto (`null` en los anteriores a la decisión), para que el CRM reconcilie sin adivinar por el
+nombre. `audit_log` recibe `action: "project.create"` con el 201, el 200 y los rechazos.
+
+### 3.17 `POST /api/v1/projects/{id}/close` — cerrar un proyecto
+
+**Alcance:** `projects:write` · **D-162**
+
+**Petición:** cuerpo vacío o `{}`. Cualquier campo → **422** `unknown_parameter`: el estado no se
+parchea a mano.
+
+> No hay `PATCH /projects/{id}`. Como con los hitos (§3.12), cambiar el estado son **dos sub-acciones
+> `POST`** —`/close` y `/reopen`—: un acto con nombre se lee en `audit_log` sin abrir el cuerpo, y el
+> catálogo (`lib/api/catalogo.ts`) solo admite `GET` y `POST`. `paused` no tiene ruta: lo pone SLG
+> desde HQ; el CRM sabe si un proyecto está o no.
+
+**Respuesta 200:** el proyecto de §3.16 con `status: "closed"`.
+
+| Situación | Código |
+|---|---|
+| Ya estaba cerrado | **200**, idempotente: no se escribe nada |
+| No existe bajo el contexto de la clave | **404** |
+| Alcance insuficiente | **403** |
+
+`audit_log` recibe `action: "project.update"` con la ruta en `metadata.path`.
+
+### 3.18 `POST /api/v1/projects/{id}/reopen` — devolver un proyecto a activo
+
+**Alcance:** `projects:write` · **D-162**
+
+**Petición:** cuerpo vacío o `{}`. **Respuesta 200:** el proyecto con `status: "active"`.
+Idempotente sobre uno ya activo. Existe para que un proyecto cerrado por error se deshaga **sin
+borrar la fila**: el registro conserva las dos escrituras. Mismos códigos que §3.17.
+
+### 3.19 `POST /api/v1/organizations` — la empresa que el CRM crea o encuentra por su identificador
+
+**Alcance:** `orgs:write` · **D-163** · acción `org.write` de B.3
+
+**D-162 dejó que el CRM creara aquí la carpeta del cliente, pero el CRM no sabía qué `{id}` de
+empresa usar**: las empresas de aquí y las del CRM no estaban relacionadas. Se relacionan guardando
+el identificador del CRM al lado de cada empresa de aquí (`organization.crm_company_id`, índice único
+parcial, migración 0020), y esta ruta es la puerta: el CRM crea o encuentra la empresa por ese
+identificador y con el `id` que recibe llama a §3.16. **No se importa nada comercial** —ni etapa, ni
+importe, ni propietario comercial—: la frontera (a) de `scope.md` no se mueve. Los proyectos que
+cuelgan de la empresa, sus miembros y su contacto principal siguen siendo cosa de HQ.
+
+**Petición**
+
+```json
+{
+  "name": "Cliente Demo",
+  "crm_company_id": "crm_cmp_9b2e",
+  "slug": "cliente-demo"
+}
+```
+
+| Campo | Obligatorio | Reglas |
+|---|---|---|
+| `name` | sí | 1…200 caracteres. Solo espacios → 422 `invalid` |
+| `crm_company_id` | **sí** | 1…200 caracteres. Si el CRM manda, tiene que decir cuál es. Vacío → 422 `required` |
+| `slug` | no | Hasta 60 caracteres. Se normaliza como en HQ (minúsculas, guiones). Ausente: se deriva del nombre. Ya usado por **otra** empresa → 422 `already_taken` |
+
+**Respuesta 201**: la empresa con la forma de §3.2, siempre `type: "client"` y `status: "active"`. El
+tipo y el estado no se mandan: el CRM no da de alta a SLG ni archiva a nadie.
+
+```json
+{
+  "data": {
+    "id": "org_01J9Z7...",
+    "name": "Cliente Demo",
+    "slug": "cliente-demo",
+    "type": "client",
+    "status": "active",
+    "primary_contact": null,
+    "crm_company_id": "crm_cmp_9b2e",
+    "created_at": "2026-09-21T09:20:00Z"
+  }
+}
+```
+
+**Idempotente por `crm_company_id`.** Si ya existe una empresa con ese identificador, la ruta responde
+**200 con la existente**: ni crea otra ni responde 409, y el resto del cuerpo se ignora —la que manda
+es la que ya está, aunque el CRM haya cambiado el nombre desde entonces—. El índice único parcial
+`uq_organization_crm_id` lo garantiza aunque dos reintentos lleguen a la vez.
+
+**Una clave acotada a una empresa no crea empresas: 403.** Es el criterio de §3.16 para la empresa
+ajena —el universo de esa clave es exactamente la suya—, pero sin recurso en la ruta no hay «no
+existe» que responder: crear otra empresa está fuera de lo que esa clave puede hacer, y decirlo no
+revela la existencia de nadie.
+
+| Situación | Código |
+|---|---|
+| Nuevo `crm_company_id` | **201** |
+| El mismo `crm_company_id` | **200**, la existente, sin escribir nada |
+| `slug` ya usado por otra empresa | **422** `already_taken` sobre `slug` |
+| Clave acotada a una empresa | **403** |
+| Alcance insuficiente | **403** |
+
+`audit_log` recibe `action: "organization.create"` con el 201, el 200 y los rechazos.
+
 ## 4. Matriz de referencia y las tres pruebas del DoD #6
 
 ### 4.1 Ruta × alcance × códigos
@@ -867,9 +1259,19 @@ El evento aparece en el tablero de HQ («actividad reciente de agentes», RF-76,
 | `GET /projects/{id}/deliverables` | `deliverables:read` | ✔ | ✔ | ✔ | ✔ | ✔ | — | ✔ | ✔ |
 | `POST /announcements` | `announcements:write` | ✔ | ✔ | ✔ | ✔ | ✔ | — | ✔ | ✔ |
 | `POST /events` | `events:write` | ✔ | ✔ | ✔ | ✔ | ✔ | — | ✔ | ✔ |
+| `POST /organizations/{id}/news` | `news:write` | ✔ | ✔ | ✔ | ✔ | ✔ | — | ✔ | ✔ |
+| `POST /projects/{id}/milestones` | `milestones:write` | ✔ | ✔ | ✔ | ✔ | ✔ | — | ✔ | ✔ |
+| `POST /milestones/{id}/done` | `milestones:write` | ✔ | ✔ | ✔ | ✔ | ✔ | — | ✔ | ✔ |
+| `POST /milestones/{id}/reopen` | `milestones:write` | ✔ | ✔ | ✔ | ✔ | ✔ | — | ✔ | ✔ |
+| `POST /projects/{id}/action-items` | `milestones:write` | ✔ | ✔ | ✔ | ✔ | ✔ | — | ✔ | ✔ |
+| `POST /action-items/{id}/done` | `milestones:write` | ✔ | ✔ | ✔ | ✔ | ✔ | — | ✔ | ✔ |
+| `POST /organizations/{id}/projects` | `projects:write` | ✔ (200 si ya existía) | ✔ | ✔ | ✔ | ✔ | — | ✔ | ✔ |
+| `POST /projects/{id}/close` | `projects:write` | ✔ | ✔ | ✔ | ✔ | ✔ | — | ✔ | ✔ |
+| `POST /projects/{id}/reopen` | `projects:write` | ✔ | ✔ | ✔ | ✔ | ✔ | — | ✔ | ✔ |
+| `POST /organizations` | `orgs:write` | ✔ (200 si ya existía) | ✔ | ✔ | ✔ | — | — | ✔ | ✔ |
 | `GET /openapi.json` | *cualquiera* | ✔ | — | ✔ | — | — | — | — | ✔ |
 
-`413` y `415` aplican a las cuatro rutas `POST`. `500` y `503` a todas.
+`413` y `415` aplican a las catorce rutas `POST`. `500` y `503` a todas.
 
 ### 4.2 Las tres pruebas que el DoD #6 exige demostrar
 

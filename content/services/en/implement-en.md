@@ -1,7 +1,7 @@
 ---
 type: service
 name: "SLG_Implement"
-branch: SLG_Enterprise
+branch: VoltAi Enterprise
 parent: "slg-enterprise-en"
 download: "d-07-en"
 lang: en

@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { barrerDespues } from "@/lib/colas/barrer";
 import { obligatoriasQueFaltan } from "@/lib/ops/variables";
 
 /**
@@ -66,6 +67,13 @@ const MIGRACIONES: number | null = (() => {
  * otro sitio. Lista vacía significa que no falta ninguna obligatoria.
  */
 export function GET() {
+  /**
+   * LA SONDA SIGUE SIENDO TONTA: su respuesta no depende de esto. Pero como el
+   * monitor externo la visita cada cinco minutos (D-49), es el latido más
+   * fiable que tiene el sitio en una plataforma de funciones, y `lib/colas` lo
+   * aprovecha para recoger los reintentos vencidos DESPUÉS de responder.
+   */
+  barrerDespues();
   return Response.json(
     { status: "ok", app: "slg_website", migraciones: MIGRACIONES, faltan: obligatoriasQueFaltan() },
     { status: 200 },

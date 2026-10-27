@@ -1,7 +1,8 @@
 ---
 type: service
 name: "CoO as a Service"
-branch: SLG_Factory
+tagline: "Army of Agents"
+branch: VoltAi Factory
 parent: "slg-factory"
 download: "d-10"
 lang: es
@@ -16,7 +17,7 @@ El problema de aplazarlo es conocido: la dirección general acaba operando, y mi
 
 ## Qué es
 
-Dirección de operaciones como servicio, desde `SLG_Factory`.
+Dirección de operaciones como servicio, desde `VoltAi Factory`.
 No es consultoría que recomienda y se va: es una figura que opera, con responsabilidad sobre resultados acordados y presencia sostenida en el tiempo.
 
 ## Qué incluye

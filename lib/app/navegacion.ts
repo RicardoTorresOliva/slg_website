@@ -50,6 +50,13 @@ export type Seccion = {
 export const SECCIONES: readonly Seccion[] = [
   // ── HQ ──────────────────────────────────────────────────────────────────
   { clave: "dashboard", href: "/hq/tablero", superficie: "hq", accion: "hq.dashboard.read" },
+  /**
+   * El lanzador de productos externos (DU-29(a) · RF-154). Misma acción que el
+   * tablero **a propósito**: no es un dato nuevo que gobernar, es otra vista de
+   * «puede entrar a HQ» — inventar una acción propia obligaría a tocar la
+   * matriz B.3 por una pantalla que no decide nada, solo abre pestañas.
+   */
+  { clave: "connections", href: "/hq/conexiones", superficie: "hq", accion: "hq.dashboard.read" },
   { clave: "captures", href: "/hq/capturas", superficie: "hq", accion: "capture.read" },
   { clave: "orgs", href: "/hq/empresas", superficie: "hq", accion: "org.read" },
   { clave: "projects", href: "/hq/proyectos", superficie: "hq", accion: "org.read" },
@@ -63,10 +70,30 @@ export const SECCIONES: readonly Seccion[] = [
   { clave: "users", href: "/hq/usuarios", superficie: "hq", accion: "member.invite" },
   { clave: "deliverablesHq", href: "/hq/entregables", superficie: "hq", accion: "deliverable.publish" },
   { clave: "announcementsHq", href: "/hq/avisos", superficie: "hq", accion: "announcement.publish" },
+  // DU-29(c): escribir una noticia para una empresa. `slg_operator` la ve solo
+  // si tiene prueba de asignación, igual que entregables y avisos.
+  { clave: "newsHq", href: "/hq/noticias", superficie: "hq", accion: "news.write" },
   { clave: "apikeys", href: "/hq/claves", superficie: "hq", accion: "apikey.manage" },
   { clave: "audit", href: "/hq/auditoria", superficie: "hq", accion: "audit.read" },
   // ── Portal ──────────────────────────────────────────────────────────────
-  { clave: "announcements", href: "/portal", superficie: "portal", accion: "announcement.read" },
+  /**
+   * «Hoy» (DU-26 · RF-149): la portada del portal, que antes era la lista de
+   * avisos. La clave cambia de `announcements` a `today` porque el título de
+   * la pantalla sale de aquí (`app.nav.<clave>`, RNF-43) y ya no es «Avisos».
+   * La acción se queda en `announcement.read` **a propósito**: la portada la ve
+   * todo el que puede ver los avisos de su empresa —todos los roles de
+   * cliente—, y las otras cuatro puertas que consulta (`news.read`,
+   * `milestone.read`, `deliverable.read`) las exige cada servicio por su
+   * cuenta. Inventar una acción «ver la portada» obligaría a tocar la matriz
+   * B.3 por una pantalla que no gobierna ningún dato propio.
+   */
+  { clave: "today", href: "/portal", superficie: "portal", accion: "announcement.read" },
+  /**
+   * «Programa» (DU-27): hitos y pendientes por proyecto. `milestone.read` es de
+   * los cuatro roles, así que la sección la ve toda la empresa; cerrar un
+   * pendiente lo decide `cerrarPendiente` por `closes_by`, no la sección.
+   */
+  { clave: "program", href: "/portal/programa", superficie: "portal", accion: "milestone.read" },
   { clave: "deliverables", href: "/portal/proyectos", superficie: "portal", accion: "deliverable.read" },
   /**
    * Los materiales de programa (DU-20). Misma acción que los proyectos **a
@@ -75,6 +102,19 @@ export const SECCIONES: readonly Seccion[] = [
    * no entregables, que no existe en B.3.
    */
   { clave: "materials", href: "/portal/materiales", superficie: "portal", accion: "deliverable.read" },
+  /**
+   * La lista completa de avisos (DU-18 · RF-88), que DU-26 saca de la portada
+   * a su propia ruta: «Hoy» enseña los últimos tres y enlaza aquí (RNF-43).
+   * Misma acción que tenía en `/portal`, porque son los mismos datos.
+   */
+  { clave: "announcements", href: "/portal/avisos", superficie: "portal", accion: "announcement.read" },
+  /**
+   * «Clases» (DU-28 · RF-155): los mismos materiales de programa, vistos de
+   * otra manera — con los de vídeo distinguidos y abiertos aparte. Misma acción
+   * que `materials` **por la misma razón** que explica su comentario: son los
+   * mismos datos, no un permiso nuevo.
+   */
+  { clave: "classes", href: "/portal/clases", superficie: "portal", accion: "deliverable.read" },
   /**
    * `member.read` y **no** `member.invite` (DU-21, criterio 2). El criterio dice
    * que `client_member` **ve la lista y no puede invitar**: con la acción de

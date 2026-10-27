@@ -7,7 +7,8 @@ learns:
   - "Why asking inside the company and asking a vendor fail for opposite reasons"
   - "What can be brought to individual support and what cannot"
   - "How a third-party proposal is reviewed before signing it"
-status: coming-soon
+file_key: "D-05-ai-coaching-en.pdf"
+status: published
 lang: en
 pair: "d-05"
 copy: temporal

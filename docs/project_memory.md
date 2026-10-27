@@ -495,3 +495,455 @@ porque lo que se prueba son **políticas de fila reales**, y contra un doble sie
 - `scripts/auth/`: `test-permisos.ts`, `test-autorizacion.ts` · `scripts/ci/check-auth-boundary.ts`,
   `check-migrations.ts` · `scripts/db/local-pg.sh`
 - `implementation/task_tracker.md` · `package.json` · `scripts/tsconfig.json`
+
+---
+
+## Sesión 2026-09-17 — el sitio está publicado
+
+**`https://softlandingglobal.com` sirve en producción, desde Vercel.** No desde el
+VPS: Easypanel sigue sin arrancar contenedores nuevos (ver `handoff-despliegue.md`
+§9) y se rodeó, no se arregló.
+
+- Proyecto `slg-website` en la cuenta de Vercel de Ricardo. Protección SSO
+  **desactivada** a propósito — con ella puesta el sitio pedía login.
+- Las variables NO están en el almacén del proyecto: viajan en cada despliegue
+  con `--build-env`/`--env`. `DATABASE_URL` apunta adrede a una dirección que no
+  conecta; el sitio público no la necesita y una cadena que no conecta es más
+  segura que una que sí. **Los formularios no guardan nada todavía.**
+- **`output: "standalone"` es condicional** (`next.config.ts`): Vercel escribe
+  los `.nft.json` que su ejecutor lee, y con la salida autocontenida Next no los
+  emite. Así falló el primer despliegue. Fuera de Vercel no cambia nada.
+- DNS en Hostinger: raíz y `www` → `76.76.21.21`. Ricardo lo cambió el 17.
+
+**Contenido.** Los seis servicios de `SLG_Academy`/`SLG_Factory` y las páginas
+Doctrina y Nosotros reescritos contra las fuentes reales
+(`The_Phoenix_Doctrine_v1.1.md`, `SLG Overhauling.md`). Phoenix RETx describía
+otro servicio: es para investigadores y estudiantes, no para revisar
+implementaciones fallidas. Los 76 registros siguen en `copy: temporal`.
+
+**Marca.** `public/marca/isotipo-slg.svg` se había perdido al reemplazar la línea
+de código; recuperado de `origin/develop-linea-2026-09-11-local`. Once
+fotografías propias en `public/fotos/` (WebP, 352 KB en total).
+
+**`app/apple.css`** aporta la capa de acabado que faltaba. Lleva `!important`
+porque las páginas escriben estilo en línea; quitarlos es trabajo aparte.
+
+**Los 11 documentos de descarga EXISTEN**, en `~/Dev/SLG_Overhauling/docs/`
+(markdown) y `docs/pdf/` (PDF con la marca, vía pandoc + typst). 29.671 palabras,
+222 citas de fuente, 69 `[PENDIENTE]` declarados. **Todavía no están conectados
+al sitio**: las fichas siguen diciendo «disponible próximamente».
+
+**Dos frenos corregidos, ninguno cosmético:**
+- `check-copy` marcaba «liderazgo» como superlativo: la expresión sin `\b` final
+  cazaba toda la familia de «liderar».
+- `eslint` analizaba `.claude/worktrees/`, copias completas del repo de otra
+  línea — 583 errores en archivos que no son fuente.
+
+**Pendiente de Ricardo, y solo de él:** aprobar el título nuevo de D-03;
+verificar el «12× de capacidad» de D-10 (medición interna con supuestos sin
+confirmar); los 69 pendientes de los documentos, casi todos precios, duraciones
+y casos reales; y qué son ACP y SelectUSA/SGWIT para poder escribirlos en
+Nosotros.
+
+---
+
+## Sesión 2026-09-17 (noche) — la captura de correo funciona en producción
+
+**Base de datos y archivos en Supabase, tramo gratuito.** Proyecto `slg-website`
+(ref `jadrwpbgtshwqanrhjxp`, `us-east-1`, Postgres 17). Las 17 migraciones
+aplicadas con el rol dueño; `slg_app` con contraseña y LOGIN; 21 tablas, 11 con
+RLS forzada. Bucket privado `downloads` con los 11 PDF (uno por ficha, clave =
+`file_key` del frontmatter).
+
+- **Vercel conecta por el pooler** `aws-0-us-east-1.pooler.supabase.com`, usuario `slg_app.<ref>`.
+  **Puerto 6543 (modo transacción) desde el 18-09**: el 5432 (sesión) limita a 15 clientes en total y
+  una sola instancia con los pools de 10 + 5 lo agotaba (`EMAXCONNSESSION`, 500 en `/hq/capturas`).
+  El código lleva ahora `prepare: false` y pools de 3 + 2. Las migraciones van por el host directo,
+  que es IPv6.
+- **Archivos por `FILES_DRIVER=supabase`**: la API de gestión no crea claves S3,
+  así que existe `lib/files/supabase.ts` (REST de Storage, clave de servicio) y
+  `adaptadorDeArchivos()` elige proveedor en un solo sitio. El adaptador S3 y el
+  diseño del VPS no cambian.
+- **Secretos** en `~/Dev/SLG_Overhauling/ops/supabase-slg-website.env` (fuera del
+  repo) y cargados en el despliegue de Vercel con `--env`.
+- **Verificado de punta a punta contra producción**: POST al formulario → 303 a
+  `/gracias?url=…` → GET de la URL firmada devuelve el PDF (142 KB) →
+  `lead_capture` con `crm_sync_status: pending` y `download_event` con su firma.
+
+**Bug corregido por el camino**: cinco componentes comparaban el estado de la
+descarga con `"available"`, valor que el esquema no admite; unificado en
+`published`. Las 11 fichas ES están `published`; las EN siguen `coming-soon`
+porque los documentos existen solo en español.
+
+**Lo que sigue faltando y por qué**: `MAIL_SMTP_HOST`/`OPS_MAIL_TO` (correo:
+las credenciales de Resend viven en Easypanel, no aquí) — no bloquean la
+descarga; `CRM_*` (la cola queda en `pending` hasta que existan); los documentos
+en inglés (traducción, otro encargo). El CLI de Supabase bajo Claude Code fuerza
+modo JSON: invocarlo con `env -u CLAUDECODE` (ver memoria del agente).
+
+---
+
+## Sesión 2026-09-18 (tarde) — la primera cuenta existe como mecanismo; la plantilla, medida
+
+**Objetivo B, resuelto en lo que dependía del código.** `scripts/auth/primer-admin.ts` (`npm run
+auth:primer-admin`) crea la empresa de SLG, el usuario `slg_admin` con contraseña y su pertenencia, y
+deja fila en `audit_log`. **Se niega a correr si `"user"` tiene una sola fila**: es arranque, no una
+puerta trasera.
+
+La disyuntiva «guion o acción en `/api/ops`» **no era una preferencia: la cierra el diseño**.
+`membership` lleva `FORCE ROW LEVEL SECURITY` y su política (0001 + 0015) solo deja escribir al actor
+cuya empresa coincide o a `slg_admin`/`slg_operator`/`agent_slg`. `withSystemScope` pone `system`, que
+no está en la lista y la 0015 explica por qué no puede estarlo; `withScope` exige un `AuthContext`,
+imposible de fabricar. **La aplicación no puede crear su primera pertenencia**, así que el actor tiene
+que ser el dueño de la base y el sitio, un guion —como `migrar.ts` y `seed.ts`—. Una acción HTTP
+correría con la conexión de la aplicación, que es justo la que no puede.
+
+**No se ejecutó contra producción**: el modo auto del agente bloquea leer credenciales y tocar la base
+real. Para Ricardo, con la cadena del **rol dueño** (la de las migraciones, host directo):
+
+```
+node --env-file=$HOME/Dev/SLG_Overhauling/ops/supabase-slg-website.env \
+  scripts/auth/primer-admin.ts --correo TU-CORREO-REAL --nombre "Ricardo Torres Oliva" --rehacer
+```
+
+**HECHO el 2026-09-18, 16:42.** La cuenta existe en producción:
+`ricardo.torres@softlandingglobal.com`, rol `slg_admin`, en la empresa `SLG Agency` (`slg`). Se eligió
+el correo **corporativo** y no el personal por una razón del código: `accountLinking` lleva
+`allowDifferentEmails: false`, así que el día que se configure Entra (F.2-3) sólo podrá vincularse a
+una cuenta con ese mismo correo — y el MX del dominio está en Microsoft 365, o sea que el buzón es
+real. `--rehacer` se usó porque el primer intento se lanzó con el marcador de posición del ejemplo y
+creó un `slg_admin` con `tu@correo`; los dos apuntes están en `audit_log` (`auth.primer-admin` y
+`auth.primer-admin.rehecho`). El guion valida ahora el correo, así que ese error no se repite.
+
+**La contraseña impresa está en la transcripción de la sesión**: cambiarla por `/recuperar` (público,
+manda el enlace al corporativo) o por `/perfil` cuando el portal esté abierto. `/perfil` vive dentro
+de `(portal)`, así que hoy devuelve 404.
+
+**La cadena no se escribe en la línea de comandos**: `--env-file` es de Node y carga el archivo de
+`ops/` que ya existe, así que la credencial no pasa por el historial del intérprete. El guion acepta
+los nombres de los dos sitios (`DATABASE_URL_OWNER`/`DATABASE_URL_APP` de `ops/`, o
+`DATABASE_URL_MIGRATIONS`/`DATABASE_URL` de `.env.example`). Imprime la contraseña **una sola vez**.
+
+Si la cadena del dueño apunta al host directo y tu red no tiene IPv6, fallará la conexión, no el
+guion: el mensaje lo dirá. En ese caso, la del *pooler* en modo sesión con el usuario dueño.
+
+**HQ y el portal ya se pueden mirar — en la vista previa de `develop`, hecho y comprobado.**
+
+| | |
+|---|---|
+| Dirección | `https://slg-website-git-develop-ricardotorresolivas-projects.vercel.app` |
+| Compuerta | usuario `slg`; la contraseña la guarda Vercel → *Settings* → *Environment Variables* →
+  `STAGING_BASIC_AUTH_PASSWORD` (Preview · rama `develop`), y se enseñó una vez en la sesión.
+  **Aquí no se escribe: el repositorio es público** (Regla 2). |
+| Dentro | `/acceder` con `ricardo.torres@softlandingglobal.com` |
+
+Corrección a esta memoria: **las variables SÍ están en el almacén del proyecto de Vercel** (26 en
+Production y 26 en Preview desde el 17-09 de madrugada), así que no hubo que componer nada con
+`--env`. Se añadieron cuatro, acotadas a **Preview + rama `develop`**: `SUPERFICIES_EN_REVISION`,
+`STAGING_BASIC_AUTH_USER`/`_PASSWORD` —sin compuerta la apertura no ocurre, y eso es el diseño— y
+`BETTER_AUTH_URL` con el **alias de rama**, porque con la URL de producción el acceso se haría contra
+un origen que no sirve la página.
+
+Verificado por HTTP: sin credencial, 401 en todo; con ella, `/` y `/acceder` dan 200 y `/hq/tablero`
+y `/portal/entregables` dan **307 → `/acceder?volver=…`**, que es «existe y te falta sesión» donde
+antes había 404. Producción sigue en 404, que es lo que RF-87 protege.
+
+**Cuidado al usarla: la vista previa escribe en la base de PRODUCCIÓN** — las variables de Preview
+apuntan al mismo Supabase. Una empresa de prueba creada desde HQ se crea de verdad.
+
+**Andamio con fecha**: al cerrar M3 y M4 se pone `SUPERFICIES_ABIERTAS` en `true` y se retiran las
+cuatro variables.
+
+**Objetivo A, primer paso hecho: `docs/plantilla-de-sitios.md`.** El inventario mecánico, con una
+decisión por línea. El recuento cambia el tamaño del trabajo: de **1.388 líneas en 128 archivos** que
+nombran a SLG, 761 son prefijo técnico, 347 son «SLG» = **la casa** (frente a la empresa cliente), 133
+el vocabulario de roles, y **solo 147 son marca y oferta**. La marca son 26 sitios concretos (media
+tarde). Lo caro es la **estructura** —`rutas.ts`, `schema.ts`, los 30 patrones de `nomenclature.ts`,
+`POR_RUTA` de `Fotografia.tsx`— y, con ella, los **cinco frenos que validan contra la oferta de SLG**:
+si no se parametrizan, un sitio de cliente arranca con cinco frenos en rojo y alguien los apaga.
+
+**La decisión que falta, y es de Ricardo**: si la estructura de ejes/líneas/servicios se **declara en
+un archivo** (cuesta un generador, paga desde el segundo cliente) o cada cliente tiene **su
+`rutas.ts`** (cuesta cero, paga hasta el tercero). Sin esa respuesta no tiene sentido escribir el
+`site.config` ni el playbook `crear-sitio`.
+
+**Dos defectos encontrados de paso, no arreglados** (son cambio de alcance):
+- Texto visible con la marca **dentro de `lib/`**: `lib/auth/acceso.ts:23` y
+  `lib/invitations/service.ts:362`. Debe salir de `content/ui/*.json`, como el resto.
+- El respaldo `?? "https://softlandingglobal.com"` en `lib/content/seo.ts:21`, `lib/content/rss.ts:75`
+  y `app/api/ops/route.ts:126`. Un sitio de cliente al que se le olvide `NEXT_PUBLIC_SITE_URL` **no
+  falla: publica el dominio de SLG** en sus etiquetas sociales.
+
+**Menores cerrados.** `check:literacy` llevaba en rojo desde la sesión de Supabase —cuatro variables
+sin explicar en `README.md`: `FILES_DRIVER`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
+`CRON_SECRET`—; documentadas, en verde. Los tres worktrees `agent-*` quitados: **3,0 GB → 2,0 MB**,
+ramas intactas — y ojo: `worktree-agent-a361ac28e2e6b40e1` **no está fusionada** en `develop`, al
+contrario de lo que decía esta memoria; es la línea vieja, y por eso se quitó el directorio y no la
+rama. `.gitignore`: el `.env*` del final **anulaba el `!.env.example`** de arriba; retirado, y añadido
+`supabase/.temp/`. CLI de Vercel 54 → 59.23.1.
+
+---
+
+## PRÓXIMA SESIÓN
+
+Cierre del 2026-09-23. **Producción de SLG = `0eb6fa5`** (desplegada por Ricardo; `/api/health`: ok,
+27 de 27 migraciones). **`slg_website` `develop`** = fusión con la plantilla `7926d6d` (empujada; su CI
+es el primero que corre el motor genérico sobre la piel de SLG). **`website_template` `develop` =
+`7926d6d`**, CI en verde hasta `6edaa10`. **`web_demo` `develop`** actualizado con `sitio:actualizar`.
+
+### 0 · Lo primero al abrir
+1. CI de `slg_website` `develop` (`gh run list --branch develop --limit 1`). Es la primera vez que SLG
+   corre el motor que viene de la plantilla (tests genéricos, `conMarca` en `lib/content/loader.ts`,
+   prototipo desde la ficha). El HTML servido de las 89 páginas se cotejó en local antes y después:
+   mismo texto, mismos atributos. Si el CI sale rojo: el arreglo se hace **en `website_template`** y
+   SLG lo trae con `npm run sitio:actualizar`.
+2. Con el CI en verde, dar a Ricardo la línea de despliegue (el modo auto la bloquea):
+   `cd ~/Dev/slg_website/.claude/worktrees/desplegar && git fetch origin && git checkout --detach <sha> && vercel --prod`.
+   Si sale `Not authorized`: `vercel logout && vercel login` y repetir.
+
+### 1 · D-167 hecha (opción A)
+- `website_template`: `npm run sitio:actualizar` (`scripts/sitio/fusion.ts`, CLI `actualizar.ts`,
+  prueba `test-actualizar.ts` 35/35 en CI) y `.gitattributes` con `merge=ours`. Tras fusionar, la piel
+  (`PIEL` en `fusion.ts`: ficha, `content/`, `public/marca|fotos/`, iconos de `app/`, `README.md`,
+  `docs/project_memory|work_log|decision_log.md`) se deja **exactamente como en HEAD**, porque el
+  driver `ours` no protege de borrados ni de archivos añadidos. Conflicto de motor o frenos rojos →
+  deshace y no empuja. `--primera-vez` para repos sin historial común (`-X theirs` en el motor).
+- `commands/crear-sitio.md` paso 1: repo vacío + `git clone` de la plantilla + `push develop
+  develop:main`. Paso 1b: cómo actualizar.
+- `web_demo`: enganchado con `--primera-vez` y actualizado de verdad (`7926d6d`). Repositorio intacto.
+- `slg_website`: remoto `plantilla`. **Desde ahora, los cambios de motor se hacen en
+  `website_template`**; SLG los trae con `npm run sitio:actualizar` como un cliente más.
+
+### 2 · Estado de la plantilla (§3 de `docs/PLAYBOOK_REPLICACION.md`)
+Pasos 0–14, 16 y 17 hechos. 14 cerrado el 23-09 **sin vaciar**: `planning/`, `implementation/` y
+`knowledge/` son la spec del motor que cita el código y se comparten con los clientes
+(`docs/PLANTILLA.md` §4). 15 pendiente de Ricardo: claves de Resend y UptimeRobot.
+Producción de SLG desplegada después en `89a5694` (motor de la plantilla; CI verde).
+
+### 3 · Pendientes de Ricardo
+- ~~Correcciones al formulario de intake~~: hechas el 23-09 con
+  `docs/intake/corregir-formulario-intake.gs` (Ricardo lo ejecutó). **Lección**: `pbcopy` desde la
+  shell de Claude rompe las tildes; usar `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 pbcopy`.
+- De las 5 webs: cuántas informativas / con área privada / e-commerce.
+- Analítica: Umami, propia o ninguna (RF-35 prohíbe scripts de terceros).
+
+---
+
+### Lo anterior (22-09)
+
+Cierre del 2026-09-22 por límite de ventana. **`slg_website` `develop` = `fde1496`** (CI en marcha al
+cerrar). **`website_template` `develop` = `de3cb86`** (solo ramas `develop` y `main`). **Producción de
+SLG**: base en **27 de 27** (0023–0026 aplicadas el 22-09 por Claude con la CLI de Supabase y
+registradas en `drizzle.__drizzle_migrations`; API REST cerrada, verificado); código desplegado =
+`1e55868`, **pendiente de desplegar `develop`**.
+
+### 0 · Lo primero al abrir
+1. `gh run list --branch develop --limit 1` en `slg_website`. Si `fde1496` (o posterior) está en verde:
+   desplegar. `git -C .claude/worktrees/desplegar checkout --detach origin/develop` y `vercel --prod`
+   desde esa copia (si el modo auto lo bloquea, dar a Ricardo la línea exacta). Comprobar en
+   `https://softlandingglobal.com/api/health`: `status ok`, `migraciones 27`.
+2. CI de `website_template` (`gh run list -R RicardoTorresOliva/website_template --branch develop
+   --limit 1`): el último rojo era de pruebas que asumían CRM; ya corregido, falta verlo en verde.
+
+### 1 · Trabajo aprobado: D-167, opción A (actualizar clientes desde la plantilla)
+Ricardo dijo «sí, opción A» el 22-09. Cuatro pasos, sin intervención suya:
+1. `commands/crear-sitio.md` paso 1: crear el repositorio del cliente **con el historial** de la
+   plantilla (repo vacío con `gh repo create --private` + `git clone` de la plantilla + `git push` de
+   `develop` y `main`), no con `--template`.
+2. En `website_template`: `.gitattributes` con `merge=ours` para la piel (`site.config.ts`,
+   `content/**`, `public/marca/**`, `public/fotos/**`, `app/icon*`, `app/apple-icon*`,
+   `app/favicon.ico`) y `npm run sitio:actualizar` (añade el remoto `plantilla` si falta, configura
+   el driver `merge.ours`, `git fetch` + `git merge plantilla/develop`, frenos, `push` a `develop` →
+   vista previa; producción solo con el «sí» de Ricardo).
+3. `web_demo` (`~/Dev/web_demo`): engancharlo con `git merge --allow-unrelated-histories` a la
+   plantilla conservando su piel; probar una actualización real. **No borrar el repositorio.**
+4. `slg_website`: remoto `plantilla` = `website_template`; desde ahora los cambios de motor se hacen
+   en la plantilla y SLG los trae con `sitio:actualizar`.
+
+### 2 · Estado de la plantilla (pasos del §3 de `docs/PLAYBOOK_REPLICACION.md`)
+Pasos 0–13 y 16 hechos. 14 a medias (falta vaciar la documentación de SLG del template:
+`docs/PLANTILLA.md` §4). 15 (configuración única de Ricardo, §7.3) pendiente: formulario ✅, Vercel
+con acceso a todos los repos ✅ (la conexión Git de `web_demo` funcionó), claves de Resend y
+UptimeRobot pendientes. **Prueba en frío**: `web_demo` en línea
+(`web-demo-4mtfx5v7o-ricardotorresolivas-projects.vercel.app`), Supabase `emzuigrgbcihjoxssfqd`,
+Vercel `web-demo`; lecciones en `work_log` («Prueba en frío (paso 16)»).
+
+### 3 · Pendientes de Ricardo
+- Correcciones al formulario de intake (huecos detectados: correo público, «Solo inglés» no
+  soportado, CRM «panel» en web sin área privada, formulario solo en español, tipografía sin sitio en
+  la ficha). Claude puede darle un script que edite el formulario existente.
+- La pregunta del playbook: de las 5 webs, cuántas informativas / con área privada / e-commerce.
+- Decisión de analítica (Umami, propia o ninguna).
+
+### Herramientas que funcionaron (prueba en frío)
+- Supabase: `npx --no-install supabase … --agent no` con la sesión del Mac (proyectos, `db query
+  --linked --project-ref <ref> --file`). El conector MCP no confirma costes (parámetros como texto).
+- Vercel: `vercel project add` / `link` / `git connect`, `vercel api` (PATCH de `framework`),
+  `vercel curl` para vistas previas protegidas. El conector MCP no ve los proyectos del equipo.
+- `vercel project add` crea el preset «Other»; `vercel link` añade `.env*` al `.gitignore`.
+
+---
+
+### Lo anterior (22-09)
+
+
+Cierre del 2026-09-21, noche. **`develop` = `92903ba`**, empujado; nada vive solo en el portátil
+(se subió también la rama vieja `claude/wizardly-spence-6b2e2e`, del D-50 de septiembre, que no
+estaba en el remoto y no está fusionada). **Producción = `slg-website-hpx6scn2i`**, desde `1e55868`.
+**Base de producción = 23 de 23: falta aplicar 0023.**
+
+### Plantilla de clientes (22-09) — pasos 1–12 hechos
+- `slg_website` es ya un motor que lee su ficha (`site.config.ts`); con la de SLG sirve el mismo HTML que antes (117 URL cotejadas). CI verde en `b00db3a`.
+- `website_template` (`~/Dev/website_template`, rama por defecto `develop` = `aed4a19`) arranca como «Cliente Demo»: sin rastro de SLG en lo servido.
+- Pendiente de Ricardo: aplicar 0023–0026 y desplegar `b00db3a`; borrar 4 ramas viejas de `website_template` (el modo auto bloquea borrar ramas remotas); correcciones al formulario de intake (huecos del agente del paso 10).
+- Siguiente de Claude: paso 16, prueba en frío con «Cliente Demo» (`crear-sitio` + `sitio:secretos`), y vaciar la documentación de SLG del template (`docs/PLANTILLA.md` §4).
+
+### 0 · Lo primero al abrir, en este orden
+1. **Mirar el CI de `92903ba`** (`gh run list --branch develop --limit 1`). Quedó en marcha al cerrar.
+   Es el tercer intento de dejar D-164 en verde: los dos anteriores fallaron y los dos fallos eran
+   reales (ver §1). Si sigue rojo, el patrón es siempre el mismo — algún llamador del camino de
+   captura que no manda el campo trampa.
+2. **Aplicar 0023 en producción**, con la cadena del POOLER (ver §2):
+   `cd ~/Dev/slg_website && node --env-file=$HOME/Dev/SLG_Overhauling/ops/supabase-slg-website.env scripts/db/migrar.ts`
+   → «1 migración(es) aplicada(s) ahora: 0023_dominios_desechables.sql. Total en la base: 24 de 24».
+3. **Desplegar**, después de la migración y solo con el CI en verde:
+   `cd ~/Dev/slg_website/.claude/worktrees/desplegar && git checkout --detach origin/develop && vercel --prod`
+   Producción va tres commits por detrás de `develop`: le falta D-164 entero.
+
+### 1 · D-164 vino de `main` y traía tres fallos, los tres reales
+El commit `356ae02` estaba **solo en `main`**, 102 commits por detrás; se trajo con `cherry-pick -x`.
+El traslado destapó lo que el CI de `main` no podía ver, porque allí falta medio proyecto:
+- **La migración 0023 no estaba declarada en `_journal.json`.** En `main` el journal se queda en 0016
+  y `check:migrations` no tenía con qué comparar. Registrada como `idx: 23`.
+- **La puerta de contacto quedaba rota.** D-164 puso la trampa vacía en el ayudante de
+  `/api/descargas` y se dejó el de `/api/contacto` y la solicitud de doctrina: con la regla nueva,
+  los envíos legítimos se descartaban en silencio. Tal cual estaba en `main`, **el formulario de
+  contacto del sitio habría dejado de capturar leads**.
+- **D-164 no tenía ni una prueba que ejerciera lo que decide.** Ninguna enviaba un formulario sin el
+  campo, que es justo el envío que se coló cinco veces en producción. Añadida en
+  `test-descargas.ts`, con `fetch` pelado para saltarse el ayudante que pinta la trampa.
+- Y un tercer llamador: el fixture de `test-webhooks.ts`, que llama a `registrarCaptura` con un
+  formulario de un solo campo. El arreglo va en el fixture y no en el código, y se comprobó antes de
+  decidirlo: `verificarEnvio` tiene un solo llamador, `registrarCaptura`, el embudo de las dos
+  puertas públicas, así que la comprobación ya está en la frontera del formulario.
+
+**Lección, para el próximo cambio de esta forma**: una regla que atraviesa tres puertas se cambia en
+las tres o no se cambia. Y **nada se commitea sobre `main`**: `main` no ve lo que ve `develop`.
+
+### 2 · El host directo de Supabase es IPv6 y la red de casa no siempre lo tiene
+`scripts/db/migrar.ts` falló con `CONNECT_TIMEOUT db.jadrwpbgtshwqanrhjxp.supabase.co:5432` después
+de haber funcionado dos veces el mismo día. Comprobado: ese host **no tiene dirección IPv4** y esa
+noche la máquina no tenía salida IPv6. El pooler sí responde por IPv4 en el 5432.
+La salida es cambiar `DATABASE_URL_OWNER` en `ops/supabase-slg-website.env` al **pooler en modo
+sesión**: usuario `<rol>.jadrwpbgtshwqanrhjxp`, host `aws-0-us-east-1.pooler.supabase.com`, puerto
+**5432** (el 6543 es modo transacción, para la aplicación; las migraciones necesitan sesión).
+**No se sabe si Ricardo llegó a hacer el cambio**: preguntar antes de dar por buena la cadena.
+
+### 3 · La sesión del CLI de Vercel se cayó dos veces en una hora
+Síntoma exacto: `vercel whoami`, `ls`, `project ls` y `env ls` funcionan; `vercel --prod` responde
+`Not authorized`. Se arregla con `vercel logout && vercel login`. Sospecha principal: **otra sesión
+de Claude en la misma máquina** haciendo `logout`/`login`/`setup` — el token es uno por máquina.
+Segunda sospecha, sin descartar: el CLI está en 59.23.1 y hay 59.24.0.
+
+### 4 · Analítica: el sitio no tiene ninguna, y es deliberado
+Ricardo preguntó dónde ver las visitas. **No hay ni un script de analítica en el repositorio**
+—`grep` de analytics/plausible/umami/posthog/@vercel/analytics: cero—, y eso lo exige **RF-35**: la
+capa pública no carga ningún script de terceros. Lo que sí hay hoy son los **registros de Vercel**
+(peticiones por ruta, sin visitantes únicos), y `lead_capture`, que mide conversión, no tráfico.
+**Decisión pendiente de Ricardo**: si quiere métricas de visitas, hay que elegir entre (a) Vercel
+Web Analytics, que **es un script de terceros y choca de frente con RF-35** salvo que se decida
+excepción explícita; (b) una analítica propia, servidor adentro, sin script; (c) quedarse sin ella.
+
+---
+
+### Lo anterior de esta sesión (21-09, primera y segunda tanda)
+
+
+Cierre del 2026-09-21 (segunda tanda). **`develop` = `dfc767d`**, empujado, **CI entero en verde**
+—incluido «Datos», que corre las migraciones y el aislamiento contra PostgreSQL real—.
+**Producción = `slg-website-ohk96rxwu`**, desplegada desde `dfc767d`: código y base **en 23 de 23**,
+sin desajuste. Comprobado por HTTP sobre el dominio: portada, `/acceder`, favicon e `icon.svg` a 200,
+`robots.txt` publicando `https://softlandingglobal.com` (la variable real, no un respaldo inventado),
+`/visor/<id>` sin vale a 404.
+
+### 0 · Lo que se cerró hoy, después de D-163
+Cuatro defectos de la lista «anotados, sin arreglar», cada uno por un agente en su worktree, todos
+fusionados y con los frenos en verde tras cada fusión:
+
+- **0021 · vocabulario de servicios.** El `CHECK project_service_literal` aceptaba `SLG_Holdings`
+  donde el contenido dice `Holdings by SLG`: un proyecto de esa línea no se podía crear. Los once
+  literales verificados uno a uno contra el frontmatter de `content/services`; los otros diez
+  coincidían. La prueba de gestión ahora lee la definición viva del `CHECK` desde `pg_constraint` y
+  la compara con el contenido, así que la discrepancia no vuelve sin que un freno la vea.
+- **0022 · el visor abre los entregables internos desde HQ.** El arreglo NO relaja la función de
+  0016: el **ámbito va firmado dentro del vale** (`<id>.<caducidad>.<ámbito>`). HQ firma `hq` sobre
+  lo que ya filtró la política de fila; el portal firma `cliente` sobre una consulta que nunca
+  devuelve un `internal`. Reescribir `a=hq` en una URL del portal rompe el HMAC. La función pide el
+  ámbito **sin `DEFAULT`**, y 0022 hace `DROP` de la de un argumento: la versión vieja no queda
+  llamable.
+- **Archivar cierra de verdad** (§4.3, sin migración: `invitation.status` admitía `canceled` desde
+  0001 y `api_key.revoked_at` existe desde 0006). En la misma transacción: estado a `archived`,
+  invitaciones pendientes a `canceled` con `token_hash = NULL`, claves de esa empresa revocadas.
+  Las claves sin empresa —las de la casa— no se tocan. Reactivar devuelve solo el estado: ni
+  invitaciones ni claves resucitan. Auditoría con el vocabulario que ya existía
+  (`invitation.revoke`, `apikey.revoke`).
+- **Dos defectos de la plantilla.** El texto con la marca en `lib/` resultó ser una **copia
+  duplicada**: `auth.signin.error` y `auth.invitation.invalid` ya existían en los dos idiomas y las
+  pantallas ya las pintaban; `lib/` exporta ahora la clave, no el mensaje. Y el respaldo
+  `?? "https://softlandingglobal.com"` se sustituye por `baseDelSitio()` en `lib/content/sitio.ts`,
+  que **falla al compilar** si falta `NEXT_PUBLIC_SITE_URL` o no es URL absoluta — al construir y no
+  al arrancar, porque `NEXT_PUBLIC_*` se incrusta en el build. Apareció un cuarto sitio que el
+  inventario no había visto: `scripts/ci/check-seo.ts` medía los `canonical` contra el dominio
+  inventado y pasaba en verde. `ci.yml` lleva la variable en los dos trabajos que compilan.
+
+### 1 · Lo que Ricardo tiene que hacer
+1. **Terminar la revisión visual** (sigue sin hacerse): en la vista previa de `develop`, invitar
+   `torresoliva.ricardo@gmail.com` como `client_admin` de `Cliente de Prueba` desde `/hq/usuarios`,
+   entrar al portal y recorrer «Hoy», «Programa» (marcar un pendiente), «Clases», «Avisos». Al
+   terminar, archivar `Cliente de Prueba` desde `/hq/empresas` — y ahora eso además cancela sus
+   invitaciones y revoca sus claves, que es justo lo que conviene ver funcionando.
+2. **Clave para Hermes Editor**: `/hq/claves` → alcances `orgs:read` + `news:write`.
+3. **El flujo CRM → sitio** (n8n o webhook del CRM): `POST /api/v1/organizations` (idempotente por
+   `crm_company_id`) → `POST /api/v1/organizations/{id}/projects` (idempotente por
+   `crm_project_id`). Clave con `orgs:read` + `orgs:write` + `projects:write`. Vive fuera del repo.
+4. **La pregunta de la plantilla, §4.1 de `docs/plantilla-de-sitios.md`**: estructura de
+   ejes/líneas/servicios declarada en un archivo (cuesta un generador, paga desde el segundo
+   cliente) o `rutas.ts` por cliente (cuesta cero, paga hasta el tercero). Sin esa respuesta no
+   tiene sentido escribir `site.config` ni el playbook `crear-sitio`.
+
+### 2 · Defectos anotados que siguen abiertos
+- `design_docs/data_model.md:1018` describe un `CHECK download_service_literal` que **no existe en
+  ninguna migración**. El documento dice que la base valida algo que la base no valida.
+- `GET /organizations/{id}/news` no existe: `news.read` no tiene alcance de agente. Si Hermes
+  necesita leer noticias, es decisión de matriz B.3.
+- Los botones «Continuar con Google/Microsoft» salen apagados en `/acceder` (deliberado, D-01);
+  Ricardo los vio como fallo. Decidir si se esconden hasta configurar F.2-2/F.2-3.
+- Frenos que no corren en el portátil: los de navegador (Playwright sin Chromium) y los de base
+  (sin PostgreSQL ni Docker). CI los corre todos.
+
+### 3 · Cosas aprendidas hoy sobre la operación
+- **Una anónima sobre `/hq/tablero` no prueba RF-87.** En producción devuelve 307 a `/acceder`
+  porque el middleware redirige antes de que corra la comprobación del 404; el despliegue del 18-09
+  hacía lo mismo. La comprobación de verdad es **con sesión válida**, como hace `test:acceso`. La
+  frase «Producción sigue en 404» de esta memoria era, leída a secas, engañosa.
+- **Los agentes del Agent tool NO nacen en su propio worktree** salvo que se pida. Dos empezaron a
+  escribir sobre el mismo directorio; hay que crearles el worktree y decírselo. Y cada worktree
+  necesita `node_modules` —enlace simbólico al del repositorio principal basta, salvo para
+  `check:seo`, que compila y Turbopack rechaza el enlace: ahí hace falta copia de verdad—.
+- **Cada empujón cancela el CI del anterior.** Fusionar todo y empujar una sola vez.
+- **Desplegar desde una copia limpia**, no desde el directorio donde trabaja un agente:
+  `.claude/worktrees/desplegar` es un worktree separado con `.vercel` copiado dentro.
+- El `vercel --prod` que devolvía `Not authorized` se arregló con `vercel logout && vercel login`:
+  la sesión del CLI leía (`ls`, `project ls`, `env ls`) pero no escribía.
+- **Orden al desplegar**: primero `scripts/db/migrar.ts`, después `vercel --prod`. Hoy hubo una
+  ventana en la que la base tenía 0022 —que hace `DROP` de la función del visor de un argumento— y
+  el código desplegado aún llamaba a la vieja. Sin consecuencia porque el visor sin vale da 404 y
+  los vales solo los firman HQ y el portal, cerrados en producción; pero la ventana existió.
+
+### Herramientas que existen y conviene recordar
+- `npm run auth:primer-admin` (arranque; la cuenta nace sin contraseña y recibe el enlace para elegirla; `--rehacer` mientras nadie haya entrado; `--imprimir-contrasena` solo de emergencia).
+- `npm run auth:revisar-cuenta -- --correo X --password Y`: por qué no entra una cuenta, sin
+  escribir nada.
+- `node --env-file=<ops>.env scripts/db/migrar.ts`: dice qué aplicó.
+- `.claude/worktrees/desplegar`: copia limpia enlazada a Vercel. Ponerla en el commit que se quiere
+  desplegar con `git -C .claude/worktrees/desplegar checkout --detach <sha>`.

@@ -60,6 +60,15 @@ export const ACCIONES = [
   "profile.self",
   "event.write",
   "audit.read",
+  // FU-15 · Academy (spec-delta 2026-09-18). Leer es de todos los de la
+  // empresa; escribir es de SLG o de un agente con el alcance exacto; cerrar un
+  // pendiente lo puede hacer el cliente, y `closes_by` decide en el servidor.
+  "news.read",
+  "news.write",
+  "milestone.read",
+  "milestone.write",
+  "action_item.write",
+  "action_item.close",
 ] as const;
 
 export type Accion = (typeof ACCIONES)[number];
@@ -114,12 +123,28 @@ export const MATRIZ_B3: Readonly<Record<Accion, ReglaB3>> = {
   "org.write": {
     filaB3: "Crear/editar empresas, proyectos",
     porRol: { slg_admin: "si", slg_operator: "asignados", client_admin: "no", client_member: "no" },
-    alcanceDeAgente: null,
+    /**
+     * Era `null` hasta D-163: D-162 dejó que el CRM creara aquí la carpeta del
+     * cliente, pero el CRM no sabía qué `{id}` de empresa usar, porque las
+     * empresas de aquí y las del CRM no estaban relacionadas. Ahora el CRM crea
+     * o encuentra la empresa por su `crm_company_id` con `POST /organizations`.
+     * Es UN alcance propio, no `projects:write` ampliado: crear proyectos no
+     * implica crear empresas (RF-147). Una clave acotada a una empresa sigue
+     * sin poder crear otras.
+     */
+    alcanceDeAgente: "orgs:write",
   },
   "project.write": {
     filaB3: "Crear/editar empresas, proyectos",
     porRol: { slg_admin: "si", slg_operator: "asignados", client_admin: "no", client_member: "no" },
-    alcanceDeAgente: null,
+    /**
+     * Era `null` hasta D-162: el CRM es donde nace un proyecto y este sitio lo
+     * recibe, así que una clave de agente tiene que poder crear aquí la carpeta
+     * del cliente y cerrarla o reabrirla. Es UN alcance propio, no `orgs:read`
+     * ampliado: leer empresas no implica escribir proyectos (RF-147). Sigue sin
+     * habilitar `org.write`: las empresas se dan de alta en HQ.
+     */
+    alcanceDeAgente: "projects:write",
   },
   "user.invite.slg": {
     filaB3: "Invitar usuarios SLG / crear claves de API",
@@ -193,6 +218,36 @@ export const MATRIZ_B3: Readonly<Record<Accion, ReglaB3>> = {
   "audit.read": {
     filaB3: "Ver auditoría",
     porRol: { slg_admin: "si", slg_operator: "no", client_admin: "no", client_member: "no" },
+    alcanceDeAgente: null,
+  },
+  "news.read": {
+    filaB3: "(Academy, RF-149/RF-150): ver las noticias de su empresa",
+    porRol: { slg_admin: "si", slg_operator: "si", client_admin: "si", client_member: "si" },
+    alcanceDeAgente: null,
+  },
+  "news.write": {
+    filaB3: "(Academy, RF-150/RF-152): escribir una noticia para una empresa",
+    porRol: { slg_admin: "si", slg_operator: "asignados", client_admin: "no", client_member: "no" },
+    alcanceDeAgente: "news:write",
+  },
+  "milestone.read": {
+    filaB3: "(Academy, RF-151): ver hitos y pendientes de su empresa",
+    porRol: { slg_admin: "si", slg_operator: "si", client_admin: "si", client_member: "si" },
+    alcanceDeAgente: null,
+  },
+  "milestone.write": {
+    filaB3: "(Academy, RF-151/RF-152): crear, editar y cerrar hitos",
+    porRol: { slg_admin: "si", slg_operator: "asignados", client_admin: "no", client_member: "no" },
+    alcanceDeAgente: "milestones:write",
+  },
+  "action_item.write": {
+    filaB3: "(Academy, RF-151/RF-152): crear y editar pendientes, y cerrar los de SLG",
+    porRol: { slg_admin: "si", slg_operator: "asignados", client_admin: "no", client_member: "no" },
+    alcanceDeAgente: "milestones:write",
+  },
+  "action_item.close": {
+    filaB3: "(Academy, RF-151): el cliente cierra un pendiente SUYO (closes_by = client)",
+    porRol: { slg_admin: "si", slg_operator: "si", client_admin: "si", client_member: "si" },
     alcanceDeAgente: null,
   },
 };

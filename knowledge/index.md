@@ -24,7 +24,7 @@ tienes que haber pasado. Es el único que se lee "por si acaso".
 |---|---|---|
 | [method-sdd-icm](method-sdd-icm.md) | Las cuatro compuertas vinculantes: Planning Gate, copy (FU-01), prototipo (C.5) y revisión por milestone; qué se rechaza por saltárselas | **Siempre, antes de empezar cualquier unidad.** Y otra vez al cerrar un milestone |
 | [naming-rules](naming-rules.md) | Nombres literales e intraducibles, `SLG Agency` vs "Softlanding Global", la "D" de DAL OS, tono y notación de origen | Cada vez que escribas **texto visible** o el nombre de una ruta, colección o etiqueta |
-| [offer-structure](offer-structure.md) | Las dos ramas, las tres líneas de `SLG_AI`, las 11 páginas con documento y el contrato de seis secciones | Al construir navegación, cualquier página pública o el mapa de rutas |
+| [offer-structure](offer-structure.md) | Las dos ramas, las tres líneas de `VoltAi by SLG`, las 11 páginas con documento y el contrato de seis secciones | Al construir navegación, cualquier página pública o el mapa de rutas |
 | [content-schema](content-schema.md) | Las seis colecciones de `content/` con su ruta y frontmatter mínimo, y las cuatro reglas del script de CI | Al crear o validar cualquier registro de contenido; al escribir el script de CI |
 | [brand-tokens](brand-tokens.md) | Tokens de color con contraste medido, tipografía, materiales y las **prohibiciones duras** del kit | Al pintar cualquier interfaz, prototipar un componente o revisar el gate de marca |
 | [crm-integration](crm-integration.md) | El adaptador de dos modos web → CRM, la cola de reintentos y la lectura del tablero | Al construir el formulario de descarga, la entrega al CRM o el tablero de HQ |
@@ -55,6 +55,7 @@ Los cinco están escritos, más un consolidado que los indexa. Se abren **por se
 | [../docs/decision_log.md](../docs/decision_log.md) | Decisiones de planificación desde `D-14`, e incidencias de seguridad |
 | [../docs/deployment.md](../docs/deployment.md) | **Runbook de operación** (FU-05): los cinco servicios, el despliegue automático, los registros DNS con la lista de «no tocar» delante y el monitor externo. Se abre al desplegar o al tocar la zona DNS, no antes |
 | [../planning/requirements.md](../planning/requirements.md) | Los requisitos `RF-*` / `RNF-*`. Se abre por sección |
+| [../planning/spec-delta-academy.md](../planning/spec-delta-academy.md) | **M6 · Academy y centro de mando** (D-160): qué pidió Ricardo, en qué se convierte, qué fronteras NO se mueven, las seis unidades FU-15 y DU-26…DU-30 con sus criterios. Se abre antes de cualquier unidad de M6 |
 | [../planning/scope.md](../planning/scope.md) · [../planning/risks.md](../planning/risks.md) | Dentro/fuera/previsto; riesgos y mitigaciones |
 | [../profiles/software-app/profile.md](../profiles/software-app/profile.md) | Perfil activo: qué es "hecho" y qué comprueba el quality gate |
 | Docs_MD (fuera del repo) | Resumen público completo de The Phoenix Doctrine y DAL OS |

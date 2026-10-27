@@ -3,14 +3,17 @@ import Link from "next/link";
 import { NOMBRE_DEL_CAMPO_TRAMPA } from "@/lib/antiabuso";
 import { loadUiStrings } from "@/lib/content/loader";
 
+import { AvisoDelFormulario } from "./AvisoDelFormulario";
+
 /**
  * El formulario público — **uno solo**, para contacto y para la solicitud de
  * Doctrina (DU-10).
  *
  * Es el mismo componente porque es la misma máquina: `POST` nativo, campo
- * trampa oculto, correo corporativo obligatorio y enlace a la política de
- * privacidad. Dos componentes habrían sido dos sitios donde olvidarse de la
- * trampa, y el que se olvida **no da ningún error**: simplemente deja pasar.
+ * trampa oculto, nombre, apellido y correo corporativo obligatorios, y enlace a
+ * la política de privacidad. Dos componentes habrían sido dos sitios donde
+ * olvidarse de la trampa, y el que se olvida **no da ningún error**:
+ * simplemente deja pasar.
  */
 export function FormularioPublico({
   lang,
@@ -45,10 +48,36 @@ export function FormularioPublico({
         />
       </div>
 
+      <AvisoDelFormulario
+        textos={{
+          dominio_gratuito: t["download.freeEmailRejected"],
+          datos_incompletos: t["download.incompleteData"],
+        }}
+      />
+
       <label htmlFor={`${origen}-nombre`} style={etiqueta}>
         {t["form.name"]}
       </label>
-      <input id={`${origen}-nombre`} name="nombre" type="text" autoComplete="name" style={campo} />
+      <input
+        id={`${origen}-nombre`}
+        name="nombre"
+        type="text"
+        required
+        autoComplete="given-name"
+        style={campo}
+      />
+
+      <label htmlFor={`${origen}-apellido`} style={etiqueta}>
+        {t["form.lastName"]}
+      </label>
+      <input
+        id={`${origen}-apellido`}
+        name="apellido"
+        type="text"
+        required
+        autoComplete="family-name"
+        style={campo}
+      />
 
       <label htmlFor={`${origen}-email`} style={etiqueta}>
         {t["download.emailLabel"]}

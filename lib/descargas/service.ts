@@ -19,7 +19,7 @@
 import { verificarEnvio, type Veredicto } from "../antiabuso/index.ts";
 import { downloadEvent, leadCapture } from "../db/schema.ts";
 import { withSystemScope } from "../db/scope.ts";
-import { adaptadorS3 } from "../files/index.ts";
+import { adaptadorDeArchivos } from "../files/index.ts";
 import { emitir } from "../webhooks/index.ts";
 
 export type Documento = {
@@ -66,7 +66,13 @@ export async function registrarCaptura(entrada: {
   origen: Origen;
   datos: FormData;
   email: string;
+  /**
+   * Nombre y apellido, **obligatorios los dos** en todo formulario público. El
+   * CRM los exige por separado al crear el contacto, y sin ellos la captura
+   * llega como «parte local del correo» a alguien que tiene que llamar.
+   */
   nombre?: string;
+  apellido?: string;
   empresa?: string;
   cargo?: string;
   /**
@@ -87,6 +93,14 @@ export async function registrarCaptura(entrada: {
   });
   if (!veredicto.ok) return { ok: false, veredicto };
 
+  // ── 1bis · Nombre y apellido. DESPUÉS de las tres capas de FU-11, nunca ──
+  // antes: la trampa tiene que seguir respondiendo como la trampa, y el límite
+  // tiene que contar también los envíos incompletos. `required` en el HTML es
+  // cortesía; la comprobación que vale es esta.
+  const nombre = entrada.nombre?.trim() ?? "";
+  const apellido = entrada.apellido?.trim() ?? "";
+  if (!nombre || !apellido) return { ok: false, veredicto: { ok: false, motivo: "datos_incompletos" } };
+
   // ── 2 · El lead, ANTES de cualquier cosa que se le entregue al visitante ──
   const leadId = await withSystemScope(
     "DU-08 · la captura de la capa pública no pertenece a ninguna empresa cliente: " +
@@ -106,7 +120,8 @@ export async function registrarCaptura(entrada: {
           id: crypto.randomUUID(),
           email: veredicto.email,
           emailDomain: veredicto.dominio,
-          name: entrada.nombre ?? null,
+          name: nombre,
+          lastName: apellido,
           company: entrada.empresa ?? null,
           jobTitle: entrada.cargo ?? null,
           message: entrada.mensaje ?? null,
@@ -161,16 +176,16 @@ export async function registrarCaptura(entrada: {
   const documento = entrada.documento;
   const claveDeArchivo = documento?.claveDeArchivo;
 
-  if (!documento || !claveDeArchivo || documento.estado !== "available") {
+  if (!documento || !claveDeArchivo || documento.estado !== "published") {
     // «Disponible próximamente»: se capturó el correo y NO se emite firma ni se
     // dispara `download.completed` (RF-40).
     return { ok: true, leadId, url: null, caducaEn: null, proximamente: true };
   }
 
   try {
-    // `adaptadorS3()` DENTRO del try: si faltan sus variables lanza, y esto
+    // `adaptadorDeArchivos()` DENTRO del try: si faltan sus variables lanza, y esto
     // tiene que contarlo, no romperse.
-    const firmada = await adaptadorS3().firmarDescarga({
+    const firmada = await adaptadorDeArchivos().firmarDescarga({
       bucket: "downloads",
       clave: claveDeArchivo,
       uso: "download",

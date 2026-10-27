@@ -1,5 +1,5 @@
 /**
- * templates.ts — Las cuatro plantillas, en los dos idiomas.
+ * templates.ts — Las plantillas de correo, en los dos idiomas.
  *
  * DOS REGLAS QUE SE DEFIENDEN EN CADA REVISIÓN:
  *
@@ -18,6 +18,7 @@
  */
 
 import type { Idioma, MensajeSaliente, TipoDeCorreo } from "./port.ts";
+import { sitio } from "../sitio/index.ts";
 
 export type CorreoCompuesto = {
   readonly asunto: string;
@@ -61,8 +62,8 @@ const DEFINICIONES: Readonly<Record<TipoDeCorreo, Definicion>> = {
   invitation: {
     subjectKey: "mail.invitation.subject",
     asunto: {
-      es: "Te han invitado a SLG Agency",
-      en: "You have been invited to SLG Agency",
+      es: `Te han invitado a ${sitio.marca.nombre}`,
+      en: `You have been invited to ${sitio.marca.nombre}`,
     },
     componer: (datos, idioma) => {
       const quien = exigir(datos, "invitadoPor");
@@ -71,11 +72,11 @@ const DEFINICIONES: Readonly<Record<TipoDeCorreo, Definicion>> = {
       const es = idioma === "es";
       const parrafos = es
         ? [
-            `${quien} te ha invitado a acceder${empresa ? ` al espacio de ${empresa}` : ""} en SLG Agency.`,
+            `${quien} te ha invitado a acceder${empresa ? ` al espacio de ${empresa}` : ""} en ${sitio.marca.nombre}.`,
             "El enlace caduca; si expira, pide una invitación nueva.",
           ]
         : [
-            `${quien} has invited you to access${empresa ? ` the ${empresa} space` : ""} at SLG Agency.`,
+            `${quien} has invited you to access${empresa ? ` the ${empresa} space` : ""} at ${sitio.marca.nombre}.`,
             "The link expires; if it does, ask for a new invitation.",
           ];
       return {
@@ -158,6 +159,87 @@ const DEFINICIONES: Readonly<Record<TipoDeCorreo, Definicion>> = {
         texto: `${parrafos.join("\n")}\n\n${url}\n`,
         parrafos,
         enlace: { url, etiqueta: "Ver la captura en HQ" },
+      };
+    },
+  },
+
+  /**
+   * El aviso de un sitio SIN CRM (plantilla, paso 5b). A diferencia de los dos
+   * avisos de arriba, **lo lee el cliente**, no el equipo que opera el sitio:
+   * por eso va en el idioma principal de la ficha y no en el del equipo, y por
+   * eso cuenta el contacto entero —nombre, correo, de dónde vino, qué pidió y
+   * qué escribió—. Con CRM, el aviso enlaza a la ficha y basta; aquí no hay
+   * ficha: el correo es todo lo que el cliente va a ver de ese contacto.
+   *
+   * El mensaje de la persona va **partido en párrafos**: el HTML de `envolver`
+   * no respeta los saltos de línea, y un mensaje de cinco líneas leído como una
+   * sola es un mensaje que se lee mal.
+   */
+  capture_inbox_notice: {
+    subjectKey: "mail.capture_inbox_notice.subject",
+    asunto: {
+      es: "Nuevo contacto desde la web",
+      en: "New contact from the website",
+    },
+    componer: (datos, idioma) => {
+      // Nombre y apellido son obligatorios en todo formulario público, pero una
+      // captura anterior a la columna `last_name` que se reintente no los trae:
+      // sin ellos el aviso tiene que salir igual, con el correo por delante.
+      const correo = exigir(datos, "correo");
+      const quien = [datos.nombre, datos.apellido].filter(Boolean).join(" ");
+      const origen = exigir(datos, "origen");
+      const pagina = exigir(datos, "pagina");
+      const es = idioma === "es";
+      const origenes: Readonly<Record<string, string>> = es
+        ? {
+            download: "descarga de un documento",
+            contact: "formulario de contacto",
+            "doctrine-request": "solicitud del documento de Doctrina",
+          }
+        : {
+            download: "document download",
+            contact: "contact form",
+            "doctrine-request": "Doctrine document request",
+          };
+      const deDonde = origenes[origen] ?? origen;
+      const mensaje = (datos.mensaje ?? "")
+        .split(/\n+/)
+        .map((l) => l.trim())
+        .filter(Boolean);
+
+      const parrafos = es
+        ? [
+            `${quien ? `${quien} <${correo}>` : correo} ha dejado sus datos en la web.`,
+            `Origen: ${deDonde}.`,
+            `Página: ${pagina}`,
+            datos.documento ? `Documento que pidió: ${datos.documento}.` : "",
+            datos.empresa ? `Empresa: ${datos.empresa}.` : "",
+            datos.cargo ? `Cargo: ${datos.cargo}.` : "",
+            datos.idiomaDelContacto ? `Idioma en el que navegaba: ${datos.idiomaDelContacto}.` : "",
+            mensaje.length ? "Su mensaje:" : "",
+            ...mensaje,
+            `Para contestarle, escribe directamente a ${correo}.`,
+            "Este sitio no está conectado a ningún CRM: este correo es el aviso, y la captura queda guardada en la web.",
+          ]
+        : [
+            `${quien ? `${quien} <${correo}>` : correo} left their details on the website.`,
+            `Source: ${deDonde}.`,
+            `Page: ${pagina}`,
+            datos.documento ? `Document requested: ${datos.documento}.` : "",
+            datos.empresa ? `Company: ${datos.empresa}.` : "",
+            datos.cargo ? `Job title: ${datos.cargo}.` : "",
+            datos.idiomaDelContacto ? `Language they were browsing in: ${datos.idiomaDelContacto}.` : "",
+            mensaje.length ? "Their message:" : "",
+            ...mensaje,
+            `To answer, write directly to ${correo}.`,
+            "This site is not connected to any CRM: this email is the notice, and the capture stays stored on the website.",
+          ];
+      const limpios = parrafos.filter(Boolean);
+      const url = datos.urlHq;
+      return {
+        texto: `${limpios.join("\n")}\n${url ? `\n${url}\n` : ""}`,
+        parrafos: limpios,
+        ...(url ? { enlace: { url, etiqueta: es ? "Ver la captura en HQ" : "View the capture in HQ" } } : {}),
       };
     },
   },

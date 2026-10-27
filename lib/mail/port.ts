@@ -18,8 +18,9 @@
  */
 
 /**
- * Los tipos de la v1 (`data_model` §3.12). Eran cuatro —RF-50 pidió el cuarto—
- * y FU-14 añade el quinto: el aviso de copia de seguridad fallida.
+ * Los tipos de la v1 (`data_model` §3.12). Eran cuatro —RF-50 pidió el cuarto—,
+ * FU-14 añade el quinto —el aviso de copia de seguridad fallida— y la plantilla
+ * de sitios el sexto: el aviso de captura de un sitio sin CRM.
  */
 export const TIPOS_DE_CORREO = [
   "invitation",
@@ -32,6 +33,14 @@ export const TIPOS_DE_CORREO = [
    * de anoche no está, y llega antes de que haga falta restaurarla.
    */
   "backup_failed_alert",
+  /**
+   * Plantilla, paso 5b. En un sitio **sin CRM** este correo ES el CRM: es la
+   * única forma de que el cliente se entere de que alguien le ha escrito. Va al
+   * buzón del cliente (`MAIL_LEADS_TO`), no al de avisos operativos, y lleva
+   * los datos del contacto enteros, porque no hay ficha en ningún otro sitio a
+   * la que enlazar.
+   */
+  "capture_inbox_notice",
 ] as const;
 
 export type TipoDeCorreo = (typeof TIPOS_DE_CORREO)[number];

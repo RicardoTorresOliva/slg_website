@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { cerrarPendiente } from "@/lib/academy";
 import { exigirSeccion } from "@/lib/app/navegacion";
 import { ErrorDeAutorizacion, cambiarContrasenaDeLaSesion, exigirSuperficie } from "@/lib/auth";
 import { MiembroInvalido, invitarMiembro } from "@/lib/portal/miembros";
@@ -88,4 +89,34 @@ export async function accionCambiarContrasena(datos: FormData) {
     String(datos.get("nueva") ?? ""),
   );
   redirect(`/portal/perfil?aviso=${ok ? "clave" : "claveError"}`);
+}
+
+/**
+ * «Marcar como hecho» un pendiente (DU-27 · RF-151).
+ *
+ * **QUIÉN PUEDE CERRARLO LO DECIDE `cerrarPendiente` POR `closes_by`**, no este
+ * formulario: el botón solo se pinta en los del cliente, pero una Server Action
+ * es un endpoint y se puede invocar sin verlo. Si el servicio lo rechaza, queda
+ * auditado como `action_item.close.denied` y aquí se vuelve con `error=permiso`.
+ *
+ * Es la ÚNICA acción del portal que cuenta el rechazo, y a propósito: el que lo
+ * intenta es un miembro autenticado de su propia empresa mirando su propio
+ * proyecto, y lo que necesita saber es «este lo cierra SLG», no un silencio.
+ * D-38 protege de quien no debería saber que algo existe; este pendiente ya
+ * está en su pantalla.
+ */
+export async function accionCerrarPendiente(datos: FormData) {
+  const sesion = await sesionDelPortal("program");
+  const id = texto(datos, "id");
+  let resultado: Awaited<ReturnType<typeof cerrarPendiente>> = null;
+  try {
+    resultado = await cerrarPendiente(sesion.ctx, id);
+  } catch (e) {
+    if (e instanceof ErrorDeAutorizacion) redirect("/portal/programa?error=permiso");
+    throw e;
+  }
+  revalidatePath("/portal/programa");
+  revalidatePath("/portal");
+  // `null` = no existe para este actor: el id no es de su empresa o ya no está.
+  redirect(resultado ? "/portal/programa?aviso=ok" : "/portal/programa?error=pendiente");
 }

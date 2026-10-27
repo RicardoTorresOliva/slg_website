@@ -1,14 +1,20 @@
 import { sesionActual } from "@/lib/auth";
 import { MAXIMO_BYTES, sanearHtml } from "@/lib/visor/documento";
-import { origenDelVisor, politicaDelVisor, valeValido, visorEstaSeparado } from "@/lib/visor/origen";
+import {
+  ambitoDeLaPeticion,
+  origenDelVisor,
+  politicaDelVisor,
+  valeValido,
+  visorEstaSeparado,
+} from "@/lib/visor/origen";
 import { documentoParaElVisor, urlFirmadaDelObjeto } from "@/lib/visor/servicio";
 
 /**
  * `/visor/[id]` — **el documento del entregable HTML, en su propio origen**
  * (DU-19 · D-45 · RF-90 · RNF-21 · R-11).
  *
- * SE SIRVE DESDE `visor.softlandingglobal.com`, NO DESDE EL DOMINIO DEL SITIO.
- * Parte de estos HTML los generan agentes Hermes, y desde el dominio de la
+ * SE SIRVE DESDE `visor.<dominio del sitio>`, NO DESDE EL DOMINIO DEL SITIO.
+ * Parte de estos HTML los generan agentes, y desde el dominio de la
  * aplicación un script hostil **comparte origen con la sesión del cliente**:
  * podría leer la cookie, llamar a la API con las credenciales del navegador y
  * llevarse los datos. Desde un subdominio propio no puede, y no porque nosotros
@@ -64,11 +70,21 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
    *
    * Sin vale válido, 404 **con el mismo cuerpo que un entregable inexistente**:
    * un mensaje distinto diría que ese identificador existe.
+   *
+   * **EL ÁMBITO ES PARTE DEL VALE, NO UNA OPCIÓN DE LA PETICIÓN.** Dice desde
+   * qué pantalla se firmó el permiso —el portal o HQ— y es lo único que permite
+   * que un `html` `internal` se abra aquí sin abrirlo a un usuario de cliente:
+   * un `internal` solo sale de la base con ámbito `hq`, y ese ámbito va dentro
+   * de la firma. Poner `a=hq` a mano sobre un vale de portal rompe el HMAC y
+   * cae en este mismo 404; quitarlo, también, porque sin ámbito no hay vale que
+   * verificar y **no se supone ninguno**.
    */
   const consulta = new URL(request.url).searchParams;
-  if (!valeValido(id, consulta.get("c"), consulta.get("f"))) return noEncontrado();
+  const ambito = ambitoDeLaPeticion(consulta.get("a"));
+  if (!ambito) return noEncontrado();
+  if (!valeValido(id, consulta.get("c"), consulta.get("f"), ambito)) return noEncontrado();
 
-  const doc = await documentoParaElVisor(id);
+  const doc = await documentoParaElVisor(id, ambito);
   if (!doc) return noEncontrado();
 
   let crudo: string;

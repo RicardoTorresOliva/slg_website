@@ -33,6 +33,9 @@ const RAIZ = process.env.CADENAS_ROOT;
 const VIGILADOS = [
   "components/ArmazonPublico.tsx",
   "components/BarraDeNavegacion.tsx",
+  "components/Banderas.tsx",
+  "components/Regreso.tsx",
+  "components/AvisoDelFormulario.tsx",
   "components/IndiceDeBlog.tsx",
   "components/PaginaProvisional.tsx",
   "components/Articulo.tsx",
@@ -40,6 +43,8 @@ const VIGILADOS = [
   "components/PuertaDeAI.tsx",
   "components/OverviewDeRama.tsx",
   "components/PaginaDeServicio.tsx",
+  "components/MapaDelSitio.tsx",
+  "components/PaginaDeLaFicha.tsx",
   "components/app/ArmazonDeApp.tsx",
   "components/app/EstadosCanonicos.tsx",
   "components/app/PantallaDeApp.tsx",
@@ -56,10 +61,24 @@ const VIGILADOS = [
   "app/(hq)/hq/auditoria/page.tsx",
   "app/(hq)/hq/entregables/page.tsx",
   "app/(hq)/hq/avisos/page.tsx",
+  // DU-29(a): el lanzador de Conexiones también pinta texto fijo (título,
+  // subtítulos, «Abrir», «pendiente»), y tiene que salir de content/ui igual
+  // que cualquier otra pantalla de HQ.
+  "app/(hq)/hq/conexiones/page.tsx",
+  // DU-29(b)(c): la ficha de proyecto (hitos y pendientes) y las noticias
+  // pintan formularios, estados y etiquetas; todo sale de content/ui.
+  "app/(hq)/hq/proyectos/[id]/page.tsx",
+  "app/(hq)/hq/noticias/page.tsx",
   "app/(portal)/portal/page.tsx",
+  // DU-26 · RF-88: la lista de avisos sale de la portada a su propia ruta; el
+  // mismo render, la misma vigilancia.
+  "app/(portal)/portal/avisos/page.tsx",
   "app/(portal)/portal/proyectos/page.tsx",
   "app/(portal)/portal/proyectos/[id]/page.tsx",
   "app/(portal)/portal/materiales/page.tsx",
+  // DU-28 · RF-155: pantalla nueva, mismo armazón que "materiales".
+  "app/(portal)/portal/clases/page.tsx",
+  "app/(portal)/portal/programa/page.tsx",
   "app/(portal)/portal/miembros/page.tsx",
   "app/(portal)/portal/perfil/page.tsx",
   "app/(portal)/portal/PasoDeSesionCero.tsx",

@@ -33,7 +33,9 @@ ok("`link` no admite archivo",
    RENDERIZADORES.link.limiteDeSubidaBytes === null);
 
 ok("el límite se lee de limits.ts, no está repetido (criterio 8)",
-   RENDERIZADORES.deliverablePdfCheck === undefined &&
+   // La clave no existe en el tipo, y eso es justo lo que se afirma: se mira por índice
+   // suelto para que tsc no rechace la comprobación que demuestra su ausencia.
+   (RENDERIZADORES as Record<string, unknown>).deliverablePdfCheck === undefined &&
    RENDERIZADORES.pdf.limiteDeSubidaBytes === UPLOAD_LIMITS.deliverablePdf);
 
 const grande = validarSubida("pdf", UPLOAD_LIMITS.deliverablePdf + 1, "application/pdf");

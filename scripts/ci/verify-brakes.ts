@@ -225,6 +225,21 @@ const CASOS: Caso[] = [
     env: { MIGRATIONS_DIR: path.join(HERE, "negative/migrations") },
   },
   {
+    // D-166: la estructura pública sale de la ficha, y una ficha incoherente
+    // compila. Una sola ficha rota, las seis formas de romperla.
+    freno: "ficha del sitio incoherente con el contenido y con app/",
+    script: "check-sitio.ts",
+    espera: [
+      "falta content/services/es/no-existe.md",
+      "pero la ficha lo cuelga de «Otra línea»",
+      "public/fotos/foto-inexistente.webp no existe",
+      "slug de servicio: «repetido» está repetido",
+      "que Next sirve antes",
+      "no existe ni en app/ ni en la ficha",
+    ],
+    env: { SITIO_FICHA: path.join(HERE, "negative/sitio/site.config.ts") },
+  },
+  {
     freno: ".env.example con un valor",
     script: "check-env-example.ts",
     espera: "lleva VALOR",
@@ -341,7 +356,7 @@ for (const c of CASOS) {
   }
 }
 
-console.log("\nContraprueba — contra el repositorio real, los nueve deben PASAR:\n");
+console.log("\nContraprueba — contra el repositorio real, los diez deben PASAR:\n");
 for (const script of [
   "check-secrets.ts",
   "check-js-budget.ts",
@@ -352,6 +367,7 @@ for (const script of [
   "check-contraste.ts",
   "check-motion.ts",
   "check-cadenas.ts",
+  "check-sitio.ts",
 ]) {
   const res = spawnSync(process.execPath, [path.join(HERE, script)], {
     encoding: "utf8",
@@ -391,7 +407,10 @@ console.log("\nFreno del armazón público — contra un armazón roto a propós
   fixture.kill("SIGTERM");
   const salida = `${res.stdout ?? ""}${res.stderr ?? ""}`;
   const esperados = [
-    "la barra en español enlaza /holdings",
+    // Desde el 2026-09-18 el menú tiene cuatro destinos (D de la sesión: Empieza
+    // aquí · Servicios · Blog · Nosotros); el fixture roto no enlaza /servicios.
+    // Decía un destino que ya no lo era: la expectativa vivía en el pasado.
+    "la barra en español enlaza /servicios",
     "ninguna etiqueta genérica",
     "cero enlaces a superficies cerradas",
     "el conmutador manda a la portada",

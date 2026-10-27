@@ -68,7 +68,14 @@ const EXIGEN_RESPALDO: ReadonlyArray<{ re: RegExp; que: string }> = [
   { re: /\b\d+\s?(?:x|veces|times)\b/i, que: "multiplicador" },
   { re: /\b(?:USD|EUR|\$|€)\s?\d/, que: "importe" },
   { re: /\b(?:premio|premiad|award|galard[oó]n)/i, que: "premio" },
-  { re: /\b(?:l[ií]der|leading|n[uú]mero uno|number one|the best|el mejor)/i, que: "superlativo" },
+  /**
+   * La misma excepción que `check:copy` (y por el mismo motivo): «liderazgo»,
+   * «liderar» y «liderado» no son el superlativo que este freno persigue. El
+   * título de D-01 —«Liderazgo, estrategia y gobernanza de la IA agéntica»— se
+   * sirve en tres rutas y el freno lo marcaba como jactancia. Dos frenos con la
+   * misma lista tienen que tener la misma excepción, o uno de los dos miente.
+   */
+  { re: /\b(?:l[ií]der(?!azgo|a[rd])|leading|n[uú]mero uno|number one|the best|el mejor)/i, que: "superlativo" },
   { re: /\b(?:caso de [eé]xito|success story|case study)\b/i, que: "caso de cliente" },
 ];
 

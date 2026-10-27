@@ -8,7 +8,8 @@ learns:
   - "What is assessed in each of the eleven dimensions and on what evidence"
   - "How priority is ordered when several dimensions come out low at once"
   - "What has to be resolved before implementing anything"
-status: coming-soon
+file_key: "D-06-slg-readiness-en.pdf"
+status: published
 lang: en
 pair: "d-06"
 copy: temporal

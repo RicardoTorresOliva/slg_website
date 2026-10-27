@@ -28,6 +28,15 @@ import postgres from "postgres";
 
 import { contextoDeSesion } from "../../lib/db/context.ts";
 import type { UserRole } from "../../lib/db/schema.ts";
+import { nombresDeServicio } from "../../lib/sitio/index.ts";
+/**
+ * Los servicios con los que se siembran los proyectos salen de la ficha
+ * (`site.config.ts`): la base no restringe `project.service` (0024), pero la
+ * aplicación solo acepta los literales de la oferta, y una prueba que sembrara
+ * el nombre de un servicio de otro sitio probaría datos que este sitio no
+ * puede producir.
+ */
+const [SERVICIO, OTRO_SERVICIO = SERVICIO] = nombresDeServicio();
 
 let fallos = 0;
 let comprobaciones = 0;
@@ -95,9 +104,9 @@ async function sembrar() {
   }
   // Empresa A: un proyecto CON materiales y entregables, y otro SIN materiales.
   await dueno`insert into project (id, organization_id, name, service, status)
-              values (${A.p1}, ${A.org}, 'Programa Phoenix', 'Phoenix PEEx', 'active')`;
+              values (${A.p1}, ${A.org}, 'Programa de ejemplo', ${SERVICIO}, 'active')`;
   await dueno`insert into project (id, organization_id, name, service, status)
-              values (${A.p2}, ${A.org}, 'Diagnóstico', 'SLG_Readiness', 'active')`;
+              values (${A.p2}, ${A.org}, 'Diagnóstico', ${OTRO_SERVICIO}, 'active')`;
   await entregable(A.org, A.p1, "Informe de arranque", "pdf");
   await entregable(A.org, A.p1, "Manual del programa", "material");
   await entregable(A.org, A.p1, "Anexo de ejercicios", "material");
@@ -106,7 +115,7 @@ async function sembrar() {
 
   // Empresa B: un material que A no puede ver de ninguna manera (criterio 5).
   await dueno`insert into project (id, organization_id, name, service, status)
-              values (${B.p1}, ${B.org}, 'Programa ajeno', 'Phoenix TEAx', 'active')`;
+              values (${B.p1}, ${B.org}, 'Programa ajeno', ${OTRO_SERVICIO}, 'active')`;
   return { ajeno: await entregable(B.org, B.p1, "Material ajeno", "material") };
 }
 
@@ -157,7 +166,7 @@ async function main() {
     "cada material cae en el grupo de SU proyecto",
     grupos.every((g) => g.materiales.every((m) => m.projectId === g.proyecto.id)),
   );
-  check("y el grupo trae el proyecto entero, no solo su identificador", grupos[0]?.proyecto.nombre === "Programa Phoenix");
+  check("y el grupo trae el proyecto entero, no solo su identificador", grupos[0]?.proyecto.nombre === "Programa de ejemplo");
 
   const modulo = await import("../../lib/portal/materiales.ts");
   const exportaciones = Object.keys(modulo);
@@ -260,6 +269,24 @@ async function main() {
   );
   const proyectosAjenos = desdeA.filter((g) => g.proyecto.id === B.p1);
   check("ni su proyecto: la política de fila no lo devuelve, así que la pantalla es un 404", proyectosAjenos.length === 0);
+
+  console.log("\nDU-28 · RF-155 — `esVideo()` distingue por host o por extensión, no por adivinar:\n");
+
+  const { esVideo } = await import("../../lib/portal/clases.ts");
+  check("un enlace de YouTube es vídeo", esVideo("https://www.youtube.com/watch?v=abc123"));
+  check("un enlace corto de YouTube también", esVideo("https://youtu.be/abc123"));
+  check("un enlace de Vimeo es vídeo", esVideo("https://vimeo.com/12345"));
+  check(
+    "un archivo `.mp4` es vídeo aunque el host no lo diga",
+    esVideo("https://cdn.ejemplo.com/clase-1.mp4"),
+  );
+  check(
+    "una URL firmada conserva la extensión en la RUTA, antes de la firma",
+    esVideo("https://bucket.s3.amazonaws.com/fam/v1/clase.webm?X-Amz-Signature=abc"),
+  );
+  check("un PDF no es vídeo", !esVideo("https://cdn.ejemplo.com/manual.pdf"));
+  check("sin URL no hay nada que distinguir", !esVideo(null) && !esVideo(undefined) && !esVideo(""));
+  check("una cadena que no analiza como URL no revienta la pantalla", !esVideo("no-es-una-url"));
 
   await limpiar();
   await dueno.end({ timeout: 5 });

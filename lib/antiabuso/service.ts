@@ -20,7 +20,14 @@ export type Veredicto =
   | { ok: false; motivo: "trampa" }
   | { ok: false; motivo: "limite"; esperaSegundos: number }
   | { ok: false; motivo: "correo_invalido" }
-  | { ok: false; motivo: "dominio_gratuito"; dominio: string };
+  | { ok: false; motivo: "dominio_gratuito"; dominio: string }
+  /**
+   * Falta el nombre o el apellido. No lo emite `verificarEnvio` —que solo mira
+   * trampa, límite y dominio— sino `registrarCaptura`, DESPUÉS de esas tres
+   * capas: un bot con la trampa rellena sigue recibiendo la respuesta de la
+   * trampa, no una pista de qué campo le faltó.
+   */
+  | { ok: false; motivo: "datos_incompletos" };
 
 export const RESULTADO_TRAMPA = { ok: false, motivo: "trampa" } as const;
 

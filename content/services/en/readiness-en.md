@@ -1,7 +1,7 @@
 ---
 type: service
 name: "SLG_Readiness"
-branch: SLG_Enterprise
+branch: VoltAi Enterprise
 parent: "slg-enterprise-en"
 download: "d-06-en"
 lang: en

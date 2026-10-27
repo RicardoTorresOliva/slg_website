@@ -25,7 +25,12 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const conexionDeAuth = postgres(process.env.DATABASE_URL, { max: 5, prepare: true });
+/**
+ * Dos conexiones y sin sentencias preparadas, por la misma razón que en
+ * `lib/db/scope.ts`: el *pooler* de Supabase limita a 15 clientes EN TOTAL y el
+ * modo transacción no admite `prepare`. Este pool y aquél se suman por instancia.
+ */
+export const conexionDeAuth = postgres(process.env.DATABASE_URL, { max: 2, prepare: false });
 
 export const dbDeAuth = drizzle(conexionDeAuth, { schema });
 

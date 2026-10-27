@@ -15,7 +15,7 @@
 import http from "node:http";
 
 const PAGINA = (ruta: string) => `<!doctype html><html lang="es"><head>
-<title>SLG Agency</title>
+<title>Un sitio</title>
 <meta name="description" content="La misma descripción en todas.">
 <link rel="canonical" href="https://ejemplo.test/">
 ${ruta.startsWith("/en") ? "" : '<link rel="alternate" hreflang="en" href="https://ejemplo.test/en/ai">'}

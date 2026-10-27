@@ -20,7 +20,7 @@ import { urlDelVisor, visorEstaSeparado } from "@/lib/visor/origen";
  *
  * **EL TIPO NO DECIDE AQUÍ: DECIDE EL MAPA.** Esta pantalla lee
  * `especificacionDe(tipo).modo` y pinta el modo, sin saber qué tipos existen.
- * Añadir un tipo —el informe nativo de `SLG_Readiness` que §5.3 deja
+ * Añadir un tipo —el informe nativo de un diagnóstico, que §5.3 deja
  * «previsto»— es añadir una entrada a `RENDERIZADORES` y, si estrena modo, una
  * rama aquí; añadir un tipo con un modo que ya existe **no toca este archivo**.
  * Una decisión de tipo repartida por la interfaz rechaza la unidad en revisión.
@@ -125,7 +125,12 @@ async function EnPortal({ ctx, id, idioma }: { ctx: AuthContext; id: string; idi
  * exactamente lo que D-45 prohíbe.
  */
 function Aislado({ id, titulo, t }: { id: string; titulo: string; t: Record<string, string> }) {
-  const src = visorEstaSeparado() ? urlDelVisor(id) : null;
+  // **El vale se firma con ámbito `cliente`, y eso es lo que el visor
+  // verifica.** Desde 0022 el visor también sirve entregables `internal`, pero
+  // solo a quien presente un vale de HQ; el que sale de aquí no lo es y no se
+  // puede convertir en uno reescribiendo la URL, porque el ámbito va dentro de
+  // la firma. El `id` que llega aquí, además, salió de `entregablesDelCliente()`.
+  const src = visorEstaSeparado() ? urlDelVisor(id, "cliente") : null;
   if (!src) {
     return (
       <Estado

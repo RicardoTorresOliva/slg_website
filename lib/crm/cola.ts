@@ -15,16 +15,23 @@
  * **La escalera de espera es la de RF-50**: 1 min → 10 min → 1 h → 6 h → 24 h, y
  * al quinto fallo la captura pasa a `failed`, avisa por correo y queda visible
  * en HQ.
+ *
+ * **En un sitio sin CRM la cola es la misma y lo que hace con cada fila no**
+ * (plantilla, paso 5b · `sin-crm.ts`): en vez de entregar, avisa por correo al
+ * buzón del cliente. Misma reserva, misma escalera, y dos estados propios
+ * —`notified` y `notify_failed`, migración 0025— porque ni `delivered` ni
+ * `failed` describen algo que no pasó por ningún CRM.
  */
 import { sql } from "drizzle-orm";
 
-import { destinatarioDeAvisos, enviarCorreo } from "../mail/index.ts";
+import { destinatarioDeAvisos, enviarCorreo, type PuertoDeCorreo } from "../mail/index.ts";
 import { withSystemScope } from "../db/scope.ts";
 import { emitir } from "../webhooks/index.ts";
 
 import { adaptadorContactNote } from "./contact-note.ts";
 import { adaptadorLeadAdmission } from "./lead-admission.ts";
-import { enlaceAlContacto, MODOS_DE_CRM, type CapturaParaCrm, type ModoDeCrm, type PuertoDeCrm } from "./port.ts";
+import { MODOS_DE_CRM, type CapturaParaCrm, type ModoDeCrm, type PuertoDeCrm } from "./port.ts";
+import { crmEncendido, datosDelAviso, destinatarioDeContactos, idiomaDelAviso } from "./sin-crm.ts";
 
 /** Los cinco escalones de RF-50, en minutos. El sexto no existe: es `failed`. */
 export const ESCALERA_MINUTOS = [1, 10, 60, 6 * 60, 24 * 60] as const;
@@ -62,6 +69,7 @@ type Fila = {
   email: string;
   email_domain: string;
   name: string | null;
+  last_name: string | null;
   company: string | null;
   job_title: string | null;
   message: string | null;
@@ -93,7 +101,7 @@ async function reclamar(limite: number): Promise<Fila[]> {
            SET crm_next_attempt_at = now() + ${`${RESERVA_MINUTOS} minutes`}::interval
           FROM reclamadas r
          WHERE l.id = r.id
-        RETURNING l.id, l.email, l.email_domain, l.name, l.company, l.job_title, l.message,
+        RETURNING l.id, l.email, l.email_domain, l.name, l.last_name, l.company, l.job_title, l.message,
                   l.source, l.download_slug, l.page_path, l.locale, l.utm,
                   l.crm_attempts, l.crm_cycle
       `);
@@ -106,6 +114,7 @@ const comoCaptura = (f: Fila): CapturaParaCrm => ({
   email: f.email,
   dominio: f.email_domain,
   nombre: f.name,
+  apellido: f.last_name,
   empresa: f.company,
   cargo: f.job_title,
   mensaje: f.message,
@@ -177,6 +186,12 @@ async function entregarUna(fila: Fila, puerto: PuertoDeCrm): Promise<void> {
 
     const agotado = intento >= MAX_INTENTOS;
     const espera = ESCALERA_MINUTOS[Math.min(intento, MAX_INTENTOS - 1)];
+    // Una línea en el log por intento fallido: el error ya viene saneado por
+    // `http.ts`, y sin esto un fallo del CRM solo se ve entrando en HQ.
+    console.warn(
+      `[crm] entrega fallida · lead=${fila.id} intento=${intento}/${MAX_INTENTOS} ` +
+        `${resultado.endpoint} → ${resultado.codigo ?? "sin respuesta"} · ${resultado.error ?? ""}`,
+    );
     await db.execute(sql`
       UPDATE lead_capture
          SET crm_sync_status = ${agotado ? "failed" : "pending"},
@@ -208,6 +223,18 @@ async function entregarUna(fila: Fila, puerto: PuertoDeCrm): Promise<void> {
  * un problema menor que no puede propagarse hacia atrás.
  */
 async function avisarDelFallo(fila: Fila, error: string | null): Promise<void> {
+  /**
+   * **ESTE AVISO NO HABÍA SALIDO NUNCA** (2026-09-22). Se le pasaban `urlCrm` y
+   * `error`, pero la plantilla `capture_failed_alert` exige `urlHq` y lee
+   * `ultimoError`: `exigir(datos, "urlHq")` lanzaba antes de encolar el correo, y
+   * el `catch` de abajo se lo tragaba sin dejar rastro. Una captura que agotaba
+   * los cinco intentos quedaba en `failed` sin que nadie se enterara, que es
+   * exactamente lo que RF-50 existe para impedir. Ahora se pasan las claves que
+   * la plantilla pide —el enlace a la captura en HQ, que es donde se reintenta—,
+   * y si el correo falla igualmente, el fallo se escribe en el registro del
+   * servidor en vez de desaparecer.
+   */
+  const base = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
   try {
     await enviarCorreo({
       tipo: "capture_failed_alert",
@@ -216,17 +243,104 @@ async function avisarDelFallo(fila: Fila, error: string | null): Promise<void> {
       datos: {
         correo: fila.email,
         origen: fila.source,
-        error: error ?? "sin detalle",
-        urlCrm: enlaceAlContacto(null) ?? (process.env.CRM_BASE_URL ?? ""),
+        urlHq: `${base}/hq/capturas#${fila.id}`,
+        ultimoError: error ?? "sin detalle",
       },
     });
-  } catch {
-    // Deliberado: nada que hacer aquí, y nada que revertir.
+  } catch (e) {
+    // La captura ya está guardada y en `failed`, visible en HQ: no hay nada que
+    // revertir. Pero un aviso que no sale tiene que verse en algún sitio.
+    console.error(`[crm] el aviso de captura fallida (${fila.id}) no se pudo enviar:`, e);
   }
 }
 
-/** Una vuelta del barrido. Devuelve cuántas filas procesó. */
+/**
+ * El aviso de una captura en un sitio SIN CRM (plantilla, paso 5b). **Nunca
+ * lanza**, igual que `entregarUna`: un correo que falla no puede llevarse por
+ * delante el resto del lote, y la captura ya está guardada desde antes.
+ *
+ * Reutiliza la maquinaria de la cola tal cual —`crm_attempts`, la escalera, el
+ * último error—, así que un proveedor de correo caído se trata como un CRM
+ * caído: se reintenta solo, y al quinto intento la fila queda en
+ * `notify_failed`, visible en HQ con su error y su botón de reintentar. El
+ * fallo queda escrito dos veces y a propósito: en `email_delivery` —qué dijo el
+ * proveedor, como cualquier correo— y en `crm_last_error`, que es lo que HQ
+ * enseña al lado de la captura.
+ *
+ * No escribe en `crm_delivery`: esa tabla es la traza de las llamadas al CRM, y
+ * aquí no hay ninguna. No hay tampoco aviso de «fallo tras cinco intentos» a
+ * `MAIL_ALERTS_TO`: iría por el mismo proveedor que acaba de fallar cinco veces.
+ */
+async function avisarUna(fila: Fila, puertoDeCorreo?: PuertoDeCorreo): Promise<void> {
+  const intento = fila.crm_attempts + 1;
+  let error: string | null;
+  try {
+    const envio = await enviarCorreo({
+      tipo: "capture_inbox_notice",
+      para: destinatarioDeContactos(),
+      idioma: idiomaDelAviso(),
+      datos: datosDelAviso(fila),
+      puerto: puertoDeCorreo,
+    });
+    error = envio.estado === "delivered" ? null : (envio.error ?? "el proveedor no aceptó el aviso");
+  } catch (e) {
+    // `enviarCorreo` no lanza por el envío, pero sí antes de intentarlo: sin
+    // `MAIL_LEADS_TO`, sin las variables SMTP o con un dato que la plantilla
+    // exige. Es un fallo de aviso como otro cualquiera, y se cuenta igual.
+    error = (e as Error).message.slice(0, 300);
+  }
+
+  const agotado = error !== null && intento >= MAX_INTENTOS;
+  const espera = ESCALERA_MINUTOS[Math.min(intento, MAX_INTENTOS - 1)];
+  if (error !== null) {
+    console.warn(`[crm] aviso sin CRM fallido · lead=${fila.id} intento=${intento}/${MAX_INTENTOS} · ${error}`);
+  }
+
+  await withSystemScope("Paso 5b · estado del aviso por correo de una captura sin CRM.", async (db) => {
+    await db.execute(sql`
+      UPDATE lead_capture
+         SET crm_sync_status = ${error === null ? "notified" : agotado ? "notify_failed" : "pending"},
+             crm_attempts = ${intento},
+             crm_last_error = ${error === null ? null : `aviso por correo: ${error}`},
+             crm_next_attempt_at = ${
+               error === null || agotado ? null : sql`now() + ${`${espera} minutes`}::interval`
+             }
+       WHERE id = ${fila.id}
+    `);
+  });
+}
+
+/**
+ * Una vuelta del barrido **en modo sin CRM**. Exportada aparte, igual que
+ * `barrerConCrmUnaVez`, para que las pruebas ejerzan cada camino **sea cual sea
+ * la ficha**: el modo lo decide la ficha, que no se cambia en tiempo de
+ * ejecución, y SLG lo tiene encendido mientras la plantilla lo tiene apagado.
+ */
+export async function barrerSinCrmUnaVez(
+  opciones: { readonly limite?: number; readonly puertoDeCorreo?: PuertoDeCorreo } = {},
+): Promise<number> {
+  const filas = await reclamar(opciones.limite ?? LOTE);
+  for (const fila of filas) await avisarUna(fila, opciones.puertoDeCorreo);
+  return filas.length;
+}
+
+/**
+ * Una vuelta del barrido. Devuelve cuántas filas procesó.
+ *
+ * **La ficha decide qué se hace con cada fila**, y es la única rama: con el CRM
+ * encendido, este camino es exactamente el de siempre.
+ */
 export async function barrerUnaVez(limite = LOTE): Promise<number> {
+  return crmEncendido() ? barrerConCrmUnaVez(limite) : barrerSinCrmUnaVez({ limite });
+}
+
+/**
+ * Una vuelta del barrido **entregando al CRM**, sin mirar la ficha. La prueba
+ * del CRM la llama directamente: con `barrerUnaVez`, en un sitio con el CRM
+ * apagado (la plantilla «Cliente Demo»), la prueba del adaptador habría medido
+ * el aviso por correo y fallado por algo que no era el adaptador.
+ */
+export async function barrerConCrmUnaVez(limite = LOTE): Promise<number> {
   const filas = await reclamar(limite);
   if (filas.length === 0) return 0;
   const puerto = adaptadorDelModo();

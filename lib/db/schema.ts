@@ -5,7 +5,7 @@
  *
  *   1. `lead_capture` NO tiene etapa, propietario, valor de oportunidad ni
  *      próximo paso. Es evidencia y cola de entrega, no un CRM. El sistema de
- *      registro comercial es el CRM Softlanding Global (§10-13, RF-57).
+ *      registro comercial es el CRM del sitio, si lo tiene (§10-13, RF-57).
  *   2. `membership` NO tiene semántica de matrícula: ni progreso, ni cohorte,
  *      ni fecha de finalización. Esto no es un LMS (§5.2).
  *
@@ -25,6 +25,8 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
+import { nombresDeServicio } from "../sitio/index.ts";
+
 /* ══════════════════════════════════════════════════════════════════════════
  * Vocabularios cerrados
  * Se expresan como CHECK sobre `text`, no como ENUM nativo (D-27): se revisan
@@ -35,19 +37,59 @@ export const USER_ROLES = ["slg_admin", "slg_operator", "client_admin", "client_
 export const ORG_TYPES = ["slg", "client"] as const;
 export const ORG_STATUS = ["active", "archived"] as const;
 export const PROJECT_STATUS = ["active", "paused", "closed"] as const;
+/**
+ * Los servicios con los que se crea un proyecto: **los de la ficha del sitio**
+ * (`nombresDeServicio()`, D-166), con su nombre literal.
+ *
+ * Fue el espejo del `CHECK project_service_literal` (0001, reescrito por 0021),
+ * que listaba los once servicios de SLG dentro de PostgreSQL. Un sitio de otro
+ * cliente no habría podido crear un solo proyecto con sus servicios, y cada
+ * cambio de la oferta era una migración. Desde 0024 la base ya no lo contiene:
+ * lo valida la aplicación contra esta lista —el catálogo de la API
+ * (`lib/api/catalogo.ts`, un 422 fuera de ella), las escrituras que lo usan y
+ * el formulario de HQ (`lib/hq/servicios.ts`)—, y `test:gestion` comprueba que
+ * las tres dicen exactamente lo que dice la ficha.
+ */
+export const PROJECT_SERVICES: readonly string[] = nombresDeServicio();
 export const LEAD_SOURCES = ["download", "contact", "doctrine-request"] as const;
 export const QUEUE_STATUS = ["pending", "delivered", "failed"] as const;
+/**
+ * El estado de una captura es el de las colas MÁS DOS, y los dos solo existen
+ * en un sitio sin CRM (plantilla, paso 5b · migración 0025). Allí no hay a quién
+ * «entregar»: la captura se avisa por correo al buzón del cliente, y su estado
+ * tiene que decir si ese aviso salió (`notified`) o se agotó sin salir
+ * (`notify_failed`). Reutilizar `delivered` mentiría —diría que llegó a un CRM
+ * que no existe— y dejarla en `pending` la tendría en cola para siempre.
+ */
+export const CAPTURE_SYNC_STATUS = [...QUEUE_STATUS, "notified", "notify_failed"] as const;
 export const CRM_MODES = ["contact_note", "lead_admission"] as const;
 export const DOWNLOAD_STATUS = ["draft", "coming-soon", "published"] as const;
 export const DELIVERABLE_TYPES = ["pdf", "html", "md", "link", "material"] as const;
+/** FU-15 · Academy. Un hito se entrega o no; un pendiente lo cierra quien `closes_by` diga. */
+export const MILESTONE_STATUS = ["pending", "done"] as const;
+export const ACTION_ITEM_STATUS = ["open", "done"] as const;
+export const ACTION_ITEM_CLOSER = ["client", "slg"] as const;
+/** Importancia editorial de una noticia (D-161): la fija quien la escribe, 1 = más importante. */
+export const NEWS_IMPORTANCE = [1, 2, 3] as const;
 export const VISIBILITY = ["client", "internal"] as const;
 export const API_SCOPES = [
   "captures:read",
   "orgs:read",
+  // D-163: el CRM crea o encuentra aquí la empresa por su `crm_company_id`.
+  // Solo nombre, slug e identificador; nada comercial cruza. No implica
+  // `orgs:read` ni `projects:write` (RF-147).
+  "orgs:write",
   "deliverables:read",
   "deliverables:write",
   "announcements:write",
   "events:write",
+  // FU-15 · Academy (RF-153). Sin implicación entre alcances: `news:write` no
+  // permite tocar hitos ni al revés (RF-147).
+  "news:write",
+  "milestones:write",
+  // D-162: el CRM crea aquí la carpeta del cliente. Solo el proyecto —nombre,
+  // servicio, fechas, estado— y su `crm_project_id`; nada comercial cruza.
+  "projects:write",
 ] as const;
 
 export type UserRole = (typeof USER_ROLES)[number];
@@ -161,9 +203,21 @@ export const organization = pgTable(
     // Plugin `organization` de Better Auth (FU-06).
     logo: text("logo"),
     metadata: text("metadata"),
+    /**
+     * El identificador de la empresa EN EL CRM (D-163): es lo que permite al
+     * CRM crear aquí sus proyectos sin conocer el `id` de este sitio. Nulo en
+     * las que ya existían. Como en `project.crm_project_id`, aquí no entra
+     * nada comercial: la frontera (a) de `scope.md` no se mueve.
+     */
+    crmCompanyId: text("crm_company_id"),
     createdAt: createdAt(),
   },
-  (t) => [uniqueIndex("uq_organization_slug").on(t.slug)],
+  (t) => [
+    uniqueIndex("uq_organization_slug").on(t.slug),
+    // Único y parcial: la misma empresa del CRM no entra dos veces, y eso es
+    // lo que hace seguro reintentar la creación.
+    uniqueIndex("uq_organization_crm_id").on(t.crmCompanyId).where(sql`crm_company_id IS NOT NULL`),
+  ],
 );
 
 /**
@@ -306,7 +360,10 @@ export const leadCapture = pgTable(
     id: id(),
     email: text("email").notNull(),
     emailDomain: text("email_domain").notNull(),
+    /** Solo el nombre. El apellido va aparte: el CRM los exige por separado. */
     name: text("name"),
+    /** Obligatorio en los formularios públicos; `NULL` solo en capturas anteriores a la columna. */
+    lastName: text("last_name"),
     company: text("company"),
     jobTitle: text("job_title"),
     /**
@@ -330,6 +387,7 @@ export const leadCapture = pgTable(
     crmContactId: text("crm_contact_id"),
     crmCompanyId: text("crm_company_id"),
     crmOpportunityId: text("crm_opportunity_id"),
+    /** `CAPTURE_SYNC_STATUS`: con CRM, entrega; sin CRM, aviso por correo (0025). */
     crmSyncStatus: text("crm_sync_status").notNull().default("pending"),
     crmAttempts: integer("crm_attempts").notNull().default(0),
     crmCycle: integer("crm_cycle").notNull().default(1),
@@ -401,15 +459,27 @@ export const project = pgTable(
       .notNull()
       .references(() => organization.id, { onDelete: "restrict" }),
     name: text("name").notNull(),
-    /** Nomenclatura literal: el CHECK lo fija la migración (RF-14). */
+    /** Nomenclatura literal (RF-14): la valida la aplicación contra la ficha (D-166). */
     service: text("service").notNull(),
     status: text("status").notNull().default("active"),
     ownerUserId: text("owner_user_id").references(() => user.id, { onDelete: "set null" }),
     startsAt: timestamp("starts_at", { withTimezone: true }),
     endsAt: timestamp("ends_at", { withTimezone: true }),
+    /**
+     * El identificador del proyecto EN EL CRM (D-162): el CRM es donde nace un
+     * proyecto y este sitio lo recibe. Nulo en los que ya existían. Aquí no
+     * entra nada comercial —ni etapa, ni importe, ni propietario—: la
+     * frontera (a) de `scope.md` no se mueve con esta columna.
+     */
+    crmProjectId: text("crm_project_id"),
     createdAt: createdAt(),
   },
-  (t) => [index("idx_project_org").on(t.organizationId)],
+  (t) => [
+    index("idx_project_org").on(t.organizationId),
+    // Único y parcial: el mismo proyecto del CRM no entra dos veces, y eso es
+    // lo que hace seguro reintentar la creación.
+    uniqueIndex("uq_project_crm_id").on(t.crmProjectId).where(sql`crm_project_id IS NOT NULL`),
+  ],
 );
 
 export const deliverable = pgTable(
@@ -478,6 +548,106 @@ export const announcement = pgTable(
 /* ══════════════════════════════════════════════════════════════════════════
  * Agentes, auditoría y colas
  * ══════════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * Academy (FU-15, spec-delta 2026-09-18, D-160) — noticias, hitos y pendientes
+ *
+ * Tres tablas con `organization_id` y la MISMA política de fila que las ocho de
+ * 0001/0015 (migración 0018). Lo que NO son: lecciones, progreso por persona,
+ * cohortes ni certificados. La frontera (b) de `scope.md` no se mueve, y
+ * `check:alcance` la vigila también aquí.
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * news_item — una noticia CON comentario PARA una empresa (RF-150).
+ *
+ * Dos textos y no uno: `summaryMd` es la noticia; `commentMd` es lo que esa
+ * noticia significa para esa empresa. El comentario es el producto, y por eso
+ * la fila pertenece a la empresa y no se comparte entre varias.
+ */
+export const newsItem = pgTable(
+  "news_item",
+  {
+    id: id(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "restrict" }),
+    title: text("title").notNull(),
+    sourceUrl: text("source_url"),
+    summaryMd: text("summary_md").notNull(),
+    commentMd: text("comment_md").notNull(),
+    /** 1 = más importante. Editorial (D-161), nunca calculada. */
+    importance: integer("importance").notNull().default(2),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    // Actor polimórfico: la escribe un usuario de SLG o una clave de agente.
+    authorType: text("author_type"),
+    authorId: text("author_id"),
+    authorLabel: text("author_label"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("idx_news_item_portal")
+      .on(t.organizationId, t.importance, t.publishedAt)
+      .where(sql`published_at is not null`),
+  ],
+);
+
+/**
+ * milestone — un hito de ENTREGA de un proyecto (RF-151). Fecha, hecho o no,
+ * y orden. Nada más: no mide a nadie.
+ */
+export const milestone = pgTable(
+  "milestone",
+  {
+    id: id(),
+    projectId: text("project_id").notNull().references(() => project.id, { onDelete: "restrict" }),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "restrict" }),
+    title: text("title").notNull(),
+    dueAt: timestamp("due_at", { withTimezone: true }).notNull(),
+    status: text("status").notNull().default("pending"),
+    position: integer("position").notNull().default(0),
+    doneAt: timestamp("done_at", { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_milestone_project").on(t.projectId, t.position),
+    index("idx_milestone_next").on(t.organizationId, t.dueAt).where(sql`status = 'pending'`),
+  ],
+);
+
+/**
+ * action_item — una obligación pendiente de un proyecto (RF-151): «envíanos el
+ * organigrama antes del 30». `closesBy` dice QUIÉN puede cerrarla, y eso se
+ * decide en el servidor con esta columna, no en la pantalla.
+ */
+export const actionItem = pgTable(
+  "action_item",
+  {
+    id: id(),
+    projectId: text("project_id").notNull().references(() => project.id, { onDelete: "restrict" }),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "restrict" }),
+    title: text("title").notNull(),
+    dueAt: timestamp("due_at", { withTimezone: true }),
+    status: text("status").notNull().default("open"),
+    closesBy: text("closes_by").notNull().default("client"),
+    doneAt: timestamp("done_at", { withTimezone: true }),
+    // Quién lo cerró es parte del hecho: actor polimórfico (§2.4).
+    doneByType: text("done_by_type"),
+    doneById: text("done_by_id"),
+    doneByLabel: text("done_by_label"),
+    createdAt: createdAt(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("idx_action_item_project").on(t.projectId, t.status),
+    index("idx_action_item_open").on(t.organizationId, t.dueAt).where(sql`status = 'open'`),
+  ],
+);
 
 export const agentEvent = pgTable(
   "agent_event",

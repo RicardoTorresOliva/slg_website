@@ -14,9 +14,18 @@
 import { and, desc, eq, gte, lt, sql } from "drizzle-orm";
 
 import { enlaceAlContacto } from "../crm/port.ts";
-import { leadCapture } from "../db/schema.ts";
+import { CAPTURE_SYNC_STATUS, leadCapture } from "../db/schema.ts";
 import { withScope } from "../db/scope.ts";
 import type { AuthContext } from "../db/context.ts";
+
+/**
+ * Los estados por los que se puede filtrar. Los de la cola —`pending`,
+ * `delivered`, `failed`— y los dos del aviso por correo de un sitio sin CRM
+ * (`notified`, `notify_failed`, migración 0025). Salen del espejo del `CHECK`
+ * y no de una lista escrita en la pantalla: un estado que la base acepta y el
+ * filtro no ofrece es una captura que no se puede encontrar.
+ */
+export const ESTADOS_DE_CAPTURA = CAPTURE_SYNC_STATUS;
 
 export type Filtro = {
   /** Slug del documento, o `null` para todos. */
@@ -26,7 +35,7 @@ export type Filtro = {
   /** Día concreto en `YYYY-MM-DD`. Sin él, el día de hoy (DU-13, criterio 1). */
   readonly dia?: string | null;
   /**
-   * `pending` · `delivered` · `failed`, o `null` para todos (DU-16, criterio 1).
+   * Uno de `ESTADOS_DE_CAPTURA`, o `null` para todos (DU-16, criterio 1).
    */
   readonly estado?: string | null;
   /**
@@ -43,6 +52,8 @@ export type CapturaDeHq = {
   readonly id: string;
   readonly email: string;
   readonly nombre: string | null;
+  /** `null` en capturas anteriores a la columna `last_name`. */
+  readonly apellido: string | null;
   readonly empresa: string | null;
   readonly origen: string;
   readonly documento: string | null;
@@ -110,6 +121,7 @@ export async function capturasDeHq(ctx: AuthContext, filtro: Filtro = {}): Promi
     id: f.id,
     email: f.email,
     nombre: f.name,
+    apellido: f.lastName,
     empresa: f.company,
     origen: f.source,
     documento: f.downloadSlug,

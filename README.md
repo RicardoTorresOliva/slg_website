@@ -159,7 +159,9 @@ Esto **no pasa por GitHub**: se hace dentro del sitio.
 
 1. Entra en `https://softlandingglobal.com/acceder` con tu cuenta.
 2. Menú lateral → **Empresas** → rellena **nombre** y **slug** (el slug es el nombre en minúsculas y
-   con guiones: `cliente-demo`), tipo **client**, estado **active** → **Guardar**.
+   con guiones: `cliente-demo`), tipo **client**, estado **active** → **Guardar**. El **identificador
+   en el CRM** se pone aquí, al crear la empresa: es lo que permite que el CRM cree en el sitio sus
+   proyectos (si el CRM la crea él por la API, ya viene puesto).
 3. Menú lateral → **Proyectos** → elige la empresa, ponle nombre, elige el **servicio** de la lista
    y **Guardar**. El servicio se elige de una lista cerrada: los nombres son literales y no se
    escriben a mano.
@@ -176,6 +178,28 @@ Esto **no pasa por GitHub**: se hace dentro del sitio.
 > **Si el correo no sale, la invitación NO se pierde.** Queda creada y reenviable desde esa misma
 > pantalla. Es a propósito: un fallo del correo no puede dejar a un cliente sin acceso y a ti sin
 > saberlo.
+
+### Antes de la primera invitación: la primera cuenta
+
+Invitar exige estar dentro, así que la **primera** cuenta de un sitio nuevo (rol `slg_admin`) no se
+invita: la crea una sola vez el guion `npm run auth:primer-admin`, que ejecuta Claude —o quien tenga
+el archivo de variables del despliegue— al montar el sitio. **No te da ninguna contraseña**: la
+cuenta nace sin ella y te llega un correo para que la elijas tú.
+
+1. Abre tu correo y busca uno con el asunto **«Restablecer tu contraseña»**. Es el enlace de alta:
+   sirve **una vez** y **caduca en una hora**.
+2. Pulsa **Restablecer la contraseña**. Se abre `…/restablecer` en el sitio.
+3. Escribe tu contraseña (**12 caracteres como mínimo**) y confírmala.
+4. Entra en `…/acceder` con tu correo y esa contraseña. Deberías ver el panel de HQ.
+
+**Si el enlace caducó o el correo no llegó** (mira también la carpeta de spam): entra en
+`…/recuperar`, escribe **el mismo correo** y pulsa enviar; llega otro enlace igual. Si tampoco llega,
+el correo del sitio no está funcionando: díselo a Claude, que puede repetir el arranque mientras
+nadie haya entrado (`--rehacer`).
+
+> Existe un modo de emergencia, `--imprimir-contrasena`, que enseña la contraseña en la terminal en
+> vez de mandar el enlace. Es solo para cuando el correo del sitio no funciona todavía, lo avisa al
+> ejecutarse, y esa contraseña hay que cambiarla nada más entrar: ha pasado por una pantalla.
 
 ---
 
@@ -279,6 +303,12 @@ Si alguna sale **`failed`** (cinco intentos agotados), esa pantalla tiene un bot
 > El día que el CRM permita crear oportunidades por API, esto cambia de modo con **una variable**
 > (`CRM_MODE`) y sin desplegar código nuevo. Hasta entonces, el paso manual es el paso.
 
+**Un sitio sin CRM** (la ficha `site.config.ts` con `crm: false`) no entrega a ningún sitio: cada
+captura llega **por correo al buzón del cliente** (`MAIL_LEADS_TO`) con nombre, apellido, correo,
+origen, página, documento y mensaje. En **Capturas** sale como **`notified`** si el correo salió, o
+**`notify_failed`** si tras cinco intentos no salió; en ese caso lee el error de la fila (casi siempre
+falta `MAIL_LEADS_TO` o falla el correo), arréglalo y pulsa **Reintentar**.
+
 ### Rotar el secreto de Microsoft (Entra ID)
 
 El secreto que permite entrar con la cuenta de Microsoft **caduca**. Cuando caduque, nadie podrá
@@ -319,7 +349,7 @@ Los valores se ponen en **Easypanel → proyecto `slg_website` → el servicio �
 | `DATABASE_URL` | Se compone: usuario `slg_app`, su contraseña, el host interno del servicio y el nombre de la base | Tú, siguiendo `docs/deployment.md` §2.1 |
 | `DATABASE_URL_MIGRATIONS` | Igual, pero con el usuario dueño de la base | Tú, igual |
 | `APP_DB_PASSWORD` | La eliges tú; el botón de `/api/ops` se la pone al usuario `slg_app` | Tú, y se vuelve a aplicar con ese botón |
-| `NEXT_PUBLIC_SITE_URL` · `BETTER_AUTH_URL` | La dirección pública de ese entorno | Tú |
+| `NEXT_PUBLIC_SITE_URL` · `BETTER_AUTH_URL` | La dirección pública de ese entorno. `NEXT_PUBLIC_SITE_URL` **no tiene valor por defecto**: si falta, la compilación se detiene y lo dice — antes se inventaba un dominio y el sitio salía publicando el de otro en sus etiquetas sociales y en su RSS | Tú |
 | `BETTER_AUTH_SECRET` | Una cadena larga al azar que generas una vez | Tú. Cambiarla **cierra todas las sesiones abiertas** |
 | `STAGING_BASIC_AUTH_USER` · `STAGING_BASIC_AUTH_PASSWORD` | Los eliges tú: es la puerta que tapa staging | Tú |
 | `SUPERFICIES_EN_REVISION` | Qué intranets se pueden mirar en staging mientras se revisan: `hq`, `portal`, o las dos. **Solo en `slgweb-staging`**; en producción no hace nada | Tú, cuando vayas a revisarlas |
@@ -329,6 +359,7 @@ Los valores se ponen en **Easypanel → proyecto `slg_website` → el servicio �
 | `MAIL_SMTP_HOST` · `MAIL_SMTP_PORT` · `MAIL_SMTP_USERNAME` · `MAIL_SMTP_PASSWORD` | Resend → *SMTP* | Tú, en Resend |
 | `MAIL_FROM_ADDRESS` · `MAIL_FROM_NAME` · `MAIL_REPLY_TO` | Los eliges tú. El remitente vive en el **subdominio de envío**, no en la raíz | Tú |
 | `MAIL_ALERTS_TO` | El buzón que recibe los avisos de captura y de fallo | Tú |
+| `MAIL_LEADS_TO` | El buzón **del cliente** que recibe los contactos de la web. Solo en un sitio **sin CRM**, y ahí es obligatoria: cada captura le llega por correo con los datos de la persona | El cliente te la da en el formulario de intake |
 | `S3_ENDPOINT` · `S3_REGION` · `S3_BUCKET_DOWNLOADS` · `S3_BUCKET_DELIVERABLES` | El servicio `minio`: dirección interna y los dos buckets | Tú, en Easypanel |
 | `S3_ACCESS_KEY_ID` · `S3_SECRET_ACCESS_KEY` | Son `MINIO_ROOT_USER` y `MINIO_ROOT_PASSWORD` del servicio `minio` | Tú, en Easypanel → `minio` → `Environment` |
 | `SIGNED_URL_TTL_DOWNLOAD_MINUTES` · `SIGNED_URL_TTL_DELIVERABLE_MINUTES` · `SIGNED_URL_TTL_UPLOAD_MINUTES` | Cuánto dura un enlace de archivo. Tienen defecto: solo se ponen para cambiarlo | Tú |
@@ -359,6 +390,9 @@ Los valores se ponen en **Easypanel → proyecto `slg_website` → el servicio �
 | `BACKUP_FIRST_DATE` | La fecha de tu primera copia (`AAAA-MM-DD`). Va **en la tarea de purga**. Es lo que permite detectar que alguien ha borrado el histórico | Tú, el día que hagas la primera copia |
 | `BACKUP_DATE_OVERRIDE` | **Solo para el simulacro de restauración.** Producción no la define | — |
 | `PG_DUMP_BIN` · `PG_RESTORE_BIN` | Solo si esos programas no están donde el sistema los busca | — |
+| `FILES_DRIVER` | Qué guarda los archivos. Vacía: S3/MinIO, el diseño del VPS. `supabase`: Supabase Storage por su REST, y entonces las `S3_*` no hacen falta —los nombres de bucket sí | Tú, según dónde esté el sitio |
+| `SUPABASE_URL` · `SUPABASE_SERVICE_ROLE_KEY` | Solo con `FILES_DRIVER=supabase`. Supabase → *Project Settings* → *API*. La clave de servicio **salta las políticas de fila**: no toca nunca al navegador | Tú, en Supabase |
+| `CRON_SECRET` | Testigo de `/api/colas`, la ruta que vacía las colas cuando la llama un planificador externo. **Opcional**: sin ella la ruta responde 404 y las colas se vacían igual tras cada captura | Tú. Larga y al azar |
 
 > **Lo que se pierde para siempre si se pierde:** `BACKUP_PRIVATE_KEY`. Todo lo demás se regenera
 > donde lo creaste. Esa no.
@@ -376,3 +410,5 @@ Los valores se ponen en **Easypanel → proyecto `slg_website` → el servicio �
 | Qué se está construyendo ahora | [`implementation/task_tracker.md`](implementation/task_tracker.md) |
 | Cómo trabaja el equipo que construye esto | [`AGENTS.md`](AGENTS.md) |
 | El conocimiento del proyecto, por dónde entrar | [`knowledge/index.md`](knowledge/index.md) |
+| Añadir una conexión a HQ | editar [`content/conexiones.json`](content/conexiones.json) |
+| Archivar una empresa o cerrar un proyecto | HQ → **Empresas** / **Proyectos** → **Archivar** / **Cerrar proyecto** → confirmar. No se borra nada: la fila baja al final, atenuada, y **Reactivar** / **Reabrir** lo deshace |

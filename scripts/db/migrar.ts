@@ -23,13 +23,18 @@
  * despliegue, con el rol DUEÑO. El sitio en marcha usa el rol de aplicación, que
  * no puede alterar el esquema, y eso es deliberado (FU-04).
  */
+import fs from "node:fs";
 import path from "node:path";
 
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 
-const URL_DUENO = process.env.DATABASE_URL_MIGRATIONS ?? process.env.DATABASE_URL;
+// `DATABASE_URL_OWNER` es el nombre del archivo de `ops/` que se carga con
+// `node --env-file`: así la cadena del dueño no pasa por la línea de comandos
+// (mismo trato que en `scripts/auth/primer-admin.ts`).
+const URL_DUENO =
+  process.env.DATABASE_URL_MIGRATIONS ?? process.env.DATABASE_URL_OWNER ?? process.env.DATABASE_URL;
 if (!URL_DUENO) {
   console.error(
     "Falta DATABASE_URL_MIGRATIONS. Las migraciones las aplica el rol DUEÑO, nunca el rol de " +
@@ -59,9 +64,37 @@ const conexion = postgres(URL_DUENO, {
   },
 });
 
+/**
+ * Cuántas hay aplicadas, o cero si la tabla del migrador aún no existe (base
+ * vacía). Se lee antes y después para poder decir QUÉ hizo esta ejecución:
+ * «aplicadas (o ya estaban todas)» servía para el despliegue y no servía para la
+ * persona que acaba de lanzarlo a mano y necesita saber si la 0018 entró.
+ */
+async function aplicadas(): Promise<{ n: number; ultima: string | null }> {
+  const [existe] = await conexion<{ n: number }[]>`
+    select count(*)::int as n from information_schema.tables
+     where table_schema = 'drizzle' and table_name = '__drizzle_migrations'`;
+  if (!existe?.n) return { n: 0, ultima: null };
+  const [fila] = await conexion<{ n: number; ultima: string | null }[]>`
+    select count(*)::int as n, max(created_at)::text as ultima from drizzle.__drizzle_migrations`;
+  return { n: fila?.n ?? 0, ultima: fila?.ultima ?? null };
+}
+
 try {
+  const antes = await aplicadas();
   await migrate(drizzle(conexion), { migrationsFolder: CARPETA });
-  console.log("✓ migraciones aplicadas (o ya estaban todas).");
+  const despues = await aplicadas();
+  const nuevas = despues.n - antes.n;
+  const enDisco = fs.readdirSync(CARPETA).filter((f) => f.endsWith(".sql")).sort();
+  const recienAplicadas = nuevas > 0 ? enDisco.slice(-nuevas) : [];
+  console.log(
+    nuevas > 0
+      ? `✓ ${nuevas} migración(es) aplicada(s) ahora: ${recienAplicadas.join(", ")}. Total en la base: ${despues.n} de ${enDisco.length}.`
+      : `✓ nada que aplicar: la base ya tiene las ${despues.n} migraciones (${enDisco.length} en disco).`,
+  );
+  if (despues.n !== enDisco.length) {
+    console.warn(`  ⚠ la base tiene ${despues.n} y en disco hay ${enDisco.length}: revisa el journal.`);
+  }
 } catch (error) {
   console.error("✗ la migración falló y el despliegue NO debe seguir:");
   console.error(error instanceof Error ? error.message : String(error));

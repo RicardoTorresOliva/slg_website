@@ -32,6 +32,7 @@ export function adaptadorLeadAdmission(): PuertoDeCrm {
         email: captura.email,
         email_domain: captura.dominio,
         name: captura.nombre,
+        last_name: captura.apellido,
         company: captura.empresa,
         job_title: captura.cargo,
         message: captura.mensaje,

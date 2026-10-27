@@ -10,6 +10,10 @@
  *   · **Trampa rellena** ⇒ responde como un éxito y **no crea lead** (RF-33).
  *     Si creara uno, el bot habría conseguido lo que venía a buscar.
  *   · **Dominio gratuito** ⇒ mensaje explícito, y **tampoco crea lead**.
+ *   · **Sin nombre o sin apellido** ⇒ `datos_incompletos`, y **tampoco crea
+ *     lead**. Los tres campos son obligatorios en todo formulario público, y
+ *     el `required` del HTML no cuenta: la comprobación que vale es la del
+ *     servidor. Se comprueba DESPUÉS de la trampa y del dominio a propósito.
  *   · **Documento sin archivo** ⇒ **sí crea lead**, no emite firma y no crea
  *     `download_event` (RF-40). Es el caso que más se rompe al implementarlo
  *     «cuando haya PDFs».
@@ -21,6 +25,7 @@
  * Necesita `bash scripts/db/local-pg.sh up` y `npm run build:standalone`.
  */
 import { spawn, type ChildProcess } from "node:child_process";
+import fs from "node:fs";
 import net from "node:net";
 import path from "node:path";
 
@@ -93,6 +98,34 @@ async function arrancar(env: Record<string, string>) {
 }
 
 /** Envía el formulario como lo haría un navegador, sin seguir la redirección. */
+/**
+ * El primer documento en `coming-soon` del contenido en español, o `null`.
+ * Lee el frontmatter a pelo: la prueba corre contra el servidor construido y
+ * no puede importar el cargador de contenido sin arrastrar Next.
+ */
+function documentoProximamente(): string | null {
+  const carpeta = path.join(REPO_ROOT, "content", "downloads", "es");
+  for (const archivo of fs.readdirSync(carpeta).filter((f) => f.endsWith(".md")).sort()) {
+    const texto = fs.readFileSync(path.join(carpeta, archivo), "utf8");
+    if (/^status:\s*coming-soon\s*$/m.test(texto)) return archivo.replace(/\.md$/, "");
+  }
+  return null;
+}
+
+/**
+ * Un documento cualquiera del contenido, para los casos en los que da igual
+ * cuál: la trampa, el dominio gratuito, los datos incompletos. Se lee del
+ * contenido y no se escribe aquí porque los documentos son de cada sitio; con
+ * uno inventado, la ruta respondería «no existe» antes de llegar a lo que se
+ * prueba.
+ */
+function unDocumento(): string {
+  const carpeta = path.join(REPO_ROOT, "content", "downloads", "es");
+  const primero = fs.readdirSync(carpeta).filter((f) => f.endsWith(".md")).sort()[0];
+  if (!primero) throw new Error("test-descargas necesita al menos un documento en content/downloads/es");
+  return primero.replace(/\.md$/, "");
+}
+
 async function enviar(
   base: string,
   campos: Record<string, string>,
@@ -125,6 +158,9 @@ async function main() {
   });
 
   try {
+    // Los hijos primero: desde que la cola se vacía tras cada captura
+    // (`barrerDespues`), toda captura deja su fila en `crm_delivery`.
+    await dueno`delete from crm_delivery where lead_capture_id in (select id from lead_capture where email like '%@prueba-slg.com' or email like '%@gmail.com')`;
     await dueno`delete from download_event where lead_capture_id in (select id from lead_capture where email like '%@prueba-slg.com' or email like '%@gmail.com')`;
     await dueno`delete from lead_capture where email like '%@prueba-slg.com' or email like '%@gmail.com'`;
 
@@ -140,8 +176,10 @@ async function main() {
 
     await reiniciarLimite();
     console.log("\nCampo trampa — se descarta EN SILENCIO y no deja rastro (RF-33):\n");
+    // Sin nombre ni apellido A PROPÓSITO: la trampa tiene que responder antes
+    // que la comprobación de datos, o el bot recibiría una pista de qué le faltó.
     const conTrampa = await enviar(base, {
-      documento: "d-06",
+      documento: unDocumento(),
       idioma: "es",
       email: "bot@prueba-slg.com",
       empresa_web: "soy un bot",
@@ -160,9 +198,11 @@ async function main() {
     await reiniciarLimite();
     console.log("\nDominio de correo gratuito — mensaje explícito, y sin captura (RF-31):\n");
     const gratuito = await enviar(base, {
-      documento: "d-06",
+      documento: unDocumento(),
       idioma: "es",
       email: "persona@gmail.com",
+      nombre: "Persona",
+      apellido: "Gratuita",
     });
     check(
       "el correo de dominio gratuito se rechaza con motivo explícito",
@@ -182,9 +222,11 @@ async function main() {
     // comprobar que el cambio surte efecto SIN reconstruir ni reiniciar.
     await new Promise((r) => setTimeout(r, 61_000));
     const ampliado = await enviar(base, {
-      documento: "d-06",
+      documento: unDocumento(),
       idioma: "es",
       email: "alguien@prueba-slg.com",
+      nombre: "Alguien",
+      apellido: "Ampliado",
     });
     check(
       "un dominio añadido por INSERT se rechaza sin reconstruir ni reiniciar",
@@ -195,11 +237,32 @@ async function main() {
 
     await reiniciarLimite();
     console.log("\nDocumento SIN archivo — captura igual, y no emite firma (RF-40):\n");
-    const sinArchivo = await enviar(base, {
-      documento: "d-06",
-      idioma: "es",
-      email: "director@empresa-real-slg.test",
-    });
+    /**
+     * El caso exige un documento en `coming-soon`, y eso es un ESTADO DEL
+     * CONTENIDO, no de esta prueba: en el primer sitio lo fue uno concreto, y
+     * el día que todos pasaron a `published` (con sus PDF) la prueba
+     * se puso roja por un motivo que no era un defecto. Ahora busca uno en el
+     * contenido; si no hay ninguno, lo dice y no lo finge: un caso omitido con
+     * su motivo escrito es verdad, y una comprobación que se acomoda para pasar
+     * no comprueba nada.
+     */
+    const proximamente = documentoProximamente();
+    if (!proximamente) {
+      console.log(
+        "  (omitido: no hay ningún documento `coming-soon` en content/downloads/es —\n" +
+          "   RF-40 no se puede ejercer contra este contenido; vuelve a ejercerse solo con que exista uno)",
+      );
+    }
+    const sinArchivo = proximamente
+      ? await enviar(base, {
+          documento: proximamente,
+          idioma: "es",
+          email: "director@empresa-real-slg.test",
+          nombre: "Director",
+          apellido: "Real",
+        })
+      : null;
+    if (sinArchivo) {
     check(
       "el envío redirige a gracias con «próximamente»",
       sinArchivo.destino.includes("estado=proximamente"),
@@ -210,7 +273,7 @@ async function main() {
     check(
       "la captura guarda el dominio, el documento y la versión de la política",
       leads[0]?.email_domain === "empresa-real-slg.test" &&
-        leads[0]?.download_slug === "d-06" &&
+        leads[0]?.download_slug === proximamente &&
         Boolean(leads[0]?.privacy_version),
       JSON.stringify(leads[0] ?? {}),
     );
@@ -224,15 +287,54 @@ async function main() {
       (await eventosDe(String(leads[0]?.id))).length === 0,
       "un documento sin archivo no puede haber entregado nada",
     );
+    const guardado = await dueno`select name, last_name from lead_capture where id = ${String(leads[0]?.id)}`;
+    check(
+      "guarda nombre y apellido en columnas separadas, tal como se escribieron",
+      guardado[0]?.name === "Director" && guardado[0]?.last_name === "Real",
+      JSON.stringify(guardado[0] ?? {}),
+    );
+    }
+
+    await reiniciarLimite();
+    console.log("\nSin nombre o sin apellido — motivo explícito, y sin captura:\n");
+    const sinApellido = await enviar(base, {
+      documento: unDocumento(),
+      idioma: "es",
+      email: "incompleta@empresa-real-slg.test",
+      nombre: "Persona",
+    });
+    check(
+      "sin apellido se rechaza con motivo `datos_incompletos`",
+      sinApellido.destino.includes("error=datos_incompletos"),
+      `destino: ${sinApellido.destino}`,
+    );
+    const sinNombre = await enviar(base, {
+      documento: unDocumento(),
+      idioma: "es",
+      email: "incompleta@empresa-real-slg.test",
+      apellido: "Apellido",
+    });
+    check(
+      "sin nombre, lo mismo",
+      sinNombre.destino.includes("error=datos_incompletos"),
+      `destino: ${sinNombre.destino}`,
+    );
+    check(
+      "y NO crea captura en ninguno de los dos casos",
+      (await leadsDe("incompleta@empresa-real-slg.test")).length === 0,
+      "una captura sin apellido llega al CRM como «parte local del correo»",
+    );
 
     await reiniciarLimite();
     console.log("\nLímite de peticiones — 429 sin revelar el umbral (RF-34):\n");
     let cortado = "";
     for (let i = 0; i < 6; i++) {
       const r = await enviar(base, {
-        documento: "d-06",
+        documento: unDocumento(),
         idioma: "es",
         email: `tope${i}@empresa-real-slg.test`,
+        nombre: "Tope",
+        apellido: String(i),
         // La misma IP en los seis: es lo que el límite por IP tiene que ver.
       });
       if (r.destino.includes("error=limite")) {
@@ -256,7 +358,11 @@ async function main() {
       const r = await fetch(`${base}${ruta}`, {
         method: "POST",
         headers: { "content-type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams(campos),
+        // La trampa VACÍA por delante, igual que en `enviar` (RF-33): es lo que
+        // manda un navegador real, y desde que la ausencia también descarta un
+        // envío sin ella no llega. El spread va después para que el caso del bot
+        // pueda seguir rellenándola.
+        body: new URLSearchParams({ empresa_web: "", ...campos }),
         redirect: "manual",
       });
       return { status: r.status, destino: r.headers.get("location") ?? "" };
@@ -267,17 +373,23 @@ async function main() {
       idioma: "es",
       email: "contacto@empresa-real-slg.test",
       nombre: "Persona",
-      mensaje: "Queremos hablar de SLG_Readiness.",
+      apellido: "De Contacto",
+      mensaje: "Queremos hablar de un proyecto.",
     });
     check(
       "el envío de contacto redirige a gracias con su variante",
       contacto.destino.includes("estado=contact"),
       `destino: ${contacto.destino}`,
     );
-    const leadContacto = await dueno`select source, message from lead_capture where email = 'contacto@empresa-real-slg.test'`;
+    const leadContacto = await dueno`select source, message, name, last_name from lead_capture where email = 'contacto@empresa-real-slg.test'`;
     check(
       "crea una captura con source `contact` y guarda el mensaje",
-      leadContacto[0]?.source === "contact" && String(leadContacto[0]?.message).includes("SLG_Readiness"),
+      leadContacto[0]?.source === "contact" && String(leadContacto[0]?.message).includes("hablar de un proyecto"),
+      JSON.stringify(leadContacto[0] ?? {}),
+    );
+    check(
+      "y el nombre y el apellido por separado, como la descarga",
+      leadContacto[0]?.name === "Persona" && leadContacto[0]?.last_name === "De Contacto",
       JSON.stringify(leadContacto[0] ?? {}),
     );
 
@@ -285,6 +397,8 @@ async function main() {
       origen: "doctrine-request",
       idioma: "es",
       email: "doctrina@empresa-real-slg.test",
+      nombre: "Persona",
+      apellido: "De Doctrina",
     });
     check(
       "la solicitud de doctrina redirige con SU variante, no con la de contacto",
@@ -311,17 +425,69 @@ async function main() {
         (await dueno`select id from lead_capture where email = 'bot-contacto@empresa-real-slg.test'`).length === 0,
       `destino: ${trampaContacto.destino}`,
     );
+    /**
+     * D-164 · EL CAMPO QUE NO VIENE, que es la puerta por la que entraron los
+     * cinco registros basura del 17-18 de septiembre de 2026.
+     *
+     * Aquí NO se usa `enviarA`: ese ayudante pinta la trampa vacía por delante
+     * justamente porque es lo que hace un navegador. Este envío es el del bot
+     * que arma el cuerpo a mano y omite el campo que nunca vio, así que va con
+     * `fetch` pelado. Se comprueban las dos mitades: que responde **como si
+     * hubiera funcionado** —dos respuestas distintas le dirían al bot cuál de
+     * las dos cosas corregir— y que no queda fila.
+     */
+    await reiniciarLimite();
+    const sinTrampa = await fetch(`${base}/api/contacto`, {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        origen: "contact",
+        idioma: "es",
+        email: "bot-sin-trampa@empresa-real-slg.test",
+        nombre: "Bot",
+        apellido: "Sin Trampa",
+        mensaje: "Posteo directo a la API, nunca vi el formulario.",
+      }),
+      redirect: "manual",
+    });
+    const destinoSinTrampa = sinTrampa.headers.get("location") ?? "";
+    check(
+      "un envío que NI SIQUIERA MANDA la trampa se descarta, y en silencio (D-164)",
+      destinoSinTrampa.includes("/gracias") &&
+        !destinoSinTrampa.includes("error=") &&
+        (await dueno`select id from lead_capture where email = 'bot-sin-trampa@empresa-real-slg.test'`)
+          .length === 0,
+      `destino: ${destinoSinTrampa}`,
+    );
+
+    await reiniciarLimite();
     const gratuitoContacto = await enviarA("/api/contacto", {
       origen: "contact",
       idioma: "es",
       email: "alguien@gmail.com",
+      nombre: "Alguien",
+      apellido: "Gratuito",
     });
     check(
       "y rechaza los dominios de correo gratuito igual que la descarga",
       gratuitoContacto.destino.includes("error=dominio_gratuito"),
       `destino: ${gratuitoContacto.destino}`,
     );
+    await reiniciarLimite();
+    const incompletoContacto = await enviarA("/api/contacto", {
+      origen: "contact",
+      idioma: "es",
+      email: "incompleto-contacto@empresa-real-slg.test",
+      nombre: "Persona",
+    });
+    check(
+      "y exige nombre y apellido igual que la descarga: sin apellido, `datos_incompletos` y sin captura",
+      incompletoContacto.destino.includes("error=datos_incompletos") &&
+        (await leadsDe("incompleto-contacto@empresa-real-slg.test")).length === 0,
+      `destino: ${incompletoContacto.destino}`,
+    );
 
+    await dueno`delete from crm_delivery where lead_capture_id in (select id from lead_capture where email like '%empresa-real-slg.test' or email = 'alguien@gmail.com')`;
     await dueno`delete from download_event where lead_capture_id in (select id from lead_capture where email like '%empresa-real-slg.test')`;
     await dueno`delete from lead_capture where email like '%empresa-real-slg.test' or email = 'alguien@gmail.com'`;
   } finally {

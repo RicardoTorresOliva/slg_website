@@ -230,9 +230,9 @@ async function main() {
     MAIL_SMTP_PORT: "2530",
     MAIL_SMTP_USERNAME: "u",
     MAIL_SMTP_PASSWORD: CLAVE_DEL_BUZON_LOCAL,
-    MAIL_FROM_ADDRESS: "no-reply@mailweb.softlandingglobal.com",
-    MAIL_REPLY_TO: "support@softlandingglobal.com",
-    MAIL_ALERTS_TO: "support@softlandingglobal.com",
+    MAIL_FROM_ADDRESS: "no-reply@mail.demo.example.com",
+    MAIL_REPLY_TO: "hola@demo.example.com",
+    MAIL_ALERTS_TO: "hola@demo.example.com",
     // Sin GOOGLE_* ni MICROSOFT_*: es el estado real hasta que F.2-2 y F.2-3
     // se cierren, y el criterio 8 exige que la pantalla lo diga.
   };

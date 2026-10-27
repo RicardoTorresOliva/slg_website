@@ -1,5 +1,6 @@
 import { consultarTestigo } from "@/lib/invitations";
 import { loadUiStrings } from "@/lib/content/loader";
+import { sitio } from "@/lib/sitio";
 
 import { PantallaDeAcceso } from "../../acceso";
 
@@ -16,7 +17,7 @@ import { PantallaDeAcceso } from "../../acceso";
  * cuáles existieron.
  */
 export const metadata = {
-  title: "Invitación · SLG Agency",
+  title: `Invitación · ${sitio.marca.nombre}`,
   robots: { index: false, follow: false },
 };
 export const dynamic = "force-dynamic";

@@ -1759,6 +1759,61 @@ RNF-18 · RNF-34 (auditoría holística) · RNF-38 · RNF-42.
 
 ---
 
+### M6 — Academy y centro de mando (spec-delta 2026-09-18, D-160)
+
+*Condición de cierre: **DoD #5** sobre las tres tablas nuevas + revisión visual de Ricardo. El
+delta completo, con lo que se modifica y lo que no cambia, está en `planning/spec-delta-academy.md`.*
+
+---
+
+#### FU-15 · Modelo de datos de la Academy: noticias, hitos y pendientes
+
+| Campo | Contenido |
+|---|---|
+| **Tipo** | FU |
+| **Milestone** | M6 |
+| **Depende de** | FU-04, FU-13 |
+
+**Qué produce.** Migración `0018_academy.sql`: `news_item`, `milestone`, `action_item`, las tres con
+`organization_id`, la **misma política de fila** de 0001/0015 y `FORCE ROW LEVEL SECURITY`. Alcances
+`news:write` y `milestones:write`. `data_model.md` §3.6, §4.2 y §5.20–5.22.
+
+**Requisitos que cubre.** RF-150, RF-151 (modelo), RF-153 (alcances).
+
+**Criterios de aceptación.**
+1. `test:isolation` cubre las tres tablas: sin contexto → 0 filas; otra empresa → 0; escritura
+   cruzada → rechazada.
+2. Los enumerados son `text + CHECK` (data_model §2.3).
+3. `check:migrations` y `check:alcance` en verde; la prueba negativa de `check:alcance` incluye una
+   migración que pone progreso en `milestone`.
+4. `data_model.md` dice cuántas tablas hay y coincide con la base.
+
+**Gates.** D9 · `check:migrations` · `check:alcance`.
+
+---
+
+#### DU-30 · API v1 para noticias, hitos y pendientes
+
+Ver `planning/spec-delta-academy.md`. Depende de FU-15, DU-23. Cubre RF-153, RF-156.
+
+#### DU-29 · HQ: Conexiones, y escritura de hitos, pendientes y noticias
+
+Ver `planning/spec-delta-academy.md`. Depende de FU-15, DU-14, DU-15. Cubre RF-152, RF-154, RF-156.
+
+#### DU-26 · Portal «Hoy»
+
+Ver `planning/spec-delta-academy.md`. Depende de FU-15, DU-18, DU-29. Cubre RF-149, RF-150.
+
+#### DU-27 · Portal «Programa»
+
+Ver `planning/spec-delta-academy.md`. Depende de FU-15, DU-19, DU-29. Cubre RF-151, RF-156.
+
+#### DU-28 · Portal «Clases»
+
+Ver `planning/spec-delta-academy.md`. Depende de DU-20. Cubre RF-155.
+
+---
+
 ## 3. Trazabilidad inversa — requisito → unidad
 
 **Regla de cierre (`requirements.md` §3):** cada requisito mapea a **al menos una** FU o DU. Un
@@ -2017,7 +2072,8 @@ auditoría final** (DU-25).
 | **M3** HQ | 1 | 5 | **6** | FU-12, DU-13, DU-14, DU-15, DU-16, DU-17 |
 | **M4** Portal | 1 | 4 | **5** | FU-13, DU-18, DU-19, DU-20, DU-21 |
 | **M5** API + go-live | 1 | 4 | **5** | DU-22, DU-23, FU-14, DU-24, DU-25 |
-| **Total** | **14** | **25** | **39** | |
+| **M6** Academy y centro de mando | 1 | 5 | **6** | FU-15, DU-30, DU-29, DU-26, DU-27, DU-28 |
+| **Total** | **15** | **30** | **45** | |
 
 ---
 

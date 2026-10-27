@@ -1,6 +1,6 @@
 /**
- * catalogo.ts — **Las nueve rutas de `/api/v1`, como DATOS** (DU-22 · DU-23 ·
- * `api_contracts` §2, §3 y §4).
+ * catalogo.ts — **Las diecinueve rutas de `/api/v1`, como DATOS** (DU-22 · DU-23 ·
+ * DU-30 · D-162 · D-163 · `api_contracts` §2, §3 y §4).
  *
  * ESTE ARCHIVO EXISTE PARA QUE LA ESPECIFICACIÓN NO PUEDA MENTIR. El criterio 5
  * de DU-23 pide que `GET /openapi.json` se genere **a partir de los mismos
@@ -19,12 +19,14 @@
  */
 import { ACCIONES, MATRIZ_B3, type Accion } from "../auth/index.ts";
 import {
+  ACTION_ITEM_CLOSER,
+  CAPTURE_SYNC_STATUS,
   DELIVERABLE_TYPES,
   LEAD_SOURCES,
   ORG_STATUS,
   ORG_TYPES,
+  PROJECT_SERVICES,
   PROJECT_STATUS,
-  QUEUE_STATUS,
   VISIBILITY,
   type ApiScope,
 } from "../db/schema.ts";
@@ -62,7 +64,9 @@ const CURSOR: Declaracion = {
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
- * Las nueve rutas
+ * Las diecinueve rutas: nueve de DU-22/DU-23, seis de la Academy (DU-30),
+ * tres del proyecto que nace en el CRM (D-162) y una de la empresa que el
+ * CRM crea o encuentra por su identificador (D-163)
  * ══════════════════════════════════════════════════════════════════════════ */
 
 export type RutaDeApi = {
@@ -94,8 +98,9 @@ export const RUTAS: readonly RutaDeApi[] = [
       {
         nombre: "crm_sync_status",
         tipo: "enum",
-        valores: QUEUE_STATUS,
-        descripcion: "Estado de la entrega al CRM.",
+        valores: CAPTURE_SYNC_STATUS,
+        descripcion:
+          "Estado de la entrega al CRM; en un sitio sin CRM, del aviso por correo (`notified`, `notify_failed`).",
       },
       {
         nombre: "doc_code",
@@ -234,6 +239,214 @@ export const RUTAS: readonly RutaDeApi[] = [
     ],
     codigos: [201, 400, 404, 413, 415, 422],
   },
+
+  /* ── M6 · Academy (DU-30 · RF-153): noticias, hitos y pendientes ──────────
+   *
+   * Las seis son `POST`: la matriz B.3 no da alcance de agente a `news.read`
+   * ni a `milestone.read`, así que no hay lectura que una clave pueda hacer, y
+   * una ruta que ninguna clave puede llamar sería una mentira en la
+   * especificación. Las sub-acciones `done` y `reopen` son `POST`, como
+   * `/deliverables/{id}/publish`: un acto con nombre, no un campo que se
+   * parchea. Las tres son idempotentes a propósito —repetir `done` no mueve
+   * `done_at` ni falla—: un agente que reintenta una llamada cortada no tiene
+   * que preguntar antes.
+   */
+  {
+    metodo: "POST",
+    ruta: "/api/v1/organizations/{id}/news",
+    accion: "news.write",
+    resumen: "Noticia con comentario para una empresa. Ajena o inexistente, 404.",
+    cuerpo: [
+      { nombre: "title", tipo: "string", minimo: 1, maximo: 200, obligatorio: true, descripcion: "Título." },
+      { nombre: "source_url", tipo: "string", maximo: 2000, descripcion: "Fuente de la noticia. Solo http(s)." },
+      {
+        nombre: "summary_md",
+        tipo: "string",
+        minimo: 1,
+        maximo: 20_000,
+        obligatorio: true,
+        descripcion: "La noticia, en Markdown. Se guarda tal cual.",
+      },
+      {
+        nombre: "comment_md",
+        tipo: "string",
+        minimo: 1,
+        maximo: 20_000,
+        obligatorio: true,
+        descripcion: "Lo que la noticia significa PARA esa empresa, en Markdown.",
+      },
+      {
+        nombre: "importance",
+        tipo: "integer",
+        minimo: 1,
+        maximo: 3,
+        obligatorio: true,
+        descripcion: "Importancia editorial (D-161): 1 es lo primero. La fija quien escribe.",
+      },
+      {
+        nombre: "publish",
+        tipo: "boolean",
+        obligatorio: true,
+        descripcion: "Obligatorio y SIN defecto, como en los avisos: que un cliente lo vea no se olvida.",
+      },
+    ],
+    codigos: [201, 400, 404, 413, 415, 422],
+  },
+  {
+    metodo: "POST",
+    ruta: "/api/v1/projects/{id}/milestones",
+    accion: "milestone.write",
+    resumen: "Hito de entrega de un proyecto. Nace pendiente; la empresa sale del proyecto.",
+    cuerpo: [
+      { nombre: "title", tipo: "string", minimo: 1, maximo: 200, obligatorio: true, descripcion: "Título." },
+      { nombre: "due_at", tipo: "datetime", obligatorio: true, descripcion: "Fecha de entrega." },
+      { nombre: "position", tipo: "integer", minimo: 0, maximo: 10_000, descripcion: "Orden manual. Ausente: 0." },
+    ],
+    codigos: [201, 400, 404, 413, 415, 422],
+  },
+  {
+    metodo: "POST",
+    ruta: "/api/v1/milestones/{id}/done",
+    accion: "milestone.write",
+    resumen: "Marca un hito como hecho y pone `done_at`. Repetirlo no mueve la fecha.",
+    cuerpo: [],
+    codigos: [200, 400, 404, 415, 422],
+  },
+  {
+    metodo: "POST",
+    ruta: "/api/v1/milestones/{id}/reopen",
+    accion: "milestone.write",
+    resumen: "Devuelve un hito a pendiente y quita `done_at`.",
+    cuerpo: [],
+    codigos: [200, 400, 404, 415, 422],
+  },
+  {
+    metodo: "POST",
+    ruta: "/api/v1/projects/{id}/action-items",
+    accion: "action_item.write",
+    resumen: "Pendiente de un proyecto. `closes_by` dice quién puede cerrarlo.",
+    cuerpo: [
+      { nombre: "title", tipo: "string", minimo: 1, maximo: 200, obligatorio: true, descripcion: "Título." },
+      { nombre: "due_at", tipo: "datetime", descripcion: "Fecha límite, opcional." },
+      {
+        nombre: "closes_by",
+        tipo: "enum",
+        valores: ACTION_ITEM_CLOSER,
+        obligatorio: true,
+        descripcion: "Quién lo cierra: `client` o `slg`. Sin defecto: es una decisión.",
+      },
+    ],
+    codigos: [201, 400, 404, 413, 415, 422],
+  },
+  {
+    metodo: "POST",
+    ruta: "/api/v1/action-items/{id}/done",
+    accion: "action_item.write",
+    resumen: "Cierra un pendiente, sea de quien sea, con el actor de la clave. Repetirlo no cambia nada.",
+    cuerpo: [],
+    codigos: [200, 400, 404, 415, 422],
+  },
+
+  /* ── D-162 · El proyecto nace en el CRM; este sitio lo recibe ─────────────
+   *
+   * El CRM (o Hermes por él) crea aquí la carpeta del cliente y deja al lado
+   * su identificador. **Idempotente por `crm_project_id`**: un reintento tras
+   * una llamada cortada devuelve 200 con el proyecto que ya existe, ni crea
+   * otro ni responde 409 — un agente no tiene que preguntar antes de repetir.
+   * Cerrar y reabrir son sub-acciones `POST`, como los hitos: el catálogo no
+   * conoce `PATCH`, y un acto con nombre se lee en `audit_log` sin abrir el
+   * cuerpo. Nada comercial viaja en el cuerpo: frontera (a) de `scope.md`.
+   */
+  {
+    metodo: "POST",
+    ruta: "/api/v1/organizations/{id}/projects",
+    accion: "project.write",
+    resumen:
+      "Crea la carpeta del cliente que el CRM acaba de abrir. Mismo `crm_project_id`: 200 con la existente. Ajena o inexistente, 404.",
+    cuerpo: [
+      { nombre: "name", tipo: "string", minimo: 1, maximo: 200, obligatorio: true, descripcion: "Nombre del proyecto." },
+      {
+        nombre: "service",
+        tipo: "enum",
+        valores: PROJECT_SERVICES,
+        obligatorio: true,
+        // La lista es la de la ficha del sitio (D-166): desde 0024 la base ya no
+        // la contiene, así que esta es la primera validación y no un espejo.
+        descripcion: "Servicio, literal e intraducible (RF-14). Fuera de la lista, 422.",
+      },
+      {
+        nombre: "crm_project_id",
+        tipo: "string",
+        minimo: 1,
+        maximo: 200,
+        obligatorio: true,
+        descripcion: "Identificador del proyecto en el CRM. Si el CRM manda, dice cuál es. Repetirlo devuelve 200 con el existente.",
+      },
+      { nombre: "starts_at", tipo: "datetime", descripcion: "Fecha de inicio, opcional." },
+      { nombre: "ends_at", tipo: "datetime", descripcion: "Fecha de fin prevista, opcional." },
+      {
+        nombre: "status",
+        tipo: "enum",
+        valores: PROJECT_STATUS,
+        defecto: "active",
+        descripcion: "Estado inicial. Ausente: `active`.",
+      },
+    ],
+    codigos: [200, 201, 400, 404, 413, 415, 422],
+  },
+  {
+    metodo: "POST",
+    ruta: "/api/v1/projects/{id}/close",
+    accion: "project.write",
+    resumen: "Cierra un proyecto (`status: closed`). Repetirlo no cambia nada.",
+    cuerpo: [],
+    codigos: [200, 400, 404, 415, 422],
+  },
+  {
+    metodo: "POST",
+    ruta: "/api/v1/projects/{id}/reopen",
+    accion: "project.write",
+    resumen: "Devuelve un proyecto a `active`. Idempotente sobre uno ya activo.",
+    cuerpo: [],
+    codigos: [200, 400, 404, 415, 422],
+  },
+
+  /* ── D-163 · La empresa se relaciona con la del CRM por su identificador ──
+   *
+   * D-162 dejó que el CRM creara aquí la carpeta del cliente, pero no sabía
+   * qué `{id}` de empresa usar: las empresas de aquí y las del CRM no estaban
+   * relacionadas. Esta ruta es la puerta: crea o encuentra la empresa por su
+   * `crm_company_id`. **Idempotente**: repetirlo devuelve 200 con la que ya
+   * existe. Sin `{id}` en la ruta no hay 404 que dar; una clave acotada a una
+   * empresa responde 403, porque crear otra está fuera de su universo. Nada
+   * comercial viaja en el cuerpo: frontera (a) de `scope.md`.
+   */
+  {
+    metodo: "POST",
+    ruta: "/api/v1/organizations",
+    accion: "org.write",
+    resumen:
+      "Crea o encuentra la empresa por su `crm_company_id`. Mismo identificador: 200 con la existente. Clave acotada a una empresa: 403.",
+    cuerpo: [
+      { nombre: "name", tipo: "string", minimo: 1, maximo: 200, obligatorio: true, descripcion: "Nombre de la empresa." },
+      {
+        nombre: "crm_company_id",
+        tipo: "string",
+        minimo: 1,
+        maximo: 200,
+        obligatorio: true,
+        descripcion: "Identificador de la empresa en el CRM. Si el CRM manda, dice cuál es. Repetirlo devuelve 200 con la existente.",
+      },
+      {
+        nombre: "slug",
+        tipo: "string",
+        maximo: 60,
+        descripcion: "Identificador legible, en minúsculas y con guiones. Ausente: se deriva del nombre. Ya usado por otra empresa: 422.",
+      },
+    ],
+    codigos: [200, 201, 400, 413, 415, 422],
+  },
+
   {
     metodo: "GET",
     ruta: "/api/v1/openapi.json",

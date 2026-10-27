@@ -84,10 +84,10 @@ async function sembrar() {
   // Una captura de HOY, entregada en `contact_note` y SIN oportunidad: es la
   // que el criterio 7 tiene que contar.
   await dueno`
-    insert into lead_capture (id, email, email_domain, name, company, source, download_slug,
+    insert into lead_capture (id, email, email_domain, name, last_name, company, source, download_slug,
                               page_path, locale, consent_at, privacy_version,
                               crm_sync_status, crm_mode, crm_contact_id, crm_attempts, crm_delivered_at)
-    values (${crypto.randomUUID()}, ${`hoy@${MARCA}`}, ${MARCA}, 'Persona de hoy', 'Empresa',
+    values (${crypto.randomUUID()}, ${`hoy@${MARCA}`}, ${MARCA}, 'Persona de hoy', 'Apellido', 'Empresa',
             'download', 'd-06', '/descargas/d-06', 'es', now(), '2026-09-13',
             'delivered', 'contact_note', 'c-123', 1, now())`;
   // Una de HOY todavía en cola, sin contacto: no tiene enlace al CRM.

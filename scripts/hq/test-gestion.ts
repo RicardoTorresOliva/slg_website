@@ -6,7 +6,12 @@
  *
  *   · **criterio 2** — el campo `service` **solo admite nomenclatura literal**.
  *     Se prueban las tres formas de romperlo que salen solas al escribir:
- *     minúsculas, espacios en vez de guion bajo, y un nombre inventado.
+ *     minúsculas, espacios en vez de guion bajo, y un nombre inventado. Y la
+ *     cuarta forma —la que no se ve escribiendo—: que dos puertas acepten
+ *     listas distintas. Desde la migración 0024 (D-166) la lista es la de la
+ *     ficha del sitio y la aplica la aplicación, no un `CHECK`: se enfrentan la
+ *     ficha, el formulario de HQ y el catálogo de la API, y se comprueba que la
+ *     contención vieja ya no está en PostgreSQL.
  *   · **criterio 3** — una invitación no aceptada **se revoca y deja de servir
  *     de inmediato**: el mismo testigo que valía hace un segundo ya no vale.
  *   · **criterio 4** — `slg_operator` opera **solo sobre sus proyectos
@@ -16,6 +21,27 @@
  *   · **criterio 6** — estados: sin empresas · sin proyectos · invitación
  *     caducada · **correo fallido con la invitación viva y reenviable**
  *     (RF-119).
+ *   · **DU-29 (criterio 1)** — hitos, pendientes y noticias desde HQ:
+ *     `slg_operator` sobre un proyecto (o una empresa) no asignado → rechazado
+ *     **y auditado como `.denied`**; título vacío o fecha imposible → dato
+ *     inválido con su campo; crear → aparece; hecho/reabrir y cerrar/reabrir
+ *     dejan el estado y las fechas coherentes (RF-151, RF-152, RF-156).
+ *   · **Archivar y cerrar (data_model §2.5, §4.3)** — archivar una empresa y
+ *     cerrar un proyecto **cambian `status` y no borran nada**: proyectos,
+ *     entregables y pertenencias se cuentan antes y después. Solo `slg_admin`
+ *     archiva empresas; `slg_operator` cierra solo los proyectos que tiene
+ *     asignados, y cada rechazo queda auditado como `.denied`. Reactivar y
+ *     reabrir lo devuelven todo tal como estaba.
+ *   · **Archivar CIERRA las dos puertas (§4.3)** — las invitaciones `pending`
+ *     de esa empresa quedan `canceled` y sus claves de API revocadas, en la
+ *     misma operación y con su apunte de auditoría; la clave sin empresa —la de
+ *     la casa— **no** se toca; y reactivar **no** resucita ni una ni otra. Es la
+ *     mitad del contrato que el código no cumplía: una empresa archivada dejaba
+ *     un enlace de invitación canjeable y una clave escribiendo por `/api/v1`.
+ *   · **El identificador del CRM (D-163)** — se pone al crear la empresa, se
+ *     edita, y **es de una sola**: repetirlo en otra empresa es un dato
+ *     inválido con su campo (`crmCompanyId`), no un error de PostgreSQL, tanto
+ *     al crear como al editar. En blanco vuelve a ser nulo.
  *
  * Necesita `bash scripts/db/local-pg.sh up`.
  */
@@ -48,7 +74,18 @@ const ADMIN = "u-admin-du14";
 /** Con sufijo: «Cliente Demo» a secas es de la semilla y no es nuestro. */
 const NOMBRE_CLIENTE = "Cliente Demo DU14";
 const SLUG_CLIENTE = "cliente-demo-du14";
+/** La segunda empresa, solo para probar que el identificador del CRM es de una (D-163). */
+const SLUG_SEGUNDA = "cliente-dos-du14";
+const CRM_ID = "crm-du14-0001";
 const OPERADOR = "u-operador-du14";
+/**
+ * Las dos claves de API de la prueba del archivado, identificadas **por el
+ * nombre**: la del cliente se la llevaría el borrado de su empresa en cascada,
+ * pero la de la casa no cuelga de ninguna —ese es justo el punto— y sin nombre
+ * conocido no habría forma de limpiarla.
+ */
+const CLAVE_CLIENTE = "Clave DU14 del cliente";
+const CLAVE_SLG = "Clave DU14 de la casa";
 
 const ctxDe = (rol: UserRole, userId: string, org: string | null) =>
   contextoDeSesion({ userId, userName: `Persona ${rol}`, role: rol, organizationId: org });
@@ -71,8 +108,17 @@ async function limpiar() {
    */
   await dueno`delete from invitation where organization_id in (select id from organization where slug in (${SLUG_CLIENTE}, 'slg-du14'))`;
   await dueno`delete from membership where organization_id in (select id from organization where slug in (${SLUG_CLIENTE}, 'slg-du14'))`;
+  // El entregable de la prueba de archivado cuelga del proyecto con `RESTRICT`
+  // (§4.3): si se borrara el proyecto antes, la limpieza moriría aquí.
+  await dueno`delete from deliverable where organization_id in (select id from organization where slug in (${SLUG_CLIENTE}, 'slg-du14'))`;
+  // Las tres tablas de la Academy cuelgan del proyecto (DU-29): antes que él.
+  await dueno`delete from milestone where organization_id in (select id from organization where slug in (${SLUG_CLIENTE}, 'slg-du14'))`;
+  await dueno`delete from action_item where organization_id in (select id from organization where slug in (${SLUG_CLIENTE}, 'slg-du14'))`;
+  await dueno`delete from news_item where organization_id in (select id from organization where slug in (${SLUG_CLIENTE}, 'slg-du14'))`;
   await dueno`delete from project where organization_id in (select id from organization where slug in (${SLUG_CLIENTE}, 'slg-du14'))`;
   await dueno`delete from organization where slug in (${SLUG_CLIENTE}, 'slg-du14')`;
+  // La segunda empresa de D-163 no tiene proyectos ni miembros: solo la fila.
+  await dueno`delete from organization where slug = ${SLUG_SEGUNDA}`;
   /**
    * **`audit_log` NO se limpia, y no es un olvido**: un disparador de la
    * migración 0003 lo hace inmutable (RNF-29) y rechaza el `DELETE` incluso al
@@ -84,8 +130,14 @@ async function limpiar() {
   await dueno`delete from invitation where organization_id in (${ORG_SLG}, ${ORG_CLIENTE})`;
   await dueno`delete from membership where organization_id in (${ORG_SLG}, ${ORG_CLIENTE})`;
   await dueno`delete from deliverable where organization_id in (${ORG_SLG}, ${ORG_CLIENTE})`;
+  await dueno`delete from milestone where organization_id in (${ORG_SLG}, ${ORG_CLIENTE})`;
+  await dueno`delete from action_item where organization_id in (${ORG_SLG}, ${ORG_CLIENTE})`;
+  await dueno`delete from news_item where organization_id in (${ORG_SLG}, ${ORG_CLIENTE})`;
   await dueno`delete from project where organization_id in (${ORG_SLG}, ${ORG_CLIENTE})`;
   await dueno`delete from "user" where id in (${ADMIN}, ${OPERADOR})`;
+  // Por nombre: ver el comentario de `CLAVE_SLG`. La del cliente caería con su
+  // empresa; la de la casa no cae con nada.
+  await dueno`delete from api_key where name in (${CLAVE_CLIENTE}, ${CLAVE_SLG})`;
   await dueno`delete from organization where id in (${ORG_SLG}, ${ORG_CLIENTE})`;
 }
 
@@ -117,10 +169,22 @@ async function main() {
   // el criterio 6: la invitación tiene que quedar creada y reenviable igual.
   delete process.env.MAIL_SMTP_HOST;
 
-  const { crearEmpresa, empresas, editarEmpresa } = await import("../../lib/hq/empresas.ts");
-  const { crearProyecto, editarProyecto, estaAsignado, proyectos } = await import("../../lib/hq/proyectos.ts");
+  const { archivarEmpresa, crearEmpresa, empresas, editarEmpresa, reactivarEmpresa } = await import("../../lib/hq/empresas.ts");
+  const { archivarProyecto, crearProyecto, editarProyecto, estaAsignado, proyectos, reabrirProyecto } = await import(
+    "../../lib/hq/proyectos.ts"
+  );
   const { invitarASlg, invitarACliente, invitacionesPendientes, revocar } = await import("../../lib/hq/usuarios.ts");
+  const { claves, crearClave } = await import("../../lib/hq/claves.ts");
   const { esServicioLiteral, serviciosLiterales } = await import("../../lib/hq/servicios.ts");
+  const { PROJECT_SERVICES } = await import("../../lib/db/schema.ts");
+  const { nombresDeServicio } = await import("../../lib/sitio/index.ts");
+  const { LITERAL_TERMS } = await import("../../lib/content/nomenclature.ts");
+  // Los servicios de la prueba salen de la ficha: escribir aquí el nombre de
+  // uno lo ataría a la oferta de un cliente, y la prueba fallaría en el
+  // siguiente por la razón equivocada. Hacen falta dos distintos.
+  const [SERVICIO, OTRO_SERVICIO] = nombresDeServicio();
+  if (!SERVICIO || !OTRO_SERVICIO) throw new Error("test-gestion necesita al menos dos servicios en la ficha");
+  const { buscarRuta } = await import("../../lib/api/catalogo.ts");
   const { consultarTestigo } = await import("../../lib/invitations/index.ts");
   const { generarTestigo } = await import("../../lib/invitations/token.ts");
 
@@ -140,9 +204,15 @@ async function main() {
       tipo: "client",
       estado: "active",
       contactoPrincipal: `contacto@${SUFIJO}`,
+      crmCompanyId: ` ${CRM_ID} `,
     });
     await dueno`update organization set id = ${ORG_CLIENTE} where id = ${creada.id}`;
     check("la empresa se crea", creada.nombre === NOMBRE_CLIENTE, JSON.stringify(creada));
+    check("con el identificador del CRM, recortado (D-163)", creada.crmCompanyId === CRM_ID, String(creada.crmCompanyId));
+    check(
+      "y la fila lo lleva",
+      ((await dueno`select crm_company_id from organization where id = ${ORG_CLIENTE}`) as unknown as { crm_company_id: string | null }[])[0]?.crm_company_id === CRM_ID,
+    );
     check("el slug se deriva del nombre cuando se deja vacío", creada.slug === SLUG_CLIENTE, creada.slug);
     check(
       "el alta queda auditada",
@@ -172,10 +242,15 @@ async function main() {
       tipo: "client",
       estado: "active",
       contactoPrincipal: `contacto@${SUFIJO}`,
+      crmCompanyId: CRM_ID,
     });
     check(
       "el administrador edita la empresa",
       (await empresas(admin())).some((e) => e.nombre === `${NOMBRE_CLIENTE} S.L.`),
+    );
+    check(
+      "y conserva el identificador del CRM",
+      (await empresas(admin())).some((e) => e.id === ORG_CLIENTE && e.crmCompanyId === CRM_ID),
     );
     check("y la edición queda auditada", (await apuntes("org.update", ADMIN)).length === 1);
 
@@ -196,25 +271,113 @@ async function main() {
     check("el operador NO edita una empresa que no tiene asignada", estadoEdicion > 0, `estado ${estadoEdicion}`);
     check("y ese intento queda auditado", (await apuntes("org.update.denied", OPERADOR)).length === 1);
 
+    /* ── D-163 · el identificador del CRM es de una sola empresa ────────── */
+    console.log("\nEl identificador del CRM es de una sola empresa (D-163):\n");
+    const campoDelCrm = async (fn: () => Promise<unknown>): Promise<string> => {
+      try {
+        await fn();
+        return "";
+      } catch (e) {
+        return (e as Error & { campo?: string }).campo ?? (e as Error).name;
+      }
+    };
+    const SEGUNDA = { nombre: "Cliente Dos DU14", slug: SLUG_SEGUNDA, tipo: "client", estado: "active" };
+    check(
+      "crear otra empresa con el MISMO identificador devuelve «crmCompanyId», no un error de PostgreSQL",
+      (await campoDelCrm(() => crearEmpresa(admin(), { ...SEGUNDA, crmCompanyId: CRM_ID }))) === "crmCompanyId",
+    );
+    check(
+      "y la primera sigue siendo la única con ese identificador (índice único parcial de 0020)",
+      ((await dueno`select count(*)::text as n from organization where crm_company_id = ${CRM_ID}`) as unknown as { n: string }[])[0]?.n === "1",
+    );
+    const segunda = await crearEmpresa(admin(), SEGUNDA);
+    check("sin identificador se crea: es opcional, y queda nulo", segunda.slug === SLUG_SEGUNDA && segunda.crmCompanyId === null, JSON.stringify(segunda));
+    check(
+      "editarla para ponerle el de la primera también se rechaza sobre «crmCompanyId»",
+      (await campoDelCrm(() => editarEmpresa(admin(), segunda.id, { ...SEGUNDA, crmCompanyId: CRM_ID }))) === "crmCompanyId",
+    );
+    await editarEmpresa(admin(), segunda.id, { ...SEGUNDA, crmCompanyId: "crm-du14-0002" });
+    check(
+      "con uno propio, la edición lo guarda y la lista lo enseña",
+      (await empresas(admin())).some((e) => e.id === segunda.id && e.crmCompanyId === "crm-du14-0002"),
+    );
+    await editarEmpresa(admin(), segunda.id, { ...SEGUNDA, crmCompanyId: "  " });
+    check(
+      "y en blanco lo quita: vuelve a ser nulo, no una cadena vacía",
+      (await empresas(admin())).some((e) => e.id === segunda.id && e.crmCompanyId === null),
+    );
+    check(
+      "uno más largo de lo que admite la columna es «crmCompanyId» antes de tocar la base",
+      (await campoDelCrm(() => editarEmpresa(admin(), segunda.id, { ...SEGUNDA, crmCompanyId: "x".repeat(201) }))) === "crmCompanyId",
+    );
+
     console.log("\nCriterio 2 — `service` solo admite nomenclatura literal (RF-79, RF-14):\n");
     const oferta = serviciosLiterales();
-    check("están LOS ONCE servicios de A.2, no solo los que son marca", oferta.length === 11, `${oferta.length}: ${oferta.join(" · ")}`);
+    const ficha = [...nombresDeServicio()].sort((a, b) => a.localeCompare(b, "es"));
     check(
-      "incluidos los dos que NO son marca registrada y por eso no están en LITERAL_TERMS",
-      oferta.some((s) => s.includes("Coaching")) && oferta.some((s) => s.includes("Customize") || s.includes("Programa")),
-      oferta.join(" · "),
+      "están TODOS los servicios de la ficha, no solo los que son marca",
+      oferta.length === ficha.length,
+      `${oferta.length} de ${ficha.length}: ${oferta.join(" · ")}`,
     );
-    check("«Phoenix PEEx» vale", esServicioLiteral("Phoenix PEEx"));
-    for (const roto of ["phoenix peex", "Phoenix PEEX", "SLG Readiness", "Consultoría IA", ""]) {
+    // Un servicio no tiene por qué ser un literal de nomenclatura (en el primer
+    // sitio, dos no lo eran): la lista de HQ es la de la ficha, no la de marcas.
+    const noLiterales = ficha.filter((n) => !LITERAL_TERMS.includes(n));
+    check(
+      "incluidos los que NO están en LITERAL_TERMS, si los hay",
+      noLiterales.every((n) => oferta.includes(n)),
+      `faltan: ${noLiterales.filter((n) => !oferta.includes(n)).join(" · ")}`,
+    );
+    check(`«${SERVICIO}» vale`, esServicioLiteral(SERVICIO));
+    for (const roto of [SERVICIO.toLowerCase(), SERVICIO.toUpperCase(), ` ${SERVICIO}`, "Servicio inventado", ""]) {
       check(`«${roto || "(vacío)"}» NO vale`, !esServicioLiteral(roto));
     }
+
+    // El defecto que esta comprobación existe para impedir, y que ya ocurrió:
+    // la oferta del primer sitio renombró una línea (18-09) y una
+    // de las listas —entonces el `CHECK` de la base— se quedó con el nombre
+    // viejo. Todo lo de arriba seguía en verde y aun así un proyecto de esa
+    // línea era imposible de crear. Desde 0024 no hay `CHECK`: la lista es la
+    // de la ficha, y lo que hay que enfrentar son las puertas que la aplican.
+    const diferencia = (a: readonly string[], b: readonly string[]) => a.filter((x) => !b.includes(x));
+    check(
+      "el formulario de HQ acepta EXACTAMENTE los servicios de la ficha",
+      diferencia(oferta, ficha).length === 0 &&
+        diferencia(ficha, oferta).length === 0 &&
+        ficha.every((s) => esServicioLiteral(s)),
+      `solo en HQ: ${diferencia(oferta, ficha).join(" · ") || "—"} · solo en la ficha: ${diferencia(ficha, oferta).join(" · ") || "—"}`,
+    );
+    const enLaApi = buscarRuta("POST", "/api/v1/organizations/{id}/projects").cuerpo?.find(
+      (c) => c.nombre === "service",
+    );
+    const valoresDeLaApi = enLaApi && enLaApi.tipo === "enum" ? [...enLaApi.valores] : [];
+    check(
+      "el catálogo de la API anuncia EXACTAMENTE los servicios de la ficha",
+      diferencia(valoresDeLaApi, ficha).length === 0 &&
+        diferencia(ficha, valoresDeLaApi).length === 0 &&
+        diferencia([...PROJECT_SERVICES], ficha).length === 0,
+      `solo en la API: ${diferencia(valoresDeLaApi, ficha).join(" · ") || "—"} · solo en la ficha: ${diferencia(ficha, valoresDeLaApi).join(" · ") || "—"}`,
+    );
+
+    // Y la base ya no lleva su propia lista: si alguien reintroduce el `CHECK`,
+    // vuelve a haber dos vocabularios y un cliente que no puede crear
+    // proyectos con sus servicios.
+    const contencion = await dueno<{ def: string }[]>`
+      SELECT pg_get_constraintdef(oid) AS def
+        FROM pg_constraint
+       WHERE conname = 'project_service_literal'
+    `;
+    check(
+      "PostgreSQL ya no contiene la lista de servicios (0024)",
+      contencion.length === 0,
+      `sigue existiendo project_service_literal: ${contencion[0]?.def ?? ""}`,
+    );
 
     let motivo = "";
     try {
       await crearProyecto(admin(), {
         organizationId: ORG_CLIENTE,
         nombre: "Proyecto roto",
-        servicio: "phoenix peex",
+        servicio: SERVICIO.toLowerCase(),
         estado: "active",
       });
     } catch (e) {
@@ -225,7 +388,7 @@ async function main() {
     const proyectoId = await crearProyecto(admin(), {
       organizationId: ORG_CLIENTE,
       nombre: "Proyecto Demo",
-      servicio: "Phoenix PEEx",
+      servicio: SERVICIO,
       estado: "active",
       responsableId: OPERADOR,
     });
@@ -238,7 +401,7 @@ async function main() {
     const ajeno = await crearProyecto(admin(), {
       organizationId: ORG_CLIENTE,
       nombre: "Proyecto ajeno",
-      servicio: "SLG_Readiness",
+      servicio: OTRO_SERVICIO,
       estado: "active",
       responsableId: ADMIN,
     });
@@ -250,7 +413,7 @@ async function main() {
       await editarProyecto(operador(), proyectoId, {
         organizationId: ORG_CLIENTE,
         nombre: "Proyecto Demo (editado)",
-        servicio: "Phoenix PEEx",
+        servicio: SERVICIO,
         estado: "paused",
       });
     } catch {
@@ -264,7 +427,7 @@ async function main() {
       await editarProyecto(operador(), ajeno, {
         organizationId: ORG_CLIENTE,
         nombre: "Se lo quedo",
-        servicio: "SLG_Readiness",
+        servicio: OTRO_SERVICIO,
         estado: "closed",
       });
     } catch (e) {
@@ -307,6 +470,178 @@ async function main() {
       "y queda auditado",
       (await apuntes("user.invite.slg.denied", OPERADOR)).length === 1,
     );
+
+    /* ── DU-29 · hitos, pendientes y noticias desde HQ ──────────────────── */
+    const {
+      actualizarHito,
+      cerrarPendiente,
+      crearHito,
+      crearNoticia,
+      crearPendiente,
+      hitosDeProyecto,
+      noticias,
+      pendientesAbiertos,
+      pendientesDeProyecto,
+      reabrirPendiente,
+    } = await import("../../lib/academy/index.ts");
+
+    /**
+     * La edición del operador de más arriba no llevaba `responsableId`, y
+     * `editarProyecto` lo guarda tal cual: el proyecto se quedó **sin
+     * responsable**. Se reasigna a propósito, porque lo que se prueba aquí es
+     * «asignado sí / no asignado no», y sin asignación las dos mitades darían
+     * «no» y la prueba pasaría por la razón equivocada.
+     */
+    await editarProyecto(admin(), proyectoId, {
+      organizationId: ORG_CLIENTE,
+      nombre: "Proyecto Demo",
+      servicio: SERVICIO,
+      estado: "active",
+      responsableId: OPERADOR,
+    });
+    check("el operador vuelve a ser responsable de su proyecto", await estaAsignado(operador(), proyectoId));
+
+    const campoDe = async (fn: () => Promise<unknown>) => {
+      try {
+        await fn();
+        return "(aceptado)";
+      } catch (e) {
+        return (e as Error & { campo?: string }).campo ?? (e as Error).name;
+      }
+    };
+    const estadoDe = async (fn: () => Promise<unknown>) => {
+      try {
+        await fn();
+        return 0;
+      } catch (e) {
+        return e instanceof ErrorDeAutorizacion ? e.status : -1;
+      }
+    };
+
+    console.log("\nDU-29 — hitos: solo en los proyectos asignados, y el rechazo queda auditado (RF-152, RF-156):\n");
+    const estadoHitoAjeno = await estadoDe(() =>
+      crearHito(operador(), { projectId: ajeno, titulo: "Hito ajeno", venceEn: "2026-10-01" }),
+    );
+    check(
+      "el operador NO crea un hito en un proyecto que no tiene asignado",
+      estadoHitoAjeno === 403 || estadoHitoAjeno === 404,
+      `estado ${estadoHitoAjeno}`,
+    );
+    check("y el intento queda auditado como rechazo", (await apuntes("milestone.create.denied", OPERADOR)).length === 1);
+    check(
+      "un hito sin título es un dato inválido, no una avería",
+      (await campoDe(() => crearHito(admin(), { projectId: proyectoId, titulo: "   ", venceEn: "2026-10-01" }))) === "titulo",
+    );
+    check(
+      "y uno con fecha imposible también",
+      (await campoDe(() => crearHito(admin(), { projectId: proyectoId, titulo: "Entrega", venceEn: "no es una fecha" }))) === "fecha",
+    );
+
+    const hito = await crearHito(operador(), {
+      projectId: proyectoId,
+      titulo: "Entrega del diagnóstico",
+      venceEn: "2026-10-15",
+      posicion: 1,
+    });
+    check("en su proyecto asignado, el hito se crea pendiente y sin fecha de hecho", hito.estado === "pending" && hito.hechoEn === null);
+    check("con la empresa copiada del proyecto, no de un parámetro", hito.organizationId === ORG_CLIENTE);
+    check("y aparece en la lista del proyecto", (await hitosDeProyecto(admin(), proyectoId)).some((h) => h.id === hito.id));
+    check("la creación queda auditada", (await apuntes("milestone.create", OPERADOR)).length === 1);
+
+    const hecho = await actualizarHito(admin(), hito.id, { estado: "done" });
+    check("marcarlo hecho pone la fecha", hecho?.estado === "done" && hecho.hechoEn !== null, JSON.stringify(hecho));
+    const reabierto = await actualizarHito(admin(), hito.id, { estado: "pending" });
+    check("y reabrirlo la quita: hecho ⇔ con fecha", reabierto?.estado === "pending" && reabierto.hechoEn === null);
+    check("un hito que no existe para este actor es `null`, no un error", (await actualizarHito(admin(), "no-existe", { estado: "done" })) === null);
+
+    console.log("\nDU-29 — pendientes: crear, cerrar y reabrir, con quién lo cerró (RF-151):\n");
+    const estadoPendienteAjeno = await estadoDe(() =>
+      crearPendiente(operador(), { projectId: ajeno, titulo: "Ajeno", cierra: "client" }),
+    );
+    check(
+      "el operador NO crea un pendiente en un proyecto ajeno",
+      estadoPendienteAjeno === 403 || estadoPendienteAjeno === 404,
+      `estado ${estadoPendienteAjeno}`,
+    );
+    check("y queda auditado", (await apuntes("action_item.create.denied", OPERADOR)).length === 1);
+    check(
+      "un pendiente sin título es un dato inválido",
+      (await campoDe(() => crearPendiente(admin(), { projectId: proyectoId, titulo: "", cierra: "client" }))) === "titulo",
+    );
+    check(
+      "y uno con fecha límite imposible también",
+      (await campoDe(() => crearPendiente(admin(), { projectId: proyectoId, titulo: "Organigrama", venceEn: "ayer", cierra: "client" }))) === "fecha",
+    );
+
+    const pendiente = await crearPendiente(operador(), {
+      projectId: proyectoId,
+      titulo: "Enviar el organigrama",
+      venceEn: "2026-09-30",
+      cierra: "client",
+    });
+    check("en su proyecto asignado, el pendiente se crea abierto y sin cierre", pendiente.estado === "open" && pendiente.hechoPor === null);
+    check("y aparece entre los abiertos de la empresa", (await pendientesAbiertos(admin(), ORG_CLIENTE)).some((p) => p.id === pendiente.id));
+
+    const cerrado = await cerrarPendiente(admin(), pendiente.id);
+    check(
+      "cerrarlo guarda quién y cuándo, del contexto y no de un parámetro",
+      cerrado?.estado === "done" && cerrado.hechoPorTipo === "user" && cerrado.hechoPorId === ADMIN && cerrado.hechoEn !== null,
+      JSON.stringify(cerrado),
+    );
+    check("y sale de los abiertos", !(await pendientesAbiertos(admin(), ORG_CLIENTE)).some((p) => p.id === pendiente.id));
+    check("el cierre queda auditado", (await apuntes("action_item.close", ADMIN)).length === 1);
+    const reabiertoP = await reabrirPendiente(admin(), pendiente.id);
+    check(
+      "reabrirlo borra el cierre entero",
+      reabiertoP?.estado === "open" && reabiertoP.hechoEn === null && reabiertoP.hechoPor === null,
+      JSON.stringify(reabiertoP),
+    );
+    check(
+      "y vuelve a la lista del proyecto como abierto",
+      (await pendientesDeProyecto(admin(), proyectoId)).some((p) => p.id === pendiente.id && p.estado === "open"),
+    );
+
+    console.log("\nDU-29 — noticias: de UNA empresa, y solo donde el operador tiene proyecto (RF-150, RF-152):\n");
+    const noticiaBase = {
+      titulo: "Nueva norma sectorial",
+      resumenMd: "Resumen de la noticia.",
+      comentarioMd: "Para esta empresa significa revisar el plan.",
+      importancia: 1 as const,
+      publicar: true,
+    };
+    // En la empresa de SLG el operador tiene membresía pero ningún proyecto:
+    // sin prueba de asignación, el silencio vale «no».
+    const estadoNoticiaAjena = await estadoDe(() => crearNoticia(operador(), { ...noticiaBase, organizationId: ORG_SLG }));
+    check(
+      "el operador NO escribe para una empresa donde no tiene proyecto",
+      estadoNoticiaAjena === 403 || estadoNoticiaAjena === 404,
+      `estado ${estadoNoticiaAjena}`,
+    );
+    check("y queda auditado", (await apuntes("news.create.denied", OPERADOR)).length === 1);
+    check(
+      "una noticia sin título es un dato inválido",
+      (await campoDe(() => crearNoticia(admin(), { ...noticiaBase, titulo: "", organizationId: ORG_CLIENTE }))) === "titulo",
+    );
+    check(
+      "y una con fuente que no es http(s) también",
+      (await campoDe(() => crearNoticia(admin(), { ...noticiaBase, organizationId: ORG_CLIENTE, fuenteUrl: "javascript:alert(1)" }))) === "fuente",
+    );
+
+    const publicada = await crearNoticia(operador(), { ...noticiaBase, organizationId: ORG_CLIENTE, fuenteUrl: "https://ejemplo.test/norma" });
+    check(
+      "donde sí tiene proyecto, la publica con su autoría del contexto",
+      publicada.publicadaEn !== null && publicada.autorTipo === "user" && publicada.autorId === OPERADOR,
+      JSON.stringify(publicada),
+    );
+    const borrador = await crearNoticia(admin(), { ...noticiaBase, organizationId: ORG_CLIENTE, titulo: "Borrador", publicar: false });
+    check("un borrador no lleva fecha de publicación ni autor", borrador.publicadaEn === null && borrador.autor === null);
+    const deLaEmpresa = await noticias(admin(), { organizationId: ORG_CLIENTE });
+    check("HQ ve las dos", deLaEmpresa.some((n) => n.id === publicada.id) && deLaEmpresa.some((n) => n.id === borrador.id));
+    check(
+      "y solo la publicada sale por `soloPublicadas`, que es lo que ve el portal",
+      (await noticias(admin(), { organizationId: ORG_CLIENTE, soloPublicadas: true })).every((n) => n.id !== borrador.id),
+    );
+    check("la escritura queda auditada", (await apuntes("news.create", OPERADOR)).length === 1);
 
     /* ── Criterios 1, 3 y 6 · invitaciones ──────────────────────────────── */
     console.log("\nCriterio 3 — una invitación no aceptada se revoca y deja de servir DE INMEDIATO:\n");
@@ -366,6 +701,208 @@ async function main() {
                  where id = ${caducable.invitacion.id}`;
     const caducado = await consultarTestigo(otro.enClaro);
     check("un testigo caducado no vale", caducado.valido === false, JSON.stringify(caducado));
+
+    /* ── Archivar y cerrar · nada se borra (data_model §2.5 y §4.3) ────── */
+    console.log("\nArchivar una empresa — cambia el estado, queda auditado y NO borra nada (§2.5, §4.3):\n");
+
+    /**
+     * Un entregable de verdad colgando del proyecto: es lo que §4.3 promete que
+     * se conserva, y se **cuenta** antes y después en vez de suponerlo. Se
+     * siembra con el dueño porque publicarlo por el servicio pediría un
+     * archivo, y aquí lo que se prueba es que sobrevive, no que se publica.
+     */
+    await dueno`insert into deliverable (id, project_id, organization_id, title, type, version, family_id, visibility, published_at)
+                values (${crypto.randomUUID()}, ${proyectoId}, ${ORG_CLIENTE}, 'Informe final', 'pdf', 1, ${crypto.randomUUID()}, 'client', now())`;
+    const cuenta = async () => {
+      const [p] = await dueno<{ n: number }[]>`select count(*)::int as n from project where organization_id = ${ORG_CLIENTE}`;
+      const [d] = await dueno<{ n: number }[]>`select count(*)::int as n from deliverable where organization_id = ${ORG_CLIENTE}`;
+      const [m] = await dueno<{ n: number }[]>`select count(*)::int as n from membership where organization_id = ${ORG_CLIENTE}`;
+      return { proyectos: Number(p?.n ?? -1), entregables: Number(d?.n ?? -1), pertenencias: Number(m?.n ?? -1) };
+    };
+    const antesDeArchivar = await cuenta();
+    check(
+      "hay algo que perder: dos proyectos y un entregable",
+      antesDeArchivar.proyectos === 2 && antesDeArchivar.entregables === 1,
+      JSON.stringify(antesDeArchivar),
+    );
+
+    const estadoArchivoAjeno = await estadoDe(() => archivarEmpresa(operador(), ORG_SLG));
+    check(
+      "el operador NO archiva una empresa que no tiene asignada",
+      estadoArchivoAjeno === 403 || estadoArchivoAjeno === 404,
+      `estado ${estadoArchivoAjeno}`,
+    );
+    check("y el intento queda auditado como rechazo", (await apuntes("org.archive.denied", OPERADOR)).length === 1);
+    // Ni la empresa donde SÍ tiene un proyecto: archivar una empresa entera
+    // —con los proyectos de otros y el acceso de todos sus miembros— no es
+    // «operar sobre un proyecto asignado». Es una decisión de administrador.
+    const estadoArchivoPropio = await estadoDe(() => archivarEmpresa(operador(), ORG_CLIENTE));
+    check(
+      "ni una donde tiene proyecto: archivar una empresa es de administrador",
+      estadoArchivoPropio === 403 || estadoArchivoPropio === 404,
+      `estado ${estadoArchivoPropio}`,
+    );
+    check("y la empresa sigue activa", (await empresas(admin())).find((e) => e.id === ORG_CLIENTE)?.estado === "active");
+
+    /**
+     * LAS DOS PUERTAS DE §4.3, abiertas a propósito justo antes de archivar.
+     *
+     * Ninguna de las dos pasa por la capa de sesión, que es la razón de que el
+     * estado de la empresa no bastara: el enlace de invitación lo canjea alguien
+     * que **todavía no tiene cuenta**, y la clave escribe por `/api/v1` sin
+     * sesión ninguna. Por eso se comprueban aquí y no en la prueba del portal.
+     *
+     * La invitación caducada de más arriba sigue en `pending` y también entra:
+     * lo que se cierra es el estado de la fila, no «las que aún valían».
+     */
+    const invitacionViva = await invitarACliente(admin(), {
+      email: `viva@${SUFIJO}`,
+      organizationId: ORG_CLIENTE,
+      role: "client_member",
+    });
+    const CADUCA = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const claveDelCliente = await crearClave(admin(), {
+      nombre: CLAVE_CLIENTE,
+      organizationId: ORG_CLIENTE,
+      alcances: ["deliverables:read"],
+      limite: 60,
+      ventanaSegundos: 60,
+      caducaEn: CADUCA,
+    });
+    // La de la casa: sin empresa. Archivar un cliente no puede apagar la
+    // integración de SLG, y sin esta clave el freno no distinguiría «revoca las
+    // de esa empresa» de «revoca todas».
+    const claveDeLaCasa = await crearClave(admin(), {
+      nombre: CLAVE_SLG,
+      organizationId: null,
+      alcances: ["orgs:read"],
+      limite: 60,
+      ventanaSegundos: 60,
+      caducaEn: CADUCA,
+    });
+
+    const estadoDeInvitacion = async (invitationId: string) => {
+      const [f] = await dueno<{ status: string }[]>`select status from invitation where id = ${invitationId}`;
+      return f?.status ?? "(no existe)";
+    };
+    const revocada = async (claveId: string) =>
+      (await claves(admin())).find((c) => c.id === claveId)?.revocadaEn !== null;
+    const pendientesDeLaEmpresa = async () => {
+      const [f] = await dueno<{ n: number }[]>`select count(*)::int as n from invitation
+                                                where organization_id = ${ORG_CLIENTE} and status = 'pending'`;
+      return Number(f?.n ?? -1);
+    };
+
+    check(
+      "antes de archivar hay dos invitaciones pendientes y dos claves vivas",
+      (await pendientesDeLaEmpresa()) === 2 && !(await revocada(claveDelCliente.id)) && !(await revocada(claveDeLaCasa.id)),
+      `pendientes: ${await pendientesDeLaEmpresa()}`,
+    );
+    // Se cuenta desde aquí porque `revocar` ya apuntó una revocación más arriba:
+    // lo que se comprueba es lo que añade el archivado, no el total.
+    const revocacionesAntes = (await apuntes("invitation.revoke", ADMIN)).length;
+    const clavesRevocadasAntes = (await apuntes("apikey.revoke", ADMIN)).length;
+
+    const archivada = await archivarEmpresa(admin(), ORG_CLIENTE);
+    check("el administrador la archiva y vuelve archivada", archivada?.estado === "archived", JSON.stringify(archivada));
+    check(
+      "y sigue en la lista de HQ, con su estado escrito",
+      (await empresas(admin())).some((e) => e.id === ORG_CLIENTE && e.estado === "archived"),
+    );
+    check("el archivado queda auditado", (await apuntes("org.archive", ADMIN)).length === 1);
+    const despuesDeArchivar = await cuenta();
+    check(
+      "NO se borra ningún proyecto, entregable ni pertenencia",
+      JSON.stringify(despuesDeArchivar) === JSON.stringify(antesDeArchivar),
+      `${JSON.stringify(antesDeArchivar)} → ${JSON.stringify(despuesDeArchivar)}`,
+    );
+    check(
+      "y HQ sigue viendo sus proyectos",
+      (await proyectos(admin())).filter((p) => p.organizationId === ORG_CLIENTE).length === antesDeArchivar.proyectos,
+    );
+    check("una empresa que no existe es `null`, no un error", (await archivarEmpresa(admin(), "no-existe")) === null);
+
+    console.log("\n…y CIERRA las dos puertas que no pasan por la sesión (§4.3):\n");
+    check(
+      "la invitación viva queda cancelada, no borrada",
+      (await estadoDeInvitacion(invitacionViva.invitacion.id)) === "canceled",
+      await estadoDeInvitacion(invitacionViva.invitacion.id),
+    );
+    check(
+      "y la caducada también: lo que se cierra es el estado de la fila, no «las que aún valían»",
+      (await estadoDeInvitacion(caducable.invitacion.id)) === "canceled",
+      await estadoDeInvitacion(caducable.invitacion.id),
+    );
+    check("no queda ninguna pendiente en esa empresa", (await pendientesDeLaEmpresa()) === 0);
+    /**
+     * El hash del testigo se borra, igual que al revocar a mano: un hash
+     * guardado de un enlace que ya no vale solo sirve para confundir a quien
+     * lea la tabla después. Se mira la columna y no `consultarTestigo`, que ya
+     * decía «no vale» por la caducidad y no distinguiría las dos razones.
+     */
+    const [sinTestigo] = await dueno<{ vacio: boolean }[]>`select token_hash is null as vacio
+                                                             from invitation where id = ${caducable.invitacion.id}`;
+    check("y el hash de su enlace se borra, como en una revocación a mano", sinTestigo?.vacio === true);
+    check("la clave de la empresa queda revocada", await revocada(claveDelCliente.id));
+    check(
+      "y HQ la da por muerta",
+      (await claves(admin())).find((c) => c.id === claveDelCliente.id)?.muerta === true,
+    );
+    check(
+      "la clave SIN empresa sigue viva: archivar un cliente no apaga la integración de la casa",
+      !(await revocada(claveDeLaCasa.id)),
+    );
+    check(
+      "cada invitación cancelada deja su apunte, con la acción que ya existía",
+      (await apuntes("invitation.revoke", ADMIN)).length - revocacionesAntes === 2,
+      `${revocacionesAntes} → ${(await apuntes("invitation.revoke", ADMIN)).length}`,
+    );
+    check(
+      "y cada clave revocada, el suyo",
+      (await apuntes("apikey.revoke", ADMIN)).length - clavesRevocadasAntes === 1,
+      `${clavesRevocadasAntes} → ${(await apuntes("apikey.revoke", ADMIN)).length}`,
+    );
+
+    console.log("\nReactivar — la devuelve, con todo lo suyo y sin volver a invitar a nadie:\n");
+    const reactivada = await reactivarEmpresa(admin(), ORG_CLIENTE);
+    check("vuelve activa", reactivada?.estado === "active", JSON.stringify(reactivada));
+    check("y queda auditado", (await apuntes("org.reactivate", ADMIN)).length === 1);
+    check("con todo lo suyo intacto", JSON.stringify(await cuenta()) === JSON.stringify(antesDeArchivar));
+    /**
+     * LO QUE REACTIVAR **NO** HACE, que es la mitad que se olvida. Una puerta
+     * que se cerró al archivar se queda cerrada: quien haga falta se invita otra
+     * vez, y la clave se crea de nuevo declarando alcances y caducidad. Volver a
+     * abrirlas en silencio sería conceder, meses después, un acceso que nadie
+     * recuerda haber dado.
+     */
+    check(
+      "y las invitaciones canceladas NO resucitan",
+      (await estadoDeInvitacion(invitacionViva.invitacion.id)) === "canceled" && (await pendientesDeLaEmpresa()) === 0,
+    );
+    check("ni la clave revocada", await revocada(claveDelCliente.id));
+
+    console.log("\nCerrar un proyecto — solo los asignados, y sus entregables se quedan (RF-86, §2.5):\n");
+    const estadoCierreAjeno = await estadoDe(() => archivarProyecto(operador(), ajeno));
+    check(
+      "el operador NO cierra un proyecto que no es suyo",
+      estadoCierreAjeno === 403 || estadoCierreAjeno === 404,
+      `estado ${estadoCierreAjeno}`,
+    );
+    check("y el intento queda auditado como rechazo", (await apuntes("project.close.denied", OPERADOR)).length === 1);
+    const cerradoProyecto = await archivarProyecto(operador(), proyectoId);
+    check(
+      "el suyo sí, y vuelve cerrado con su empresa",
+      cerradoProyecto?.estado === "closed" && cerradoProyecto.organizationId === ORG_CLIENTE,
+      JSON.stringify(cerradoProyecto),
+    );
+    check("el cierre queda auditado", (await apuntes("project.close", OPERADOR)).length === 1);
+    check("sus entregables siguen ahí", (await cuenta()).entregables === antesDeArchivar.entregables);
+    check("y HQ lo lista como cerrado", (await proyectos(admin())).some((p) => p.id === proyectoId && p.estado === "closed"));
+    check("un proyecto que no existe es `null`, no un error", (await archivarProyecto(admin(), "no-existe")) === null);
+
+    const reabiertoProyecto = await reabrirProyecto(admin(), proyectoId);
+    check("reabrirlo lo devuelve a activo", reabiertoProyecto?.estado === "active", JSON.stringify(reabiertoProyecto));
+    check("y queda auditado", (await apuntes("project.reopen", ADMIN)).length === 1);
 
     await limpiar();
   } finally {

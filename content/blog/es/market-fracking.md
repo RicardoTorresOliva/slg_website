@@ -4,7 +4,7 @@ title: "Market Fracking"
 description: "Un borrador de trabajo. Existe en el repositorio y no se sirve en ninguna parte: eso es exactamente lo que tiene que demostrar."
 lang: es
 pair: null
-date: 2026-09-13
+date: 2026-08-07
 tags:
   - Market Fracking
   - Digital Geography

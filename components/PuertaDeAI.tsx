@@ -1,34 +1,44 @@
 import { loadCollection, loadUiStrings } from "@/lib/content/loader";
-import { RAMAS, SERVICIOS } from "@/lib/content/rutas";
+import { RAMAS, SERVICIOS, type Eje } from "@/lib/content/rutas";
 import { secciones } from "@/lib/content/secciones";
 
 import { Markdown } from "./Markdown";
 import { HeroTipografico, TarjetaDeServicio } from "./piezas";
 
 /**
- * `SLG_AI` — el overview de la rama, que es **la puerta a las tres líneas**
- * (DU-04, criterio 2).
+ * El índice de un EJE de la oferta —en la demo, `Consultoría` en `/consultoria`—: la
+ * puerta a sus líneas (DU-04, criterio 2). El nombre del archivo es el de
+ * cuando solo existía ese eje; el componente sirve a cualquiera que declare la
+ * ficha.
  *
- * Enlaza a las tres y a ninguna más. La cuenta de servicios de cada tarjeta
- * sale de la tabla de rutas, no de un número escrito a mano: si mañana entra un
- * servicio nuevo, la cuenta cambia sola.
+ * Enlaza a las líneas de ESTE eje y a ninguna más. La cuenta de servicios de
+ * cada tarjeta sale de la tabla de rutas, no de un número escrito a mano: si
+ * mañana entra un servicio nuevo, la cuenta cambia sola.
  */
-export function PuertaDeAI({ lang }: { lang: "es" | "en" }) {
+export function PuertaDeAI({ eje, lang }: { eje: Eje; lang: "es" | "en" }) {
   const t = loadUiStrings()[lang];
   const idx = lang === "en" ? "en" : "es";
-  const slug = lang === "en" ? "ai" : "ai";
+  const slug = lang === "en" ? eje.slugEn : eje.slug;
   const pagina = loadCollection<{ title: string; description: string }>("page", lang).find(
     (p) => p.slug === slug,
   );
-  const bloques = secciones(pagina?.body ?? "");
+  const cuerpo = pagina?.body ?? "";
+  const bloques = secciones(cuerpo);
+  // La entrada es lo que va ANTES del primer `##`: se pinta siempre. Antes solo
+  // se pintaba el cuerpo cuando no había ninguna sección, así que añadir una
+  // (la historia del nombre del eje) hizo desaparecer también el párrafo de entrada. Las
+  // secciones van después de las líneas: primero la oferta, luego el nombre y
+  // su historia.
+  const entrada = cuerpo.split(/\n##\s+/)[0]?.trim() ?? "";
+  const lineas = RAMAS.filter((r) => r.eje === eje.clave);
 
   return (
     <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "0 1.25rem" }}>
       <HeroTipografico titular={pagina?.data.title ?? ""} apoyo={pagina?.data.description ?? ""} />
 
-      {bloques.length === 0 ? (
+      {entrada ? (
         <div style={{ maxWidth: "44rem" }}>
-          <Markdown texto={pagina?.body ?? ""} />
+          <Markdown texto={entrada} />
         </div>
       ) : null}
 
@@ -37,7 +47,7 @@ export function PuertaDeAI({ lang }: { lang: "es" | "en" }) {
           {t["overview.lines"]}
         </h2>
         <ul style={rejilla}>
-          {RAMAS.map((r) => {
+          {lineas.map((r) => {
             const registro = loadCollection<{ title: string; description: string }>(
               "page",
               lang,
@@ -57,6 +67,13 @@ export function PuertaDeAI({ lang }: { lang: "es" | "en" }) {
           })}
         </ul>
       </section>
+
+      {bloques.map((b) => (
+        <section key={b.titulo} aria-label={b.titulo} style={{ maxWidth: "44rem", padding: "0 0 4rem" }}>
+          <h2 style={titulo}>{b.titulo}</h2>
+          <Markdown texto={b.cuerpo} />
+        </section>
+      ))}
     </div>
   );
 }
