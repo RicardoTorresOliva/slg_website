@@ -4327,3 +4327,23 @@ Lo que no depende de Ricardo, sobre `develop` (rama `claude/fase2-servicios`).
 **No hecho.** Entregables por fase (P-07), CTA del servicio de entrada de Academy y Factory,
 duración y formato por fase (D-4, D-5), trayectoria y once dimensiones por nombre, DU-RC05 y
 DU-RC06. Todo el copy nuevo queda `temporal`.
+
+## 2026-10-29 — «Empieza aquí» abre con quiénes somos y qué problema resolvemos
+
+Encargo de Ricardo: el primer párrafo de «Empieza aquí» dice quiénes somos y qué problema
+resolvemos, con postura firme, tomando su criterio («business transformation agency, AI-first… la IA
+no es solo una herramienta… nuestro ADN es Human-first») y lo leído en su carpeta Doctrine & OS
+(`The Phoenix Doctrine`, `DAL OS`, `Phoenix AI Activation`).
+
+- Se retira el texto inicial y la raíz del árbol (la caja gris): sube y pasa a ser la caja de
+  `.slg-mapa-quienes`, con el copy nuevo. El árbol cuelga debajo, sin raíz propia (`mapa.root` fuera
+  de `content/ui`).
+- El copy vive en los registros `empieza-aqui` / `start-here` (hero + cuatro bloques, por posición);
+  `MapaDelSitio.tsx` no lleva texto. El H1 de la página es ahora el titular; el título del registro
+  («Empieza aquí») queda como rótulo, menú y metadatos.
+- Copy `temporal`, a la espera de la firma. No se publica ninguna cifra ni caso de la doctrina
+  (regla de prueba autorizada); el enlace a la doctrina es el único salto.
+
+**Verificado** (build de producción): `lint`, `tsc`, `check:content`, `check:cadenas`,
+`check:contraste`, `check:motion`, `check:paginas` (142), `check:seo` (238), `check:armazon` (60),
+`check:produccion`, `check:js-budget`, Lighthouse (accesibilidad 100); sin desbordes a 390 px.

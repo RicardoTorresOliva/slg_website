@@ -6,10 +6,14 @@ import { secciones } from "@/lib/content/secciones";
 import { PAGINAS_DEL_MOTOR, paginaDelMotorActiva } from "@/lib/sitio/motor";
 
 import { Markdown } from "./Markdown";
-import { HeroTipografico } from "./piezas";
 
 /**
  * «Empieza aquí» / «Start here»: el mapa del sitio en una página.
+ *
+ * **ARRIBA VA LA POSTURA, Y EL MAPA DEBAJO** (Ricardo, 2026-10-29). La página abre
+ * con quiénes somos y qué problema resolvemos, en la caja que antes era la raíz
+ * del árbol; el texto va en el registro `empieza-aqui` / `start-here`, por
+ * posición, y el árbol cuelga debajo sin raíz propia.
  *
  * **EL ÁRBOL SE GENERA DESDE LA ESTRUCTURA REAL, Y ESO ES LA DECISIÓN.** Los
  * nodos salen de `EJES`, `RAMAS` y `SERVICIOS` —la tabla de rutas, que sale de
@@ -60,13 +64,6 @@ export function MapaDelSitio({ slug, lang }: { slug: string; lang: "es" | "en" }
   const primeraLinea = (cuerpo: string) => secciones(cuerpo)[0]?.cuerpo.split("\n")[0] ?? "";
 
   const esta = pagina(slug);
-
-  // La raíz enlaza a Servicios, la casa comercial: el mapa ES esta página.
-  const raiz: Nodo = {
-    nombre: t["mapa.root"],
-    linea: pagina(M.servicios.registro[lang])?.data.description ?? "",
-    href: M.servicios.ruta[lang],
-  };
 
   /** Las líneas de un eje, cada una con sus servicios y la frase de cada uno. */
   const lineasDe = (eje: string): Rama[] =>
@@ -133,13 +130,9 @@ export function MapaDelSitio({ slug, lang }: { slug: string; lang: "es" | "en" }
 
   return (
     <div className="slg-mapa" lang={lang}>
-      <HeroTipografico titular={esta?.data.title ?? ""} apoyo={esta?.data.description ?? ""} />
-      <Markdown texto={esta?.body ?? ""} />
+      <Quienes cuerpo={esta?.body ?? ""} etiqueta={esta?.data.title ?? ""} />
 
       <nav aria-label={t["mapa.aria"]} className="slg-mapa-arbol">
-        <div className="slg-mapa-raiz-wrap">
-          <Tarjeta nodo={raiz} clase="slg-mapa-raiz" />
-        </div>
         <ul className="slg-mapa-lista slg-mapa-destinos">
           {destinos.map((d) => (
             <li key={d.href}>
@@ -193,5 +186,31 @@ function Tarjeta({ nodo, clase }: { nodo: Nodo; clase?: string }) {
       <span className="slg-mapa-nombre">{nodo.nombre}</span>
       {nodo.linea ? <span className="slg-mapa-linea">{nodo.linea}</span> : null}
     </Link>
+  );
+}
+
+/**
+ * La postura de la casa. El registro trae el hero (titular y entradilla) y,
+ * después, un bloque por sección: el título es el `##`, el texto es lo que
+ * sigue. Sin texto en el registro no se pinta nada: el mapa se sirve igual.
+ */
+function Quienes({ cuerpo, etiqueta }: { cuerpo: string; etiqueta: string }) {
+  const [hero, ...bloques] = secciones(cuerpo);
+  if (!hero) return null;
+  const [titular, ...apoyo] = hero.cuerpo.split("\n").filter(Boolean);
+  return (
+    <section aria-labelledby="mapa-quienes" className="slg-mapa-quienes">
+      <p className="slg-mapa-etiqueta">{etiqueta}</p>
+      <h1 id="mapa-quienes">{titular}</h1>
+      {apoyo.length > 0 ? <p className="slg-mapa-entradilla">{apoyo.join(" ")}</p> : null}
+      <div className="slg-mapa-bloques">
+        {bloques.map((b) => (
+          <div key={b.titulo}>
+            <h2>{b.titulo}</h2>
+            <Markdown texto={b.cuerpo} />
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
