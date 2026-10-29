@@ -149,6 +149,7 @@ const DEL_MOTOR_EN_EL_SITEMAP: readonly ClaveDelMotor[] = [
   "descargas",
   "contacto",
   "servicios",
+  "mapa",
   "legalPrivacidad",
   "legalTerminos",
 ];

@@ -34,8 +34,14 @@ export type PaginaDelMotor = {
 };
 
 export const PAGINAS_DEL_MOTOR = {
-  /** La portada es el mapa del sitio («Empieza aquí»). */
-  inicio: { ruta: { es: "/", en: "/en" }, registro: { es: "empieza-aqui", en: "start-here" } },
+  /**
+   * La portada dice qué hace SLG y para quién (reingeniería, 2026-10-27): la
+   * propuesta de valor, el método y el siguiente paso. Fue el mapa del sitio
+   * desde el 2026-09-18; el mapa vive ahora en su propia ruta (`mapa`).
+   */
+  inicio: { ruta: { es: "/", en: "/en" }, registro: { es: "inicio", en: "home" } },
+  /** «Empieza aquí»: el mapa del sitio en una página, enlazado desde el menú. */
+  mapa: { ruta: { es: "/empieza-aqui", en: "/en/start-here" }, registro: { es: "empieza-aqui", en: "start-here" } },
   /** La casa comercial: los bloques de `sitio.bloquesDeServicios`. */
   servicios: { ruta: { es: "/servicios", en: "/en/services" }, registro: { es: "servicios", en: "services" } },
   blog: { ruta: { es: "/blog", en: "/en/blog" }, modulos: ["blog"] },

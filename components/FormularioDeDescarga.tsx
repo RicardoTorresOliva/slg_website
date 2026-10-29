@@ -138,6 +138,7 @@ export function FormularioDeDescarga({
       <button
         type="submit"
         className="slg-pressable"
+        data-press="propio"
         data-pressed={pulsado ? "true" : "false"}
         onPointerDown={() => setPulsado(true)}
         onPointerUp={() => setPulsado(false)}

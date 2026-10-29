@@ -44,6 +44,8 @@ const VIGILADOS = [
   "components/OverviewDeRama.tsx",
   "components/PaginaDeServicio.tsx",
   "components/MapaDelSitio.tsx",
+  // Reingeniería 2026-10-27: la portada nueva lee todo su texto del registro.
+  "components/Propuesta.tsx",
   "components/PaginaDeLaFicha.tsx",
   "components/app/ArmazonDeApp.tsx",
   "components/app/EstadosCanonicos.tsx",

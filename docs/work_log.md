@@ -4245,3 +4245,57 @@ Construido sobre `develop`: `/assessment` y `/en/assessment` (par ES/EN, `?progr
 (desvío del spec: el `CHECK` de `lead_capture.source` obligaba a una migración). `/gracias?estado=assessment`. Prefijo `/api/assessment` bajo el módulo `contacto`.
 Opcional y sin filtro (DU-10). Verificado: `tsc --noEmit`, `check:content`, `check:cadenas`, `check:sitio`, `check:fronteras`, `check:alcance`, `check:secrets`, `check:env`.
 **Pendiente:** `build:standalone` + `check:paginas/seo/armazon`, `test:capturas`, revisión visual en staging, envío de prueba al CRM. Llega a producción solo por la ruta `develop`→staging→`main`.
+
+## 2026-10-27 — Reingeniería del sitio público: análisis REA, plan y portada nueva
+
+**Encargo** (Ricardo): reingeniería para mostrar con más contundencia la propuesta de valor; análisis
+profundo de agenciaia.com.pe y prayaga.biz con REA; integrar lo mejor sin perder el estilo sobrio;
+aplicar `apple-design` (Emil Kowalski) sin perder el minimalismo nórdico. Instrucción explícita de
+ejecutar hasta el final sin detenerse (decisiones D-168…D-173).
+
+**Base.** La rama partía de `main`, que va 167 commits por detrás de `develop`, y lo publicado sale
+de `develop`. La rama se movió a `develop` con un merge cuyo árbol es `develop` + el expediente (sin
+reescribir historia). El único commit de `main` ausente en `develop` (356ae02) está superado allí.
+
+**Análisis (workflow de 7 agentes).** Captura de las referencias con Apify (`web-fetch` con render
+JS): la red del contenedor bloquea los tres dominios y Firecrawl estaba sin créditos, así que las
+herramientas de navegador de REA no pudieron cargarlos; el método REA (checklist, ledger de
+evidencia OBS/INF/UNK, revisión final) se aplicó completo. Ledgers: 57 (agenciaia), 60 (prayaga),
+84 (SLG). Síntesis: 13 brechas y 8 principios. Planes de contenido (3 heros) y visual. Crítica
+independiente: 21 hallazgos, 15 corregidos en los planes. Todo en `planning/reingenieria/`.
+
+**Implementado.**
+- Portada `/` y `/en` (`components/Propuesta.tsx`, `content/pages/{es/inicio,en/home}.md`): once
+  bloques, una sola acción primaria (el documento del diagnóstico) repetida tres veces y nunca dos en
+  el mismo viewport, la única franja oscura para las cuatro reglas, servidor puro (cero JS nuevo).
+- Mapa en `/empieza-aqui` y `/en/start-here` (antes redirigían); `nav.start` apunta ahí; entra en el
+  sitemap (`mapa` en `motor.ts`).
+- FU-21, FU-22, FU-23 y DU-40 (plan visual): tokens (`tokens.css`), motion (`motion.css`), `apple.css` sin valores propios, `PressDelegado`,
+  sheet con foco/`inert`/entrada y salida simétricas; peso 500 inexistente en la barra → 400.
+- Copy: Servicios sin «tu futuro» ni reglas internas; `/ai` sin backticks y sin el párrafo de hype
+  de VoltAi; compuerta con una sola redacción en Nosotros y los 22 servicios; Contacto sin la
+  contradicción «sin formulario» + formulario.
+- `test:gesto` espera a que el panel se asiente antes de medir (el panel ahora entra en 300 ms).
+
+**Verificado** (servidor real, build de producción): `lint`, `tsc`, `check:content` (5 frenos),
+`check:cadenas` (+`Propuesta.tsx`), `check:motion`, `check:contraste`, `check:sitio`,
+`check:js-budget`, `check:paginas` (142), `check:armazon` (60), `check:seo` (238),
+`check:produccion`, `check:runtime` (35), `check:blog`, `check:terceros`, `test:gesto` (20/20),
+Lighthouse móvil en `/`, `/en`, `/servicios`, `/empieza-aqui`: **accesibilidad 100** en las cuatro,
+rendimiento 95–98, buenas prácticas y SEO 100. Foco del sheet comprobado con teclado (entra,
+queda atrapado, `main` inerte, Escape cierra y el foco vuelve a «Menú»). Las cuatro páginas siguen
+prerenderizadas (○).
+
+**No hecho (queda para Ricardo o para fase 2).** Firma del copy (`copy: temporal`); decisiones D-2
+(marca maestra), D-4/D-5 (duraciones y rangos), D-6 (audiencia única), D-7 (foto), D-9 (renombrar
+productos); los `[PENDIENTE: Ricardo]` de 03 §4 (casos, trayectoria, once dimensiones por nombre,
+entregables por fase); páginas de línea por fase y `/servicios` como índice por fase (DU-RC02/03);
+objeciones visibles en servicios (DU-RC04); campo trampa fuera del texto extraído; prueba de 5 s
+con lectores (DU-RC06).
+
+## 2026-10-29 — Copy de la portada aprobado
+
+Ricardo aprueba el copy de la portada nueva: `content/pages/es/inicio.md` y `content/pages/en/home.md`
+pasan de `copy: temporal` a `copy: aprobado`, y pide mezclar el PR #3 en `develop`. Con eso queda
+confirmada D-168 (la portada muestra la propuesta de valor; el mapa sigue en `/empieza-aqui`).
+

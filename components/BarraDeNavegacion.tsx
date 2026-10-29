@@ -98,7 +98,8 @@ export function BarraDeNavegacion({
                   style={{
                     ...enlaceEstilo,
                     color: activo === e.href ? "var(--slg-blue-deep)" : "var(--slg-ink-2)",
-                    fontWeight: activo === e.href ? 600 : 500,
+                    // Solo se cargan los cortes 400/600/700: un 500 se pintaba como 400.
+                    fontWeight: activo === e.href ? 600 : 400,
                   }}
                 >
                   {e.etiqueta}

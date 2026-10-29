@@ -338,6 +338,23 @@ jobs:
           BETTER_AUTH_SECRET: solo-para-compilar-en-ci
         run: npm run build:standalone
 
+      # `test:respaldos` vuelca y restaura con `pg_dump`/`pg_restore`. El cliente
+      # que trae la imagen del runner ya es posterior a 16 y escribe en el volcado
+      # `SET transaction_timeout`, que un servidor 16 no conoce: el restore sale
+      # con 1. El cliente tiene que ser de la MISMA versión que el servidor de
+      # arriba y que producción (`docker-compose.yml`: postgres:16).
+      - name: Cliente de PostgreSQL 16, la versión del servidor
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          . /etc/os-release
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt ${VERSION_CODENAME}-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-16
+          /usr/lib/postgresql/16/bin/pg_dump --version
+          echo "PG_DUMP_BIN=/usr/lib/postgresql/16/bin/pg_dump" >> "$GITHUB_ENV"
+          echo "PG_RESTORE_BIN=/usr/lib/postgresql/16/bin/pg_restore" >> "$GITHUB_ENV"
+
       - name: Migraciones, con el rol dueño
         run: npm run db:migrate
 

@@ -25,7 +25,7 @@ We do not solve it with a canned programme that arrives late. We solve it with d
 
 **We are technology-agnostic.** We work with the technology you already have, or we implement whichever suits best.
 
-**Approval gates.** Every phase passes through complex decisions before the next one starts.
+**Approval gates.** Every phase ends in a decision of yours, and the next one does not start without it.
 
 **The capability stays inside.** If you still depend on us when we finish, the work is not done.
 

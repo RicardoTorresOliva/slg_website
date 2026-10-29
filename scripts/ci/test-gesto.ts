@@ -208,6 +208,21 @@ async function abrirSheet(page: Page, url: string) {
     }
   }
   await page.waitForSelector('[role="dialog"]', { state: "visible", timeout: 2_000 });
+  // Desde la reingeniería (plan visual §4.2) el panel ENTRA: nace abajo y sube
+  // en 300 ms. Estas mediciones son del gesto, no de la entrada, así que se
+  // espera a que el panel se asiente antes de medir su caja; medirla a mitad
+  // de la subida daría un `top` que ya no es el suyo.
+  await page.waitForFunction(
+    () => {
+      const panel = document.querySelector('[role="dialog"]')?.firstElementChild as HTMLElement | null;
+      if (!panel) return false;
+      const t = getComputedStyle(panel).transform;
+      return t === "none" || Math.abs(new DOMMatrixReadOnly(t).m42) < 0.5;
+    },
+    undefined,
+    { timeout: 2_000 },
+  );
+  await esperar(50);
   await instalarMuestreo(page);
   const caja = await page.evaluate(() => {
     const panel = document.querySelector('[role="dialog"]')?.firstElementChild as HTMLElement;

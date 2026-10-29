@@ -1,18 +1,18 @@
 import { ArmazonPublico } from "@/components/ArmazonPublico";
-import { MapaDelSitio } from "@/components/MapaDelSitio";
+import { Propuesta } from "@/components/Propuesta";
 import { metadatosDePagina } from "@/lib/content/seo";
 
 /**
- * La portada es «Empieza aquí»: el mapa del sitio (decisión de Ricardo,
- * 2026-09-18). Poco contenido, toda la estructura a la vista, y desde ahí a
- * Servicios, que es la casa comercial. La portada anterior vive en `/servicios`.
+ * La portada dice qué hace SLG, para quién y cuál es el siguiente paso
+ * (reingeniería, 2026-10-27; `planning/reingenieria/`). El mapa del sitio,
+ * que fue la portada desde el 2026-09-18, vive en `/empieza-aqui`.
  */
-export const metadata = metadatosDePagina("empieza-aqui", "es", "/");
+export const metadata = metadatosDePagina("inicio", "es", "/");
 
 export default function Home() {
   return (
     <ArmazonPublico ruta="/">
-      <MapaDelSitio slug="empieza-aqui" lang="es" />
+      <Propuesta lang="es" />
     </ArmazonPublico>
   );
 }

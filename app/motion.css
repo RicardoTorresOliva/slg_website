@@ -29,6 +29,28 @@
 
   /** Reveal al scroll: opacidad + 8 px, una sola vez (RNF-46). */
   --slg-reveal-offset: 8px;
+
+  /* ── Reingeniería 2026-10-27 (plan visual §3.6) ───────────────────────────
+   * Nombres honestos para lo que ya existía, y lo que faltaba. La curva de
+   * `--slg-spring` es una ease-out fuerte: en una transición disparada por un
+   * clic SE PERCIBE más rápida que un spring que arranca del reposo. El spring
+   * de verdad queda para el gesto, donde hay una velocidad que heredar. */
+  --slg-ease-out: var(--slg-spring);
+  /* Entrada y salida del sheet sin gesto. */
+  --slg-ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  /* El press baja en 100 ms y suelta en 160: la respuesta es inmediata y el
+     regreso, un poco más tranquilo. */
+  --slg-dur-press: var(--slg-press-duration);
+  --slg-dur-release: 160ms;
+  --slg-dur-fade: 200ms;
+  --slg-dur-hover: 200ms;
+  --slg-dur-enter: 300ms;
+  --slg-dur-exit: 240ms;
+  --slg-dur-reveal: var(--slg-spring-duration);
+  /* El escalonado de las fases del método. A 0 POR DEFECTO (DD-7, crítica
+     C-12): el orden ya lo dan los numerales y el `<ol>`. El mecanismo queda
+     listo; solo se enciende si un prototipo demuestra que ayuda a leer. */
+  --slg-stagger: 0ms;
 }
 
 /* ── Feedback a la entrada (RNF-10) ────────────────────────────────────────
@@ -37,12 +59,14 @@
  * CERO RETARDOS ARTIFICIALES: no hay `transition-delay` en ninguna parte de
  * esta ruta.
  */
+/* Sin `translateZ(0)` permanente: crearía una capa por botón sin que haya
+ * movimiento inminente. Baja en 100 ms; suelta en 160. */
 .slg-pressable {
-  transition: transform var(--slg-press-duration) var(--slg-spring);
-  transform: translateZ(0);
+  transition: transform var(--slg-dur-release) var(--slg-ease-out);
 }
 .slg-pressable[data-pressed="true"] {
   transform: scale(var(--slg-press-scale));
+  transition-duration: var(--slg-dur-press);
 }
 
 /* ── Reveal al scroll (RNF-46) ─────────────────────────────────────────────
@@ -70,9 +94,24 @@
   transform: translateY(var(--slg-reveal-offset));
 }
 
+/* El escalonado del método (plan visual §4.4). Cada fase lleva `--i`; el
+ * retardo existe solo durante el reveal y no está en ninguna ruta de entrada,
+ * así que no contradice «cero retardos artificiales». Como mucho 0/60/120/180. */
+.slg-reveal .slg-escalon {
+  transition:
+    opacity var(--slg-dur-reveal) var(--slg-ease-out),
+    transform var(--slg-dur-reveal) var(--slg-ease-out);
+  transition-delay: calc(var(--i, 0) * var(--slg-stagger));
+}
+.slg-reveal[data-revealed="false"] .slg-escalon {
+  opacity: 0;
+  transform: translateY(var(--slg-reveal-offset));
+}
+
 /* Al imprimir no hay scroll que dispare nada: todo visible. */
 @media print {
-  .slg-reveal[data-revealed="false"] {
+  .slg-reveal[data-revealed="false"],
+  .slg-reveal[data-revealed="false"] .slg-escalon {
     opacity: 1;
     transform: none;
   }
@@ -129,8 +168,11 @@ textarea:focus-visible,
   /* El reveal degrada a fundido puro: sin desplazamiento (RNF-46). El
      selector es el del estado ESCONDIDO, que es el único que desplaza. */
   .slg-reveal,
-  .slg-reveal[data-revealed="false"] {
+  .slg-reveal[data-revealed="false"],
+  .slg-reveal .slg-escalon,
+  .slg-reveal[data-revealed="false"] .slg-escalon {
     transform: none;
+    transition-delay: 0ms !important;
   }
   .slg-pressable[data-pressed="true"] {
     transform: none;
@@ -218,6 +260,13 @@ textarea:focus-visible,
     color: var(--slg-ink-2);
     font-size: 0.8125rem;
   }
+  /* Celdas de frase, no de dato (el antes/después de la portada): el rótulo
+     va ENCIMA de su valor. Al lado, una columna de 30 px partía cada frase en
+     cuatro líneas. */
+  [data-slg-tabla="apilada"] td {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
 }
 
 /* ── Armazón de aplicación: la barra lateral en móvil (FU-12) ──────────────
@@ -274,7 +323,8 @@ textarea:focus-visible,
   text-decoration: none;
   box-shadow: var(--slg-shadow-lg);
   transform: translateY(calc(-100% - 1rem));
-  transition: transform 160ms var(--slg-spring);
+  /* SIN transición: es una acción iniciada por teclado, y esas no se animan
+     (review-animations; plan visual §1.3, defecto 6). */
 }
 
 .slg-saltar:focus-visible {

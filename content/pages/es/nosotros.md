@@ -25,7 +25,7 @@ No lo resolvemos con un programa enlatado que llega tarde. Lo resolvemos con doc
 
 **Somos agnósticos tecnológicos.** Trabajamos con la tecnología que ya tienes o implementamos la que más convenga.
 
-**Compuertas de aprobación.** Cada fase pasa por decisiones complejas antes de que empiece la siguiente.
+**Compuertas de aprobación.** Cada fase termina en una decisión tuya, y la siguiente no empieza sin ella.
 
 **La capacidad se queda dentro.** Si al terminar sigues dependiendo de nosotros, el trabajo no está hecho.
 

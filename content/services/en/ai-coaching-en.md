@@ -31,7 +31,7 @@ Confidentiality, which in this service is the condition for it to be worth anyth
 
 No lock-in: nothing we build ties you to us or to a vendor.
 You choose the stack, and if you already have one, we work with the one you have.
-Every phase passes through an approval gate of yours before the next one starts.
+Every phase ends at an approval gate: a decision of yours, and the next one does not start without it.
 And the capability stays inside your company: if you still depend on us when we finish, the work is not done.
 
 ## Download

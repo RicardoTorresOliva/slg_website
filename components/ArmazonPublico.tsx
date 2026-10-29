@@ -10,6 +10,7 @@ import { Analitica } from "./Analitica";
 import { BarraDeNavegacion } from "./BarraDeNavegacion";
 import { DatosEstructurados } from "./DatosEstructurados";
 import { Fotografia } from "./Fotografia";
+import { PressDelegado } from "./PressDelegado";
 import { Regreso } from "./Regreso";
 
 /**
@@ -93,6 +94,7 @@ export function ArmazonPublico({
       {/* Sin variable, esto no emite nada: la capa pública se sirve sin un solo
           script de terceros (RF-127). */}
       <Analitica />
+      <PressDelegado />
     </>
   );
 }

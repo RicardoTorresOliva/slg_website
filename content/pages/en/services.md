@@ -11,13 +11,13 @@ copy: temporal
 
 ## Hero
 
-We do not sell artificial intelligence. Together, we build your future with it.
+We do not sell artificial intelligence. We help you decide what to buy, what to build and what to leave alone.
 
 We work with boards and executive committees that have to decide on AI and do not want to do it on the information supplied by whoever is selling.
 
 ## The Agency's axes
 
-The agency works on two axes, and it is worth choosing before reading on.
+The agency works on two axes: artificial intelligence, and building companies outside their home market.
 
 ### VoltAi by SLG
 
@@ -29,7 +29,7 @@ Building and operating companies outside their home market, with direct involvem
 
 ## VoltAi by SLG
 
-`VoltAi by SLG` runs in three lines, and they answer three different moments.
+VoltAi by SLG runs in three lines, and they answer three different moments: judgement first, then diagnosis, and only then building.
 
 ### VoltAi Academy
 
@@ -45,7 +45,7 @@ Building what is not in the catalogue: applications, agents and operations leade
 
 ## Holdings by SLG
 
-The other axis of the Agency, and the only context in which the brand is written **Softlanding Global**. It is not internationalisation advice: it is building and operating companies outside their home market, with direct involvement in the result.
+The other axis of the Agency. It is not internationalisation advice: it is building and operating companies outside their home market, with direct involvement in the result.
 
 For the founder or leadership team who knows that the difficulty of operating abroad is not the translation but everything else: corporate structure, regulation, clients and people. A single point of responsibility for the whole, which is the difference from hiring five advisers.
 
