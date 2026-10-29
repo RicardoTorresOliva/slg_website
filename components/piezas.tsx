@@ -24,16 +24,20 @@ import { MarkdownEnLinea } from "./Markdown";
  * mide 2,4:1 y es el error que el gate D2 existe para atrapar.
  */
 export function HeroTipografico({
+  etiqueta,
   titular,
   apoyo,
   accion,
 }: {
+  /** Una línea pequeña sobre el titular: el literal del producto cuando el titular es el resultado. */
+  etiqueta?: string;
   titular: string;
   apoyo?: string;
   accion?: { href: string; etiqueta: string };
 }) {
   return (
     <section style={hero}>
+      {etiqueta ? <p style={heroEtiqueta}>{etiqueta}</p> : null}
       <h1 style={heroTitular}>{titular}</h1>
       {apoyo ? <p style={heroApoyo}>{apoyo}</p> : null}
       {accion ? (
@@ -198,6 +202,14 @@ const heroTitular: CSSProperties = {
   letterSpacing: "-0.02em",
   color: "var(--slg-blue-deep)",
   fontWeight: 700,
+};
+
+const heroEtiqueta: CSSProperties = {
+  margin: "0 0 0.75rem",
+  fontSize: "0.875rem",
+  fontWeight: 600,
+  letterSpacing: "0.02em",
+  color: "var(--slg-ink-2)",
 };
 
 const heroApoyo: CSSProperties = {

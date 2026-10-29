@@ -7,6 +7,9 @@ download: "d-05-en"
 lang: en
 pair: "ai-coaching"
 copy: temporal
+fase: 1
+titular: "One-to-one coaching for those who lead"
+lector: "chairs, directors and chief executives"
 ---
 
 ## Who it is for and what problem
@@ -18,7 +21,7 @@ The problem with asking inside the company is that nobody is neutral; the proble
 
 Individual, continuing support for artificial intelligence decisions at board and executive level.
 It is neither training nor implementation consulting: it is a space for judgement.
-We take no commission from any vendor, and when the conversation reaches something this firm sells — `SLG_Implement`, `VoltAi Factory` — that is said at the time, and you decide with that on the table.
+We take no commission from any vendor, and when the conversation reaches something this firm sells — SLG_Implement, VoltAi Factory — that is said at the time, and you decide with that on the table.
 
 ## What it includes
 

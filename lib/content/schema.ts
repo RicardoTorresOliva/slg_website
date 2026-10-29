@@ -181,6 +181,20 @@ export const SCHEMAS: Record<Exclude<CollectionName, "ui">, FieldSpec[]> = {
      * Vive en el registro y no en `content/ui` porque es oferta, no interfaz.
      */
     { name: "tagline", required: false, check: isNonEmptyString },
+    /**
+     * La fase del método en la que vive el servicio (1, 2, …): la posición del
+     * `###` de la sección `fases` de Servicios. Opcional: un servicio sin fase
+     * (un suelto, fuera del método) no entra en el índice por fase.
+     */
+    {
+      name: "fase",
+      required: false,
+      check: (v) => (Number.isInteger(v) && (v as number) >= 1 ? null : "debe ser un entero desde 1"),
+    },
+    /** El titular público: el resultado, en el idioma de la página. El literal queda como etiqueta. */
+    { name: "titular", required: false, check: isNonEmptyString },
+    /** Quién lo lee, por rol: «Miembros de directorio». */
+    { name: "lector", required: false, check: isNonEmptyString },
     COPY,
   ],
 

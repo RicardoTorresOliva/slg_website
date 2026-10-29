@@ -8,6 +8,9 @@ download: "d-09-en"
 lang: en
 pair: "age-building"
 copy: temporal
+fase: 3
+titular: "Custom AI agents for a specific process"
+lector: "the process owner"
 ---
 
 ## Who it is for and what problem
@@ -17,7 +20,7 @@ The problem with automating that with rules is that the first exception breaks t
 
 ## What it is
 
-The **artificial intelligence agent factory** of `VoltAi Factory`: systems that carry out work with delegated judgement, inside limits you define.
+The **artificial intelligence agent factory** of VoltAi Factory: systems that carry out work with delegated judgement, inside limits you define.
 They are built like an application — with specification, gates and tests — and with something an application does not need: explicit limits on what the agent may **not** do on its own.
 
 ## What it includes

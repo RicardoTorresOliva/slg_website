@@ -4299,3 +4299,31 @@ Ricardo aprueba el copy de la portada nueva: `content/pages/es/inicio.md` y `con
 pasan de `copy: temporal` a `copy: aprobado`, y pide mezclar el PR #3 en `develop`. Con eso queda
 confirmada D-168 (la portada muestra la propuesta de valor; el mapa sigue en `/empieza-aqui`).
 
+
+## 2026-10-29 — Reingeniería fase 2: índice por fase, método y servicios (DU-RC02, DU-RC03, DU-RC04 parcial)
+
+Lo que no depende de Ricardo, sobre `develop` (rama `claude/fase2-servicios`).
+
+- **DU-RC02.** Nuevo bloque de Servicios `fases` (motor genérico: la fase N es el `###` N de la
+  sección, y cada servicio declara su `fase` en el frontmatter). La ficha de SLG pasa a
+  `["fases", holdings, "doctrina"]`: `/servicios` y `/en/services` son «Todos los servicios», sin hero
+  comercial ni CTA. Frontmatter de servicio con `fase`, `titular` y `lector` (opcionales en el
+  esquema; los 20 registros de VoltAi los llevan). `check:paginas` comprueba que el índice enlaza los
+  11 servicios.
+- **DU-RC03.** `/ai` (ES/EN) presenta el método, la línea de cada fase, «Cuándo no conviene» y el
+  enlace a la doctrina; se retira «Por qué VoltAi» (§7.2). Las tres líneas abren con su fase y una
+  escena, sin backticks, y sus tarjetas muestran titular, literal y lector.
+- **DU-RC04 (parcial).** La página de servicio muestra el titular por resultado con el literal como
+  etiqueta, «Este servicio vive en la fase N del método» con enlace al método y dos objeciones
+  visibles (registro único en `content/ui`). Backticks retirados de los cuerpos de servicio. El
+  lector de TEAx se alinea con su página («alta gerencia»); la incoherencia con su descarga
+  (E-SLG-46) sigue abierta.
+
+**Verificado** (build de producción): `lint`, `tsc`, `check:content`, `check:sitio`,
+`check:cadenas`, `check:motion`, `check:paginas` (142), `check:seo` (238), `check:armazon` (60),
+`check:produccion`, `check:js-budget`, `check:terceros`, `test:gesto` (20/20), Lighthouse
+(accesibilidad 100, rendimiento 95–98). Capturas de `/servicios`, `/ai`, `/ai/academy` y PEEx.
+
+**No hecho.** Entregables por fase (P-07), CTA del servicio de entrada de Academy y Factory,
+duración y formato por fase (D-4, D-5), trayectoria y once dimensiones por nombre, DU-RC05 y
+DU-RC06. Todo el copy nuevo queda `temporal`.

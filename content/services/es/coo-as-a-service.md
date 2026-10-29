@@ -8,6 +8,9 @@ download: "d-10"
 lang: es
 pair: "coo-as-a-service-en"
 copy: temporal
+fase: 3
+titular: "Dirección de operaciones con agentes, como servicio"
+lector: "la dirección general de empresas pequeñas o medianas"
 ---
 
 ## Para quién y qué problema
@@ -17,7 +20,7 @@ El problema de aplazarlo es conocido: la dirección general acaba operando, y mi
 
 ## Qué es
 
-Dirección de operaciones como servicio, desde `VoltAi Factory`.
+Dirección de operaciones como servicio, desde VoltAi Factory.
 No es consultoría que recomienda y se va: es una figura que opera, con responsabilidad sobre resultados acordados y presencia sostenida en el tiempo.
 
 ## Qué incluye

@@ -7,6 +7,9 @@ download: "d-04"
 lang: es
 pair: "customize-programs-en"
 copy: temporal
+fase: 1
+titular: "Programas a medida para tu organización"
+lector: "responsables de formación o de transformación"
 ---
 
 ## Para quién y qué problema
@@ -16,7 +19,7 @@ El problema de un programa estándar aquí no es que sea malo: es que la mitad s
 
 ## Qué es
 
-Un programa de `VoltAi Academy` **diseñado sobre tu contexto**, no adaptado desde una plantilla.
+Un programa de VoltAi Academy **diseñado sobre tu contexto**, no adaptado desde una plantilla.
 Parte de la misma doctrina y los mismos pilares que el resto de la línea; el alcance, la audiencia y la profundidad se deciden contigo antes de empezar.
 
 ## Qué incluye

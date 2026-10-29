@@ -3,8 +3,9 @@ import { Portada } from "@/components/Portada";
 import { metadatosDePagina } from "@/lib/content/seo";
 
 /**
- * `/servicios` — la casa comercial (decisión de Ricardo, 2026-09-18): los
- * bloques de RF-09 que antes eran la portada. La portada es ahora el mapa.
+ * `/servicios` — el índice de toda la oferta por fase del método (reingeniería,
+ * DU-RC02): los bloques de RF-09 que declara la ficha. La propuesta vive en la
+ * portada; aquí entra quien ya sabe lo que busca.
  */
 export const metadata = metadatosDePagina("servicios", "es", "/servicios");
 

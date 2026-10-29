@@ -7,6 +7,9 @@ download: "d-06"
 lang: es
 pair: "readiness-en"
 copy: temporal
+fase: 2
+titular: "Diagnóstico de preparación para la IA, en once dimensiones"
+lector: "el comité de dirección, antes de invertir"
 ---
 
 ## Para quién y qué problema

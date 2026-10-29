@@ -7,6 +7,9 @@ download: "d-07-en"
 lang: en
 pair: "implement"
 copy: temporal
+fase: 3
+titular: "Phased implementation of what the diagnosis prioritised"
+lector: "the committee and the heads of operations or technology"
 ---
 
 ## Who it is for and what problem

@@ -461,9 +461,9 @@ la firma de Ricardo**.
 | FU-21/22/23 | Tokens únicos, frenos de motion, press unificado | `done` |
 | DU-40 | Sheet móvil v2: foco, `inert`, entrada y salida simétricas | `done` |
 | DU-RC01 | Portada nueva ES/EN | `review` (a11y 100, perf 97–98) |
-| DU-RC02 | Mapa reubicado · `/servicios` como índice por fase | `in_progress` (mapa hecho; índice por fase pendiente) |
-| DU-RC03 | `/ai` como página del método y líneas por fase | `in_progress` (hype y backticks retirados) |
-| DU-RC04 | Servicios dentro de A.3 (lector, fase, entregables, objeciones) | `pending` |
+| DU-RC02 | Mapa reubicado · `/servicios` como índice por fase | `review` (bloque `fases`; 11 servicios bajo su fase, freno en `check:paginas`) |
+| DU-RC03 | `/ai` como página del método y líneas por fase | `review` (método en `/ai` sin «Por qué VoltAi»; líneas con fase, escena y tarjetas titular/lector; CTA del servicio de entrada espera a Ricardo) |
+| DU-RC04 | Servicios dentro de A.3 (lector, fase, entregables, objeciones) | `in_progress` (titular por resultado, fase y dos objeciones visibles hechos; entregables por fase esperan P-07) |
 | DU-RC05 | Nosotros, Contacto, Gracias | `in_progress` (compuerta y contradicción de Contacto corregidas) |
 | DU-RC06 | Prueba de 5 s con lectores y cierre | `pending` |
 | DU-RC07/08 | Casos y duraciones | `blocked` (condicionadas a datos de Ricardo) |

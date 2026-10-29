@@ -7,6 +7,9 @@ download: "d-06-en"
 lang: en
 pair: "readiness"
 copy: temporal
+fase: 2
+titular: "AI readiness diagnosis, in eleven dimensions"
+lector: "the executive committee, before investing"
 ---
 
 ## Who it is for and what problem

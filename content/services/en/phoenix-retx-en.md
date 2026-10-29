@@ -8,6 +8,9 @@ download: "d-03-en"
 lang: en
 pair: "phoenix-retx"
 copy: temporal
+fase: 1
+titular: "Programme for research and university education"
+lector: "researchers and students"
 ---
 
 ## Who it is for and what problem
@@ -17,7 +20,7 @@ The problem is not access to the tool: it is that the rigour demanded of a metho
 
 ## What it is
 
-An `VoltAi Academy` programme of the **Phoenix** family, built on The Phoenix Doctrine, aimed at research work.
+A VoltAi Academy programme of the **Phoenix** family, built on The Phoenix Doctrine, aimed at research work.
 Its unit of work is not a company but the academic project: the question, the sources, the method and what finally gets published.
 
 ## What it includes

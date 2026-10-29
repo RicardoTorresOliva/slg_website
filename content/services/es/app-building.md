@@ -8,6 +8,9 @@ download: "d-08"
 lang: es
 pair: "app-building-en"
 copy: temporal
+fase: 3
+titular: "Aplicaciones a medida, en tu stack"
+lector: "la dirección que ya decidió qué construir"
 ---
 
 ## Para quién y qué problema
@@ -17,7 +20,7 @@ El problema de construirla en casa suele ser el mismo: se puede empezar y se pue
 
 ## Qué es
 
-La **fábrica de activos digitales** de `VoltAi Factory`.
+La **fábrica de activos digitales** de VoltAi Factory.
 Lo que se entrega no es una demostración sino un sistema en producción, con su despliegue, sus pruebas y su documentación — y con el código en un repositorio que es tuyo desde el primer día.
 
 ## Qué incluye
