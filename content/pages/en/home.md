@@ -6,7 +6,7 @@ lang: en
 pair: "inicio"
 nav_order: 1
 updated: "2026-10-27"
-copy: temporal
+copy: aprobado
 ---
 
 ## Hero

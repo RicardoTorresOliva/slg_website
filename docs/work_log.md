@@ -4293,3 +4293,9 @@ entregables por fase); páginas de línea por fase y `/servicios` como índice p
 objeciones visibles en servicios (DU-RC04); campo trampa fuera del texto extraído; prueba de 5 s
 con lectores (DU-RC06).
 
+## 2026-10-29 — Copy de la portada aprobado
+
+Ricardo aprueba el copy de la portada nueva: `content/pages/es/inicio.md` y `content/pages/en/home.md`
+pasan de `copy: temporal` a `copy: aprobado`, y pide mezclar el PR #3 en `develop`. Con eso queda
+confirmada D-168 (la portada muestra la propuesta de valor; el mapa sigue en `/empieza-aqui`).
+
