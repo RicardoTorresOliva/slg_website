@@ -31,7 +31,7 @@ export function OverviewDeRama({ slug, lang }: { slug: string; lang: "es" | "en"
   const hrefExterno = externo ? sitio.dominio.enlaces[externo.enlace] : undefined;
 
   const servicios = SERVICIOS.filter((s) => s.rama === slug);
-  const registros = loadCollection<{ name: string }>("service", lang);
+  const registros = loadCollection<{ name: string; titular?: string; lector?: string }>("service", lang);
 
   const tarjetas = servicios
     .map((s) => {
@@ -39,14 +39,18 @@ export function OverviewDeRama({ slug, lang }: { slug: string; lang: "es" | "en"
       const registro = registros.find((r) => r.slug === buscado);
       // Criterio 5: sin registro, no hay tarjeta — y el índice sigue en pie.
       if (!registro) return null;
+      const { name, titular, lector } = registro.data;
       const primeraSeccion = secciones(registro.body)[0];
+      // Con titular (reingeniería, §7.2): el resultado manda, el literal del
+      // producto queda como etiqueta y el resumen dice para quién es.
       return {
-        nombre: registro.data.name,
-        resumen: primeraSeccion?.cuerpo.split("\n")[0] ?? "",
+        nombre: titular ?? name,
+        etiqueta: titular ? name : undefined,
+        resumen: lector ? `${t["services.for"]} ${lector}.` : (primeraSeccion?.cuerpo.split("\n")[0] ?? ""),
         href: lang === "en" ? rutaEnDeServicio(s) : s.es,
       };
     })
-    .filter((x): x is { nombre: string; resumen: string; href: string } => x !== null);
+    .filter((x): x is { nombre: string; etiqueta: string | undefined; resumen: string; href: string } => x !== null);
 
   return (
     <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "0 1.25rem" }}>
@@ -64,7 +68,7 @@ export function OverviewDeRama({ slug, lang }: { slug: string; lang: "es" | "en"
         <ul style={rejilla}>
           {tarjetas.map((s) => (
             <li key={s.href} style={{ listStyle: "none" }}>
-              <TarjetaDeServicio nombre={s.nombre} resumen={s.resumen} href={s.href} />
+              <TarjetaDeServicio nombre={s.nombre} rama={s.etiqueta} resumen={s.resumen} href={s.href} />
             </li>
           ))}
         </ul>

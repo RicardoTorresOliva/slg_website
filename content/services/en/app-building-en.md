@@ -8,6 +8,9 @@ download: "d-08-en"
 lang: en
 pair: "app-building"
 copy: temporal
+fase: 3
+titular: "Custom applications, on your stack"
+lector: "leadership that has already decided what to build"
 ---
 
 ## Who it is for and what problem
@@ -17,7 +20,7 @@ The problem with building it in-house is usually the same: you can start and you
 
 ## What it is
 
-The **digital asset factory** of `VoltAi Factory`.
+The **digital asset factory** of VoltAi Factory.
 What is delivered is not a demo but a system in production, with its deployment, its tests and its documentation — and with the code in a repository that is yours from day one.
 
 ## What it includes

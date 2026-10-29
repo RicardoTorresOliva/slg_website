@@ -137,13 +137,13 @@ export const sitio: FichaDelSitio = {
     contacto: "contacto",
   },
 
+  // Servicios es el índice de toda la oferta por fase del método (reingeniería,
+  // DU-RC02): la propuesta vive en la portada, y aquí entra quien ya sabe lo
+  // que busca. Sin hero comercial ni CTA de conversión.
   bloquesDeServicios: [
-    "puertas",
-    "lineas",
+    "fases",
     { id: "holdings", suelto: "slg-holdings", etiqueta: "home.seeHoldings" },
     "doctrina",
-    "articulos",
-    "descarga",
   ],
 
   nomenclatura: {

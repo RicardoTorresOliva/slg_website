@@ -148,6 +148,16 @@ async function main() {
           "la doctrina es una franja con cita y enlace, no un bloque de texto (A.3)",
         );
       }
+      if (BLOQUES_DE_PORTADA.includes("fases")) {
+        // DU-RC02 criterio 3: el índice por fase lista TODA la oferta. Los
+        // servicios sin fase llegan por su bloque suelto; los demás, por el
+        // índice. Uno que falte es un servicio al que no se llega.
+        const idioma = ruta === PAGINA_DE_SERVICIOS.en ? "en" : "es";
+        const faltan = SERVICIOS.map((s) => (idioma === "en" ? rutaEnDeServicio(s) : s.es)).filter(
+          (r) => r && !dentro.includes(`href="${r}"`),
+        );
+        check(`${ruta} · el índice por fase enlaza los ${SERVICIOS.length} servicios`, faltan.length === 0, `faltan: ${faltan.join(", ")}`);
+      }
       check(
         `${ruta} · cero fotografía de stock (RNF-44)`,
         !/<img[^>]+src="https?:\/\//.test(dentro),

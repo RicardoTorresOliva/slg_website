@@ -1,51 +1,46 @@
 ---
 type: page
 title: "Servicios"
-description: "SLG Agency ayuda a directorios y comités de dirección a decidir sobre inteligencia artificial: qué preguntar, qué exigir y qué no comprar."
+description: "Todos los servicios de SLG Agency, ordenados por la fase del método en la que trabajan: criterio, diagnóstico, construcción y transferencia."
 lang: es
 pair: "services"
 nav_order: 1
-updated: "2026-09-18"
+updated: "2026-10-29"
 copy: temporal
 ---
 
 ## Hero
 
-No vendemos inteligencia artificial. Te ayudamos a decidir cuál comprar, cuál construir y cuál no.
+Todos los servicios, ordenados por fase.
 
-Trabajamos con directorios y comités de dirección que tienen que decidir sobre IA y no quieren hacerlo con la información que da quien vende.
+Cada servicio trabaja en una fase del método «Criterio primero». Busca la fase en la que está tu empresa: ahí está el servicio que te sirve. Si no sabes en cuál estás, empieza por el diagnóstico.
 
-## Los ejes de la Agencia
+## Criterio primero, fase a fase
 
-La agencia trabaja sobre dos ejes: la inteligencia artificial, y la construcción de compañías fuera de su mercado de origen.
+Cuatro fases en un orden recomendable, no obligatorio. Cada una termina en una compuerta con tres salidas —avanzar, ajustar o descartar— y la decisión es tuya.
 
-### VoltAi by SLG
+### Criterio
 
-El eje de inteligencia artificial. Formar criterio, diagnosticar, implementar y construir lo que no está en el catálogo.
+Quien decide sabe qué preguntar, qué exigir y qué no comprar.
+«Tengo que decidir sobre IA y no sé qué preguntarle al proveedor.»
 
-### Holdings by SLG
+### Diagnóstico
 
-Construir y operar compañías fuera de su mercado de origen, con implicación directa en el resultado.
+Sabes dónde está tu empresa y qué la bloquea, en once dimensiones.
+«No sé dónde está mi empresa, y sospecho que el entusiasmo interno no es la respuesta.»
 
-## VoltAi by SLG
+### Construcción
 
-VoltAi by SLG se despliega en tres líneas, y responden a tres momentos distintos: primero criterio, después diagnóstico y solo entonces construcción.
+Se construye lo priorizado, por fases y sobre la tecnología que ya tienes.
+«Ya sabemos qué hay que hacer; falta construirlo sin quedar atados.»
 
-### VoltAi Academy
+### Transferencia
 
-Formar criterio en quien decide. Qué preguntar a un proveedor, qué exigir en una propuesta y qué no comprar.
-
-### VoltAi Enterprise
-
-Saber dónde estás y llegar a donde decidas. Primero el diagnóstico, después la implementación.
-
-### VoltAi Factory
-
-Construir lo que no está en el catálogo: aplicaciones, agentes y dirección de operaciones.
+Lo construido queda documentado y en manos de tu equipo. No se contrata aparte: es la forma en que termina cada encargo.
 
 ## Holdings by SLG
 
-El otro eje de la Agencia. No es asesoría de internacionalización: es construcción y operación de compañías fuera de su mercado de origen, con implicación directa en el resultado.
+Fuera del método, para otra decisión: construir u operar una compañía fuera de tu mercado de origen.
 
 Para el fundador o el equipo directivo que sabe que la dificultad de operar fuera no es la traducción, sino todo lo demás: estructura societaria, regulación, clientes y gente. Un punto único de responsabilidad sobre el conjunto, que es la diferencia con contratar cinco asesorías.
 
@@ -53,16 +48,4 @@ Para el fundador o el equipo directivo que sabe que la dificultad de operar fuer
 
 > Lo que hay que dejar de hacer pesa más que lo que hay que empezar.
 
-Todo lo que hacemos sale de un cuerpo doctrinal escrito: The Phoenix Doctrine, y los tres pilares de DAL OS — Destrucción Creativa, Antifragilidad y AI Literacy.
-
-## Últimos artículos
-
-Publicamos criterio, no novedades.
-
-Todavía no hay artículos publicados. Cuando los haya, aparecen aquí.
-
-## Descargas destacadas
-
-Cada servicio tiene un documento, escrito para una silla concreta y publicado tal cual. Se entregan a cambio de un correo corporativo, y nada más.
-
-Todavía no hay ningún documento disponible. Cuando lo esté, aparece aquí.
+Cada servicio sale de un cuerpo doctrinal escrito: The Phoenix Doctrine, y los tres pilares de DAL OS — Destrucción Creativa, Antifragilidad y AI Literacy.

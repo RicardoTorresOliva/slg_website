@@ -8,6 +8,9 @@ download: "lo-que-un-director-debe-saber"
 lang: es
 pair: "phoenix-peex-en"
 copy: temporal
+fase: 1
+titular: "Programa de criterio para directores"
+lector: "miembros de directorio"
 ---
 
 ## Para quién y qué problema
@@ -17,7 +20,7 @@ El problema no es falta de información: es que ninguna de las dos está escrita
 
 ## Qué es
 
-Un programa de `VoltAi Academy` de la familia **Phoenix**, construido sobre The Phoenix Doctrine.
+Un programa de VoltAi Academy de la familia **Phoenix**, construido sobre The Phoenix Doctrine.
 Está pensado para el nivel ejecutivo: no enseña a usar herramientas, enseña a decidir sobre ellas — qué preguntar, qué exigir, qué no comprar y cómo saber si lo que se implementó funciona.
 
 ## Qué incluye

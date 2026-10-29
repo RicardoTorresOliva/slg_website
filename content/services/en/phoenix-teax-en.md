@@ -8,6 +8,9 @@ download: "d-02-en"
 lang: en
 pair: "phoenix-teax"
 copy: temporal
+fase: 1
+titular: "Judgement programme for senior executives"
+lector: "senior executives"
 ---
 
 ## Who it is for and what problem
@@ -17,7 +20,7 @@ The problem is not resistance to change: it is that the decision arrives without
 
 ## What it is
 
-An `VoltAi Academy` programme of the **Phoenix** family, built on The Phoenix Doctrine, aimed at senior management.
+A VoltAi Academy programme of the **Phoenix** family, built on The Phoenix Doctrine, aimed at senior management.
 Unlike an individual programme, its unit of work is **the team**: what it produces is not a set of trained people, it is a management layer that decides by the same criteria.
 
 ## What it includes

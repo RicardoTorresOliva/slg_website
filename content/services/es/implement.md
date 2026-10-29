@@ -7,6 +7,9 @@ download: "d-07"
 lang: es
 pair: "implement-en"
 copy: temporal
+fase: 3
+titular: "Implementación por fases de lo que el diagnóstico priorizó"
+lector: "el comité y la dirección de operaciones o tecnología"
 ---
 
 ## Para quién y qué problema

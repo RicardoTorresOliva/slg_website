@@ -7,6 +7,9 @@ download: "d-04-en"
 lang: en
 pair: "customize-programs"
 copy: temporal
+fase: 1
+titular: "Programmes tailored to your organisation"
+lector: "heads of learning or transformation"
 ---
 
 ## Who it is for and what problem
@@ -16,7 +19,7 @@ The problem with a standard programme here is not that it is bad: it is that hal
 
 ## What it is
 
-An `VoltAi Academy` programme **designed on your context**, not adapted from a template.
+A VoltAi Academy programme **designed on your context**, not adapted from a template.
 It starts from the same doctrine and the same pillars as the rest of the line; scope, audience and depth are decided with you before it begins.
 
 ## What it includes

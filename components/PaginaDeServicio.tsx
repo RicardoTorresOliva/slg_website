@@ -1,9 +1,10 @@
 import Link from "next/link";
 
 import { loadCollection, loadUiStrings } from "@/lib/content/loader";
+import { EJES, RAMAS, SERVICIOS } from "@/lib/content/rutas";
 import { servicioJsonLd } from "@/lib/content/seo";
 import { secciones } from "@/lib/content/secciones";
-import { moduloActivo } from "@/lib/sitio";
+import { moduloActivo, sitio } from "@/lib/sitio";
 import { PAGINAS_DEL_MOTOR } from "@/lib/sitio/motor";
 
 import { Markdown } from "./Markdown";
@@ -40,9 +41,18 @@ export function PaginaDeServicio({
   ruta: string;
 }) {
   const t = loadUiStrings()[lang];
-  const registro = loadCollection<{ name: string; download: string }>("service", lang).find(
-    (s) => s.slug === slug,
-  );
+  const registro = loadCollection<{ name: string; download: string; fase?: number; titular?: string }>(
+    "service",
+    lang,
+  ).find((s) => s.slug === slug);
+  // La fase del método en la que vive (§7.3, sección 2): su nombre es el `###`
+  // N de la sección `fases` del registro de Servicios, no una cadena de aquí.
+  const fase = registro?.data.fase ? nombreDeFase(lang, registro.data.fase) : null;
+  // «Ver el método» lleva a la página del eje del servicio, que es la del
+  // método (§7.2); sin eje, al índice por fase.
+  const servicio = SERVICIOS.find((x) => (lang === "en" ? x.slugEn : x.slug) === slug);
+  const eje = EJES.find((e) => e.clave === RAMAS.find((r) => r.slug === servicio?.rama)?.eje);
+  const metodo = eje?.[lang] ?? PAGINAS_DEL_MOTOR.servicios.ruta[lang];
   const bloques = secciones(registro?.body ?? "");
   const [paraQuien, queEs, queIncluye, comoTrabajamos, descarga, siguiente] = bloques;
 
@@ -68,7 +78,8 @@ export function PaginaDeServicio({
       />
 
       <HeroTipografico
-        titular={registro?.data.name ?? ""}
+        etiqueta={registro?.data.titular ? registro.data.name : undefined}
+        titular={registro?.data.titular ?? registro?.data.name ?? ""}
         apoyo={primeraLinea(paraQuien?.cuerpo ?? "")}
       />
 
@@ -84,6 +95,14 @@ export function PaginaDeServicio({
       {/* 2 · Qué es */}
       <Seccion titulo={queEs?.titulo}>
         <Markdown texto={queEs?.cuerpo ?? ""} />
+        {fase ? (
+          <p style={{ margin: "1rem 0 0", color: "var(--slg-ink-2)" }}>
+            {t["service.phase"].replace("{n}", String(registro?.data.fase)).replace("{fase}", fase)}{" "}
+            <Link href={metodo} style={{ color: "var(--slg-link)" }}>
+              {t["service.method"]}
+            </Link>
+          </p>
+        ) : null}
       </Seccion>
 
       {/* 3 · Qué incluye — lista, no párrafo: es la sección que se escanea. */}
@@ -99,6 +118,21 @@ export function PaginaDeServicio({
       {/* 4 · Cómo trabajamos */}
       <Seccion titulo={comoTrabajamos?.titulo}>
         <BloqueQueIncluye elementos={lineas(comoTrabajamos?.cuerpo ?? "")} />
+        {/* Las objeciones, a la vista y sin acordeón (§7.3): las mismas en
+            todos los servicios, así que viven una vez en `content/ui`. */}
+        {fase ? (
+          <div style={{ marginTop: "1.5rem" }}>
+            <h3 style={tituloDeObjeciones}>{t["service.objections"]}</h3>
+            <dl style={{ margin: 0 }}>
+              {(["1", "2"] as const).map((n) => (
+                <div key={n} style={{ marginTop: "1rem" }}>
+                  <dt style={{ fontWeight: 600, color: "var(--slg-ink)" }}>{t[`service.q${n}`]}</dt>
+                  <dd style={{ margin: "0.25rem 0 0", color: "var(--slg-ink-2)" }}>{t[`service.a${n}`]}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        ) : null}
       </Seccion>
 
       {/* 5 · Descarga — el ÚNICO CTA. No hay segundo, ni agenda, ni formulario
@@ -144,6 +178,16 @@ function Seccion({ titulo, children }: { titulo?: string; children: React.ReactN
   );
 }
 
+/** El nombre de la fase N del método: el `###` N de la sección `fases` de Servicios. */
+function nombreDeFase(lang: "es" | "en", n: number): string | null {
+  const i = sitio.bloquesDeServicios.indexOf("fases");
+  if (i < 0) return null;
+  const registro = loadCollection("page", lang).find((p) => p.slug === PAGINAS_DEL_MOTOR.servicios.registro[lang]);
+  const seccion = secciones(registro?.body ?? "")[i + 1];
+  const fases = [...(seccion?.cuerpo ?? "").matchAll(/^###\s+(.+?)\s*$/gm)].map((m) => m[1]);
+  return fases[n - 1]?.toLowerCase() ?? null;
+}
+
 const primeraLinea = (texto: string) => texto.split("\n").filter(Boolean)[0] ?? "";
 const restoDeLineas = (texto: string) => texto.split("\n").filter(Boolean).slice(1).join("\n");
 /** Cada línea no vacía es un elemento. Así lo escribe el contrato A.3. */
@@ -156,6 +200,13 @@ const lineas = (texto: string) =>
 const tituloDeSeccion: React.CSSProperties = {
   margin: "0 0 1rem",
   fontSize: "1.25rem",
+  color: "var(--slg-blue-deep)",
+  fontWeight: 700,
+};
+
+const tituloDeObjeciones: React.CSSProperties = {
+  margin: 0,
+  fontSize: "1rem",
   color: "var(--slg-blue-deep)",
   fontWeight: 700,
 };

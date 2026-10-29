@@ -1,26 +1,30 @@
 ---
 type: page
 title: "VoltAi by SLG"
-description: "VoltAi by SLG, el eje de inteligencia artificial de SLG Agency, y sus tres líneas: VoltAi Academy, VoltAi Enterprise y VoltAi Factory."
+description: "El método de VoltAi by SLG, Criterio primero: cuatro fases con una compuerta de decisión tuya al final de cada una, y la línea que ejecuta cada fase."
 lang: es
 pair: "ai"
 nav_order: 2
-updated: "2026-09-17"
+updated: "2026-10-29"
 copy: temporal
 ---
 
-VoltAi by SLG es el eje de inteligencia artificial de la agencia, y se despliega en **tres líneas** que responden a tres momentos distintos.
+VoltAi by SLG trabaja con un método: **Criterio primero**. Cuatro fases en un orden recomendable, no obligatorio, y cada una termina en una compuerta con tres salidas —avanzar, ajustar o descartar—. La decisión es siempre tuya, y la fase siguiente no empieza sin ella.
 
-**VoltAi Academy** — formar criterio en quien decide. Los programas de la familia Phoenix, los programas a medida y el acompañamiento individual a dirección.
+1. **Criterio.** Quien decide sabe qué preguntar, qué exigir y qué no comprar. Lo ejecuta [VoltAi Academy](/ai/academy).
+2. **Diagnóstico.** Sabes dónde está tu empresa y qué la bloquea, en once dimensiones. Lo ejecuta [VoltAi Enterprise](/ai/enterprise).
+3. **Construcción.** Se construye lo priorizado, por fases y sobre la tecnología que ya tienes. Lo ejecutan VoltAi Enterprise, con la implementación, y [VoltAi Factory](/ai/factory).
+4. **Transferencia.** Lo construido queda documentado y en manos de tu equipo. No se contrata aparte: es la forma en que termina cada encargo.
 
-**VoltAi Enterprise** — saber dónde estás y llegar a donde decidas. `SLG_Readiness` diagnostica; `SLG_Implement` ejecuta lo que el diagnóstico priorizó.
+Empezar por el final es la forma más cara de descubrir que no hacía falta.
 
-**VoltAi Factory** — construir lo que no está en el catálogo. Aplicaciones, agentes y dirección de operaciones como servicio.
+## Cuándo no conviene comprar IA (todavía)
 
-No hay un orden obligatorio, pero sí uno recomendable: primero criterio, después diagnóstico/arquitectura, y solo entonces construcción. Empezar por el final (la IA) es la forma más cara de descubrir que no hacía falta.
+- Cuando todavía no puedes decir qué decisión o qué proceso debería cambiar.
+- Cuando los datos que alimentarían la herramienta no los defiende nadie dentro.
+- Cuando la única comparación disponible la escribió quien vende.
+- Cuando nadie dentro va a poder mantenerla el día que se vaya el proveedor.
 
-## Por qué VoltAi
+## Por qué primero criterio
 
-En 1800, Alessandro Volta presentó la primera pila eléctrica: una invención que permitió generar una corriente sostenida y abrió el camino a nuevas aplicaciones de la electricidad. Su legado nos inspira por esa capacidad de convertir el conocimiento en una fuerza que otros pueden utilizar.
-
-**VoltAi nace en su honor.** Unimos su nombre con AI, inteligencia artificial: conocimiento convertido en algo que otros pueden usar, que es lo que hacemos con cada empresa.
+El método es el cómo. El porqué está escrito: [la doctrina](/doctrina) explica por qué lo que hay que dejar de hacer pesa más que lo que hay que empezar.

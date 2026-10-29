@@ -8,6 +8,9 @@ download: "d-10-en"
 lang: en
 pair: "coo-as-a-service"
 copy: temporal
+fase: 3
+titular: "Operations management with agents, as a service"
+lector: "the leadership of small and mid-sized companies"
 ---
 
 ## Who it is for and what problem
@@ -17,7 +20,7 @@ The problem with postponing it is familiar: the chief executive ends up running 
 
 ## What it is
 
-Operations leadership as a service, from `VoltAi Factory`.
+Operations leadership as a service, from VoltAi Factory.
 It is not consulting that recommends and leaves: it is a figure who operates, accountable for agreed results and present over time.
 
 ## What it includes

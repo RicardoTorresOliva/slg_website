@@ -250,7 +250,7 @@ sinDuplicados("destino del menú", sitio.menu.map((d) => d.ruta.es));
 
 /* ── 7 · Coherencias sueltas ────────────────────────────────────────────── */
 
-const BLOQUES = new Set(["puertas", "lineas", "doctrina", "articulos", "descarga"]);
+const BLOQUES = new Set(["fases", "puertas", "lineas", "doctrina", "articulos", "descarga"]);
 const sueltos = new Set(sitio.oferta.sueltos.map((s) => s.slug));
 for (const b of sitio.bloquesDeServicios) {
   if (typeof b === "string") {

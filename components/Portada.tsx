@@ -13,9 +13,9 @@ import { HeroTipografico, TarjetaDeArticulo, TarjetaDeServicio } from "./piezas"
 
 /**
  * Servicios — **los bloques de RF-09, en orden fijo**. Fue la portada hasta el
- * 2026-09-18; desde entonces vive en `/servicios` y la portada es el mapa
- * («Empieza aquí»). Decisión de Ricardo: la casa comercial es Servicios, y la
- * entrada es un mapa poco invasivo.
+ * 2026-09-18 y la casa comercial hasta la reingeniería del 2026-10-27: desde
+ * entonces la propuesta vive en la portada y, en este sitio, Servicios es el
+ * índice de toda la oferta por fase del método (bloque `fases`, DU-RC02).
  *
  * Qué bloques y en qué orden lo dice la ficha (`sitio.bloquesDeServicios`); en
  * la demo de la plantilla son estos:
@@ -102,6 +102,77 @@ function Bloque({
   }
 
   switch (bloque) {
+    case "fases": {
+      // Todos los servicios, cada uno bajo su fase (DU-RC02). La fase N es el
+      // `###` N de la sección; el servicio dice en qué fase vive con su `fase`.
+      // Una fase sin servicios —la transferencia, que es el cierre de todos—
+      // se pinta solo con su texto.
+      const registros = loadCollection<{ name: string; fase?: number; titular?: string; lector?: string }>(
+        "service",
+        lang,
+      );
+      const enFase = (n: number) =>
+        SERVICIOS.flatMap((s) => {
+          const r = registros.find((x) => x.slug === (lang === "en" ? s.slugEn : s.slug));
+          return r && r.data.fase === n ? [{ ruta: s[idx], ...r.data }] : [];
+        });
+      return (
+        <Reveal>
+          <section aria-labelledby="fases" style={seccionEstilo}>
+            <h2 id="fases" style={tituloDeSeccion}>
+              {seccion?.titulo}
+            </h2>
+            <p style={apoyoDeSeccion}>
+              <MarkdownEnLinea texto={seccion?.cuerpo.split("\n")[0] ?? ""} />
+            </p>
+            <ol style={listaDeFases}>
+              {subsecciones(seccion?.cuerpo ?? "").map((f, i) => {
+                const [resuelve, ...resto] = f.cuerpo.split("\n").filter(Boolean);
+                const servicios = enFase(i + 1);
+                return (
+                  <li key={f.titulo} style={faseEstilo}>
+                    <div>
+                      <span aria-hidden="true" style={numeral}>
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <h3 style={faseTitulo}>{f.titulo}</h3>
+                      <p style={faseResuelve}>
+                        <MarkdownEnLinea texto={resuelve ?? ""} />
+                      </p>
+                      {resto.map((r) => (
+                        <p key={r} style={faseEscena}>
+                          <MarkdownEnLinea texto={r} />
+                        </p>
+                      ))}
+                    </div>
+                    {servicios.length > 0 ? (
+                      <ul style={listaDeServicios}>
+                        {servicios.map((s) => (
+                          <li key={s.ruta} style={servicioEstilo}>
+                            <p style={servicioTitular}>
+                              <Link href={s.ruta} style={{ color: "inherit", textDecoration: "none" }}>
+                                {s.titular ?? s.name}
+                              </Link>
+                            </p>
+                            {s.titular ? <p style={servicioLiteral}>{s.name}</p> : null}
+                            {s.lector ? (
+                              <p style={servicioLector}>
+                                {t["services.for"]} {s.lector}
+                              </p>
+                            ) : null}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+        </Reveal>
+      );
+    }
+
     case "puertas": {
       // Los ejes y los servicios sueltos traen sus propios subtítulos (`###`):
       // se parten aquí para no repetir los nombres en el componente. La
@@ -296,6 +367,74 @@ const apoyoDeSeccion: React.CSSProperties = {
   color: "var(--slg-ink-2)",
   maxWidth: "42rem",
 };
+
+/* El índice por fase: el número grande hace de imagen (guía §4.3), la fase a
+   la izquierda y sus servicios a la derecha; en móvil, uno debajo del otro. */
+const listaDeFases: React.CSSProperties = { listStyle: "none", margin: 0, padding: 0 };
+
+const faseEstilo: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(17rem, 1fr))",
+  gap: "1.5rem 3rem",
+  padding: "2.25rem 0",
+  borderTop: "1px solid var(--slg-hairline)",
+};
+
+const numeral: React.CSSProperties = {
+  display: "block",
+  fontSize: "var(--slg-type-numeral)",
+  lineHeight: 1,
+  letterSpacing: "var(--slg-track-numeral)",
+  fontWeight: 700,
+  fontVariantNumeric: "lining-nums tabular-nums",
+  color: "var(--slg-blue-deep)",
+  marginBottom: "var(--slg-space-4)",
+};
+
+const faseTitulo: React.CSSProperties = {
+  margin: "0 0 0.5rem",
+  fontSize: "1.375rem",
+  lineHeight: 1.2,
+  color: "var(--slg-blue-deep)",
+  fontWeight: 700,
+};
+
+const faseResuelve: React.CSSProperties = { margin: "0 0 0.75rem", color: "var(--slg-ink)", maxWidth: "30rem" };
+
+const faseEscena: React.CSSProperties = {
+  margin: 0,
+  color: "var(--slg-ink-2)",
+  fontStyle: "italic",
+  maxWidth: "30rem",
+};
+
+const listaDeServicios: React.CSSProperties = {
+  listStyle: "none",
+  margin: 0,
+  padding: 0,
+  display: "grid",
+  gap: "1.25rem",
+  alignContent: "start",
+};
+
+const servicioEstilo: React.CSSProperties = { paddingLeft: "1rem", borderLeft: "2px solid var(--slg-hairline)" };
+
+const servicioTitular: React.CSSProperties = {
+  margin: 0,
+  fontSize: "1.0625rem",
+  fontWeight: 600,
+  color: "var(--slg-link)",
+  lineHeight: 1.35,
+};
+
+const servicioLiteral: React.CSSProperties = {
+  margin: "0.25rem 0 0",
+  fontSize: "0.8125rem",
+  letterSpacing: "0.02em",
+  color: "var(--slg-ink-2)",
+};
+
+const servicioLector: React.CSSProperties = { margin: "0.25rem 0 0", fontSize: "0.9375rem", color: "var(--slg-ink-2)" };
 
 const rejillaDos: React.CSSProperties = {
   display: "grid",

@@ -1,68 +1,51 @@
 ---
 type: page
 title: "Services"
-description: "SLG Agency helps boards and executive committees decide on artificial intelligence: what to ask, what to demand and what not to buy."
+description: "Every SLG Agency service, ordered by the phase of the method it works in: judgement, diagnosis, building and transfer."
 lang: en
 pair: "servicios"
 nav_order: 1
-updated: "2026-09-18"
+updated: "2026-10-29"
 copy: temporal
 ---
 
 ## Hero
 
-We do not sell artificial intelligence. We help you decide what to buy, what to build and what to leave alone.
+Every service, ordered by phase.
 
-We work with boards and executive committees that have to decide on AI and do not want to do it on the information supplied by whoever is selling.
+Each service works in one phase of the Judgement first method. Find the phase your company is in: that is where the service you need sits. If you do not know which one it is, start with the diagnosis.
 
-## The Agency's axes
+## Judgement first, phase by phase
 
-The agency works on two axes: artificial intelligence, and building companies outside their home market.
+Four phases in a sensible order, not a mandatory one. Each ends at a gate with three exits —proceed, adjust or stop— and the decision is yours.
 
-### VoltAi by SLG
+### Judgement
 
-The artificial intelligence axis. Building judgement, diagnosing, implementing, and building what the catalogue does not have.
+Those who decide know what to ask, what to demand and what not to buy.
+"I have to decide on AI and I do not know what to ask the vendor."
 
-### Holdings by SLG
+### Diagnosis
 
-Building and operating companies outside their home market, with direct involvement in the outcome.
+You know where your company stands and what is blocking it, across eleven dimensions.
+"I do not know where my company stands, and I suspect internal enthusiasm is not the answer."
 
-## VoltAi by SLG
+### Building
 
-VoltAi by SLG runs in three lines, and they answer three different moments: judgement first, then diagnosis, and only then building.
+What was prioritised gets built, in phases and on the technology you already have.
+"We know what needs doing; what is missing is building it without getting locked in."
 
-### VoltAi Academy
+### Transfer
 
-Building judgement in the people who decide. What to ask a vendor, what to demand in a proposal, and what not to buy.
-
-### VoltAi Enterprise
-
-Know where you are and get where you decide to go. The diagnosis first, the implementation after.
-
-### VoltAi Factory
-
-Building what is not in the catalogue: applications, agents and operations leadership.
+What was built is documented and in your team's hands. It is not bought separately: it is how every engagement ends.
 
 ## Holdings by SLG
 
-The other axis of the Agency. It is not internationalisation advice: it is building and operating companies outside their home market, with direct involvement in the result.
+Outside the method, for a different decision: building or operating a company outside your home market.
 
-For the founder or leadership team who knows that the difficulty of operating abroad is not the translation but everything else: corporate structure, regulation, clients and people. A single point of responsibility for the whole, which is the difference from hiring five advisers.
+For the founder or the leadership team who knows that the hard part of operating abroad is not the translation but everything else: corporate structure, regulation, customers and people. A single point of accountability for the whole, which is the difference from hiring five advisory firms.
 
 ## Doctrine
 
 > What has to stop weighs more than what has to start.
 
-Everything we do comes from a written body of doctrine: The Phoenix Doctrine, and the three pillars of DAL OS — Destrucción Creativa, Antifragility and AI Literacy.
-
-## Latest articles
-
-We publish judgement, not news.
-
-There are no published articles yet. When there are, they appear here.
-
-## Featured downloads
-
-Every service has a document, written for a specific chair and published as it is. They are delivered in exchange for a corporate email, and nothing else.
-
-No document is available yet. When one is, it appears here.
+Every service comes from a written body of doctrine: The Phoenix Doctrine, and the three pillars of DAL OS — Destrucción Creativa, Antifragility and AI Literacy.

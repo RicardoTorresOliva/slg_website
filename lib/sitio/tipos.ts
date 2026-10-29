@@ -164,6 +164,9 @@ export type ReglaDeContenido = { readonly pattern: RegExp; readonly why: string;
  * Los bloques que la página de Servicios sabe pintar. Cada uno toma su texto de
  * la sección del registro `servicios` que ocupa su misma posición (RF-09):
  *
+ *   · `fases`     — el índice de todos los servicios agrupados por la fase del
+ *                   método: cada `###` de la sección es una fase, y cada
+ *                   servicio entra en la que declara su `fase` (1, 2, …);
  *   · `puertas`   — una tarjeta por eje y por servicio suelto, en ese orden;
  *   · `lineas`    — una tarjeta por línea, con su número de servicios;
  *   · `doctrina`  — la franja con cita y enlace (módulo `doctrina`);
@@ -173,6 +176,7 @@ export type ReglaDeContenido = { readonly pattern: RegExp; readonly why: string;
  *     con la etiqueta `etiqueta` de `content/ui`. `id` es el ancla del bloque.
  */
 export type BloqueDeServicios =
+  | "fases"
   | "puertas"
   | "lineas"
   | "doctrina"
