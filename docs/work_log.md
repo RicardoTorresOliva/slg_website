@@ -4372,3 +4372,17 @@ titulares nuevos. Todo el copy sigue `temporal`.
 `/` y `/en` redirigen al mapa (D-177). Pieza azul profunda arriba con quiénes somos; los cuatro
 bloques, en tarjetas separadas 2×2; sin «← Volver» en esa página. Sitemap sin `/` ni `/en`;
 `check:seo`, `check:armazon` y `check:lighthouse` apuntan a `/empieza-aqui`.
+
+## 2026-10-30 — Vista previa de LinkedIn por página (PR #7, guía §3.0)
+
+- `public/og.png` (por defecto, antes 404) y `public/og/*.png`: 10 imágenes 1200×627, ES/EN, de
+  Empieza aquí, Phoenix PEEx, Phoenix TEAx, SLG_Readiness y SLG_Implement.
+- `lib/content/seo.ts`: `OG_POR_RUTA` con imagen (`?v=2026-10-30`), título, descripción y alt por
+  ruta; `/` y `/en` reutilizan Empieza aquí / Start here. Resto del sitio: `/og.png`. Alto 627.
+  El `<title>` y la `description` de cada página no cambian.
+
+**Verificado** (build con `NEXT_PUBLIC_SITE_URL=https://www.softlandingglobal.com`): `tsc`,
+`check:content`, `lint`; `og:image`/`og:title` correctos en el HTML de las rutas del mapa.
+
+**Abierto.** `NEXT_PUBLIC_SITE_URL` con www en producción (variable del proveedor). `<html lang>`
+sigue `es` en `/en/*` (lo fija el armazón raíz; cambiarlo exige un layout raíz por idioma).
