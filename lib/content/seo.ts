@@ -31,8 +31,101 @@ import {
 import type { Lang } from "./schema.ts";
 import { baseDelSitio } from "./sitio.ts";
 
-/** La imagen de marca de Open Graph. Una sola, servida desde nuestro dominio. */
+/** La imagen de marca de Open Graph por defecto, servida desde nuestro dominio. */
 const IMAGEN_OG = "/og.png";
+
+/**
+ * La vista previa propia de las páginas que se comparten en LinkedIn: imagen,
+ * título, descripción y texto alternativo por ruta e idioma. Solo cambia lo que
+ * leen las redes (`og:*`, `twitter:*`); el `<title>` y la `description` de la
+ * página siguen saliendo de su contenido. Título ≤ 60 y descripción ≤ 150
+ * caracteres, para que LinkedIn no los corte.
+ *
+ * `VERSION_OG` va en la URL de la imagen: LinkedIn guarda la miniatura por URL,
+ * así que cambiar una imagen sin cambiar la versión no se ve nunca.
+ */
+const VERSION_OG = "2026-10-30";
+
+type VistaPrevia = { imagen: string; titulo: string; descripcion: string; alt: string };
+
+const EMPIEZA_AQUI: VistaPrevia = {
+  imagen: "/og/start-here-es.png",
+  titulo: "SLG Agency · Transformación de negocio AI-first, Human-first",
+  descripcion:
+    "Diseñamos, construimos y desplegamos estructuras para el escenario de negocios que crea la IA. Primero criterio, después construcción.",
+  alt: "SLG Agency: primero criterio, después construcción",
+};
+
+const START_HERE: VistaPrevia = {
+  imagen: "/og/start-here-en.png",
+  titulo: "SLG Agency · AI-first, Human-first business transformation",
+  descripcion:
+    "We design, build and deploy structures for the business landscape that AI creates. Judgment first, then we build.",
+  alt: "SLG Agency: judgment first, then we build",
+};
+
+const OG_POR_RUTA: Record<string, VistaPrevia> = {
+  "/": EMPIEZA_AQUI,
+  "/empieza-aqui": EMPIEZA_AQUI,
+  "/en": START_HERE,
+  "/en/start-here": START_HERE,
+  "/ai/academy/phoenix-peex": {
+    imagen: "/og/phoenix-peex-es.png",
+    titulo: "Phoenix PEEx · Programa de IA para directores",
+    descripcion:
+      "Para directores que deben decidir sobre IA sin depender de quien la vende: qué preguntar, qué exigir, qué no comprar y cómo saber si funciona.",
+    alt: "Phoenix PEEx, programa de IA para directores",
+  },
+  "/en/ai/academy/phoenix-peex": {
+    imagen: "/og/phoenix-peex-en.png",
+    titulo: "Phoenix PEEx · AI program for directors",
+    descripcion:
+      "For directors who must decide on AI without relying on whoever sells it: what to ask, what to demand, what not to buy, and how to know it works.",
+    alt: "Phoenix PEEx, AI program for directors",
+  },
+  "/ai/academy/phoenix-teax": {
+    imagen: "/og/phoenix-teax-es.png",
+    titulo: "Phoenix TEAx · Programa de IA para la alta gerencia",
+    descripcion:
+      "Para la alta gerencia que recibe la decisión del directorio y debe convertirla en operación. Un equipo gerencial que decide con los mismos criterios.",
+    alt: "Phoenix TEAx, programa de IA para la alta gerencia",
+  },
+  "/en/ai/academy/phoenix-teax": {
+    imagen: "/og/phoenix-teax-en.png",
+    titulo: "Phoenix TEAx · AI program for senior management",
+    descripcion:
+      "For senior management teams that receive the board's AI decision and must turn it into operations. One leadership team, one shared set of criteria.",
+    alt: "Phoenix TEAx, AI program for senior management",
+  },
+  "/ai/enterprise/readiness": {
+    imagen: "/og/readiness-es.png",
+    titulo: "SLG_Readiness · Diagnóstico de preparación para la IA",
+    descripcion:
+      "Antes de invertir, sabe dónde está tu empresa frente a la IA: once dimensiones, evidencia en cada una y prioridades defendibles ante el directorio.",
+    alt: "SLG_Readiness, diagnóstico de preparación para la IA en 11 dimensiones",
+  },
+  "/en/ai/enterprise/readiness": {
+    imagen: "/og/readiness-en.png",
+    titulo: "SLG_Readiness · AI readiness diagnostic",
+    descripcion:
+      "Before you invest, know where your company really stands on AI: eleven dimensions, evidence for each, and priorities you can defend to the board.",
+    alt: "SLG_Readiness, 11-dimension AI readiness diagnostic",
+  },
+  "/ai/enterprise/implement": {
+    imagen: "/og/implement-es.png",
+    titulo: "SLG_Implement · Implementación de IA por fases",
+    descripcion:
+      "Cuando el piloto funcionó y el despliegue no avanza: implementación por fases sobre tu stack, con compuertas de aprobación tuyas y sin lock-in.",
+    alt: "SLG_Implement, implementación de IA por fases",
+  },
+  "/en/ai/enterprise/implement": {
+    imagen: "/og/implement-en.png",
+    titulo: "SLG_Implement · Phased AI implementation",
+    descripcion:
+      "When the pilot worked and the rollout is stuck: phased implementation on your stack, with your approval gates and no lock-in.",
+    alt: "SLG_Implement, phased AI implementation",
+  },
+};
 
 export function metadatosDe({
   ruta,
@@ -53,6 +146,13 @@ export function metadatosDe({
   const marca = sitio.marca.nombre;
   const tituloCompleto = ruta === "/" || ruta === "/en" ? marca : `${titulo} · ${marca}`;
 
+  const propia = OG_POR_RUTA[ruta];
+  const tituloSocial = propia?.titulo ?? tituloCompleto;
+  const descripcionSocial = propia?.descripcion ?? descripcion;
+  const imagen = propia
+    ? { url: `${base}${propia.imagen}?v=${VERSION_OG}`, alt: propia.alt }
+    : { url: `${base}${IMAGEN_OG}`, alt: marca };
+
   const idiomas: Record<string, string> = { "x-default": `${base}/` };
   idiomas[lang === "en" ? "en" : "es"] = `${base}${ruta}`;
   if (otra) idiomas[lang === "en" ? "es" : "en"] = `${base}${otra}`;
@@ -69,17 +169,17 @@ export function metadatosDe({
     openGraph: {
       type: "website",
       siteName: marca,
-      title: tituloCompleto,
-      description: descripcion,
+      title: tituloSocial,
+      description: descripcionSocial,
       url: `${base}${ruta}`,
       locale: lang === "en" ? "en_US" : "es_ES",
-      images: [{ url: `${base}${IMAGEN_OG}`, width: 1200, height: 630, alt: marca }],
+      images: [{ ...imagen, width: 1200, height: 627, type: "image/png" }],
     },
     twitter: {
       card: "summary_large_image",
-      title: tituloCompleto,
-      description: descripcion,
-      images: [`${base}${IMAGEN_OG}`],
+      title: tituloSocial,
+      description: descripcionSocial,
+      images: [imagen],
     },
   };
 }
