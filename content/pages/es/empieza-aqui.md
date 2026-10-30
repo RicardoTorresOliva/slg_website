@@ -6,7 +6,7 @@ lang: es
 pair: "start-here"
 nav_order: 1
 updated: "2026-10-29"
-copy: temporal
+copy: aprobado
 ---
 
 ## Hero
