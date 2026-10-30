@@ -84,19 +84,11 @@
 /* ── Quiénes somos: la postura, arriba, en la caja gris ─────────────────── */
 
 .slg-mapa-quienes {
-  margin-top: 3rem;
-  padding: clamp(1.75rem, 5vw, 3.5rem);
+  margin-top: 1rem;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
   border: 1px solid var(--slg-line);
   border-radius: var(--slg-radius-lg);
   background: var(--slg-paper-2);
-}
-
-.slg-mapa-etiqueta {
-  margin: 0 0 0.75rem;
-  color: var(--slg-ink-2);
-  font-size: 0.875rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
 }
 
 .slg-mapa .slg-mapa-quienes h1 {

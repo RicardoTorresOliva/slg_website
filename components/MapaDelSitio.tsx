@@ -130,7 +130,7 @@ export function MapaDelSitio({ slug, lang }: { slug: string; lang: "es" | "en" }
 
   return (
     <div className="slg-mapa" lang={lang}>
-      <Quienes cuerpo={esta?.body ?? ""} etiqueta={esta?.data.title ?? ""} />
+      <Quienes cuerpo={esta?.body ?? ""} />
 
       <nav aria-label={t["mapa.aria"]} className="slg-mapa-arbol">
         <ul className="slg-mapa-lista slg-mapa-destinos">
@@ -194,13 +194,12 @@ function Tarjeta({ nodo, clase }: { nodo: Nodo; clase?: string }) {
  * después, un bloque por sección: el título es el `##`, el texto es lo que
  * sigue. Sin texto en el registro no se pinta nada: el mapa se sirve igual.
  */
-function Quienes({ cuerpo, etiqueta }: { cuerpo: string; etiqueta: string }) {
+function Quienes({ cuerpo }: { cuerpo: string }) {
   const [hero, ...bloques] = secciones(cuerpo);
   if (!hero) return null;
   const [titular, ...apoyo] = hero.cuerpo.split("\n").filter(Boolean);
   return (
     <section aria-labelledby="mapa-quienes" className="slg-mapa-quienes">
-      <p className="slg-mapa-etiqueta">{etiqueta}</p>
       <h1 id="mapa-quienes">{titular}</h1>
       {apoyo.length > 0 ? <p className="slg-mapa-entradilla">{apoyo.join(" ")}</p> : null}
       <div className="slg-mapa-bloques">
