@@ -40,6 +40,8 @@ export function padreDe(ruta: string, lang: Lang, t: Record<string, string>): Pa
   const inicio = INICIO[lang];
   const servicios = PAGINA_DE_SERVICIOS[lang];
   if (ruta === inicio) return null;
+  // «Empieza aquí» es donde empieza el recorrido (la portada redirige allí): no vuelve a nada.
+  if (ruta === PAGINAS_DEL_MOTOR.mapa.ruta[lang]) return null;
 
   const paginas = loadCollection<{ title: string }>("page", lang);
   const tituloDePagina = (slug: string, porDefecto: string) =>

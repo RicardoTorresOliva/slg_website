@@ -38,12 +38,12 @@ const SERVER = path.join(REPO_ROOT, ".next", "standalone", "server.js");
  * **SIN `LH_PAGINAS`, LAS TRES SALEN DE LA FICHA Y DEL CONTENIDO** (plantilla,
  * 2026-09-22). Antes eran una página de servicio y un artículo del primer sitio,
  * escritos a mano: en el sitio de un cliente las dos serían 404 y el freno
- * mediría una página de error. Ahora: la portada; el primer servicio de la
+ * mediría una página de error. Ahora: «Empieza aquí» (la portada redirige allí); el primer servicio de la
  * oferta (el gate pide «una página de servicio», y todas salen de la misma
  * plantilla); y el primer artículo publicado, si el blog está encendido.
  */
 function paginasPorDefecto(): string[] {
-  const paginas = ["/"];
+  const paginas = ["/empieza-aqui"];
   const servicio = serviciosDeLaOferta()[0];
   if (servicio) paginas.push(servicio.ruta.es);
   if (moduloActivo("blog")) {

@@ -165,7 +165,8 @@ async function main() {
   const { base, parar } = externo ? { base: externo, parar: () => {} } : await arrancar();
   try {
     // Todas las rutas públicas, de las dos mitades del sitio.
-    const rutas = [M.inicio.ruta.es, M.inicio.ruta.en, ...DESTINOS_ES, ...DESTINOS_EN, ...rutasDelArmazon()].filter(
+    // `/` y `/en` redirigen a «Empieza aquí»: el recorrido empieza allí.
+    const rutas = [...DESTINOS_ES, ...DESTINOS_EN, ...rutasDelArmazon()].filter(
       rutaDisponible,
     );
 

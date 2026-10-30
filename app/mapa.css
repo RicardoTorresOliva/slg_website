@@ -81,55 +81,71 @@
   content: " — ";
 }
 
-/* ── Quiénes somos: la postura, arriba, en la caja gris ─────────────────── */
+/* ── Quiénes somos: la postura, arriba, como pieza propia en azul profundo ─ */
 
-.slg-mapa-quienes {
+.slg-mapa-hero {
   margin-top: 1rem;
-  padding: clamp(1.5rem, 4vw, 2.5rem);
-  border: 1px solid var(--slg-line);
+  padding: clamp(2rem, 6vw, 4rem);
   border-radius: var(--slg-radius-lg);
-  background: var(--slg-paper-2);
+  background: var(--slg-surface-inverse);
+  color: var(--slg-paper);
 }
 
-.slg-mapa .slg-mapa-quienes h1 {
+.slg-mapa .slg-mapa-hero h1 {
   margin: 0;
   max-width: 24ch;
-  color: var(--slg-blue-deep);
+  color: var(--slg-paper);
   font-size: clamp(2rem, 5.5vw, 3.25rem);
   font-weight: 700;
   line-height: 1.08;
   letter-spacing: -0.02em;
 }
 
-.slg-mapa-entradilla {
+.slg-mapa .slg-mapa-hero .slg-mapa-entradilla {
   margin: 1.25rem 0 0;
   max-width: 44rem;
-  color: var(--slg-ink);
+  color: var(--slg-paper);
   font-size: clamp(1.0625rem, 2.2vw, 1.25rem);
   line-height: 1.55;
 }
 
+/* El resto, igual que antes pero en piezas separadas, no en una sola caja. */
 .slg-mapa-bloques {
   display: grid;
-  gap: 2rem 3rem;
-  grid-template-columns: repeat(auto-fit, minmax(min(22rem, 100%), 1fr));
-  margin-top: 2.5rem;
-  padding-top: 2rem;
-  border-top: 1px solid var(--slg-line);
+  gap: 1rem;
+  grid-template-columns: 1fr;
+  margin-top: 1rem;
+}
+
+@media (min-width: 48rem) {
+  .slg-mapa-bloques {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.slg-mapa-bloque {
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid var(--slg-line);
+  border-radius: var(--slg-radius-lg);
+  background: var(--slg-paper-2);
 }
 
 /* El tamaño del H2 lo fija apple.css (una sola escala); aquí solo el color y el aire. */
-.slg-mapa .slg-mapa-bloques h2 {
+.slg-mapa .slg-mapa-bloque h2 {
   margin: 0 0 0.75rem;
   color: var(--slg-blue-deep);
   font-weight: 700;
 }
 
-.slg-mapa-bloques p {
+.slg-mapa-bloque p {
   margin: 0 0 0.75rem;
   color: var(--slg-ink-2);
   font-size: 0.9375rem;
   line-height: 1.6;
+}
+
+.slg-mapa-bloque p:last-child {
+  margin-bottom: 0;
 }
 
 /* ── El árbol ─────────────────────────────────────────────────────────────── */

@@ -4366,3 +4366,9 @@ no es solo una herramienta… nuestro ADN es Human-first») y lo leído en su ca
 **Abierto.** Las frases junto a algunos servicios del mapa («para C-suite», «Army of Agents»,
 «Crea Agentes IA para cualquier escenario») son las antiguas (`tagline`) y no coinciden con los
 titulares nuevos. Todo el copy sigue `temporal`.
+
+## 2026-10-30 — El recorrido empieza en «Empieza aquí»
+
+`/` y `/en` redirigen al mapa (D-177). Pieza azul profunda arriba con quiénes somos; los cuatro
+bloques, en tarjetas separadas 2×2; sin «← Volver» en esa página. Sitemap sin `/` ni `/en`;
+`check:seo`, `check:armazon` y `check:lighthouse` apuntan a `/empieza-aqui`.

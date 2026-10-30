@@ -15,11 +15,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const base = baseDelSitio();
   const hoy = new Date();
 
-  const paginas = rutasDelSitemap().map((ruta) => ({
+  // `/` y `/en` redirigen a «Empieza aquí» (next.config.ts): no se anuncian.
+  const paginas = rutasDelSitemap()
+    .filter((ruta) => ruta !== "/" && ruta !== "/en")
+    .map((ruta) => ({
     url: `${base}${ruta}`,
     lastModified: hoy,
     changeFrequency: "monthly" as const,
-    priority: ruta === "/" || ruta === "/en" ? 1 : 0.7,
+    priority: ruta === "/empieza-aqui" || ruta === "/en/start-here" ? 1 : 0.7,
   }));
 
   // Sin blog no hay artículos que anunciar; sin inglés, solo los españoles.

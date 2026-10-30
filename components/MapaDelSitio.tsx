@@ -199,17 +199,22 @@ function Quienes({ cuerpo }: { cuerpo: string }) {
   if (!hero) return null;
   const [titular, ...apoyo] = hero.cuerpo.split("\n").filter(Boolean);
   return (
-    <section aria-labelledby="mapa-quienes" className="slg-mapa-quienes">
-      <h1 id="mapa-quienes">{titular}</h1>
-      {apoyo.length > 0 ? <p className="slg-mapa-entradilla">{apoyo.join(" ")}</p> : null}
+    <>
+      <section aria-labelledby="mapa-quienes" className="slg-mapa-hero">
+        {/* En un <header> propio: apple.css pinta `main h1 + p` en gris con !important y sobre azul no se lee. */}
+        <header>
+          <h1 id="mapa-quienes">{titular}</h1>
+        </header>
+        {apoyo.length > 0 ? <p className="slg-mapa-entradilla">{apoyo.join(" ")}</p> : null}
+      </section>
       <div className="slg-mapa-bloques">
         {bloques.map((b) => (
-          <div key={b.titulo}>
+          <section key={b.titulo} className="slg-mapa-bloque">
             <h2>{b.titulo}</h2>
             <Markdown texto={b.cuerpo} />
-          </div>
+          </section>
         ))}
       </div>
-    </section>
+    </>
   );
 }

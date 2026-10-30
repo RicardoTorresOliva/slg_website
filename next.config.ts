@@ -36,6 +36,18 @@ const nextConfig: NextConfig = {
    *
    * Las de abajo sí son constantes, y por eso siguen aquí.
    */
+  /**
+   * El recorrido empieza en «Empieza aquí» (Ricardo, 2026-10-30): la portada
+   * se retira y `/` y `/en` llevan al mapa. 307 y no 308: es una decisión de
+   * producto que puede revertirse, y un 308 queda guardado en el navegador.
+   */
+  async redirects() {
+    return [
+      { source: "/", destination: "/empieza-aqui", permanent: false },
+      { source: "/en", destination: "/en/start-here", permanent: false },
+    ];
+  },
+
   async headers() {
     return [
       {

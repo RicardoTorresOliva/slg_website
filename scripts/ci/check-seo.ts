@@ -121,7 +121,8 @@ async function main() {
   const externo = process.env.SEO_BASE;
   const { base, parar } = externo ? { base: externo, parar: () => {} } : await arrancar();
   try {
-    const rutas = rutasDelSitemap();
+    // `/` y `/en` redirigen a «Empieza aquí» (next.config.ts): no son páginas propias.
+    const rutas = rutasDelSitemap().filter((r) => r !== "/" && r !== "/en");
     /**
      * Los títulos se comparan **dentro de cada idioma**, no entre idiomas.
      *
@@ -159,11 +160,12 @@ async function main() {
      * Compararlo contra el puerto del servidor de prueba habría dado un rojo
      * permanente y falso.
      */
-    const origen = (canonical(paginas.get("/") ?? "") || "").replace(/\/$/, "");
+    const canonicoDelMapa = canonical(paginas.get("/empieza-aqui") ?? "") || "";
+    const origen = canonicoDelMapa.replace(/\/(en\/start-here|empieza-aqui)$/, "").replace(/\/$/, "");
     check(
       "las páginas declaran un origen canónico",
       origen.startsWith("http"),
-      `la portada declara: ${canonical(paginas.get("/") ?? "") || "(ausente)"}`,
+      `la portada declara: ${canonical(paginas.get("/empieza-aqui") ?? "") || "(ausente)"}`,
     );
 
     for (const [ruta, html] of paginas) {
@@ -227,7 +229,7 @@ async function main() {
     }
 
     console.log("\nOpen Graph, sitemap, robots y datos estructurados (RNF-17):\n");
-    const portada = paginas.get("/") ?? "";
+    const portada = paginas.get("/empieza-aqui") ?? "";
     check(
       "la portada emite Open Graph con imagen de marca",
       /<meta property="og:image"/.test(portada) && /<meta property="og:title"/.test(portada),
