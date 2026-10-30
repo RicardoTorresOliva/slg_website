@@ -9,7 +9,7 @@ lang: es
 pair: "phoenix-teax-en"
 copy: temporal
 fase: 1
-titular: "Programa de criterio para la alta gerencia"
+titular: "Programa de criterio y ejecución para la alta gerencia"
 lector: "la alta gerencia"
 ---
 

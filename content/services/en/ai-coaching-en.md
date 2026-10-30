@@ -8,7 +8,7 @@ lang: en
 pair: "ai-coaching"
 copy: temporal
 fase: 1
-titular: "One-to-one coaching for those who lead"
+titular: "One-to-one coaching in judgement and execution for those who lead"
 lector: "chairs, directors and chief executives"
 ---
 

@@ -11,7 +11,7 @@ copy: temporal
 
 VoltAi by SLG works with one method: **Judgement first**. Four phases in a sensible order, not a mandatory one, and each ends at a gate with three exits —proceed, adjust or stop—. The decision is always yours, and the next phase does not start without it.
 
-1. **Judgement.** Those who decide know what to ask, what to demand and what not to buy. Run by [VoltAi Academy](/en/ai/academy).
+1. **Judgement and Execution.** Those who decide know what to ask, what to demand and what not to buy, and how to put it into practice. Run by [VoltAi Academy](/en/ai/academy).
 2. **Diagnosis.** You know where your company stands and what is blocking it, across eleven dimensions. Run by [VoltAi Enterprise](/en/ai/enterprise).
 3. **Building.** What was prioritised gets built, in phases and on the technology you already have. Run by VoltAi Enterprise, through implementation, and [VoltAi Factory](/en/ai/factory).
 4. **Transfer.** What was built is documented and in your team's hands. It is not bought separately: it is how every engagement ends.

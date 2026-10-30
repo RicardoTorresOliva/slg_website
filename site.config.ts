@@ -125,7 +125,8 @@ export const sitio: FichaDelSitio = {
         ],
       },
     ],
-    sueltos: [servicio("slg-holdings", "Holdings by SLG", "/holdings", "holdings")],
+    // Holdings by SLG está archivado (D-174): ver content/_archivo/holdings/README.md.
+    sueltos: [],
   },
 
   fotos: {
@@ -142,14 +143,12 @@ export const sitio: FichaDelSitio = {
   // que busca. Sin hero comercial ni CTA de conversión.
   bloquesDeServicios: [
     "fases",
-    { id: "holdings", suelto: "slg-holdings", etiqueta: "home.seeHoldings" },
     "doctrina",
   ],
 
   nomenclatura: {
     literales: [
       "VoltAi by SLG",
-      "Holdings by SLG",
       "VoltAi Academy",
       "VoltAi Enterprise",
       "VoltAi Factory",
@@ -174,7 +173,6 @@ export const sitio: FichaDelSitio = {
       { pattern: /\bSLG_Voltai\b/g, correct: "VoltAi by SLG", why: "capitalización alterada" },
       { pattern: /\bSLG_voltai\b/g, correct: "VoltAi by SLG", why: "capitalización alterada" },
       { pattern: /\bVolt\s+Ai\b/gi, correct: "VoltAi by SLG", why: "espacio dentro del nombre" },
-      { pattern: /\bSLG\s+Holdings\b/g, correct: "Holdings by SLG", why: "espacio en vez de guion bajo" },
       { pattern: /\bSLG\s+Academy\b/g, correct: "VoltAi Academy", why: "espacio en vez de guion bajo" },
       { pattern: /\bSLG\s+Enterprise\b/g, correct: "VoltAi Enterprise", why: "espacio en vez de guion bajo" },
       { pattern: /\bSLG\s+Factory\b/g, correct: "VoltAi Factory", why: "espacio en vez de guion bajo" },

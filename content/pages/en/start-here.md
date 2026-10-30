@@ -1,7 +1,7 @@
 ---
 type: page
 title: "Start here"
-description: "SLG Agency is an AI-first business transformation agency: it designs, builds and deploys businesses for the business landscape that artificial intelligence creates."
+description: "SLG Agency is an AI-first business transformation agency: it designs, builds and deploys structures for the business landscape that artificial intelligence creates."
 lang: en
 pair: "empieza-aqui"
 nav_order: 1
@@ -13,7 +13,7 @@ copy: temporal
 
 We are an AI-first business transformation agency.
 
-We design, build and deploy businesses for the new business landscape built on artificial intelligence.
+We design, build and deploy structures for the new business landscape built on artificial intelligence.
 
 ## AI changes how reality is seen
 

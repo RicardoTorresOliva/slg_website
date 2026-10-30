@@ -1,7 +1,7 @@
 ---
 type: page
 title: "Empieza aquí"
-description: "SLG Agency es una business transformation agency, AI-first: diseña, construye y despliega negocios para el escenario de negocios que crea la inteligencia artificial."
+description: "SLG Agency es una business transformation agency, AI-first: diseña, construye y despliega estructuras para el escenario de negocios que crea la inteligencia artificial."
 lang: es
 pair: "start-here"
 nav_order: 1
@@ -13,7 +13,7 @@ copy: temporal
 
 Somos una business transformation agency, AI-first.
 
-Diseñamos, construimos y desplegamos negocios para el nuevo escenario de negocios basado en inteligencia artificial.
+Diseñamos, construimos y desplegamos estructuras para el nuevo escenario de negocios basado en inteligencia artificial.
 
 ## La IA cambia cómo se mira la realidad
 

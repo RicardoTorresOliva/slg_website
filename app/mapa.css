@@ -38,9 +38,19 @@
   text-decoration: none;
 }
 
+/* Los nombres del árbol SON enlaces, y tienen que parecerlo: azul y subrayado
+   (Ricardo, 2026-10-30). El subrayado se engrosa al pasar el puntero. */
+.slg-mapa-tarjeta .slg-mapa-nombre,
+.slg-mapa-rama .slg-mapa-nombre {
+  color: var(--slg-link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
 .slg-mapa-tarjeta:hover .slg-mapa-nombre,
 .slg-mapa-rama:hover .slg-mapa-nombre {
-  text-decoration: underline;
+  text-decoration-thickness: 2px;
 }
 
 .slg-mapa-nombre {

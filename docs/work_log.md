@@ -4347,3 +4347,22 @@ no es solo una herramienta… nuestro ADN es Human-first») y lo leído en su ca
 **Verificado** (build de producción): `lint`, `tsc`, `check:content`, `check:cadenas`,
 `check:contraste`, `check:motion`, `check:paginas` (142), `check:seo` (238), `check:armazon` (60),
 `check:produccion`, `check:js-budget`, Lighthouse (accesibilidad 100); sin desbordes a 390 px.
+
+## 2026-10-30 — Cambios de Ricardo al PR #5: fase 01, «estructuras», enlaces del mapa, Holdings archivado
+
+- Fase 01 → «Criterio y Ejecución» (D-175) en portada, `/ai`, Servicios, Academy y los titulares de
+  los cinco servicios de la Academy; ES y EN.
+- «Empieza aquí»: «estructuras» en lugar de «negocios» (D-176), también en la meta-descripción.
+- Árbol de «Empieza aquí»: nombres en azul y subrayados (`mapa.css`); contraste en verde.
+- Holdings by SLG archivado (D-174): `site.config.ts` sin suelto ni bloque; fuera de la portada
+  (`Propuesta.tsx` y los registros), de Servicios y de `content/ui`; servicio y descarga D-11 movidos
+  a `content/_archivo/holdings/` con su README de restauración. `check:sitio`: 10 servicios.
+
+**Verificado** (build de producción): `lint`, `tsc`, `check:content`, `check:cadenas`,
+`check:contraste`, `check:motion`, `check:sitio`, `check:paginas` (132), `check:seo` (226),
+`check:armazon` (58), `check:produccion`, `check:js-budget`, Lighthouse (accesibilidad 100).
+`/holdings` responde 404.
+
+**Abierto.** Las frases junto a algunos servicios del mapa («para C-suite», «Army of Agents»,
+«Crea Agentes IA para cualquier escenario») son las antiguas (`tagline`) y no coinciden con los
+titulares nuevos. Todo el copy sigue `temporal`.

@@ -9,7 +9,7 @@ updated: "2026-10-29"
 copy: temporal
 ---
 
-**Phase 01 of the method · Judgement.** The VoltAi by SLG line that works on the people who decide.
+**Phase 01 of the method · Judgement and Execution.** The VoltAi by SLG line that works on the people who decide.
 
 > "I have to decide on AI and I do not know what to ask the vendor."
 

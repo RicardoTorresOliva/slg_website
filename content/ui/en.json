@@ -1,6 +1,5 @@
 {
   "nav.ai": "VoltAi by SLG",
-  "nav.holdings": "Holdings by SLG",
   "nav.doctrine": "Doctrine",
   "nav.blog": "Blog",
   "nav.about": "About",
@@ -554,7 +553,6 @@
   "nav.start": "Start here",
   "nav.services": "Services",
   "home.allDownloads": "See all downloads",
-  "home.seeHoldings": "Learn about Holdings by SLG",
   "home.download": "Download",
   "downloads.get": "Go to the document",
   "nav.backTo": "← Back to",

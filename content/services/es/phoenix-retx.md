@@ -9,7 +9,7 @@ lang: es
 pair: "phoenix-retx-en"
 copy: temporal
 fase: 1
-titular: "Programa para investigación y formación universitaria"
+titular: "Programa de criterio y ejecución para investigación y formación universitaria"
 lector: "investigadores y estudiantes"
 ---
 

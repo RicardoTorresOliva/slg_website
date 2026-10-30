@@ -11,7 +11,7 @@ copy: temporal
 
 VoltAi by SLG trabaja con un método: **Criterio primero**. Cuatro fases en un orden recomendable, no obligatorio, y cada una termina en una compuerta con tres salidas —avanzar, ajustar o descartar—. La decisión es siempre tuya, y la fase siguiente no empieza sin ella.
 
-1. **Criterio.** Quien decide sabe qué preguntar, qué exigir y qué no comprar. Lo ejecuta [VoltAi Academy](/ai/academy).
+1. **Criterio y Ejecución.** Quien decide sabe qué preguntar, qué exigir y qué no comprar, y sabe llevarlo a la práctica. Lo ejecuta [VoltAi Academy](/ai/academy).
 2. **Diagnóstico.** Sabes dónde está tu empresa y qué la bloquea, en once dimensiones. Lo ejecuta [VoltAi Enterprise](/ai/enterprise).
 3. **Construcción.** Se construye lo priorizado, por fases y sobre la tecnología que ya tienes. Lo ejecutan VoltAi Enterprise, con la implementación, y [VoltAi Factory](/ai/factory).
 4. **Transferencia.** Lo construido queda documentado y en manos de tu equipo. No se contrata aparte: es la forma en que termina cada encargo.

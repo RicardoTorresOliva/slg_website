@@ -8,7 +8,7 @@ lang: es
 pair: "ai-coaching-en"
 copy: temporal
 fase: 1
-titular: "Acompañamiento individual a quien dirige"
+titular: "Acompañamiento individual en criterio y ejecución a quien dirige"
 lector: "presidentes, consejeros y directores generales"
 ---
 
