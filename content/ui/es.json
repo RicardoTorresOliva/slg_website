@@ -1,6 +1,5 @@
 {
   "nav.ai": "VoltAi by SLG",
-  "nav.holdings": "Holdings by SLG",
   "nav.doctrine": "Doctrina",
   "nav.blog": "Blog",
   "nav.about": "Nosotros",
@@ -51,7 +50,6 @@
   "footer.legalPrivacy": "Privacidad",
   "footer.startHere": "Empieza aquí",
   "mapa.aria": "Mapa del sitio",
-  "mapa.root": "SLG Agency",
   "mapa.transversal": "Accesos desde cualquier página",
   "blog.title": "Blog",
   "blog.empty": "Todavía no hay artículos publicados en español.",
@@ -555,7 +553,6 @@
   "nav.start": "Empieza aquí",
   "nav.services": "Servicios",
   "home.allDownloads": "Ver todas las descargas",
-  "home.seeHoldings": "Conocer Holdings by SLG",
   "home.download": "Descargar",
   "downloads.get": "Ir al documento",
   "nav.backTo": "← Volver a",

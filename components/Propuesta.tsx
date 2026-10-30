@@ -21,7 +21,7 @@ import { Reveal } from "./Reveal";
  *   6. Cuatro reglas: la independencia es la prueba (franja oscura, la única)
  *   7. Cuándo no conviene comprar IA (todavía)
  *   8. Quién responde
- *   9. Doctrina, Holdings y el cierre con la misma acción
+ *   9. Doctrina y el cierre con la misma acción
  *
  * **EL TEXTO NO VIVE AQUÍ** (RF-16, `check:cadenas`): cada bloque es la sección
  * N del registro `inicio` / `home` de `content/pages`, pedida por POSICIÓN,
@@ -45,7 +45,7 @@ export function Propuesta({ lang }: { lang: "es" | "en" }) {
   const t = loadUiStrings()[lang];
   const M = PAGINAS_DEL_MOTOR;
   const registro = loadCollection("page", lang).find((p) => p.slug === M.inicio.registro[lang]);
-  const [hero, situaciones, cambia, metodo, entrada, reglas, cuandoNo, quien, doctrina, holdings, cierre] =
+  const [hero, situaciones, cambia, metodo, entrada, reglas, cuandoNo, quien, doctrina, cierre] =
     secciones(registro?.body ?? "");
 
   const [antetitulo, titular, apoyo, etiquetaCta, notaCta] = parrafos(hero?.cuerpo ?? "");
@@ -53,7 +53,6 @@ export function Propuesta({ lang }: { lang: "es" | "en" }) {
   // empezar»—, no este archivo: cambiar la puerta es editar el `.md`.
   const accion = accionPrimaria(lang, enlaceDe(entrada?.cuerpo ?? ""), etiquetaCta ?? t["download.cta"]);
 
-  const holdingsRuta = SERVICIOS.find((s) => s.rama === null);
   const contacto = moduloActivo("contacto") ? M.contacto.ruta[lang] : null;
 
   return (
@@ -196,23 +195,6 @@ export function Propuesta({ lang }: { lang: "es" | "en" }) {
                 </Link>
               ) : null}
             </p>
-          </section>
-        </Reveal>
-      ) : null}
-
-      {/* 10 · Holdings: la segunda audiencia, en una línea, sin competir. */}
-      {holdings && holdingsRuta ? (
-        <Reveal>
-          <section aria-labelledby="holdings" style={seccion}>
-            <h2 id="holdings" style={h2}>
-              {holdings.titulo}
-            </h2>
-            <p style={apoyoDeSeccion}>
-              <MarkdownEnLinea texto={holdings.cuerpo} />
-            </p>
-            <Link href={lang === "en" ? rutaEnDeServicio(holdingsRuta) : holdingsRuta.es} style={enlace}>
-              {t["home.seeHoldings"]}
-            </Link>
           </section>
         </Reveal>
       ) : null}

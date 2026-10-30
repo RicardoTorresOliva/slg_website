@@ -9,7 +9,7 @@ lang: es
 pair: "phoenix-peex-en"
 copy: temporal
 fase: 1
-titular: "Programa de criterio para directores"
+titular: "Programa de criterio y ejecución para directores"
 lector: "miembros de directorio"
 ---
 

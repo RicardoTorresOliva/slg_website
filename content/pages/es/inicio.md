@@ -57,9 +57,9 @@ Al terminar, la capacidad está dentro.
 
 Cuatro fases en un orden recomendable, no obligatorio. Cada una termina en una compuerta con tres salidas —avanzar, ajustar o descartar— y la decisión es tuya.
 
-### Criterio
+### Criterio y Ejecución
 
-Quien decide sabe qué preguntar, qué exigir y qué no comprar.
+Quien decide sabe qué preguntar, qué exigir y qué no comprar, y sabe llevarlo a la práctica.
 
 [VoltAi Academy](/ai/academy)
 
@@ -127,10 +127,6 @@ Si al terminar sigues dependiendo de nosotros, el trabajo no está hecho.
 > Lo que hay que dejar de hacer pesa más que lo que hay que empezar.
 
 Todo lo que hacemos sale de un cuerpo doctrinal escrito: The Phoenix Doctrine, y los tres pilares de DAL OS — Destrucción Creativa, Antifragilidad y AI Literacy. Publicamos criterio, no novedades.
-
-## Holdings by SLG
-
-¿Vas a construir u operar una compañía fuera de tu mercado de origen? Eso es Holdings by SLG: un punto único de responsabilidad sobre el conjunto.
 
 ## Empieza por el documento
 

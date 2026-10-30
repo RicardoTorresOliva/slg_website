@@ -9,7 +9,7 @@ lang: en
 pair: "phoenix-retx"
 copy: temporal
 fase: 1
-titular: "Programme for research and university education"
+titular: "Judgement and execution programme for research and university education"
 lector: "researchers and students"
 ---
 

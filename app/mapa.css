@@ -4,13 +4,12 @@
  * Conectores en CSS puro, sin JavaScript de cliente y sin nada animado: un
  * mapa que se mueve no se lee de un vistazo.
  *
- * EL ÁRBOL CRECE DE IZQUIERDA A DERECHA (2026-09-21). La raíz a la izquierda;
- * a su derecha, los cuatro destinos apilados; y cada nivel se abre hacia la
+ * EL ÁRBOL CRECE DE IZQUIERDA A DERECHA (2026-09-21). Los destinos, apilados; y cada nivel se abre hacia la
  * derecha con el mismo conector —una línea vertical que baja por los hermanos
  * y un codo hacia cada nodo—. Antes el primer nivel se abría en cuatro columnas
  * bajo un tronco, y como solo Servicios tiene descendencia, tres columnas
- * quedaban vacías y la cuarta era un pozo. En móvil la raíz se pone encima y
- * el árbol sigue igual: la indentación hacia la derecha es la misma.
+ * quedaban vacías y la cuarta era un pozo. Desde 2026-10-29 el árbol no
+ * tiene raíz propia: la caja de arriba (`.slg-mapa-quienes`) dice quiénes somos.
  *
  * Cero colores literales: todo sale de tokens.css (FU-02, criterio 2).
  * ========================================================================== */
@@ -39,9 +38,19 @@
   text-decoration: none;
 }
 
+/* Los nombres del árbol SON enlaces, y tienen que parecerlo: azul y subrayado
+   (Ricardo, 2026-10-30). El subrayado se engrosa al pasar el puntero. */
+.slg-mapa-tarjeta .slg-mapa-nombre,
+.slg-mapa-rama .slg-mapa-nombre {
+  color: var(--slg-link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
 .slg-mapa-tarjeta:hover .slg-mapa-nombre,
 .slg-mapa-rama:hover .slg-mapa-nombre {
-  text-decoration: underline;
+  text-decoration-thickness: 2px;
 }
 
 .slg-mapa-nombre {
@@ -72,18 +81,61 @@
   content: " — ";
 }
 
-.slg-mapa-raiz {
+/* ── Quiénes somos: la postura, arriba, en la caja gris ─────────────────── */
+
+.slg-mapa-quienes {
+  margin-top: 1rem;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  border: 1px solid var(--slg-line);
+  border-radius: var(--slg-radius-lg);
   background: var(--slg-paper-2);
 }
 
-.slg-mapa-raiz .slg-mapa-nombre {
-  font-size: 1.125rem;
+.slg-mapa .slg-mapa-quienes h1 {
+  margin: 0;
+  max-width: 24ch;
+  color: var(--slg-blue-deep);
+  font-size: clamp(2rem, 5.5vw, 3.25rem);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+.slg-mapa-entradilla {
+  margin: 1.25rem 0 0;
+  max-width: 44rem;
+  color: var(--slg-ink);
+  font-size: clamp(1.0625rem, 2.2vw, 1.25rem);
+  line-height: 1.55;
+}
+
+.slg-mapa-bloques {
+  display: grid;
+  gap: 2rem 3rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(22rem, 100%), 1fr));
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--slg-line);
+}
+
+/* El tamaño del H2 lo fija apple.css (una sola escala); aquí solo el color y el aire. */
+.slg-mapa .slg-mapa-bloques h2 {
+  margin: 0 0 0.75rem;
+  color: var(--slg-blue-deep);
+  font-weight: 700;
+}
+
+.slg-mapa-bloques p {
+  margin: 0 0 0.75rem;
+  color: var(--slg-ink-2);
+  font-size: 0.9375rem;
+  line-height: 1.6;
 }
 
 /* ── El árbol ─────────────────────────────────────────────────────────────── */
 
 .slg-mapa-arbol {
-  margin-top: 1.5rem;
+  margin-top: 3rem;
 }
 
 /* Cada lista es un nivel: la línea vertical baja por los hermanos y cada uno
@@ -204,41 +256,9 @@
   grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
 }
 
-/* ── Escritorio: la raíz a la izquierda, el árbol a su derecha ────────────── */
+/* ── Escritorio: el primer destino arranca el tronco a la altura de su codo ── */
 
 @media (min-width: 64rem) {
-  .slg-mapa-arbol {
-    display: grid;
-    grid-template-columns: 18rem 1fr;
-    column-gap: 2rem;
-    align-items: start;
-  }
-
-  /* La raíz se queda a la vista mientras el árbol baja. */
-  .slg-mapa-raiz-wrap {
-    position: sticky;
-    top: 5rem;
-  }
-
-  /* El brazo que sale de la raíz hacia el árbol: una línea horizontal a la
-     altura de la primera fila de destinos, que la vertical de esa lista recoge. */
-  .slg-mapa-raiz-wrap {
-    position: relative;
-  }
-
-  .slg-mapa-raiz-wrap::after {
-    content: "";
-    position: absolute;
-    top: 1.85rem;
-    left: 100%;
-    width: 2rem;
-    border-top: 1px solid var(--slg-line);
-  }
-
-  .slg-mapa-destinos {
-    margin-top: 0;
-  }
-
   .slg-mapa-destinos > li:first-child::before {
     top: 1.85rem;
   }

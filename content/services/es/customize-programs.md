@@ -8,7 +8,7 @@ lang: es
 pair: "customize-programs-en"
 copy: temporal
 fase: 1
-titular: "Programas a medida para tu organización"
+titular: "Programas de criterio y ejecución a medida para tu organización"
 lector: "responsables de formación o de transformación"
 ---
 

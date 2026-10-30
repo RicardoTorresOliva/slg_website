@@ -1,7 +1,7 @@
 ---
 type: page
 title: "Services"
-description: "Every SLG Agency service, ordered by the phase of the method it works in: judgement, diagnosis, building and transfer."
+description: "Every SLG Agency service, ordered by the phase of the method it works in: judgement and execution, diagnosis, building and transfer."
 lang: en
 pair: "servicios"
 nav_order: 1
@@ -19,9 +19,9 @@ Each service works in one phase of the Judgement first method. Find the phase yo
 
 Four phases in a sensible order, not a mandatory one. Each ends at a gate with three exits —proceed, adjust or stop— and the decision is yours.
 
-### Judgement
+### Judgement and Execution
 
-Those who decide know what to ask, what to demand and what not to buy.
+Those who decide know what to ask, what to demand and what not to buy, and how to put it into practice.
 "I have to decide on AI and I do not know what to ask the vendor."
 
 ### Diagnosis
@@ -37,12 +37,6 @@ What was prioritised gets built, in phases and on the technology you already hav
 ### Transfer
 
 What was built is documented and in your team's hands. It is not bought separately: it is how every engagement ends.
-
-## Holdings by SLG
-
-Outside the method, for a different decision: building or operating a company outside your home market.
-
-For the founder or the leadership team who knows that the hard part of operating abroad is not the translation but everything else: corporate structure, regulation, customers and people. A single point of accountability for the whole, which is the difference from hiring five advisory firms.
 
 ## Doctrine
 

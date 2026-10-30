@@ -9,7 +9,7 @@ lang: en
 pair: "phoenix-teax"
 copy: temporal
 fase: 1
-titular: "Judgement programme for senior executives"
+titular: "Judgement and execution programme for senior executives"
 lector: "senior executives"
 ---
 

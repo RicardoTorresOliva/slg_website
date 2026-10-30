@@ -419,6 +419,14 @@ reversible, y quedan aquí para su revisión. Nada de esto llega a `develop` sin
 | D-172 | 2026-10-27 | **Una sola redacción de la compuerta** en Nosotros, la portada y los 22 servicios: «Cada fase termina en una (compuerta de aprobación:) decisión tuya, y la siguiente no empieza sin ella.» | Mantener las dos redacciones. | Había dos («pasa por decisiones complejas» frente a «compuerta de aprobación tuya»); una idea, una frase (P4). |
 | D-173 | 2026-10-27 | **Tokens únicos y moderación de motion** (plan visual §3 y §4): escala tipográfica, ritmo y elevación viven en `tokens.css` y `apple.css` los consume; hero sin animación; sin transición de color en la barra; sin `will-change` en reposo; hover solo con puntero fino; un solo press en `pointerdown` (`PressDelegado`); «saltar al contenido» sin animar; escalonado del método **a 0 ms** (DD-7); sheet con foco gestionado (WCAG 2.4.3), fondo `inert`, entrada y salida por el mismo camino y sin rebote (DD-3). Tarjetas a 16 px (DD-4), H2 700 `blue-deep` (DD-2), display a 4rem (DD-1). | Añadir una librería de animación; rebote tras lanzamiento; cristal en tarjetas. | La skill se aplica donde sirve a la función (respuesta, foco, coherencia espacial, tipografía por tamaño) y se rechaza donde sería decoración: «Simplicity — not minimalism», «decide what not to build». |
 
+## Decisiones del 2026-10-30 (Ricardo)
+
+| # | Fecha | Decisión | Alternativas | Por qué / cómo se revierte |
+|---|-------|----------|--------------|----------------------------|
+| D-174 | 2026-10-30 | **Holdings by SLG se archiva.** Sale de la oferta pública: ficha (`sueltos`, bloque de Servicios, nomenclatura), portada, Servicios, claves de `content/ui`, su servicio y su descarga D-11 (ES/EN). El contenido se conserva en `content/_archivo/holdings/`, que el cargador no lee. | Dejarlo y quitarle protagonismo; retirarlo solo de la portada. | Lo pidió Ricardo: distrae la atención del negocio principal. `/holdings` pasa a 404. No se tocó ninguna migración ni la base de datos (el vocabulario de servicios de `0021` sigue como estaba). Restaurar: `content/_archivo/holdings/README.md`. |
+| D-175 | 2026-10-30 | **La fase 01 del método se llama «Criterio y Ejecución» / «Judgement and Execution»**, en la portada, `/ai`, Servicios, la Academy y los titulares de sus cinco servicios («Programa de criterio y ejecución para…»). El nombre del método sigue siendo «Criterio primero». | Solo «Criterio». | Lo pidió Ricardo. Es texto en `content/`: se revierte editando los `.md`. |
+| D-176 | 2026-10-30 | **«Empieza aquí» dice «estructuras», no «negocios»**: «Diseñamos, construimos y desplegamos estructuras para el nuevo escenario de negocios basado en inteligencia artificial.» Y los nombres del árbol son enlaces azules y subrayados. | — | Lo pidió Ricardo. |
+
 ## Acciones de seguridad previas a la ejecución
 
 | # | Acción | Dónde se sigue |

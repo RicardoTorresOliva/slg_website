@@ -57,9 +57,9 @@ When the work ends, the capability is inside.
 
 Four phases in a sensible order, not a mandatory one. Each ends at a gate with three exits —proceed, adjust or stop— and the decision is yours.
 
-### Judgement
+### Judgement and Execution
 
-Those who decide know what to ask, what to demand and what not to buy.
+Those who decide know what to ask, what to demand and what not to buy, and how to put it into practice.
 
 [VoltAi Academy](/en/ai/academy)
 
@@ -127,10 +127,6 @@ If you still depend on us when we finish, the work is not done.
 > What has to stop weighs more than what has to start.
 
 Everything we do comes from a written body of doctrine: The Phoenix Doctrine, and the three pillars of DAL OS — Destrucción Creativa, Antifragility and AI Literacy. We publish judgement, not news.
-
-## Holdings by SLG
-
-Are you going to build or operate a company outside its home market? That is Holdings by SLG: a single point of accountability for the whole.
 
 ## Start with the briefing
 

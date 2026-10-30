@@ -8,7 +8,7 @@ lang: en
 pair: "customize-programs"
 copy: temporal
 fase: 1
-titular: "Programmes tailored to your organisation"
+titular: "Judgement and execution programmes tailored to your organisation"
 lector: "heads of learning or transformation"
 ---
 

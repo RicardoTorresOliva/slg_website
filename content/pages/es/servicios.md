@@ -1,7 +1,7 @@
 ---
 type: page
 title: "Servicios"
-description: "Todos los servicios de SLG Agency, ordenados por la fase del método en la que trabajan: criterio, diagnóstico, construcción y transferencia."
+description: "Todos los servicios de SLG Agency, ordenados por la fase del método en la que trabajan: criterio y ejecución, diagnóstico, construcción y transferencia."
 lang: es
 pair: "services"
 nav_order: 1
@@ -19,9 +19,9 @@ Cada servicio trabaja en una fase del método «Criterio primero». Busca la fas
 
 Cuatro fases en un orden recomendable, no obligatorio. Cada una termina en una compuerta con tres salidas —avanzar, ajustar o descartar— y la decisión es tuya.
 
-### Criterio
+### Criterio y Ejecución
 
-Quien decide sabe qué preguntar, qué exigir y qué no comprar.
+Quien decide sabe qué preguntar, qué exigir y qué no comprar, y sabe llevarlo a la práctica.
 «Tengo que decidir sobre IA y no sé qué preguntarle al proveedor.»
 
 ### Diagnóstico
@@ -37,12 +37,6 @@ Se construye lo priorizado, por fases y sobre la tecnología que ya tienes.
 ### Transferencia
 
 Lo construido queda documentado y en manos de tu equipo. No se contrata aparte: es la forma en que termina cada encargo.
-
-## Holdings by SLG
-
-Fuera del método, para otra decisión: construir u operar una compañía fuera de tu mercado de origen.
-
-Para el fundador o el equipo directivo que sabe que la dificultad de operar fuera no es la traducción, sino todo lo demás: estructura societaria, regulación, clientes y gente. Un punto único de responsabilidad sobre el conjunto, que es la diferencia con contratar cinco asesorías.
 
 ## Doctrina
 

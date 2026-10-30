@@ -9,7 +9,7 @@ lang: en
 pair: "phoenix-peex"
 copy: temporal
 fase: 1
-titular: "Judgement programme for directors"
+titular: "Judgement and execution programme for directors"
 lector: "board members"
 ---
 

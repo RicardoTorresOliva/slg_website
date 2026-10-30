@@ -9,7 +9,7 @@ updated: "2026-10-29"
 copy: temporal
 ---
 
-**Fase 01 del método · Criterio.** La línea de VoltAi by SLG que trabaja sobre las personas que deciden.
+**Fase 01 del método · Criterio y Ejecución.** La línea de VoltAi by SLG que trabaja sobre las personas que deciden.
 
 > «Tengo que decidir sobre IA y no sé qué preguntarle al proveedor.»
 
