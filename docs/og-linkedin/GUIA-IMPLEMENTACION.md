@@ -30,7 +30,7 @@ La solución estructural tiene tres partes: una imagen distinta por página e id
 | `public/og/implement-en.png` | `public/og/implement-en.png` | /en/ai/enterprise/implement |
 | `public/og.png` | `public/og.png` | Imagen por defecto (arregla el 404 en el resto del sitio) |
 
-`source/build.py` y `source/render.js` generan las imágenes desde HTML (Montserrat, colores de marca). Para cambiar un texto: editar `build.py`, ejecutar `python3 build.py <html_out> <carpeta_fuentes_montserrat>` y luego `node render.js <html_out> <png_out>` (requiere Playwright). `preview-todas.png` muestra las 10 juntas.
+`source/build.py` y `source/render.mjs` generan las imágenes desde HTML (Montserrat, colores de marca). Para cambiar un texto: editar `build.py`, ejecutar `python3 build.py <html_out> <carpeta_fuentes_montserrat>` y luego `node render.mjs <html_out> <png_out>` (requiere Playwright). `preview-todas.png` muestra las 10 juntas.
 
 ## 2. Textos por página
 
