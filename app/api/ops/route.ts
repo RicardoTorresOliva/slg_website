@@ -381,7 +381,8 @@ export async function GET(request: Request) {
  * alcanzable con GET, ni siquiera con el testigo puesto.
  */
 export async function POST(request: Request) {
-  const datos = await request.formData();
+  // Una llamada con `Authorization: Bearer` puede no traer cuerpo de formulario.
+  const datos = await request.formData().catch(() => new FormData());
   const token = autorizado(request, datos);
   if (!token) return new Response("Not Found", { status: 404 });
 
