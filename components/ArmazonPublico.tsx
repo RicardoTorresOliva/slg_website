@@ -10,6 +10,7 @@ import { Analitica } from "./Analitica";
 import { BarraDeNavegacion } from "./BarraDeNavegacion";
 import { DatosEstructurados } from "./DatosEstructurados";
 import { Fotografia } from "./Fotografia";
+import { IdiomaDelDocumento } from "./IdiomaDelDocumento";
 import { PressDelegado } from "./PressDelegado";
 import { Regreso } from "./Regreso";
 
@@ -81,7 +82,7 @@ export function ArmazonPublico({
         textos={{ menu: t["nav.menu"], navegacion: t["nav.aria"], inicio: t["nav.home"] }}
       />
 
-      <main id="contenido">
+      <main id="contenido" lang={idioma}>
         {/* El regreso al nivel inmediato anterior, antes de la fotografía: es lo
             primero que busca quien bajó un nivel de más (decisión del 2026-09-18). */}
         <Regreso ruta={ruta} lang={idioma} t={t} />
@@ -95,6 +96,7 @@ export function ArmazonPublico({
           script de terceros (RF-127). */}
       <Analitica />
       <PressDelegado />
+      <IdiomaDelDocumento lang={idioma} />
     </>
   );
 }

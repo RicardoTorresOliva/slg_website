@@ -1,6 +1,7 @@
 ---
 type: service
 name: "SLG_Implement"
+tagline: "Por fases, lo que el diagnóstico priorizó"
 branch: VoltAi Enterprise
 parent: "slg-enterprise"
 download: "d-07"

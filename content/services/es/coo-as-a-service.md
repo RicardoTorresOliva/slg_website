@@ -1,7 +1,7 @@
 ---
 type: service
 name: "CoO as a Service"
-tagline: "Army of Agents"
+tagline: "Operaciones dirigidas con agentes"
 branch: VoltAi Factory
 parent: "slg-factory"
 download: "d-10"

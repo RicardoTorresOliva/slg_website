@@ -1,6 +1,7 @@
 ---
 type: service
 name: "Customize Programs"
+tagline: "a medida para tu organización"
 branch: VoltAi Academy
 parent: "slg-academy"
 download: "d-04"
