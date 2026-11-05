@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { ipDelCliente } from "@/lib/antiabuso/ip";
 import { barrerDespues } from "@/lib/colas/barrer";
 import { registrarCaptura, type Origen } from "@/lib/descargas/service";
 
@@ -17,11 +18,6 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const ORIGENES_ADMITIDOS: Origen[] = ["contact", "doctrine-request"];
-
-function ipDe(request: Request): string {
-  const cabecera = request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip") ?? "";
-  return cabecera.split(",")[0]?.trim() ?? "";
-}
 
 export async function POST(request: Request) {
   const datos = await request.formData();
@@ -50,7 +46,7 @@ export async function POST(request: Request) {
     mensaje: String(datos.get("mensaje") ?? "") || undefined,
     pagina: volver,
     locale: lang,
-    ip: ipDe(request),
+    ip: ipDelCliente(request),
   });
 
   // La entrega al CRM y los webhooks salen DESPUÉS de responder: el visitante no

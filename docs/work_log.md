@@ -4386,3 +4386,18 @@ bloques, en tarjetas separadas 2×2; sin «← Volver» en esa página. Sitemap 
 
 **Abierto.** `NEXT_PUBLIC_SITE_URL` con www en producción (variable del proveedor). `<html lang>`
 sigue `es` en `/en/*` (lo fija el armazón raíz; cambiarlo exige un layout raíz por idioma).
+
+## 2026-11-05 — Pendientes sin datos de Ricardo: idioma de /en, notas del mapa, seguridad del PR #1
+
+- `<html lang>` en `/en/*`: `<main lang="en">` en el HTML servido y `IdiomaDelDocumento` corrige el
+  documento al hidratar (**D-178**). Comprobado en navegador: `/en/start-here` → `en`, `/empieza-aqui` → `es`.
+- Notas del mapa (`tagline`) alineadas con los titulares en los 10 servicios ES/EN («Army of Agents» y
+  las frases viejas de Factory se retiran; los servicios que no tenían nota la reciben). Copy `temporal`.
+- PR #1 (revisión adversarial, abierto contra `main` desde el 2026-10-01) traído a `develop` (**D-179**):
+  redirección abierta, revocación al restablecer, alta social cerrada, bloqueo esquivable, IP
+  falsificable (`TRUSTED_PROXY_HOPS`), token de `/api/ops` fuera de la URL. Conflictos solo de imports.
+
+**Verificado:** `lint`, `tsc`, `check:content`, `check:cadenas`, `check:fronteras`, `check:env`,
+`build:standalone`, `check:js-budget`, `check:armazon`, `check:paginas`, `check:seo`,
+`check:produccion`, `check:runtime`, `check:lighthouse`, `check:playbook`. Pruebas con base de
+datos (`test:permisos`, `test:aislamiento`): las corre el CI.

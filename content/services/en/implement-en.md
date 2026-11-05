@@ -1,6 +1,7 @@
 ---
 type: service
 name: "SLG_Implement"
+tagline: "Phased, what the diagnosis prioritised"
 branch: VoltAi Enterprise
 parent: "slg-enterprise-en"
 download: "d-07-en"

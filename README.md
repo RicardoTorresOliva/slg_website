@@ -372,6 +372,7 @@ Los valores se ponen en **Easypanel → proyecto `slg_website` → el servicio �
 | `UPTIME_WEBHOOK_SECRET` | Lo eliges tú; lo comparte el monitor externo | Tú |
 | `OPS_TOKEN` | Lo eliges tú: es lo que protege la página de puesta en marcha | Tú. Cámbialo cuando quieras |
 | `OPS_MAIL_TO` | A qué dirección manda el correo de prueba esa página | Tú |
+| `TRUSTED_PROXY_HOPS` | Cuántos proxies tuyos hay delante del sitio, para leer la IP real del visitante. Tiene defecto (1): solo se pone si hay más de uno | Tú |
 | `PUBLIC_FORM_RATE_LIMIT_MAX` · `PUBLIC_FORM_RATE_LIMIT_WINDOW_MS` | Cuántos envíos admite un formulario público. Tienen defecto | Tú |
 | `PRIVACY_POLICY_VERSION` | La fecha de la versión de la política que se está aceptando | Tú, cada vez que cambie la política |
 | `CRM_BASE_URL` · `CRM_APP_URL` · `CRM_CONTACT_URL_TEMPLATE` | Las direcciones de tu CRM | Tú |

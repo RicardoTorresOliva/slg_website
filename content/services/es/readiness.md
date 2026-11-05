@@ -1,6 +1,7 @@
 ---
 type: service
 name: "SLG_Readiness"
+tagline: "Diagnóstico en once dimensiones"
 branch: VoltAi Enterprise
 parent: "slg-enterprise"
 download: "d-06"

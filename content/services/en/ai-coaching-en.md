@@ -1,6 +1,7 @@
 ---
 type: service
 name: "AI Coaching for Directors"
+tagline: "for those who lead"
 branch: VoltAi Academy
 parent: "slg-academy-en"
 download: "d-05-en"
