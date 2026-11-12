@@ -23,7 +23,7 @@ import { BloqueQueIncluye, HeroTipografico } from "./piezas";
  * de DU-06): el consentimiento se guarda con su versión, y el visitante tiene
  * que poder leer a qué está consintiendo antes de enviarlo.
  *
- * **Nombre, apellido y correo corporativo, los tres obligatorios.** El CRM crea
+ * **Nombre, apellido y correo, los tres obligatorios (el correo personal vale, D-181).** El CRM crea
  * el contacto con nombre y apellido por separado, y una captura que llega como
  * «parte local del correo» es una llamada que nadie sabe a quién hacer. El
  * `required` es cortesía; la comprobación que vale es la de `registrarCaptura`.

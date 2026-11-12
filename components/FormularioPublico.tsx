@@ -10,7 +10,7 @@ import { CampoTrampa } from "./CampoTrampa";
  * Doctrina (DU-10).
  *
  * Es el mismo componente porque es la misma máquina: `POST` nativo, campo
- * trampa oculto, nombre, apellido y correo corporativo obligatorios, y enlace a
+ * trampa oculto, nombre, apellido y correo obligatorios (personal admitido, D-181), y enlace a
  * la política de privacidad. Dos componentes habrían sido dos sitios donde
  * olvidarse de la trampa, y el que se olvida **no da ningún error**:
  * simplemente deja pasar.

@@ -11,7 +11,7 @@ copy: temporal
 
 **Aviso: este texto es provisional.** El texto legal definitivo lo revisa un profesional antes del lanzamiento.
 
-**Qué recogemos.** Solo lo que nos das: tu dirección de correo corporativo cuando pides un documento, y lo que escribas si nos contactas. Nada más.
+**Qué recogemos.** Solo lo que nos das: tu dirección de correo cuando pides un documento, y lo que escribas si nos contactas. Nada más.
 
 **Para qué.** Para entregarte el documento que pediste y para responderte. No vendemos ni cedemos tu dirección a terceros.
 

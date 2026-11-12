@@ -4395,3 +4395,6 @@ por bot, no guarda el lead y responde «disponible próximamente». Arreglo: tra
 etiqueta neutra en `components/CampoTrampa.tsx` (descargas, contacto, assessment); `empresa_web`
 se acepta como presente pero se ignora. Mensajes nuevos para `limite`, `correo_invalido` y
 `error_de_firma` (`content/ui`).
+
+Ampliación (D-181): correo personal admitido en los tres formularios. `drizzle/0027_correo_personal_admitido.sql`
+borra los proveedores personales de `free_email_domain`; los desechables siguen. Copy y tests ajustados.

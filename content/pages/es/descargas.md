@@ -13,4 +13,4 @@ Cada servicio tiene un documento, y cada documento está escrito para una silla 
 
 No son folletos. Son el material que usamos para trabajar, publicado tal cual, porque si el criterio solo se ve pagando entonces no es criterio: es un argumento de venta.
 
-Para recibir uno hace falta un correo corporativo. El enlace de descarga caduca, y no compartimos tu dirección con nadie.
+Para recibir uno basta con tu correo. El enlace de descarga caduca, y no compartimos tu dirección con nadie.
