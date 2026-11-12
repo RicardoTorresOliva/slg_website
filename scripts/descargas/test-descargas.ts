@@ -133,7 +133,7 @@ async function enviar(
   // La trampa VACIA por delante: es lo que manda un navegador real, y desde
   // que la ausencia tambien descarta (RF-33) un envio sin ella no llega. El
   // spread va despues para que el bloque del bot pueda seguir rellenandola.
-  const cuerpo = new URLSearchParams({ empresa_web: "", ...campos });
+  const cuerpo = new URLSearchParams({ slg_hp: "", ...campos });
   const r = await fetch(`${base}/api/descargas`, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
@@ -160,9 +160,9 @@ async function main() {
   try {
     // Los hijos primero: desde que la cola se vacía tras cada captura
     // (`barrerDespues`), toda captura deja su fila en `crm_delivery`.
-    await dueno`delete from crm_delivery where lead_capture_id in (select id from lead_capture where email like '%@prueba-slg.com' or email like '%@gmail.com')`;
-    await dueno`delete from download_event where lead_capture_id in (select id from lead_capture where email like '%@prueba-slg.com' or email like '%@gmail.com')`;
-    await dueno`delete from lead_capture where email like '%@prueba-slg.com' or email like '%@gmail.com'`;
+    await dueno`delete from crm_delivery where lead_capture_id in (select id from lead_capture where email like '%@prueba-slg.com' or email like '%@mailinator.com')`;
+    await dueno`delete from download_event where lead_capture_id in (select id from lead_capture where email like '%@prueba-slg.com' or email like '%@mailinator.com')`;
+    await dueno`delete from lead_capture where email like '%@prueba-slg.com' or email like '%@mailinator.com'`;
 
     /**
      * El contador del límite se vacía antes de CADA bloque.
@@ -182,7 +182,7 @@ async function main() {
       documento: unDocumento(),
       idioma: "es",
       email: "bot@prueba-slg.com",
-      empresa_web: "soy un bot",
+      slg_hp: "soy un bot",
     });
     check(
       "el envío con la trampa rellena responde como un éxito",
@@ -200,18 +200,18 @@ async function main() {
     const gratuito = await enviar(base, {
       documento: unDocumento(),
       idioma: "es",
-      email: "persona@gmail.com",
+      email: "persona@mailinator.com",
       nombre: "Persona",
       apellido: "Gratuita",
     });
     check(
-      "el correo de dominio gratuito se rechaza con motivo explícito",
+      "el correo de dominio desechable se rechaza con motivo explícito",
       gratuito.destino.includes("error=dominio_gratuito"),
       `destino: ${gratuito.destino}`,
     );
     check(
       "y NO crea captura",
-      (await leadsDe("persona@gmail.com")).length === 0,
+      (await leadsDe("persona@mailinator.com")).length === 0,
       "un rechazo no es una captura",
     );
 
@@ -362,7 +362,7 @@ async function main() {
         // manda un navegador real, y desde que la ausencia también descarta un
         // envío sin ella no llega. El spread va después para que el caso del bot
         // pueda seguir rellenándola.
-        body: new URLSearchParams({ empresa_web: "", ...campos }),
+        body: new URLSearchParams({ slg_hp: "", ...campos }),
         redirect: "manual",
       });
       return { status: r.status, destino: r.headers.get("location") ?? "" };
@@ -417,7 +417,7 @@ async function main() {
       origen: "contact",
       idioma: "es",
       email: "bot-contacto@empresa-real-slg.test",
-      empresa_web: "soy un bot",
+      slg_hp: "soy un bot",
     });
     check(
       "el contacto también tiene campo trampa, y descarta en silencio",
@@ -464,7 +464,7 @@ async function main() {
     const gratuitoContacto = await enviarA("/api/contacto", {
       origen: "contact",
       idioma: "es",
-      email: "alguien@gmail.com",
+      email: "alguien@mailinator.com",
       nombre: "Alguien",
       apellido: "Gratuito",
     });
@@ -487,9 +487,9 @@ async function main() {
       `destino: ${incompletoContacto.destino}`,
     );
 
-    await dueno`delete from crm_delivery where lead_capture_id in (select id from lead_capture where email like '%empresa-real-slg.test' or email = 'alguien@gmail.com')`;
+    await dueno`delete from crm_delivery where lead_capture_id in (select id from lead_capture where email like '%empresa-real-slg.test' or email = 'alguien@mailinator.com')`;
     await dueno`delete from download_event where lead_capture_id in (select id from lead_capture where email like '%empresa-real-slg.test')`;
-    await dueno`delete from lead_capture where email like '%empresa-real-slg.test' or email = 'alguien@gmail.com'`;
+    await dueno`delete from lead_capture where email like '%empresa-real-slg.test' or email = 'alguien@mailinator.com'`;
   } finally {
     parar();
     await dueno.end({ timeout: 5 });

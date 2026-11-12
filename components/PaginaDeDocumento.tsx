@@ -1,9 +1,9 @@
 import Link from "next/link";
 
-import { NOMBRE_DEL_CAMPO_TRAMPA } from "@/lib/antiabuso";
 import { loadCollection, loadUiStrings } from "@/lib/content/loader";
 
 import { AvisoDelFormulario } from "./AvisoDelFormulario";
+import { CampoTrampa } from "./CampoTrampa";
 import { BloqueQueIncluye, HeroTipografico } from "./piezas";
 
 /**
@@ -23,7 +23,7 @@ import { BloqueQueIncluye, HeroTipografico } from "./piezas";
  * de DU-06): el consentimiento se guarda con su versión, y el visitante tiene
  * que poder leer a qué está consintiendo antes de enviarlo.
  *
- * **Nombre, apellido y correo corporativo, los tres obligatorios.** El CRM crea
+ * **Nombre, apellido y correo, los tres obligatorios (el correo personal vale, D-181).** El CRM crea
  * el contacto con nombre y apellido por separado, y una captura que llega como
  * «parte local del correo» es una llamada que nadie sabe a quién hacer. El
  * `required` es cortesía; la comprobación que vale es la de `registrarCaptura`.
@@ -60,23 +60,15 @@ export function PaginaDeDocumento({ slug, lang }: { slug: string; lang: "es" | "
         <input type="hidden" name="documento" value={slug} />
         <input type="hidden" name="idioma" value={lang} />
 
-        {/* El campo trampa. Invisible para una persona, irresistible para un bot. */}
-        <div aria-hidden="true" style={trampa}>
-          <label htmlFor={NOMBRE_DEL_CAMPO_TRAMPA}>{NOMBRE_DEL_CAMPO_TRAMPA}</label>
-          <input
-            id={NOMBRE_DEL_CAMPO_TRAMPA}
-            name={NOMBRE_DEL_CAMPO_TRAMPA}
-            type="text"
-            tabIndex={-1}
-            autoComplete="off"
-            defaultValue=""
-          />
-        </div>
+        <CampoTrampa id="slg-hp" />
 
         <AvisoDelFormulario
           textos={{
             dominio_gratuito: t["download.freeEmailRejected"],
             datos_incompletos: t["download.incompleteData"],
+            limite: t["form.rateLimited"],
+            correo_invalido: t["form.invalidEmail"],
+            error_de_firma: t["download.signError"],
           }}
         />
 
@@ -134,17 +126,6 @@ const caja: React.CSSProperties = {
   gap: "0.5rem",
 };
 
-/**
- * Fuera de la vista sin salir del documento. `display:none` lo saltan algunos
- * rellenadores; así el bot lo ve y la persona no.
- */
-const trampa: React.CSSProperties = {
-  position: "absolute",
-  left: "-9999px",
-  width: "1px",
-  height: "1px",
-  overflow: "hidden",
-};
 
 const etiqueta: React.CSSProperties = {
   fontSize: "0.9375rem",

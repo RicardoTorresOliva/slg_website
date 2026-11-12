@@ -39,8 +39,8 @@ export type TextosDelFormulario = {
  * el día que diverjan el servidor rechazaría lo que el navegador aceptó.
  */
 const GRATUITOS_EVIDENTES = [
-  "gmail.com", "hotmail.com", "outlook.com", "yahoo.com", "icloud.com",
-  "live.com", "aol.com", "proton.me", "protonmail.com", "gmx.com", "mail.com",
+  // D-181: el correo personal se admite. Solo desechables evidentes.
+  "mailinator.com", "yopmail.com", "guerrillamail.com", "10minutemail.com", "temp-mail.org",
 ];
 
 export function FormularioDeDescarga({

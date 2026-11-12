@@ -11,9 +11,9 @@ import {
   programaDe,
   type Pregunta,
 } from "@/lib/assessment/cuestionarios";
-import { NOMBRE_DEL_CAMPO_TRAMPA } from "@/lib/antiabuso/trampa";
 
 import { AvisoDelFormulario } from "./AvisoDelFormulario";
+import { CampoTrampa } from "./CampoTrampa";
 
 export type TextosDelAssessment = Readonly<Record<string, string>>;
 
@@ -61,16 +61,14 @@ function Formulario({ lang, textos: t }: { lang: "es" | "en"; textos: TextosDelA
         <input type="hidden" name="idioma" value={lang} />
         <input type="hidden" name="programa" value={programa} />
 
-        {/* Campo trampa: invisible para una persona, irresistible para un bot. */}
-        <div aria-hidden="true" style={trampa}>
-          <label htmlFor={`as-${NOMBRE_DEL_CAMPO_TRAMPA}`}>{NOMBRE_DEL_CAMPO_TRAMPA}</label>
-          <input id={`as-${NOMBRE_DEL_CAMPO_TRAMPA}`} name={NOMBRE_DEL_CAMPO_TRAMPA} type="text" tabIndex={-1} autoComplete="off" defaultValue="" />
-        </div>
+        <CampoTrampa id="as-slg-hp" />
 
         <AvisoDelFormulario
           textos={{
             dominio_gratuito: t["download.freeEmailRejected"],
             datos_incompletos: t["download.incompleteData"],
+            limite: t["form.rateLimited"],
+            correo_invalido: t["form.invalidEmail"],
           }}
         />
 
@@ -196,7 +194,6 @@ const grupo: React.CSSProperties = { border: "none", padding: 0, margin: "1rem 0
 const sub: React.CSSProperties = { border: "none", padding: 0, margin: 0, display: "grid", gap: "0.25rem" };
 const fila: React.CSSProperties = { display: "flex", flexWrap: "wrap", gap: "1rem" };
 const radio: React.CSSProperties = { fontSize: "0.9375rem", color: "var(--slg-ink)" };
-const trampa: React.CSSProperties = { position: "absolute", left: "-9999px", width: "1px", height: "1px", overflow: "hidden" };
 const etiqueta: React.CSSProperties = { fontSize: "0.9375rem", fontWeight: 600, color: "var(--slg-ink)" };
 const campo: React.CSSProperties = { padding: "0.75rem", border: "1px solid var(--slg-line)", borderRadius: "var(--slg-radius-sm)", font: "inherit", fontSize: "1rem", background: "var(--slg-paper)", color: "var(--slg-ink)" };
 const boton: React.CSSProperties = { marginTop: "0.5rem", background: "var(--slg-red)", color: "var(--slg-paper)", padding: "0.8125rem 1.25rem", border: "none", borderRadius: "var(--slg-radius-sm)", font: "inherit", fontSize: "0.9375rem", fontWeight: 600, cursor: "pointer" };

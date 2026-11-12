@@ -1,16 +1,16 @@
 import Link from "next/link";
 
-import { NOMBRE_DEL_CAMPO_TRAMPA } from "@/lib/antiabuso";
 import { loadUiStrings } from "@/lib/content/loader";
 
 import { AvisoDelFormulario } from "./AvisoDelFormulario";
+import { CampoTrampa } from "./CampoTrampa";
 
 /**
  * El formulario público — **uno solo**, para contacto y para la solicitud de
  * Doctrina (DU-10).
  *
  * Es el mismo componente porque es la misma máquina: `POST` nativo, campo
- * trampa oculto, nombre, apellido y correo corporativo obligatorios, y enlace a
+ * trampa oculto, nombre, apellido y correo obligatorios (personal admitido, D-181), y enlace a
  * la política de privacidad. Dos componentes habrían sido dos sitios donde
  * olvidarse de la trampa, y el que se olvida **no da ningún error**:
  * simplemente deja pasar.
@@ -35,23 +35,14 @@ export function FormularioPublico({
       <input type="hidden" name="origen" value={origen} />
       <input type="hidden" name="idioma" value={lang} />
 
-      {/* Campo trampa: invisible para una persona, irresistible para un bot. */}
-      <div aria-hidden="true" style={trampa}>
-        <label htmlFor={`${origen}-${NOMBRE_DEL_CAMPO_TRAMPA}`}>{NOMBRE_DEL_CAMPO_TRAMPA}</label>
-        <input
-          id={`${origen}-${NOMBRE_DEL_CAMPO_TRAMPA}`}
-          name={NOMBRE_DEL_CAMPO_TRAMPA}
-          type="text"
-          tabIndex={-1}
-          autoComplete="off"
-          defaultValue=""
-        />
-      </div>
+      <CampoTrampa id={`${origen}-slg-hp`} />
 
       <AvisoDelFormulario
         textos={{
           dominio_gratuito: t["download.freeEmailRejected"],
           datos_incompletos: t["download.incompleteData"],
+          limite: t["form.rateLimited"],
+          correo_invalido: t["form.invalidEmail"],
         }}
       />
 
@@ -124,13 +115,6 @@ const caja: React.CSSProperties = {
   gap: "0.5rem",
 };
 
-const trampa: React.CSSProperties = {
-  position: "absolute",
-  left: "-9999px",
-  width: "1px",
-  height: "1px",
-  overflow: "hidden",
-};
 
 const etiqueta: React.CSSProperties = {
   fontSize: "0.9375rem",

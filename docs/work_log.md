@@ -4386,3 +4386,15 @@ bloques, en tarjetas separadas 2×2; sin «← Volver» en esa página. Sitemap 
 
 **Abierto.** `NEXT_PUBLIC_SITE_URL` con www en producción (variable del proveedor). `<html lang>`
 sigue `es` en `/en/*` (lo fija el armazón raíz; cambiarlo exige un layout raíz por idioma).
+
+## 2026-11-12 — «Lleno el formulario y no se descarga» (D-180)
+
+Reproducido contra producción: la firma y el PDF funcionan (d-02 entrega enlace válido de Supabase).
+Causa: el campo trampa `empresa_web` lo rellena el autocompletar del navegador → el servidor lo toma
+por bot, no guarda el lead y responde «disponible próximamente». Arreglo: trampa `slg_hp` con
+etiqueta neutra en `components/CampoTrampa.tsx` (descargas, contacto, assessment); `empresa_web`
+se acepta como presente pero se ignora. Mensajes nuevos para `limite`, `correo_invalido` y
+`error_de_firma` (`content/ui`).
+
+Ampliación (D-181): correo personal admitido en los tres formularios. `drizzle/0027_correo_personal_admitido.sql`
+borra los proveedores personales de `free_email_domain`; los desechables siguen. Copy y tests ajustados.

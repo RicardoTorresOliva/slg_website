@@ -19,7 +19,7 @@ We work with boards and executive committees. We help you know what to ask, what
 
 Download the diagnosis briefing
 
-In exchange for a corporate email address, and nothing else.
+In exchange for your email address, and nothing else.
 
 ## Three situations when deciding on AI
 

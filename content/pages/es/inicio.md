@@ -19,7 +19,7 @@ Trabajamos con directorios y comités de dirección. Te ayudamos a saber qué pr
 
 Descargar el documento del diagnóstico
 
-A cambio de un correo corporativo, y nada más.
+A cambio de tu correo, y nada más.
 
 ## Tres situaciones al decidir sobre IA
 

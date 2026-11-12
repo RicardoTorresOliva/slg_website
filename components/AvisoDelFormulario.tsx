@@ -18,8 +18,10 @@ import { Suspense } from "react";
  * dinámica para todo el mundo por un aviso que solo ve quien se equivocó. Va
  * dentro de `Suspense` porque `useSearchParams` lo exige en una página estática.
  *
- * Solo habla de lo que una persona real puede provocar sin querer: un motivo
- * sin texto —`limite`, `correo_invalido`— no pinta nada, igual que hasta ahora.
+ * Todo motivo que una persona real puede recibir tiene texto (D-180): el
+ * límite, el correo mal escrito y el fallo de firma devolvían al formulario
+ * sin decir nada, y desde fuera eso es «lo lleno y no pasa nada». Solo la
+ * trampa sigue muda, porque se responde como un éxito.
  */
 export type TextosDeAviso = Readonly<Record<string, string>>;
 

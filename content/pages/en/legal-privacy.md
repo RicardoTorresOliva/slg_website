@@ -11,7 +11,7 @@ copy: temporal
 
 **Notice: this text is provisional.** The final legal text is reviewed by a professional before launch.
 
-**What we collect.** Only what you give us: your corporate email address when you request a document, and whatever you write if you contact us. Nothing else.
+**What we collect.** Only what you give us: your email address when you request a document, and whatever you write if you contact us. Nothing else.
 
 **What for.** To deliver the document you asked for and to reply to you. We do not sell or transfer your address to third parties.
 

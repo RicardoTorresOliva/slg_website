@@ -6,12 +6,20 @@
  * a un bot que ha fallado es entrenarlo; el que lo escribió cambia el campo y
  * vuelve. Un silencio que parece éxito es lo único que no da información.
  *
- * El nombre del campo parece legítimo a propósito —un bot rellena lo que
- * reconoce—, y se oculta con CSS **y** con `tabindex="-1"` y `autocomplete="off"`:
- * `display:none` a secas lo saltan algunos rellenadores automáticos de
- * formularios, y entonces la trampa la pisa una persona real.
+ * **El nombre NO puede parecerse a un dato real** (D-180). Fue `empresa_web`
+ * hasta el 2026-11-12: el autocompletar del navegador lo reconocía como
+ * «empresa» y lo rellenaba solo, así que personas reales caían en la trampa y
+ * se quedaban sin documento. Un bot rellena cualquier campo de texto; no hace
+ * falta que el nombre le resulte tentador. Se pinta con `<CampoTrampa>`.
  */
-export const NOMBRE_DEL_CAMPO_TRAMPA = "empresa_web";
+export const NOMBRE_DEL_CAMPO_TRAMPA = "slg_hp";
+
+/**
+ * El nombre anterior. Una pestaña abierta antes del despliegue lo sigue
+ * enviando: cuenta como «presente» para no tratarla de bot, pero su valor se
+ * IGNORA, porque es justo el campo que el autocompletar rellenaba.
+ */
+export const NOMBRE_ANTERIOR_DEL_CAMPO_TRAMPA = "empresa_web";
 
 export function campoTrampaRelleno(datos: FormData | Record<string, unknown>): boolean {
   const valor =
@@ -22,7 +30,7 @@ export function campoTrampaRelleno(datos: FormData | Record<string, unknown>): b
 /**
  * El campo trampa NO VINO en el envio (RF-33, ampliado el 2026-09-21).
  *
- * Todo formulario publico pinta `empresa_web`, asi que un navegador real lo
+ * Todo formulario publico pinta el campo trampa, asi que un navegador real lo
  * manda SIEMPRE —vacio, pero lo manda—. Un script que arma el cuerpo a mano
  * contra `/api/contacto` solo envia los campos que le interesan y se salta el
  * que nunca vio: la AUSENCIA delata al bot igual de bien que el relleno.
@@ -38,7 +46,6 @@ export function campoTrampaRelleno(datos: FormData | Record<string, unknown>): b
  * que recibe un error distinto aprende cual de las dos cosas hizo mal.
  */
 export function campoTrampaAusente(datos: FormData | Record<string, unknown>): boolean {
-  return datos instanceof FormData
-    ? !datos.has(NOMBRE_DEL_CAMPO_TRAMPA)
-    : !(NOMBRE_DEL_CAMPO_TRAMPA in datos);
+  const tiene = (nombre: string) => (datos instanceof FormData ? datos.has(nombre) : nombre in datos);
+  return !tiene(NOMBRE_DEL_CAMPO_TRAMPA) && !tiene(NOMBRE_ANTERIOR_DEL_CAMPO_TRAMPA);
 }
