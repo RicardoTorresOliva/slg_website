@@ -25,5 +25,8 @@ export {
   type Veredicto,
   verificarEnvio,
 } from "./service.ts";
-export { NOMBRE_DEL_CAMPO_TRAMPA, campoTrampaAusente, campoTrampaRelleno } from "./trampa.ts";
+export {
+  NOMBRE_DEL_CAMPO_TRAMPA,
+  NOMBRE_ANTERIOR_DEL_CAMPO_TRAMPA,
+  campoTrampaAusente, campoTrampaRelleno } from "./trampa.ts";
 export { limitar, type ResultadoDeLimite } from "./limite.ts";

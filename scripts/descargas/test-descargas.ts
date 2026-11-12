@@ -133,7 +133,7 @@ async function enviar(
   // La trampa VACIA por delante: es lo que manda un navegador real, y desde
   // que la ausencia tambien descarta (RF-33) un envio sin ella no llega. El
   // spread va despues para que el bloque del bot pueda seguir rellenandola.
-  const cuerpo = new URLSearchParams({ empresa_web: "", ...campos });
+  const cuerpo = new URLSearchParams({ slg_hp: "", ...campos });
   const r = await fetch(`${base}/api/descargas`, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
@@ -182,7 +182,7 @@ async function main() {
       documento: unDocumento(),
       idioma: "es",
       email: "bot@prueba-slg.com",
-      empresa_web: "soy un bot",
+      slg_hp: "soy un bot",
     });
     check(
       "el envío con la trampa rellena responde como un éxito",
@@ -362,7 +362,7 @@ async function main() {
         // manda un navegador real, y desde que la ausencia también descarta un
         // envío sin ella no llega. El spread va después para que el caso del bot
         // pueda seguir rellenándola.
-        body: new URLSearchParams({ empresa_web: "", ...campos }),
+        body: new URLSearchParams({ slg_hp: "", ...campos }),
         redirect: "manual",
       });
       return { status: r.status, destino: r.headers.get("location") ?? "" };
@@ -417,7 +417,7 @@ async function main() {
       origen: "contact",
       idioma: "es",
       email: "bot-contacto@empresa-real-slg.test",
-      empresa_web: "soy un bot",
+      slg_hp: "soy un bot",
     });
     check(
       "el contacto también tiene campo trampa, y descarta en silencio",

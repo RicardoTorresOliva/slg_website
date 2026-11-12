@@ -119,7 +119,7 @@ Reglas que aplican a los tres: sesión con cookie firmada por `BETTER_AUTH_SECRE
 
 | Paso | Dónde | Detalle |
 |---|---|---|
-| 1 | Formulario (`/descargas`, `/contacto`, solicitud de doctrina) | Nombre, apellido, correo corporativo, consentimiento; campo trampa `empresa_web` oculto |
+| 1 | Formulario (`/descargas`, `/contacto`, solicitud de doctrina) | Nombre, apellido, correo corporativo, consentimiento; campo trampa `slg_hp` oculto (D-180) |
 | 2 | `lib/antiabuso` | Descarta en silencio si la trampa viene rellena **o no viene** (D-164); límite por IP y correo en la base; rechaza dominios gratuitos/desechables (tabla editable sin desplegar) |
 | 3 | `lib/descargas` | Guarda `lead_capture` **antes** de responder; si hay archivo, firma la URL de descarga con caducidad |
 | 4 | `lib/webhooks` | Emite `lead.captured` (+ `contact.submitted` o `download.completed`) firmados a los suscriptores (n8n) |
